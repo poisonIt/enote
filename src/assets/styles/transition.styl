@@ -1,0 +1,38 @@
+@import './animate.styl'
+// .collapse-transition-enter-active, .collapse-transition-leave-active
+//   overflow hidden
+//   transition height ease 0.5s
+// .collapse-transition-enter, .collapse-transition-leave-to
+//   height 0
+//   overflow hidden
+//   transition height ease 0.5s
+.bounce-in-enter-active
+  animation bounceIn .5s
+.bounce-in-leave-active
+  animation bounceOut .5s
+
+.collapse-transition
+  transition 0.3s height ease-in-out, 0.3s padding-top ease-in-out, 0.3s padding-bottom ease-in-out
+
+.dropdown-enter-active, .dropdown-leave-active
+  transition all  .16s ease
+  transform-origin top center
+.dropdown-enter, .dropdown-leave-to
+  opacity 0
+  transform scaleY(0)
+
+.fade-enter-active, .fade-leave-active
+  transition opacity .16s ease
+.fade-enter, .fade-leave-to
+  opacity 0
+
+.fade-in-down-enter-active
+  animation fadeInDown .5s
+.fade-in-down-leave-active
+  animation fadeOutUp .5s
+
+.zoom-out-up-enter-active
+  // animation: zoomOutUp .5s reverse
+.zoom-out-up-leave-active
+  animation zoomOutUp .5s
+  

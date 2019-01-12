@@ -1,0 +1,26 @@
+[
+  {
+    "type": "folder",
+    "title": "我的资源",
+    "content": "欢迎使用ENOTE笔记",
+    "update_at": "2019-01-08",
+    "file_size": "819 B",
+    "file_path": ["我的文件夹"]
+  },
+  {
+    "type": "doc",
+    "title": "无标题笔记",
+    "content": "欢迎使用ENOTE笔记欢迎使用ENOTE笔记欢迎使用ENOTE笔记欢迎使用ENOTE笔记",
+    "update_at": "2019-01-09",
+    "file_size": "819 B",
+    "file_path": ["我的文件夹", "我的资源"]
+  },
+  {
+    "type": "md",
+    "title": "READ.md",
+    "content": "",
+    "update_at": "2019-01-08",
+    "file_size": "819 B",
+    "file_path": ["我的文件夹"]
+  }
+]

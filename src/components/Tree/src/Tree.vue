@@ -76,7 +76,7 @@ export default {
   watch: {
     data: {
       handler: function (newVal) {
-        // this.store.setData(newVal)
+        this.store.setData(newVal)
         console.log('watch-data', newVal)
       },
       deep: true

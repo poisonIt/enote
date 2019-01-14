@@ -29,6 +29,7 @@ export default class Node {
     if (store.defaultExpandAll) {
       this.expanded = true
     }
+    store.nodeMap[this.uid] = this
   }
 
   setData (data) {
@@ -77,6 +78,18 @@ export default class Node {
       data.children = null
     }
     return data.children
+  }
+
+  getAncestors () {
+    let result = [this]
+    function addAncestor (node, arr) {
+      if (node.parent) {
+        arr.unshift(node.parent)
+        addAncestor(node.parent, arr)
+      }
+    }
+    addAncestor(this, result)
+    return result
   }
 
   collapse () {

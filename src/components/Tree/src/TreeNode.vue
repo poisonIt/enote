@@ -26,7 +26,7 @@
       <!-- <input type="checkbox"> -->
       <node-content :node="node"></node-content>
     </div>
-    <collapse-transition>
+    <!-- <collapse-transition> -->
       <div class="tree-node_children" v-show="expanded">
         <tree-node
           v-for="child in node.childNodes"
@@ -34,7 +34,7 @@
           :node="child">
         </tree-node>
       </div>
-    </collapse-transition>
+    <!-- </collapse-transition> -->
   </div>
 </template>
 

@@ -14,7 +14,7 @@
             :type="item.type"
             :title="item.title"
             :content="item.content"
-            :update_at="item.update_at"
+            :update_at="item.update_at | yyyymmdd"
             :file_size="item.file_size"
             :file_path="item.file_path">
           </FileCard>
@@ -26,6 +26,7 @@
 </template>
 
 <script>
+import dayjs from 'dayjs'
 import { mapGetters, mapState } from 'vuex'
 import FileCard from './FileCard'
 
@@ -38,6 +39,12 @@ export default {
 
   data () {
     return {
+    }
+  },
+
+  filters: {
+    yyyymmdd (timestamp) {
+      return dayjs(Number(timestamp)).format('YYYY-MM-DD')
     }
   },
 

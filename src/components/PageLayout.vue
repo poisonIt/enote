@@ -3,6 +3,9 @@
     <div class="section left">
       <slot name="left"></slot>
     </div>
+    <div class="section middle">
+      <slot name="middle"></slot>
+    </div>
     <div class="section right">
       <slot name="right"></slot>
     </div>
@@ -23,11 +26,13 @@ export default {
   .section
     height 100%
     &.left
+      min-width 220px
+    &.middle
       width 280px
       border-left 1px solid #e6e6e6
       border-right 1px solid #e6e6e6
     &.right
       flex 1
-    div
-      height 100%
+      div
+        height 100%
 </style>

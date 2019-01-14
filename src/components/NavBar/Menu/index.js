@@ -3,7 +3,6 @@ import resourceMenu from './resourceMenu'
 import recycleMenu from './recycleMenu'
 
 function hookMenuEvent (menu, target) {
-  console.log('hookMenuEvent', menu, target)
   return menu.map(menuItem => {
     let newItem = menuItem
     const eventListener = newItem.eventListener

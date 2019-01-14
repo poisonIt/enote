@@ -2,16 +2,39 @@
   <div class="home">
     <PageLayout>
       <div slot="left">
+        <div id="nav">
+          <FileTool></FileTool>
+          <NavBar></NavBar>
+        </div>
+      </div>
+      <div slot="middle">
         <DocumentList></DocumentList>
       </div>
       <div slot="right">
         <EditorComp style="height: 100%"></EditorComp>
       </div>
     </PageLayout>
+    <modal
+      width="400px"
+      height="500px"
+      transition-name="fade-in-down"
+      title="移动到"
+      @close="closeMovePanel"
+      :visible.sync="isMovePanelShowed">
+      <Move></Move>
+      <div class="button-group" slot="footer">
+        <div class="button primary">确定</div>
+        <div class="button" @click="closeMovePanel">取消</div>
+      </div>
+    </modal>
   </div>
 </template>
 
 <script>
+import { mapActions, mapGetters } from 'vuex'
+import Move from '@/components/Move'
+import NavBar from '@/components/NavBar/index.js'
+import FileTool from '@/components/FileTool'
 import PageLayout from '@/components/PageLayout.vue'
 import DocumentList from '@/components/DocumentList.vue'
 import EditorComp from '@/components/EditorComp.vue'
@@ -20,10 +43,27 @@ export default {
   name: 'home',
 
   components: {
+    Move,
+    NavBar,
+    FileTool,
     PageLayout,
     DocumentList,
     EditorComp
+  },
+
+  computed: {
+    ...mapGetters({
+      isMovePanelShowed: 'GET_SHOW_MOVE_PANEL',
+    })
+  },
+
+  methods: {
+    ...mapActions(['TOGGLE_SHOW_MOVE_PANEL']),
+    closeMovePanel () {
+      this.TOGGLE_SHOW_MOVE_PANEL()
+    }
   }
+
 }
 </script>
 
@@ -33,4 +73,13 @@ export default {
   height 100%
   display flex
   flex-direction column
+
+#nav
+  min-width 220px
+  // border-right 1px solid #e6e6e6
+  a
+    font-weight bold
+    color #2c3e50
+    &.router-link-exact-active
+      color #42b983
 </style>

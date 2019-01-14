@@ -23,3 +23,8 @@ export function getPropByPath(obj, path, strict) {
     v: tempObj ? tempObj[keyArr[i]] : null
   };
 }
+
+export function GenNonDuplicateID (randomLength) {
+  console.log('GenNonDuplicateID')
+  return Number(Math.random().toString().substr(3, randomLength) + Date.now()).toString(36)
+}

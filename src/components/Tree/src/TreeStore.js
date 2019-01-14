@@ -19,6 +19,7 @@ export default class TreeStore {
   }
 
   setData (newVal) {
+    this.nodeMap = {}
     this.root.setData(newVal)
   }
 

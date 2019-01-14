@@ -15,6 +15,8 @@
     "@ckeditor/ckeditor5-autosave": "^10.0.2",
     "@ckeditor/ckeditor5-build-classic": "^11.2.0",
     "@ckeditor/ckeditor5-vue": "^1.0.0-beta.1",
+    "dayjs": "^1.8.0",
+    "lodash": "^4.17.11",
     "vue": "^2.5.21",
     "vuex": "^3.0.1"
   },

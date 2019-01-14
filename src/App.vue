@@ -1,24 +1,16 @@
 <template>
   <div id="app">
-    <div id="nav">
-      <FileTool></FileTool>
-      <NavBar></NavBar>
-    </div>
     <Home></Home>
   </div>
 </template>
 
 <script>
 import { mapActions } from 'vuex'
-import Home from './views/Home'
-import FileTool from './components/FileTool'
-import NavBar from './components/NavBar/index.js'
+import Home from '@/views/Home'
 
 export default {
   components: {
-    Home,
-    FileTool,
-    NavBar
+    Home
   },
 
   created () {
@@ -43,6 +35,10 @@ export default {
       e.preventDefault()
       e.stopPropagation()
     })
+
+    setTimeout(() => {
+      this.showMovePanel = true
+    }, 3000)
   },
 
   methods: {
@@ -77,21 +73,33 @@ ul, li
   flex-direction row
   overflow hidden
 
-#nav
-  min-width 220px
-  // border-right 1px solid #e6e6e6
-  a
-    font-weight bold
-    color #2c3e50
-    &.router-link-exact-active
-      color #42b983
-
-#views
-  // flex 1
-
 .ellipsis
   width 100%
   overflow hidden
   white-space nowrap
   text-overflow ellipsis
+
+.button-group
+  width 80%
+  position absolute
+  bottom 30px
+  left 50%
+  transform translateX(-50%)
+  display flex
+  flex-direction row
+  align-items center
+  justify-content space-around
+  margin-top 30px
+.button
+  width 80px
+  height 32px
+  border-radius 4px
+  background-color #fff
+  text-align center
+  line-height 32px
+  border 1px solid #c3c1c1
+  &.primary
+    border none
+    background-color #198cf0
+    color #fff
 </style>

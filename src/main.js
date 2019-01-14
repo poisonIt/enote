@@ -3,10 +3,13 @@ import App from './App.vue'
 import store from './store'
 import CKEditor from '@ckeditor/ckeditor5-vue'
 import CollapseTransition from './utils/transitions'
+import Modal from './components/Modal'
 const { remote, shell, webFrame } = require('electron')
+console.log(remote.app.getAppPath())
 
 Vue.use(CKEditor)
 Vue.use(CollapseTransition)
+Vue.use(Modal)
 
 Vue.prototype.$remote = remote
 Vue.prototype.$shell = shell

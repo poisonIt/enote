@@ -54,6 +54,9 @@ export default {
       window.onresize = () => {
         this.handleResize()
       }
+      setInterval(() => {
+        
+      })
     },
 
     handleEditorInput () {

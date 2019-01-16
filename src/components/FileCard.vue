@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <div class="header">
-      <div class="icon"></div>
+      <div class="icon" :class="type"></div>
       <div class="title">{{ title }}</div>
     </div>
     <div class="body" v-if="content.length > 0">
@@ -36,8 +36,8 @@ export default {
       default: ''
     },
     file_size: {
-      type: String,
-      default: ''
+      type: Number,
+      default: 0
     },
     file_path: {
       type: Array,
@@ -67,6 +67,8 @@ export default {
   height 18px
   border-radius 3px
   background-color #198cf0
+  &.folder
+    background-color #f0b019
 
 .body
   margin: 12px 0

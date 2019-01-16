@@ -1,13 +1,16 @@
 import { GenNonDuplicateID } from '@/utils/utils'
-import { writeFile } from '@/utils/file'
+import { writeFile, readFile } from '@/utils/file'
 import { remove } from 'lodash'
 import dayjs from 'dayjs'
+
+const appPath = '/Users/bowiego/Documents/workspace/enote/public'
 
 const state = {
   files_map: {},
   files_arr: [],
   folders: {},
-  recycle: []
+  recycle: [],
+  current_folder_id: null
 }
 
 const mutations = {
@@ -23,17 +26,32 @@ const mutations = {
   },
 
   ADD_FILES (state, obj) {
+    if (state.files_map[obj.id]) {
+      return
+    }
     let parentFolder = state.files_map[obj.parent_folder]
     // obj.id = GenNonDuplicateID(6)
     let timeStamp = String(dayjs(new Date()).valueOf())
     obj.create_at = timeStamp
     obj.update_at = timeStamp
     obj.ancestor_folders = [...parentFolder.ancestor_folders, parentFolder.id]
-    obj.child_folders = []
-    parentFolder.child_folders.push(obj.id)
-    if (!state.files_map[obj.id]) {
-      state.files_arr.push(obj)
+    obj.file_size = 0
+    if (obj.type === 'folder') {
+      obj.child_folders = []
+      parentFolder.child_folders.push(obj.id)
+    } else if (obj.type === 'doc') {
+      if (!parentFolder.child_docs) {
+        parentFolder.child_docs = []
+      }
+      parentFolder.child_docs.push(obj.id)
+      readFile(`${appPath}/docs/template.xml`).then(data => {
+        writeFile(`${appPath}/docs/${obj.id}.xml`, data.data).then(() => {
+          console.log('write xml success', obj)
+        })
+      })
     }
+    state.files_arr.push(obj)
+    // console.log(state)
   },
 
   DELETE_FILE (state, id) {
@@ -77,7 +95,11 @@ const mutations = {
   },
 
   SAVE_FILES (state) {
-    writeFile('/Users/bowiego/Documents/workspace/enote/public/mock/files.json', JSON.stringify(state.files_map))
+    writeFile(`${appPath}/mock/files.json`, JSON.stringify(state.files_map))
+  },
+
+  SET_CURRENT_FOLDER (state, id) {
+    state.current_folder_id = id
   }
 }
 
@@ -102,11 +124,15 @@ const actions = {
     commit('SAVE_FILES')
   },
 
-  EDIT_FILE({ commit }, opts) {
+  EDIT_FILE ({ commit }, opts) {
     commit('EDIT_FILE', opts)
     commit('UPDATE_FILE_ARR')
     commit('UPDATE_FOLDERS')
     commit('SAVE_FILES')
+  },
+
+  SET_CURRENT_FOLDER ({ commit }, id) {
+    commit('SET_CURRENT_FOLDER', id)
   }
 }
 
@@ -133,11 +159,24 @@ const getters = {
   },
 
   GET_FOLEDERS (state) {
+    console.log('GET_FOLEDERS', state)
     return state.folders
   },
 
   GET_RECYCLE (state) {
     return state.recycle
+  },
+
+  GET_CURRENT_FILES (state) {
+    console.log(state)
+    if (!state.current_folder_id) {
+      return []
+    }
+    const currentFolder = state.files_map[state.current_folder_id]
+    console.log('currentFolder', currentFolder)
+    const childFolders = currentFolder.child_folders || []
+    const childDocs = currentFolder.child_docs || []
+    return [...childFolders, ...childDocs].map(id => state.files_map[id])
   }
 }
 

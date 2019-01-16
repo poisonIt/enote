@@ -99,6 +99,7 @@ export default {
       'EDIT_FILE',
       'SET_VIEW_NAME',
       'SET_VIEW_FILE_TYPE',
+      'SET_CURRENT_FOLDER',
       'TOGGLE_SHOW_MOVE_PANEL'
     ]),
 
@@ -162,9 +163,14 @@ export default {
     },
 
     handleItemClick (node) {
+      console.log('handleItemClick', node)
       node.instance.handleClick()
       this.SET_VIEW_NAME(node.data.title)
       this.SET_VIEW_FILE_TYPE(node.data.link)
+      if (node.data.type === 'folder') {
+        console.log('folder', node.data.id)
+        this.SET_CURRENT_FOLDER(node.data.id)
+      }
     },
 
     handleContextmenu (node) {
@@ -184,6 +190,21 @@ export default {
 
     handleNewDoc () {
       console.log('handleNewDoc', this.popupedNode)
+      let id = GenNonDuplicateID(6)
+      this.ADD_FILES({
+        title: '无标题笔记',
+        type: 'doc',
+        id: id,
+        parent_folder: this.popupedNode.data.id
+      }).then(() => {
+        for (let i in this.popupedNode.store.nodeMap) {
+          let node = this.popupedNode.store.nodeMap[i]
+          if (node.data.id === this.popupedNode.data.id) {
+            this.handleItemClick(node)
+            return
+          }
+        }
+      })
     },
 
     handleNewFolder () {
@@ -200,6 +221,7 @@ export default {
           let node = this.popupedNode.store.nodeMap[i]
           if (node.data.id === id) {
             this.handleInsertChildNode(node)
+            this.handleItemClick(node)
             return
           }
         }
@@ -233,7 +255,17 @@ export default {
         val: this.nodeInput
       })
       // this.typingNode.data.title = this.nodeInput
-      this.typingNode = null
+      this.$nextTick(() => {
+        console.log('handleNodeInputBlur', this.typingNode)
+        for (let i in this.typingNode.store.nodeMap) {
+          let nodeTemp = this.typingNode.store.nodeMap[i]
+          if (nodeTemp.data.id === this.typingNode.data.id) {
+            this.handleItemClick(nodeTemp)
+            this.typingNode = null
+            return
+          }
+        }
+      })
       console.log(this.nav)
     },
 
@@ -255,6 +287,7 @@ export default {
 
     handleDelete () {
       console.log('handleDelete', this.popupedNode)
+      this.SET_CURRENT_FOLDER(null)
       this.DELETE_FILE(this.popupedNode.data.id)
     },
 

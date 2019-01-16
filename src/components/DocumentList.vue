@@ -8,14 +8,16 @@
     <div class="body">
       <ul>
         <li
+          :class="{'selected': currentFile === item}"
           v-for="(item, index) in fileList"
-          :key="index">
+          :key="index"
+          @click="selectFile(item)">
           <FileCard
             :type="item.type"
             :title="item.title"
             :content="item.content"
             :update_at="item.update_at | yyyymmdd"
-            :file_size="item.file_size"
+            :file_size="Number(item.file_size)"
             :file_path="item.file_path">
           </FileCard>
         </li>
@@ -27,7 +29,8 @@
 
 <script>
 import dayjs from 'dayjs'
-import { mapGetters, mapState } from 'vuex'
+import { readFile } from '@/utils/file'
+import { mapGetters, mapState, mapActions } from 'vuex'
 import FileCard from './FileCard'
 
 export default {
@@ -39,6 +42,7 @@ export default {
 
   data () {
     return {
+      currentFile: null
     }
   },
 
@@ -57,19 +61,45 @@ export default {
       viewFileType: 'GET_VIEW_FILE_TYPE',
       latesFiles: 'GET_LATEST_FILES',
       folders: 'GET_FOLEDERS',
-      recycle: 'GET_RECYCLE'
+      recycle: 'GET_RECYCLE',
+      currentFiles: 'GET_CURRENT_FILES',
     }),
 
     fileList () {
+      console.log(this.viewFileType)
       switch (this.viewFileType) {
         case 'latest':
           return this.latesFiles
         case 'folders':
-          return this.folders
+          // return this.folders
+          console.log('currentFiles', this.currentFiles)
+          return this.currentFiles
+        case 'new folder':
+          console.log('currentFiles', this.currentFiles)
+          return this.currentFiles
         case 'recycle':
           return this.recycle
         default:
           return this.latesFiles
+      }
+    }
+  },
+
+  methods: {
+    ...mapActions(['SET_EDITOR_CONTENT', 'EDIT_FILE']),
+    selectFile (item) {
+      this.currentFile = item
+      const appPath = '/Users/bowiego/Documents/workspace/enote/public'
+      if (item.type === 'doc') {
+        readFile(`${appPath}/docs/${item.id}.xml`).then(data => {
+          this.SET_EDITOR_CONTENT(data.data)
+          this.EDIT_FILE({
+            id: item.id,
+            attr: 'file_size',
+            val: data.size
+          })
+          console.log(data)
+        })
       }
     }
   }
@@ -92,6 +122,12 @@ export default {
       flex .85
       text-align center
       font-size 14px
+
+.body
+  ul
+    li.selected
+      background-color #eff0f1
+
 .button
   width 40px
   height 24px

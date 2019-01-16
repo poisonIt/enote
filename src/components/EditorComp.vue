@@ -11,6 +11,7 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic'
 // import Autosave from '@ckeditor/ckeditor5-autosave/src/autosave'
 import '@ckeditor/ckeditor5-build-classic/build/translations/zh-cn'
@@ -44,6 +45,18 @@ export default {
         //   }
         // },
       }
+    }
+  },
+
+  computed: {
+    ...mapGetters({
+      content: 'GET_EDITOR_CONTENT'
+    })
+  },
+
+  watch: {
+    content (val) {
+      this.editorHtml = val
     }
   },
 

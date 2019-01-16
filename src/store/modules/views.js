@@ -1,7 +1,8 @@
 const state = {
   name: '最新文档',
   view_file_type: 'latest',
-  show_move_pannel: false
+  show_move_pannel: false,
+  editor_content: ''
 }
 
 const mutations = {
@@ -15,6 +16,10 @@ const mutations = {
 
   TOGGLE_SHOW_MOVE_PANEL (state, val) {
     state.show_move_pannel = !state.show_move_pannel
+  },
+
+  SET_EDITOR_CONTENT (state, content) {
+    state.editor_content = content
   }
 }
 
@@ -29,6 +34,10 @@ const actions = {
 
   TOGGLE_SHOW_MOVE_PANEL ({ commit }) {
     commit('TOGGLE_SHOW_MOVE_PANEL')
+  },
+
+  SET_EDITOR_CONTENT ({ commit }, content) {
+    commit('SET_EDITOR_CONTENT', content)
   }
 }
 
@@ -43,6 +52,10 @@ const getters = {
 
   GET_SHOW_MOVE_PANEL (state) {
     return state.show_move_pannel
+  },
+
+  GET_EDITOR_CONTENT (state) {
+    return state.editor_content
   }
 }
 

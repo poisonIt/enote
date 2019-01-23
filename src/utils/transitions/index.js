@@ -5,7 +5,7 @@ const transitions = [
   CollapseTransition
 ]
 
-const install = function(Vue, opts = {}) {
+const install = function (Vue, opts = {}) {
   transitions.map(transition => {
     Vue.component(transition.name, transition)
   })

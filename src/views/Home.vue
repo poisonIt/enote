@@ -11,7 +11,9 @@
         <DocumentList></DocumentList>
       </div>
       <div slot="right">
-        <EditorComp style="height: 100%"></EditorComp>
+        <FileHandler></FileHandler>
+        <EditorComp style="height: 100%" v-show="currentFile && currentFile.type === 'doc'"></EditorComp>
+        <FolderComp style="height: 100%" v-show="currentFile && currentFile.type === 'folder'">folder</FolderComp>
       </div>
     </PageLayout>
     <modal
@@ -37,7 +39,9 @@ import NavBar from '@/components/NavBar/index.js'
 import FileTool from '@/components/FileTool'
 import PageLayout from '@/components/PageLayout.vue'
 import DocumentList from '@/components/DocumentList.vue'
+import FileHandler from '@/components/FileHandler.vue'
 import EditorComp from '@/components/EditorComp.vue'
+import FolderComp from '@/components/FolderComp.vue'
 
 export default {
   name: 'home',
@@ -48,17 +52,22 @@ export default {
     FileTool,
     PageLayout,
     DocumentList,
-    EditorComp
+    FileHandler,
+    EditorComp,
+    FolderComp
   },
 
   computed: {
     ...mapGetters({
       isMovePanelShowed: 'GET_SHOW_MOVE_PANEL',
+      viewFileType: 'GET_VIEW_FILE_TYPE',
+      currentFile: 'GET_CURRENT_FILE'
     })
   },
 
   methods: {
     ...mapActions(['TOGGLE_SHOW_MOVE_PANEL']),
+
     closeMovePanel () {
       this.TOGGLE_SHOW_MOVE_PANEL()
     }
@@ -75,7 +84,7 @@ export default {
   flex-direction column
 
 #nav
-  min-width 220px
+  width 100%
   // border-right 1px solid #e6e6e6
   a
     font-weight bold

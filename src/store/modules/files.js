@@ -1,4 +1,4 @@
-import { GenNonDuplicateID } from '@/utils/utils'
+// import { GenNonDuplicateID } from '@/utils/utils'
 import { writeFile, readFile } from '@/utils/file'
 import { remove } from 'lodash'
 import dayjs from 'dayjs'
@@ -10,7 +10,8 @@ const state = {
   files_arr: [],
   folders: {},
   recycle: [],
-  current_folder_id: null
+  current_folder_id: null,
+  current_file_id: null
 }
 
 const mutations = {
@@ -100,6 +101,10 @@ const mutations = {
 
   SET_CURRENT_FOLDER (state, id) {
     state.current_folder_id = id
+  },
+
+  SET_CURRENT_FILE (state, id) {
+    state.current_file_id = id
   }
 }
 
@@ -133,6 +138,11 @@ const actions = {
 
   SET_CURRENT_FOLDER ({ commit }, id) {
     commit('SET_CURRENT_FOLDER', id)
+  },
+
+  SET_CURRENT_FILE ({ commit }, id) {
+    console.log('SET_CURRENT_FILE', id)
+    commit('SET_CURRENT_FILE', id)
   }
 }
 
@@ -168,15 +178,18 @@ const getters = {
   },
 
   GET_CURRENT_FILES (state) {
-    console.log(state)
     if (!state.current_folder_id) {
       return []
     }
     const currentFolder = state.files_map[state.current_folder_id]
-    console.log('currentFolder', currentFolder)
     const childFolders = currentFolder.child_folders || []
     const childDocs = currentFolder.child_docs || []
     return [...childFolders, ...childDocs].map(id => state.files_map[id])
+  },
+
+  GET_CURRENT_FILE (state) {
+    console.log('GET_CURRENT_FILE', state.files_map)
+    return state.files_map[state.current_file_id]
   }
 }
 

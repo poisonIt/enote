@@ -1,7 +1,7 @@
 <template>
   <div id="navbar">
     <Tree
-      :item-height="'40px'"
+      v-show="viewType === 'expanded'"
       :data="nav"
       :labelProxy="'name'"
       :expand-on-click-node="false"
@@ -9,7 +9,8 @@
       @insertChildNode="handleInsertChildNode"
       default-expand-all
       ref="tree">
-      <div class="nav-node" slot-scope="{ node, data }">
+      <div class="nav-node"
+        slot-scope="{ node, data }">
         <div class="icon-folder"></div>
         <div class="title ellipsis"
           v-show="typingNode !== node">
@@ -28,6 +29,20 @@
           ref="nodeInput"/>
       </div>
     </Tree>
+    <div class="nav-mini" v-show="viewType === 'unexpanded'">
+      <div class="icon icon-latest"
+        :class="{ active : navMiniActive('latest') }"
+        @click="handleClickMini('latest')">
+      </div>
+      <div class="icon icon-folders"
+        :class="{ active : navMiniActive(['folders', 'new folder']) }"
+        @click="handleClickMini('folders')">
+      </div>
+      <div class="icon icon-recycle"
+        :class="{ active : navMiniActive('recycle') }"
+        @click="handleClickMini('recycle')">
+      </div>
+    </div>
   </div>
 </template>
 
@@ -47,6 +62,7 @@ export default {
 
   data () {
     return {
+      initFlag: true,
       typingNode: null,
       popupedNode: null,
       duplicatedNode: null,
@@ -78,18 +94,25 @@ export default {
 
   computed: {
     ...mapGetters({
+      viewType: 'GET_VIEW_TYPE',
+      viewFileType: 'GET_VIEW_FILE_TYPE',
       folders: 'GET_FOLEDERS'
     })
   },
 
   watch: {
-    folders (val) {
-      this.initNav(val)
+    folders (val, oldVal) {
+      if (val !== oldVal) {
+        this.initNav(val)
+      }
     }
   },
 
   created () {
     this.initMenus()
+  },
+
+  mounted () {
   },
 
   methods: {
@@ -113,10 +136,19 @@ export default {
       }
       let rootFolder = rootChildFolders
         .map(folder => this.translateFolderData(folder, folders))[0]
-      
+      // console.log('nav', this.nav[1], this.$refs.tree.store)
       for (let i in rootFolder) {
+        console.log(i, rootFolder[i])
         this.$set(this.nav[1], i, rootFolder[i])
       }
+
+      // let rootNode = this.$refs.tree.store.root
+      // this.$refs.tree.setNodeData(rootNode.childNodes[1].uid, rootFolder)
+
+      // if (this.initFlag) {
+      //   this.handleItemClick(this.$refs.tree.store.root.childNodes[0])
+      //   this.initFlag = false
+      // }
     },
 
     translateFolderData (folder, folders) {
@@ -151,7 +183,7 @@ export default {
       const Menu = this.$remote.Menu
       const MenuItem = this.$remote.MenuItem
       let menu = new Menu()
-      
+
       for (let i = 0, len = itemOpts.length; i < len; i++) {
         menu.append(new MenuItem(itemOpts[i]))
       }
@@ -215,7 +247,7 @@ export default {
         link: 'new folder',
         type: 'folder',
         id: id,
-        parent_folder: this.popupedNode.data.id,
+        parent_folder: this.popupedNode.data.id
       }).then(() => {
         for (let i in this.popupedNode.store.nodeMap) {
           let node = this.popupedNode.store.nodeMap[i]
@@ -297,6 +329,23 @@ export default {
 
     handleResumeRecycle () {
       console.log('handleResumeRecycle', this.popupedNode)
+    },
+
+    navIcon (node) {
+      return 'icon-' + node.data.link
+    },
+
+    handleClickMini (link) {
+      this.$hub.$emit('clickNavMini', link)
+    },
+
+    navMiniActive (link) {
+      console.log('navMiniActive', this.viewFileType, link instanceof Array)
+      if (link instanceof Array) {
+        return link.indexOf(this.viewFileType) > -1
+      } else {
+        return this.viewFileType === link
+      }
     }
   }
 }
@@ -304,7 +353,7 @@ export default {
 
 <style lang="stylus" scoped>
 #navbar
-  width 220px
+  width 100%
 
 .child
   background-color #fff
@@ -312,10 +361,12 @@ export default {
 .nav-node
   position relative
   width 100%
-  height 100%
+  height 40px
   display flex
   align-items center
   -webkit-box-flex 1
+  &.unexpanded
+    height 60px
   .title
     font-size 14px
     &.ellipsis
@@ -332,35 +383,54 @@ export default {
     border 1px solid #73a8d6
     outline none
     font-size 14px
+    .icon
+      width 16px
+      height 16px
+      display block
+      position absolute
+      top 12px
+      left 10px
+      display flex
+      justify-content center
+      align-items center
+      // transform translateY(-50%)
+      &::after
+        content ''
+        display block
+        width 0
+        height 0
+      &.icon-expand::after
+        width 0
+        height 0
+        border-top 4px solid transparent
+        border-left 6px solid #a1a1a1
+        border-bottom 4px solid transparent
+      &.icon-expanded::after
+        transform rotate(90deg)
 
-.icon
-  width 16px
-  height 16px
-  display block
-  position absolute
-  top 12px
-  left 10px
+.nav-mini
+  width 100%
   display flex
-  justify-content center
-  align-items center
-  // transform translateY(-50%)
-  &::after
-    content ''
-    display block
-    width 0
-    height 0
-  &.icon-expand::after
-    width 0
-    height 0
-    border-top 4px solid transparent
-    border-left 6px solid #a1a1a1
-    border-bottom 4px solid transparent
-  &.icon-expanded::after
-    transform rotate(90deg)
+  flex-direction column
+  .icon
+    width 80px
+    height 80px
+    background-repeat  no-repeat
+    background-size 28%
+    background-position center
+    &.active
+      background-color #eff0f1
+  .icon-latest
+    background-image url(../../assets/images/documents.png)
+  .icon-folders
+    background-image url(../../assets/images/folders.png)
+  .icon-recycle
+    background-image url(../../assets/images/recycle.png)
 
 .icon-folder
   width 26px
   height 14px
   background-color #b3b3b3
   margin-right 10px
+
 </style>

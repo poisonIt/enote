@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <div class="header">
-      <div class="button button-back"></div>
+      <div class="button button-back" @click="handleBack"></div>
       <span class="title ellipsis">{{ viewName }}</span>
       <div class="button button-listtype expand"></div>
     </div>
@@ -23,7 +23,11 @@
         </li>
       </ul>
     </div>
-    <div class="footer"></div>
+    <div class="footer">
+      <div class="num">
+        总计 {{ fileList.length }} 项
+      </div>
+    </div>
   </div>
 </template>
 
@@ -42,7 +46,6 @@ export default {
 
   data () {
     return {
-      currentFile: null
     }
   },
 
@@ -62,45 +65,82 @@ export default {
       latesFiles: 'GET_LATEST_FILES',
       folders: 'GET_FOLEDERS',
       recycle: 'GET_RECYCLE',
-      currentFiles: 'GET_CURRENT_FILES',
+      files: 'GET_CURRENT_FILES',
+      currentFile: 'GET_CURRENT_FILE'
     }),
 
     fileList () {
       console.log(this.viewFileType)
       switch (this.viewFileType) {
         case 'latest':
+          console.log(this.latesFiles)
+          // this.selectFile(this.latesFiles[0])
           return this.latesFiles
         case 'folders':
           // return this.folders
-          console.log('currentFiles', this.currentFiles)
-          return this.currentFiles
+          console.log('files', this.files)
+          // this.selectFile(this.files[0])
+          return this.files
         case 'new folder':
-          console.log('currentFiles', this.currentFiles)
-          return this.currentFiles
+          console.log('files', this.files)
+          // this.selectFile(this.files[0])
+          return this.files
         case 'recycle':
           return this.recycle
         default:
+          // this.selectFile(this.latesFiles[0])
           return this.latesFiles
       }
     }
   },
 
+  watch: {
+    fileList (val) {
+      if (this.fileList.length > 0) {
+        this.selectFile(this.fileList[0])
+      }
+    }
+  },
+
   methods: {
-    ...mapActions(['SET_EDITOR_CONTENT', 'EDIT_FILE']),
+    ...mapActions([
+      'SET_EDITOR_CONTENT',
+      'EDIT_FILE',
+      'SET_CURRENT_FILE'
+    ]),
+
     selectFile (item) {
-      this.currentFile = item
+      // if (!item) return
+      console.log('selectFile', this.currentFile, item)
+      if (this.currentFile === item) return
       const appPath = '/Users/bowiego/Documents/workspace/enote/public'
+
+      console.log('save-data')
+      // this.SAVE_EDITOR_CONTENT()
+      if (this.currentFile && this.currentFile.type === 'doc') {
+        this.$hub.$emit('saveEditorContent')
+      }
+      // this.currentFileTempId = item.id
+      // this.currentFile = item
+      // if (this.currentFile) {
+      //   console.log('currentFile', this.currentFile.id)
+      // }
+      this.SET_CURRENT_FILE(item.id)
       if (item.type === 'doc') {
         readFile(`${appPath}/docs/${item.id}.xml`).then(data => {
           this.SET_EDITOR_CONTENT(data.data)
-          this.EDIT_FILE({
-            id: item.id,
-            attr: 'file_size',
-            val: data.size
-          })
-          console.log(data)
+          // this.EDIT_FILE({
+          //   id: item.id,
+          //   attr: 'file_size',
+          //   val: data.size
+          // })
+          // console.log(data)
         })
       }
+    },
+
+    handleBack () {
+      this.$hub.$emit('navUp')
     }
   }
 }
@@ -109,9 +149,11 @@ export default {
 <style lang="stylus" scoped>
 .container
   width 100%
+  height 100%
+  position relative
   .header
     width inherit
-    height 59px
+    height 60px
     padding 14px
     display flex
     flex-direction row
@@ -124,9 +166,22 @@ export default {
       font-size 14px
 
 .body
+  height 100%
   ul
     li.selected
       background-color #eff0f1
+
+.footer
+  width 100%
+  position absolute
+  bottom 0
+  border-top 1px solid #e6e6e6
+  .num
+    height 40px
+    line-height 40px
+    padding-left 20px
+    font-size 12px
+    letter-spacing 1px
 
 .button
   width 40px

@@ -1,59 +1,93 @@
 <template>
   <div class="container">
-    <div class="item expand">
-      <div class="icon icon-newfile"></div>
-      <span>新建</span>
+    <div class="expanded" v-if="viewType === 'expanded'">
+      <div class="item expand">
+        <span>新建笔记</span>
+      </div>
+      <div class="item upload"></div>
     </div>
-    <div class="item">
-      <div class="icon icon-upload"></div>
-      <span>上传</span>
-    </div>
+    <div class="unexpanded" v-if="viewType === 'unexpanded'">+</div>
   </div>
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
+
 export default {
-  name: 'FileTool'
+  name: 'FileTool',
+
+  computed: {
+    ...mapGetters({
+      viewType: 'GET_VIEW_TYPE'
+    })
+  }
 }
 </script>
 
 <style lang="stylus" scoped>
 .container
+  position relative
+  width 100%
+  height 60px
   border-bottom 1px solid #e6e6e6
 
-.container, .item
+.expanded
+  width 100%
+  height 100%
   display flex
   flex-direction row
+  justify-content space-between
   align-items center
-.item
-  flex 1
-  height 58px
-  font-size 14px
-  // justify-content space-around
-  span
-    // display inline-block
-    // flex 1
-    text-align center
+  padding 0 20px
 
 .expand
-  position relative
-  &::after
-    content ''
+  width 135px
+  height 36px
+  display flex
+  flex-direction row
+  justify-content flex-start
+  align-items center
+  padding 10px
+  border-radius 3px
+  font-size 14px
+  color #fff
+  background-color #3161A3
+  &::before
+    content '+'
     display block
-    width 0
-    height 0
+    font-size 20px
+    font-weight 600
+    margin-right 10px
+
+.upload
+  position relative
+  width 36px
+  height 36px
+  border-radius 3px
+  background-color #3161A3
+  color #fff
+  &::before
     position absolute
     top 50%
-    right 18px
-    border-top 2.8px solid transparent
-    border-left 4.5px solid #a1a1a1
-    border-bottom 2.8px solid transparent
-    transform  translateY(-50%) rotate(90deg)
+    left 60%
+    content '>'
+    display block
+    font-size 14px
+    font-weight 500
+    transform scaleX(1.8) translate(-50%, -50%) rotate(90deg)
 
-.icon
-  width 18px
-  height 18px
-  margin 0 10px 0 22px
-  border-radius 50%
-  border 1px solid #6cb5f9
+.unexpanded
+  width 36px
+  height 36px
+  position absolute
+  top 50%
+  left 50%
+  transform translate(-50%, -50%)
+  border-radius 4px
+  font-size 26px
+  color #fff
+  text-align center
+  line-height 36px
+  background-color #3161A3
+  box-shadow 0px 2px 12px 1px rgba(0, 0, 0, 0.3)
 </style>

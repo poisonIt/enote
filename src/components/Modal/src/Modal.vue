@@ -69,8 +69,8 @@ export default {
       this.$emit('close')
     },
     handleWrapperClick () {
-      return
-      this.handleClose()
+      // return
+      // this.handleClose()
     }
   }
 }

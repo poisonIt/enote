@@ -1,7 +1,7 @@
 var fs = require('fs')
 
 const readFile = function (path, cb) {
-  return new Promise ((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     fs.readFile(path, 'utf8', function (err, data) {
       if (err) {
         reject(err)
@@ -20,7 +20,7 @@ const readFile = function (path, cb) {
 }
 
 const writeFile = function (path, data) {
-  return new Promise ((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     fs.writeFile(path, data, function (err, data) {
       if (err) {
         reject(err)

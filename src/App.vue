@@ -1,15 +1,19 @@
 <template>
   <div id="app">
+    <AppHeader></AppHeader>
     <Home></Home>
   </div>
 </template>
 
 <script>
+import dayjs from 'dayjs'
 import { mapActions } from 'vuex'
+import AppHeader from '@/components/AppHeader'
 import Home from '@/views/Home'
 
 export default {
   components: {
+    AppHeader,
     Home
   },
 
@@ -18,6 +22,22 @@ export default {
       return resp.json()
     }).then(data => {
       console.log(data)
+      if (!data['000000']) {
+        let timeStamp = String(dayjs(new Date()).valueOf())
+        let id = '000000'
+        data[id] = {
+          id: id,
+          type: 'folder',
+          title: '我的文件夹',
+          content: '',
+          create_at: timeStamp,
+          update_at: timeStamp,
+          file_size: '0',
+          file_path: ['/'],
+          ancestor_folders: [],
+          child_folders: []
+        }
+      }
       this.SET_FILES(data)
     })
   },
@@ -69,8 +89,9 @@ ul, li
   color #2c3e50
   width 100%
   height 100%
-  display flex
-  flex-direction row
+  padding-top 40px
+  // display flex
+  // flex-direction row
   overflow hidden
 
 .ellipsis

@@ -4,7 +4,7 @@ let nid = 0
 
 export default class Node {
   constructor (options) {
-    this.uid = nid ++
+    this.uid = nid++
     this.text = null
     this.data = null
     this.expanded = false

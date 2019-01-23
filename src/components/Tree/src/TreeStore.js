@@ -1,5 +1,16 @@
 import Node from './Node'
 
+// function cloneShallow (target) {
+//   let result = {}
+//   for (let name in target) {
+//     console.log(name)
+//     if (name !== '__ob__') {
+//       result[name] = target[name]
+//     }
+//   }
+//   return result
+// }
+
 export default class TreeStore {
   constructor (options) {
     this.currentNode = null
@@ -10,12 +21,14 @@ export default class TreeStore {
         this[name] = options[name]
       }
     }
+    console.log(this.data)
 
     this.nodeMap = {}
     this.root = new Node({
       data: this.data,
       store: this
     })
+    console.log(this.root)
   }
 
   setData (newVal) {

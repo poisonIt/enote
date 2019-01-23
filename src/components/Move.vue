@@ -63,7 +63,7 @@ export default {
                       title: '新建文件夹新建文件夹新建文件夹新建文件夹新建文件夹新建文件夹新建文件夹',
                       link: 'new folder',
                       type: 'folder'
-                    },
+                    }
                   ]
                 },
                 {
@@ -119,7 +119,7 @@ export default {
       let pathArr = node.getAncestors()
         .filter(item => item.data.title)
         .map(item => item.data.title)
-      
+
       if (node.level === 1) {
         this.path = '/'
         return

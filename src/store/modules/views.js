@@ -1,4 +1,5 @@
 const state = {
+  view_type: 'expanded',
   name: '最新文档',
   view_file_type: 'latest',
   show_move_pannel: false,
@@ -6,6 +7,10 @@ const state = {
 }
 
 const mutations = {
+  SET_VIEW_TYPE (state, type) {
+    state.view_type = type
+  },
+
   SET_VIEW_NAME (state, name) {
     state.name = name
   },
@@ -24,7 +29,12 @@ const mutations = {
 }
 
 const actions = {
+  SET_VIEW_TYPE ({ commit }, type) {
+    commit('SET_VIEW_TYPE', type)
+  },
+
   SET_VIEW_NAME ({ commit }, name) {
+    console.log('SET_VIEW_NAME', name)
     commit('SET_VIEW_NAME', name)
   },
 
@@ -37,15 +47,20 @@ const actions = {
   },
 
   SET_EDITOR_CONTENT ({ commit }, content) {
+    console.log('SET_EDITOR_CONTENT', content)
     commit('SET_EDITOR_CONTENT', content)
   }
 }
 
 const getters = {
+  GET_VIEW_TYPE (state) {
+    return state.view_type
+  },
+
   GET_VIEW_NAME (state) {
     return state.name
   },
-  
+
   GET_VIEW_FILE_TYPE (state) {
     return state.view_file_type
   },
@@ -55,6 +70,7 @@ const getters = {
   },
 
   GET_EDITOR_CONTENT (state) {
+    console.log('GET_EDITOR_CONTENT', state.editor_content)
     return state.editor_content
   }
 }

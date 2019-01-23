@@ -6,7 +6,7 @@
     }"
     v-show="node.visible">
     <div class="tree-node__content"
-      :style="{ paddingLeft: node.level * 20 - 10 + 'px', height: itemHeight }">
+      :style="{ paddingLeft: node.level * 20 - 10 + 'px', height: 'auto' }">
       <div class="icon icon-arrow"
         :class="{
           'transparent' : node.childNodes.length === 0,
@@ -55,10 +55,15 @@ export default {
         const node = this.node
         const { data, store } = node
         return (
-          parent.renderContent ? parent.renderContent.call(parent._renderProxy, h, { _self: tree.$vnode.context, node, data, store })
-          : tree.$scopedSlots.default
-            ? tree.$scopedSlots.default({ node, data })
-            : <span class="el-tree-node__label">{ node.label }</span>
+          parent.renderContent
+            ? parent.renderContent.call(
+              parent._renderProxy,
+              h,
+              { _self: tree.$vnode.context, node, data, store }
+            )
+            : tree.$scopedSlots.default
+              ? tree.$scopedSlots.default({ node, data })
+              : <span class="el-tree-node__label">{ node.label }</span>
         )
       }
     }
@@ -76,6 +81,7 @@ export default {
         return {}
       }
     },
+
     renderContent: Function
   },
 
@@ -87,7 +93,9 @@ export default {
 
   watch: {
     'node.expanded' (val) {
-      this.$nextTick(() => this.expanded = val)
+      this.$nextTick(() => {
+        this.expanded = val
+      })
     }
   },
 
@@ -112,6 +120,14 @@ export default {
       this.expanded = true
     }
     this.node.instance = this
+    if (this.node.level === 1 && this.node.parent.childNodes.indexOf(this.node) === 0) {
+      this.handleClick()
+    }
+    this.$hub.$on('clickNavMini', (link) => {
+      if (this.node.data.link === link) {
+        this.$parent.$parent && this.$parent.$parent.handleItemClick(this.node)
+      }
+    })
   },
 
   methods: {
@@ -122,7 +138,6 @@ export default {
     },
 
     handleExpand () {
-      const store = this.tree.store
       if (this.expanded) {
         this.node.collapse()
       } else {

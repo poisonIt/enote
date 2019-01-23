@@ -33,6 +33,7 @@ export default {
     },
     width: String,
     itemHeight: String,
+    itemHeightMini: String,
     data: Array,
     labelProxy: String,
     defaultExpandAll: Boolean,
@@ -63,6 +64,11 @@ export default {
         width: this.width
       })
     },
+
+    // itemHeightNode () {
+    //   return this.mini ? this.itemHeightMini : this.itemHeight
+    // },
+
     children: {
       set (val) {
         this.data = val
@@ -80,7 +86,7 @@ export default {
         console.log('watch-data', newVal)
       },
       deep: true
-    },
+    }
     // data (newVal) {
     //   console.log('tree-watch-data', newVal)
     //   this.store.setData(newVal)
@@ -102,6 +108,19 @@ export default {
 
     this.root = this.store.root
     this.store.instance = this
+    this.$hub.$on('navUp', () => {
+      const parentInstance = this.store.currentNode.parent.instance
+      if (parentInstance) {
+        const rootParent = this.store.instance.$parent
+        rootParent.handleItemClick(parentInstance.node)
+      }
+    })
+  },
+
+  methods: {
+    setNodeData (uid, data) {
+      this.store.nodeMap[uid].setData(data)
+    }
   }
 }
 </script>

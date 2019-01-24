@@ -1,12 +1,18 @@
 <template>
   <div class="container">
     <div class="expanded" v-if="viewType === 'expanded'">
-      <div class="item expand">
+      <div class="item expand" @click="toggleMenu">
         <span>新建笔记</span>
       </div>
       <div class="item upload"></div>
     </div>
     <div class="unexpanded" v-if="viewType === 'unexpanded'">+</div>
+    <Menu
+      :data="menuData"
+      :visible="isMenuVisible"
+      @close="closeMenu"
+      @itemClick="handleMenuClick">
+    </Menu>
   </div>
 </template>
 
@@ -16,10 +22,46 @@ import { mapGetters } from 'vuex'
 export default {
   name: 'FileTool',
 
+  data () {
+    return {
+      isMenuVisible: false,
+      menuData: [
+        {
+          label: '新建模版笔记',
+          value: 'new_doc'
+        },
+        {
+          label: '新建文件夹',
+          value: 'new_folder'
+        }
+      ]
+    }
+  },
+
   computed: {
     ...mapGetters({
       viewType: 'GET_VIEW_TYPE'
     })
+  },
+
+  methods: {
+    toggleMenu () {
+      this.isMenuVisible = !this.isMenuVisible
+    },
+
+    closeMenu () {
+      this.isMenuVisible = false
+    },
+
+    handleMenuClick (value) {
+      console.log('handleMenuClick', value)
+      if (value === 'new_doc') {
+        this.$hub.$emit('newDoc')
+      }
+      if (value === 'new_folder') {
+        this.$hub.$emit('newFolder')
+      }
+    }
   }
 }
 </script>

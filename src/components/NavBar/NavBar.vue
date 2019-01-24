@@ -64,6 +64,7 @@ export default {
     return {
       initFlag: true,
       typingNode: null,
+      currentNode: null,
       popupedNode: null,
       duplicatedNode: null,
       folderMenu: null,
@@ -110,6 +111,8 @@ export default {
 
   created () {
     this.initMenus()
+    this.$hub.$on('newDoc', () => this.handleNewDoc(true))
+    this.$hub.$on('newFolder', () => this.handleNewFolder(true))
   },
 
   mounted () {
@@ -127,7 +130,6 @@ export default {
     ]),
 
     initNav (folders) {
-      console.log('initNav', folders)
       let rootChildFolders = []
       for (let i in folders) {
         if (folders[i].ancestor_folders.length === 0) {
@@ -136,9 +138,7 @@ export default {
       }
       let rootFolder = rootChildFolders
         .map(folder => this.translateFolderData(folder, folders))[0]
-      // console.log('nav', this.nav[1], this.$refs.tree.store)
       for (let i in rootFolder) {
-        console.log(i, rootFolder[i])
         this.$set(this.nav[1], i, rootFolder[i])
       }
 
@@ -160,6 +160,16 @@ export default {
         return this.translateFolderData(folders[id], folders)
       })
       return result
+    },
+
+    getTreeNode (link) {
+      let nodeMap = this.$refs.tree.store.nodeMap
+      for (let i in nodeMap) {
+        let node = nodeMap[i]
+        if (node.data.link === link) {
+          return node
+        }
+      }
     },
 
     initMenus () {
@@ -197,10 +207,10 @@ export default {
     handleItemClick (node) {
       console.log('handleItemClick', node)
       node.instance.handleClick()
+      this.currentNode = node
       this.SET_VIEW_NAME(node.data.title)
       this.SET_VIEW_FILE_TYPE(node.data.link)
       if (node.data.type === 'folder') {
-        console.log('folder', node.data.id)
         this.SET_CURRENT_FOLDER(node.data.id)
       }
     },
@@ -220,8 +230,16 @@ export default {
       }
     },
 
-    handleNewDoc () {
-      console.log('handleNewDoc', this.popupedNode)
+    handleNewDoc (isCurrent) {
+      if (isCurrent) {
+        this.popupedNode = this.currentNode
+      }
+      if (this.popupedNode === null ||
+        this.popupedNode.data.link === 'latest' ||
+        this.popupedNode.data.link === 'recycle') {
+          this.popupedNode = this.getTreeNode('folders')
+      }
+      console.log('popupedNode', this.popupedNode)
       let id = GenNonDuplicateID(6)
       this.ADD_FILES({
         title: '无标题笔记',
@@ -229,18 +247,28 @@ export default {
         id: id,
         parent_folder: this.popupedNode.data.id
       }).then(() => {
-        for (let i in this.popupedNode.store.nodeMap) {
-          let node = this.popupedNode.store.nodeMap[i]
-          if (node.data.id === this.popupedNode.data.id) {
-            this.handleItemClick(node)
-            return
+        this.$nextTick(() => {
+          for (let i in this.popupedNode.store.nodeMap) {
+            let node = this.popupedNode.store.nodeMap[i]
+            if (node.data.id === this.popupedNode.data.id) {
+              this.handleItemClick(node)
+              return
+            }
           }
-        }
+        })
       })
     },
 
-    handleNewFolder () {
-      console.log('handleNewFolder', this.popupedNode.data)
+    handleNewFolder (isCurrent) {
+      if (isCurrent) {
+        this.popupedNode = this.currentNode
+      }
+      if (this.popupedNode === null ||
+        this.popupedNode.data.link === 'latest' ||
+        this.popupedNode.data.link === 'recycle') {
+          this.popupedNode = this.getTreeNode('folders')
+      }
+      console.log('popupedNode', this.popupedNode)
       let id = GenNonDuplicateID(6)
       this.ADD_FILES({
         title: '新建文件夹',
@@ -249,14 +277,16 @@ export default {
         id: id,
         parent_folder: this.popupedNode.data.id
       }).then(() => {
-        for (let i in this.popupedNode.store.nodeMap) {
-          let node = this.popupedNode.store.nodeMap[i]
-          if (node.data.id === id) {
-            this.handleInsertChildNode(node)
-            this.handleItemClick(node)
-            return
+        this.$nextTick(() => {
+          for (let i in this.popupedNode.store.nodeMap) {
+            let node = this.popupedNode.store.nodeMap[i]
+            if (node.data.id === id) {
+              this.handleInsertChildNode(node)
+              this.handleItemClick(node)
+              return
+            }
           }
-        }
+        })
       })
     },
 
@@ -266,11 +296,9 @@ export default {
     },
 
     handleUpload () {
-      console.log('handleUpload', this.popupedNode)
     },
 
     handleRename () {
-      console.log('handleRename', this.popupedNode)
       this.typingNode = this.popupedNode
       this.nodeInput = this.typingNode.data.title
       this.$nextTick(() => {
@@ -280,7 +308,6 @@ export default {
     },
 
     handleNodeInputBlur () {
-      console.log('handleNodeInputBlur')
       this.EDIT_FILE({
         id: this.typingNode.data.id,
         attr: 'title',
@@ -288,7 +315,6 @@ export default {
       })
       // this.typingNode.data.title = this.nodeInput
       this.$nextTick(() => {
-        console.log('handleNodeInputBlur', this.typingNode)
         for (let i in this.typingNode.store.nodeMap) {
           let nodeTemp = this.typingNode.store.nodeMap[i]
           if (nodeTemp.data.id === this.typingNode.data.id) {
@@ -298,37 +324,30 @@ export default {
           }
         }
       })
-      console.log(this.nav)
     },
 
     handleRemove () {
-      console.log('handleRemove', this.popupedNode)
       this.TOGGLE_SHOW_MOVE_PANEL()
     },
 
     handleDuplicate () {
-      console.log('handleDuplicate', this.popupedNode)
       this.duplicatedNode = this.popupedNode
     },
 
     handlePaste () {
-      console.log('handlePaste', this.duplicatedNode)
       let duplicateData = cloneDeep(this.duplicatedNode.data)
       this.popupedNode.instance.insertChild(duplicateData)
     },
 
     handleDelete () {
-      console.log('handleDelete', this.popupedNode)
       this.SET_CURRENT_FOLDER(null)
       this.DELETE_FILE(this.popupedNode.data.id)
     },
 
     handleClearRecycle () {
-      console.log('handleClearRecycle', this.popupedNode)
     },
 
     handleResumeRecycle () {
-      console.log('handleResumeRecycle', this.popupedNode)
     },
 
     navIcon (node) {
@@ -340,7 +359,6 @@ export default {
     },
 
     navMiniActive (link) {
-      console.log('navMiniActive', this.viewFileType, link instanceof Array)
       if (link instanceof Array) {
         return link.indexOf(this.viewFileType) > -1
       } else {
@@ -354,6 +372,9 @@ export default {
 <style lang="stylus" scoped>
 #navbar
   width 100%
+  height 100%
+  padding-bottom 30px
+  overflow-y scroll
 
 .child
   background-color #fff

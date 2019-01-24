@@ -176,7 +176,7 @@ export default {
 .nav-node
   position relative
   width 100%
-  height 100%
+  height 40px
   display flex
   align-items center
   font-size 13px

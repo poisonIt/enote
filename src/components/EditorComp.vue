@@ -28,7 +28,7 @@ export default {
     return {
       editorInstance: null,
       editor: ClassicEditor,
-      editorHtml: '<p>Content of the editor.</p>',
+      editorHtml: '<p></p>',
       editorConfig: {
         toolbar: [ 'undo', 'redo', 'heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote' ],
         language: 'zh-cn'

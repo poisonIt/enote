@@ -159,7 +159,7 @@ const getters = {
     let result = [...state.files_arr]
     if (result.length > 0) {
       return result
-        .filter(file => file.type !== 'folder')
+        // .filter(file => file.type !== 'folder')
         .sort((a, b) => {
           return (new Date(b.update_at)).getTime() - (new Date(b.update_at)).getTime()
         })

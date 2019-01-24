@@ -37,6 +37,8 @@ export default {
       width 220px
       &.unexpanded
         width 80px
+      > div
+        height 100%
     &.middle
       width 280px
       border-left 1px solid #e6e6e6

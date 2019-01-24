@@ -2,6 +2,8 @@ const state = {
   view_type: 'expanded',
   name: '最新文档',
   view_file_type: 'latest',
+  view_file_list_type: 'summary',
+  view_file_sort_type: 'create_at',
   show_move_pannel: false,
   editor_content: ''
 }
@@ -25,6 +27,14 @@ const mutations = {
 
   SET_EDITOR_CONTENT (state, content) {
     state.editor_content = content
+  },
+
+  SET_VIEW_FILE_LIST_TYPE (state, type) {
+    state.view_file_list_type = type
+  },
+
+  SET_VIEW_FILE_SORT_TYPE (state, type) {
+    state.view_file_sort_type = type
   }
 }
 
@@ -34,7 +44,6 @@ const actions = {
   },
 
   SET_VIEW_NAME ({ commit }, name) {
-    console.log('SET_VIEW_NAME', name)
     commit('SET_VIEW_NAME', name)
   },
 
@@ -47,9 +56,16 @@ const actions = {
   },
 
   SET_EDITOR_CONTENT ({ commit }, content) {
-    console.log('SET_EDITOR_CONTENT', content)
     commit('SET_EDITOR_CONTENT', content)
-  }
+  },
+
+  SET_VIEW_FILE_LIST_TYPE ({ commit }, type) {
+    commit('SET_VIEW_FILE_LIST_TYPE', type)
+  },
+
+  SET_VIEW_FILE_SORT_TYPE ({ commit }, type) {
+    commit('SET_VIEW_FILE_SORT_TYPE', type)
+  },
 }
 
 const getters = {
@@ -70,8 +86,15 @@ const getters = {
   },
 
   GET_EDITOR_CONTENT (state) {
-    console.log('GET_EDITOR_CONTENT', state.editor_content)
     return state.editor_content
+  },
+
+  GET_VIEW_FILE_LIST_TYPE (state) {
+    return state.view_file_list_type
+  },
+
+  GET_VIEW_FILE_SORT_TYPE (state) {
+    return state.view_file_sort_type
   }
 }
 

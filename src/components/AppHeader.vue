@@ -18,7 +18,7 @@
     </div>
     <div class="title">汇添富金融云笔记</div>
     <div class="search">
-      <input type="text" v-model="searchText">
+      <input type="text" v-model="searchText" placeholder="搜索">
     </div>
   </div>
 </template>

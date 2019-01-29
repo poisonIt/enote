@@ -3,7 +3,10 @@ import { writeFile, readFile } from '@/utils/file'
 import { remove } from 'lodash'
 import dayjs from 'dayjs'
 
+let filesArrTemp = []
+let templateDocSize = ''
 const appPath = '/Users/bowiego/Documents/workspace/enote/public'
+readFile(`${appPath}/docs/template.xml`).then(data => templateDocSize = data.size)
 
 const state = {
   files_map: {},
@@ -26,6 +29,12 @@ const mutations = {
     state.files_arr = arr
   },
 
+  UPDATE_DOC_BRIEF (state, obj) {
+    let { id, brief, size } = obj
+    state.files_map[id].brief = brief
+    state.files_map[id].file_size = size
+  },
+
   ADD_FILES (state, obj) {
     if (state.files_map[obj.id]) {
       return
@@ -36,7 +45,7 @@ const mutations = {
     obj.create_at = timeStamp
     obj.update_at = timeStamp
     obj.ancestor_folders = [...parentFolder.ancestor_folders, parentFolder.id]
-    obj.file_size = 0
+    obj.file_size = templateDocSize
     if (obj.type === 'folder') {
       obj.child_folders = []
       parentFolder.child_folders.push(obj.id)
@@ -109,10 +118,29 @@ const mutations = {
 }
 
 const actions = {
+  async SET_FILES_FROM_LOCAL ({ dispatch, commit }) {
+    dispatch('SET_FILES', await fetchLocalFiles()).then(() => {
+      dispatch('SET_DOC_BRIEF_FORM_LOCAL')
+    })
+  },
+
   SET_FILES ({ commit }, arr) {
     commit('SET_FILES', arr)
     commit('UPDATE_FOLDERS')
     commit('SAVE_FILES')
+  },
+
+  UPDATE_DOC_BRIEF ({ commit }, obj) {
+    commit('UPDATE_DOC_BRIEF', obj)
+    commit('UPDATE_FILE_ARR')
+  },
+
+  async SET_DOC_BRIEF_FORM_LOCAL ({ dispatch, commit }) {
+    const filesContent = await fetchLocalFilesContent()
+    filesContent.forEach(content => {
+      content.brief = formatContent(content.data)
+      dispatch('UPDATE_DOC_BRIEF', content)
+    })
   },
 
   ADD_FILES ({ commit }, obj) {
@@ -141,7 +169,6 @@ const actions = {
   },
 
   SET_CURRENT_FILE ({ commit }, id) {
-    console.log('SET_CURRENT_FILE', id)
     commit('SET_CURRENT_FILE', id)
   }
 }
@@ -157,19 +184,12 @@ const getters = {
 
   GET_LATEST_FILES (state) {
     let result = [...state.files_arr]
-    if (result.length > 0) {
-      return result
-        // .filter(file => file.type !== 'folder')
-        .sort((a, b) => {
-          return (new Date(b.update_at)).getTime() - (new Date(b.update_at)).getTime()
-        })
-    } else {
-      return []
-    }
+    let rootIdx = result.indexOf(state.files_map['000000'])
+    result.splice(rootIdx, 1)
+    return result
   },
 
   GET_FOLEDERS (state) {
-    console.log('GET_FOLEDERS', state)
     return state.folders
   },
 
@@ -188,9 +208,58 @@ const getters = {
   },
 
   GET_CURRENT_FILE (state) {
-    console.log('GET_CURRENT_FILE', state.files_map)
     return state.files_map[state.current_file_id]
   }
+}
+
+function fetchLocalFiles () {
+  return new Promise((resolve, reject) => {
+    fetch('../../mock/files.json').then(resp => {
+      return resp.json()
+    }).then(data => {
+      if (!data['000000']) {
+        let timeStamp = String(dayjs(new Date()).valueOf())
+        let id = '000000'
+        data[id] = {
+          id: id,
+          type: 'folder',
+          title: '我的文件夹',
+          content: '',
+          create_at: timeStamp,
+          update_at: timeStamp,
+          file_size: '0',
+          file_path: ['/'],
+          ancestor_folders: [],
+          child_folders: []
+        }
+      }
+      for (let i in data) {
+        filesArrTemp.push(data[i])
+      }
+      resolve(data)
+    })
+  })
+}
+
+function fetchLocalFilesContent () {
+  let asyncRead = filesArrTemp
+    .filter(file => file.type === 'doc')
+    .map(doc => {
+      return new Promise((resolve, reject) => {
+        readFile(`${appPath}/docs/${doc.id}.xml`).then(data => {
+          data.id = doc.id
+          resolve(data)
+        })
+      })
+    })
+  
+  return Promise.all(asyncRead)
+}
+
+function formatContent (str) {
+  let start = str.indexOf('<p>') + 3
+  let end = str.indexOf('</p>')
+  return str.substr(start, end - start)
 }
 
 export default {

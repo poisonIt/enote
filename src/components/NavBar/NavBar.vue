@@ -51,10 +51,13 @@ import { cloneDeep } from 'lodash'
 import { mapActions, mapGetters } from 'vuex'
 import Tree from '../Tree'
 import { folderMenu, resourceMenu, recycleMenu, hookMenuEvent } from './Menu'
+import EventHub from '@/utils/mixins/eventhub'
 import { GenNonDuplicateID } from '@/utils/utils'
 
 export default {
   name: 'NavBar',
+
+  mixins: [EventHub],
 
   components: {
     Tree
@@ -111,8 +114,9 @@ export default {
 
   created () {
     this.initMenus()
-    this.$hub.$on('newDoc', () => this.handleNewDoc(true))
-    this.$hub.$on('newFolder', () => this.handleNewFolder(true))
+    this.hookHub('newDoc', 'FileTool', () => this.handleNewDoc(true))
+    this.hookHub('newDoc', 'DocumentList', () => this.handleNewDoc(true))
+    this.hookHub('newFolder', 'FileTool', () => this.handleNewFolder(true))
   },
 
   mounted () {
@@ -355,7 +359,7 @@ export default {
     },
 
     handleClickMini (link) {
-      this.$hub.$emit('clickNavMini', link)
+      this.dispatchHub('clickNavMini', this, link)
     },
 
     navMiniActive (link) {
@@ -449,9 +453,13 @@ export default {
     background-image url(../../assets/images/recycle.png)
 
 .icon-folder
-  width 26px
-  height 14px
-  background-color #b3b3b3
-  margin-right 10px
-
+  display block
+  margin-right 6px
+  width 24px
+  height 24px
+  opacity 0.8
+  background-image url(../../assets/images/folder-open-fill.png)
+  background-repeat no-repeat
+  background-size contain
+  background-position center
 </style>

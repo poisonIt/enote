@@ -17,12 +17,12 @@ import ClassicEditor from '@ckeditor/ckeditor5-build-classic'
 import '@ckeditor/ckeditor5-build-classic/build/translations/zh-cn'
 import '../assets/styles/editor.css'
 import { writeFile } from '@/utils/file'
+import EventHub from '@/utils/mixins/eventhub'
 
 export default {
   name: 'EditorComp',
 
-  components: {
-  },
+  mixins: [EventHub],
 
   data () {
     return {
@@ -59,7 +59,6 @@ export default {
 
   watch: {
     content (val) {
-      console.log('watch-content', val)
       this.editorHtml = val
     },
 
@@ -75,8 +74,7 @@ export default {
       this.$hub.pool.push(() => {
         this.handleResize()
       })
-      this.$hub.$on('saveEditorContent', () => {
-        // console.log('saveEditorContent', this.editorHtml)
+      this.hookHub('saveEditorContent', 'DocumentList', () => {
         const appPath = '/Users/bowiego/Documents/workspace/enote/public'
 
         writeFile(`${appPath}/docs/${this.currentFile.id}.xml`, this.editorHtml).then(data => {

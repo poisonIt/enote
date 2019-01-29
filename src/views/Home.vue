@@ -13,7 +13,7 @@
       <div slot="right">
         <FileHandler></FileHandler>
         <EditorComp style="height: 100%" v-show="currentFile && currentFile.type === 'doc'"></EditorComp>
-        <FolderComp style="height: 100%" v-show="currentFile && currentFile.type === 'folder'">folder</FolderComp>
+        <FolderComp style="height: 100%" v-show="currentFile && currentFile.type === 'folder'"></FolderComp>
       </div>
     </PageLayout>
     <modal

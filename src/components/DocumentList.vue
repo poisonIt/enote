@@ -14,24 +14,28 @@
         </Menu>
       </div>
     </div>
-    <div class="body">
-      <ul>
-        <li
-          :class="{'selected': currentFile === item}"
-          v-for="(item, index) in fileList"
+    <div class="body" ref="body">
+      <FileCardGroup
+        ref="fileCardGroup"
+        @handleSelect="selectFile"
+        @titleClick="handleFileTitleClick">
+        <FileCard
+          v-for="(item, index) in list"
           :key="index"
-          @click="selectFile(item)">
-          <FileCard
-            :mini="viewFileListType === 'list'"
-            :type="item.type"
-            :title="item.title"
-            :content="item.content"
-            :update_at="item.update_at | yyyymmdd"
-            :file_size="Number(item.file_size)"
-            :file_path="item.file_path">
-          </FileCard>
-        </li>
-      </ul>
+          :mini="viewFileListType === 'list'"
+          :file_id="item.id"
+          :type="item.type"
+          :title="item.title"
+          :content="item.brief"
+          :update_at="item.update_at | yyyymmdd"
+          :file_size="Number(item.file_size)"
+          :parent_folder="getParentFolder(item.ancestor_folders)">
+        </FileCard>
+      </FileCardGroup>
+      <div class="no-file" v-if="list.length === 0">
+        <span>没有找到文件</span>
+        <div class="new-doc_button" @click="newDoc">新建笔记</div>
+      </div>
     </div>
     <div class="footer">
       <div class="num">
@@ -43,30 +47,35 @@
 
 <script>
 import dayjs from 'dayjs'
+import EventHub from '@/utils/mixins/eventhub'
 import { readFile } from '@/utils/file'
 import { mapGetters, mapState, mapActions } from 'vuex'
-import FileCard from './FileCard'
+import { FileCard, FileCardGroup} from './FileCard/index.js'
 
 export default {
   name: 'DocumentList',
 
+  mixins: [EventHub],
+
   components: {
-    FileCard
+    FileCard,
+    FileCardGroup
   },
 
   data () {
     return {
+      list: [],
       isMenuVisible: false,
       menuData: [
         {
           label: '摘要',
           value: 'summary',
-          type: 'check'
+          type: 'select'
         },
         {
           label: '列表',
           value: 'list',
-          type: 'check'
+          type: 'select'
         },
         {
           type: 'separator'
@@ -98,24 +107,6 @@ export default {
   filters: {
     yyyymmdd (timestamp) {
       return dayjs(Number(timestamp)).format('YYYY-MM-DD')
-    },
-
-    sortFiles (fileList) {
-      console.log('sortFiles', fileList)
-      switch (this.viewFileListType) {
-        case 'create_at':
-          return fileList.sort((a, b) => {
-            return Number(a.create_at) - Number(b.create_at)
-          })
-        case 'update_at':
-          return fileList.sort((a, b) => {
-            return Number(a.update_at) - Number(b.update_at)
-          })
-        case 'file_size':
-          return fileList.sort((a, b) => {
-            return Number(a.file_size) - Number(b.file_size)
-          })
-      }
     }
   },
 
@@ -132,7 +123,8 @@ export default {
       files: 'GET_CURRENT_FILES',
       currentFile: 'GET_CURRENT_FILE',
       viewFileListType: 'GET_VIEW_FILE_LIST_TYPE',
-      viewFileSortType: 'GET_VIEW_FILE_SORT_TYPE'
+      viewFileSortType: 'GET_VIEW_FILE_SORT_TYPE',
+      viewFileSortOrder: 'GET_VIEW_FILE_SORT_ORDER'
     }),
 
     fileList () {
@@ -154,6 +146,7 @@ export default {
           list = this.latesFiles
           break
       }
+      console.log('fileList', list)
       return this.fileListSortFunc(list)
     }
   },
@@ -161,8 +154,18 @@ export default {
   watch: {
     fileList (val) {
       if (this.fileList.length > 0) {
-        this.selectFile(this.fileList[0])
+        this.selectFile(0)
       }
+      this.list = val
+      this.$nextTick(() => {
+        this.$refs.body.scrollTo(0, 0)
+      })
+    },
+    viewFileSortType (val) {
+      this.list = this.fileListSortFunc(this.list)
+    },
+    viewFileSortOrder (val) {
+      this.list = this.fileListSortFunc(this.list)
     }
   },
 
@@ -172,31 +175,32 @@ export default {
       'EDIT_FILE',
       'SET_CURRENT_FILE',
       'SET_VIEW_FILE_LIST_TYPE',
-      'SET_VIEW_FILE_SORT_TYPE'
+      'SET_VIEW_FILE_SORT_TYPE',
+      'SET_VIEW_FILE_SORT_ORDER'
     ]),
 
-    selectFile (item) {
-      // if (!item) return
-      console.log('selectFile', this.currentFile, item)
-      if (this.currentFile === item) return
+    selectFile (index) {
+      this.$refs.fileCardGroup.select(index)
+      let file = this.fileList[index]
+      // if (!file) return
+      if (this.currentFile === file) return
       const appPath = '/Users/bowiego/Documents/workspace/enote/public'
 
-      console.log('save-data')
       // this.SAVE_EDITOR_CONTENT()
       if (this.currentFile && this.currentFile.type === 'doc') {
-        this.$hub.$emit('saveEditorContent')
+        this.dispatchHub('saveEditorContent', this)
       }
-      // this.currentFileTempId = item.id
-      // this.currentFile = item
+      // this.currentFileTempId = file.id
+      // this.currentFile = file
       // if (this.currentFile) {
       //   console.log('currentFile', this.currentFile.id)
       // }
-      this.SET_CURRENT_FILE(item.id)
-      if (item.type === 'doc') {
-        readFile(`${appPath}/docs/${item.id}.xml`).then(data => {
+      this.SET_CURRENT_FILE(file.id)
+      if (file.type === 'doc') {
+        readFile(`${appPath}/docs/${file.id}.xml`).then(data => {
           this.SET_EDITOR_CONTENT(data.data)
           // this.EDIT_FILE({
-          //   id: item.id,
+          //   id: file.id,
           //   attr: 'file_size',
           //   val: data.size
           // })
@@ -205,8 +209,14 @@ export default {
       }
     },
 
+    handleFileTitleClick (index) {
+      let file = this.fileList[index]
+      console.log('handleFileTitleClick', file)
+      this.dispatchHub('clickFolder', this, file.id)
+    },
+
     handleBack () {
-      this.$hub.$emit('navUp')
+      this.dispatchHub('navUp', this)
     },
 
     handleList () {
@@ -214,11 +224,11 @@ export default {
     },
 
     handleMenuClick (value, item) {
-      console.log('handleMenuClick', value)
       if (value === 'summary' || value === 'list') {
         this.SET_VIEW_FILE_LIST_TYPE(value)
       } else {
         this.SET_VIEW_FILE_SORT_TYPE(value)
+        this.SET_VIEW_FILE_SORT_ORDER(item.actived ? 'up' : 'down')
       }
       // if (index === 0) {
       //   this.$hub.$emit('newDoc')
@@ -228,23 +238,23 @@ export default {
     },
 
     fileListSortFunc (list) {
-      console.log('fileListSortFunc', list)
-      switch (this.viewFileSortType) {
-        case 'create_at':
-          return list.sort((a, b) => {
-            return Number(b.create_at) - Number(b.create_at)
-          })
-        case 'update_at':
-          return list.sort((a, b) => {
-            return Number(b.update_at) - Number(a.update_at)
-          })
-        case 'file_size':
-          return list.sort((a, b) => {
-            return Number(b.file_size) - Number(a.file_size)
-          })
-        default:
-          return list
+      let order = this.viewFileSortOrder === 'down' ? -1 : 1
+      return list.sort((a, b) => {
+        return (Number(a[this.viewFileSortType]) - Number(b[this.viewFileSortType])) * order
+      })
+    },
+
+    getParentFolder (folders) {
+      let parentFolderId = folders[folders.length - 1]
+      if (parentFolderId && this.folders[parentFolderId]) {
+        return this.folders[parentFolderId].title
       }
+      return ''
+    },
+
+    newDoc () {
+      console.log('newDoc')
+      this.dispatchHub('newDoc', this)
     }
   }
 }
@@ -273,9 +283,25 @@ export default {
   height 100%
   padding-bottom 100px
   overflow-y scroll
-  ul
-    li.selected
-      background-color #eff0f1
+  .no-file
+    height 100%
+    display flex
+    flex-direction column
+    align-items center
+    justify-content center
+    font-size 12px
+    color #777
+  .new-doc_button
+    width 110px
+    height 36px
+    margin-top 10px
+    border-radius 3px
+    background-color #3161a3
+    color #fff
+    font-size 12px
+    font-weight 600
+    text-align center
+    line-height 36px
 
 .footer
   width 100%
@@ -295,8 +321,17 @@ export default {
   height 24px
   border-radius 4px
   border 1px solid #dedede
+  &.button-back
+    background-image url(../assets/images/rollback.png)
+    background-repeat no-repeat
+    background-size 48%
+    background-position center
   &.expand
     position relative
+    background-image url(../assets/images/list.png)
+    background-repeat no-repeat
+    background-size 40%
+    background-position 30% 50%
     &::after
       content ''
       display block

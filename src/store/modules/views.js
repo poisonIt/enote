@@ -4,6 +4,7 @@ const state = {
   view_file_type: 'latest',
   view_file_list_type: 'summary',
   view_file_sort_type: 'create_at',
+  view_file_sort_order: 'down',
   show_move_pannel: false,
   editor_content: ''
 }
@@ -35,6 +36,10 @@ const mutations = {
 
   SET_VIEW_FILE_SORT_TYPE (state, type) {
     state.view_file_sort_type = type
+  },
+
+  SET_VIEW_FILE_SORT_ORDER (state, order) {
+    state.view_file_sort_order = order
   }
 }
 
@@ -66,6 +71,10 @@ const actions = {
   SET_VIEW_FILE_SORT_TYPE ({ commit }, type) {
     commit('SET_VIEW_FILE_SORT_TYPE', type)
   },
+
+  SET_VIEW_FILE_SORT_ORDER ({ commit }, order) {
+    commit('SET_VIEW_FILE_SORT_ORDER', order)
+  }
 }
 
 const getters = {
@@ -95,6 +104,10 @@ const getters = {
 
   GET_VIEW_FILE_SORT_TYPE (state) {
     return state.view_file_sort_type
+  },
+
+  GET_VIEW_FILE_SORT_ORDER (state) {
+    return state.view_file_sort_order
   }
 }
 

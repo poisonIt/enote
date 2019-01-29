@@ -12,9 +12,12 @@
 <script>
 import TreeNode from './TreeNode'
 import TreeStore from './TreeStore'
+import EventHub from '@/utils/mixins/eventhub'
 
 export default {
   name: 'BTree',
+
+  mixins: [EventHub],
 
   data () {
     return {
@@ -108,7 +111,7 @@ export default {
 
     this.root = this.store.root
     this.store.instance = this
-    this.$hub.$on('navUp', () => {
+    this.hookHub('navUp', 'DocumentList', () => {
       const parentInstance = this.store.currentNode.parent.instance
       if (parentInstance) {
         const rootParent = this.store.instance.$parent

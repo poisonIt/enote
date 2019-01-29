@@ -39,8 +39,12 @@
 </template>
 
 <script>
+import EventHub from '@/utils/mixins/eventhub'
+
 export default {
   name: 'TreeNode',
+
+  mixins: [EventHub],
 
   components: {
     NodeContent: {
@@ -123,9 +127,15 @@ export default {
     if (this.node.level === 1 && this.node.parent.childNodes.indexOf(this.node) === 0) {
       this.handleClick()
     }
-    this.$hub.$on('clickNavMini', (link) => {
+    this.hookHub('clickNavMini', 'NavBar', link => {
       if (this.node.data.link === link) {
-        this.$parent.$parent && this.$parent.$parent.handleItemClick(this.node)
+        this.node.store.instance.$parent.handleItemClick(this.node)
+      }
+    })
+    this.hookHub('clickFolder', 'DocumentList', id => {
+      if (this.node.data.id === id) {
+        this.expandAncestor()
+        this.node.store.instance.$parent.handleItemClick(this.node)
       }
     })
   },
@@ -146,7 +156,6 @@ export default {
     },
 
     insertChild (childData) {
-      console.log('insertChild', this.node)
       if (!this.node.data.children) {
         this.$set(this.node.data, 'children', [])
       }
@@ -154,6 +163,15 @@ export default {
         data: childData
       })
       this.node.store.instance.$emit('insertChildNode', newChildNode)
+    },
+
+    expandAncestor () {
+      if (this.node.parent &&
+        this.node.parent.instance
+      ) {
+        this.node.parent.expand()
+        this.node.parent.instance.expandAncestor()
+      }
     }
   }
 }

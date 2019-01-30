@@ -38,8 +38,12 @@
         </FileCard>
       </FileCardGroup>
       <div class="no-file" v-if="list.length === 0">
-        <span>没有找到文件</span>
-        <div class="new-doc_button" @click="newDoc">新建笔记</div>
+        <span v-if="viewFileType === 'recycle'">回收站为空</span>
+        <span v-if="viewFileType !== 'recycle'">没有找到文件</span>
+        <div v-if="viewFileType !== 'recycle'"
+          class="new-doc_button"
+          @click="newDoc">新建笔记
+        </div>
       </div>
     </div>
     <div class="footer">
@@ -124,7 +128,7 @@ export default {
       viewFileType: 'GET_VIEW_FILE_TYPE',
       latesFiles: 'GET_LATEST_FILES',
       folders: 'GET_FOLEDERS',
-      recycle: 'GET_RECYCLE',
+      recycle: 'GET_RECYCLE_FILES',
       files: 'GET_CURRENT_FILES',
       currentFile: 'GET_CURRENT_FILE',
       viewFolder: 'GET_VIEW_FOLDER',
@@ -170,6 +174,8 @@ export default {
     viewFolder (val, oldVal) {
       if (this.fileList.length > 0) {
         this.selectFile(0)
+      } else {
+        this.SET_CURRENT_FILE('')
       }
       this.list = this.fileList
       this.$nextTick(() => {
@@ -195,14 +201,14 @@ export default {
     ]),
 
     selectFile (index) {
-      this.$refs.fileCardGroup.select(index) // visually select file
       const file = this.fileList[index]
       if (this.currentFile === file) return
+      this.$refs.fileCardGroup.select(index) // visually select file
       const appPath = '/Users/bowiego/Documents/workspace/enote/public'
 
-      if (this.currentFile && this.currentFile.type === 'doc') { // save current doc
-        this.dispatchHub('saveEditorContent', this)
-      }
+      // if (this.currentFile && this.currentFile.type === 'doc') { // save current doc
+      //   this.dispatchHub('saveEditorContent', this)
+      // }
       // this.currentFileTempId = file.id
       // this.currentFile = file
       // if (this.currentFile) {

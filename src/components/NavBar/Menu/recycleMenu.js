@@ -7,7 +7,7 @@ const recycleMenu = [
     }
   },
   {
-    label: '恢复',
+    label: '全部恢复',
     eventListener: {
       eventName: 'click',
       callbackName: 'handleResumeRecycle'

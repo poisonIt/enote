@@ -2,22 +2,26 @@
   <div class="file-card" :class="{ mini : mini, selected : selected }" @click="handleClick">
     <div class="header">
       <div class="icon" :class="type"></div>
-      <div class="title ellipsis" :class="type" @click.stop="handleClickTitle">{{ title }}</div>
+      <div class="title ellipsis"
+        :class="{ folder : viewFileType !== 'recycle' }">
+        <span @click.stop="handleClickTitle">{{ title }}</span>
+      </div>
     </div>
-    <div class="body" v-if="content.length > 0 && !mini">
+    <div class="body" v-if="content.length > 0 && !mini && type === 'doc'">
       <span class="content ellipsis">{{ content }}</span>
     </div>
     <div class="footer">
-      <div class="path" v-if="!mini && selected">
+      <div class="path" v-if="!mini && selected && viewFileType === 'latest'">
         {{ parent_folder }}
       </div>
-      <span class="time" v-if="mini || !selected">{{ update_at }}</span>
-      <span class="size" v-if="!mini && !selected">{{ file_size | size }}</span>
+      <span class="time" v-if="isTimeShowed">{{ update_at }}</span>
+      <span class="size" v-if="isSizeShowed">{{ file_size | size }}</span>
     </div>
   </div>
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import Emitter from '@/utils/mixins/emitter'
 
 export default {
@@ -64,6 +68,29 @@ export default {
     }
   },
 
+  computed: {
+    ...mapGetters({
+      viewFileType: 'GET_VIEW_FILE_TYPE'
+    }),
+
+    isTimeShowed () {
+      if (this.viewFileType === 'latest') {
+        return this.mini || !this.selected
+      } else {
+        return true
+      }
+    },
+
+    isSizeShowed () {
+      if (this.type === 'folder') return false
+      if (this.viewFileType === 'latest') {
+        return !this.mini && !this.selected
+      } else {
+        return !this.mini
+      }
+    }
+  },
+
   filters: {
     size (val) {
       val = val + ''
@@ -100,6 +127,8 @@ export default {
     handleClickTitle () {
       if (this.type === 'folder') {
         this.dispatch('FileCardGroup', 'item-title-click', this)
+      } else {
+        this.handleClick()
       }
     }
   }

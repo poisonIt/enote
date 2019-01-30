@@ -6,7 +6,6 @@
 </template>
 
 <script>
-import dayjs from 'dayjs'
 import { mapActions } from 'vuex'
 import AppHeader from '@/components/AppHeader'
 import Home from '@/views/Home'
@@ -19,30 +18,6 @@ export default {
 
   created () {
     this.SET_FILES_FROM_LOCAL()
-    // fetch('./mock/files.json').then(resp => {
-    //   return resp.json()
-    // }).then(data => {
-    //   console.log(data)
-    //   if (!data['000000']) {
-    //     let timeStamp = String(dayjs(new Date()).valueOf())
-    //     let id = '000000'
-    //     data[id] = {
-    //       id: id,
-    //       type: 'folder',
-    //       title: '我的文件夹',
-    //       content: '',
-    //       create_at: timeStamp,
-    //       update_at: timeStamp,
-    //       file_size: '0',
-    //       file_path: ['/'],
-    //       ancestor_folders: [],
-    //       child_folders: []
-    //     }
-    //   }
-    //   this.SET_FILES(data).then(() => {
-    //     this.SET_ALL_DOC_CONTENT()
-    //   })
-    // })
   },
 
   mounted () {
@@ -65,7 +40,11 @@ export default {
   },
 
   methods: {
-    ...mapActions(['SET_FILES_FROM_LOCAL', 'SET_FILES', 'SET_ALL_DOC_CONTENT'])
+    ...mapActions([
+      'SET_FILES_FROM_LOCAL',
+      'SET_FILES',
+      'SET_ALL_DOC_CONTENT'
+    ])
   }
 }
 </script>

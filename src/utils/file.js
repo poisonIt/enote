@@ -30,7 +30,12 @@ const writeFile = function (path, data) {
   })
 }
 
+const deleteFile = function (path) {
+  return fs.unlinkSync(path)
+}
+
 export {
   readFile,
-  writeFile
+  writeFile,
+  deleteFile
 }

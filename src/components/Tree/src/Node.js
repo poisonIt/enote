@@ -44,6 +44,7 @@ export default class Node {
     }
 
     for (let i = 0, len = children.length; i < len; i++) {
+      if (children[i].discarded) continue
       this.insertChild({
         data: children[i]
       })

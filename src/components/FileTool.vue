@@ -1,10 +1,10 @@
 <template>
   <div class="container">
     <div class="expanded" v-if="viewType === 'expanded'">
-      <div class="item expand" @click="toggleMenu">
+      <div class="item new" @click="newDoc">
         <span>新建笔记</span>
       </div>
-      <div class="item upload"></div>
+      <div class="item expand" @click="toggleMenu"></div>
     </div>
     <div class="unexpanded" v-if="viewType === 'unexpanded'">+</div>
     <Menu
@@ -56,12 +56,20 @@ export default {
       this.isMenuVisible = false
     },
 
+    newDoc () {
+      this.dispatchHub('newDoc', this)
+    },
+
+    newFolder () {
+      this.dispatchHub('newFolder', this)
+    },
+
     handleMenuClick (value) {
       if (value === 'new_doc') {
-        this.dispatchHub('newDoc', this)
+        this.newDoc()
       }
       if (value === 'new_folder') {
-        this.dispatchHub('newFolder', this)
+        this.newFolder()
       }
     }
   }
@@ -84,7 +92,7 @@ export default {
   align-items center
   padding 0 20px
 
-.expand
+.new
   width 135px
   height 36px
   display flex
@@ -103,7 +111,7 @@ export default {
     font-weight 600
     margin-right 10px
 
-.upload
+.expand
   position relative
   width 36px
   height 36px

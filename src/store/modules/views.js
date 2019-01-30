@@ -24,6 +24,7 @@ const mutations = {
   },
 
   SET_VIEW_FILE_TYPE (state, type) {
+    console.log('SET_VIEW_FILE_TYPE', type)
     state.view_file_type = type
   },
 

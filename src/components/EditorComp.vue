@@ -5,6 +5,7 @@
       v-model="editorHtml"
       @ready="onEditorReady"
       @input="handleEditorInput"
+      @blur="saveData"
       :config="editorConfig">
     </ckeditor>
   </div>
@@ -75,25 +76,23 @@ export default {
       this.$hub.pool.push(() => {
         this.handleResize()
       })
-      this.hookHub('saveEditorContent', 'DocumentList', () => {
-        this.SAVE_DOC({
-          id: this.currentFile.id,
-          html: this.editorHtml
-        })
-      })
+      // this.hookHub('saveEditorContent', 'DocumentList', () => {
+      //   this.SAVE_DOC({
+      //     id: this.currentFile.id,
+      //     html: this.editorHtml
+      //   })
+      // })
     },
 
     handleEditorInput () {
       // console.log('handleEditorInput', this.editorInstance.getData())
     },
 
-    saveData (data) {
-      // console.log('saveData')
-      return new Promise(resolve => {
-        setTimeout(() => {
-          // console.log('Saved', data)
-          resolve()
-        }, 1000)
+    saveData () {
+      console.log('saveData')
+      this.SAVE_DOC({
+        id: this.currentFile.id,
+        html: this.editorHtml
       })
     },
 

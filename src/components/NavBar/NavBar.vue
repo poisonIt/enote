@@ -126,9 +126,11 @@ export default {
 
   methods: {
     ...mapActions([
-      'ADD_FILES',
+      'ADD_FILE',
       'DELETE_FILE',
       'EDIT_FILE',
+      'CLEAR_ALL_RECYCLE',
+      'RESUME_ALL_RECYCLE',
       'SET_VIEW_FOLDER',
       'SET_VIEW_NAME',
       'SET_VIEW_FILE_TYPE',
@@ -247,7 +249,7 @@ export default {
         this.popupedNode = this.getTreeNode('folders')
       }
       let id = GenNonDuplicateID(6)
-      this.ADD_FILES({
+      this.ADD_FILE({
         title: '无标题笔记',
         type: 'doc',
         id: id,
@@ -275,7 +277,7 @@ export default {
         this.popupedNode = this.getTreeNode('folders')
       }
       let id = GenNonDuplicateID(6)
-      this.ADD_FILES({
+      this.ADD_FILE({
         title: '新建文件夹',
         link: 'new folder',
         type: 'folder',
@@ -347,12 +349,27 @@ export default {
     handleDelete () {
       this.SET_CURRENT_FOLDER(null)
       this.DELETE_FILE(this.popupedNode.data.id)
+      // console.log(this.$refs.tree.store.root.childNodes[2])
+      this.$nextTick(() => {
+        let recycleNode = this.$refs.tree.store.root.childNodes[2]
+        this.handleItemClick(recycleNode)
+      })
     },
 
     handleClearRecycle () {
+      this.CLEAR_ALL_RECYCLE()
+      this.$nextTick(() => {
+        let recycleNode = this.$refs.tree.store.root.childNodes[2]
+        this.handleItemClick(recycleNode)
+      })
     },
 
     handleResumeRecycle () {
+      this.RESUME_ALL_RECYCLE()
+      this.$nextTick(() => {
+        let recycleNode = this.$refs.tree.store.root.childNodes[2]
+        this.handleItemClick(recycleNode)
+      })
     },
 
     navIcon (node) {
@@ -376,8 +393,7 @@ export default {
 
 <style lang="stylus" scoped>
 #navbar
-  width 100%
-  height 100%
+  flex 1
   padding-bottom 30px
   overflow-y scroll
 

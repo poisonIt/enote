@@ -3,7 +3,7 @@
     ref="container"
     v-if="currentFile"
     :style="{ width: containerWidth }">
-    <div class="title">
+    <div class="title" :class="{ disable : viewFileType === 'recycle' }">
       <input
         :class="{ hide : !isInputFocused }"
         type="text"
@@ -14,7 +14,7 @@
       <p class="ellipsis">{{ titleValue }}</p>
     </div>
     <div class="handler">
-      djojof
+      ooooo
     </div>
   </div>
 </template>
@@ -36,7 +36,8 @@ export default {
   computed: {
     ...mapGetters({
       currentFile: 'GET_CURRENT_FILE',
-      viewType: 'GET_VIEW_TYPE'
+      viewType: 'GET_VIEW_TYPE',
+      viewFileType: 'GET_VIEW_FILE_TYPE'
     })
   },
 
@@ -46,7 +47,9 @@ export default {
     },
 
     currentFile (val) {
-      this.titleValue = val.title
+      if (val) {
+        this.titleValue = val.title
+      }
     }
   },
 
@@ -98,6 +101,10 @@ export default {
   font-size 18px
   font-weight 500
   color #333
+  &.disable
+    opacity 0.5
+    input
+      display none
   input
     position absolute
     display block

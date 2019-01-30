@@ -1,4 +1,4 @@
-import { writeFile, readFile } from '@/utils/file'
+import { writeFile, readFile, deleteFile } from '@/utils/file'
 import { remove } from 'lodash'
 import dayjs from 'dayjs'
 
@@ -15,7 +15,6 @@ const state = {
   files_map: {},
   files_arr: [],
   folders: {},
-  recycle: [],
   current_folder_id: null,
   current_file_id: null
 }
@@ -32,13 +31,18 @@ const mutations = {
     state.files_arr = arr
   },
 
-  UPDATE_DOC_BRIEF (state, obj) {
+  UPDATE_FILE_BRIEF (state, obj) {
     let { id, brief, size } = obj
-    state.files_map[id].brief = brief
-    state.files_map[id].file_size = size
+    let file = state.files_map[id]
+    if (brief) {
+      file.brief = brief.slice(0, 20)
+    }
+    if (file.file_size !== size) {
+      file.file_size = size
+    }
   },
 
-  ADD_FILES (state, obj) {
+  ADD_FILE (state, obj) {
     if (state.files_map[obj.id]) {
       return
     }
@@ -47,12 +51,16 @@ const mutations = {
     obj.create_at = timeStamp
     obj.update_at = timeStamp
     obj.ancestor_folders = [...parentFolder.ancestor_folders, parentFolder.id]
-    obj.file_size = templateDocSize
-    obj.brief = templateDocContent
+    obj.file_size = 0
     if (obj.type === 'folder') {
       obj.child_folders = []
       parentFolder.child_folders.push(obj.id)
     } else if (obj.type === 'doc') {
+      obj.file_size = templateDocSize
+      obj.brief = templateDocContent
+      obj.ancestor_folders.forEach(id => {
+        state.files_map[id].file_size = state.files_map[id].file_size + obj.file_size
+      })
       if (!parentFolder.child_docs) {
         parentFolder.child_docs = []
       }
@@ -63,12 +71,7 @@ const mutations = {
 
   DELETE_FILE (state, id) {
     let file = state.files_map[id]
-    let parentFile = state.files_map[file.parent_folder]
-    remove(parentFile.child_folders, item => item === id)
-    remove(state.files_arr, item => item.id === id)
-    file.child_folders.forEach(childId => {
-      remove(state.files_arr, item => item.id === childId)
-    })
+    file.discarded = true
   },
 
   EDIT_FILE (state, opts) {
@@ -76,7 +79,37 @@ const mutations = {
     state.files_map[id][attr] = val
   },
 
-  UPDATE_FILE_ARR (state) {
+  CLEAR_ALL_RECYCLE (state) {
+    let recycledFiles = state.files_arr.filter(file => file.discarded)
+    recycledFiles.forEach(file => {
+      let parentFolder = state.files_map[file.parent_folder]
+      if (parentFolder) {
+        remove(parentFolder.child_folders, item => item === file.id)
+      }
+
+      let allChildFile = state.files_arr.filter(fileTemp => {
+        return fileTemp.ancestor_folders.indexOf(file.id) > -1
+      })
+
+      allChildFile.forEach(childFile => {
+        remove(state.files_arr, item => item.id === childFile.id)
+        if (childFile.type === 'doc') {
+          // sync
+          deleteFile(`${appPath}/docs/${childFile.id}.xml`)
+        }
+      })
+
+      remove(state.files_arr, item => item.id === file.id)
+    })
+  },
+
+  RESUME_ALL_RECYCLE (state) {
+    state.files_arr.forEach(file => {
+      file.discarded = false
+    })
+  },
+
+  UPDATE_FILES_ARR (state) {
     state.files_arr = []
     for (let i in state.files_map) {
       state.files_arr.push(state.files_map[i])
@@ -127,36 +160,37 @@ const actions = {
   },
 
   SET_FILES ({ commit }, arr) {
+    // delete surplus docs
     commit('SET_FILES', arr)
     commit('UPDATE_FOLDERS')
     commit('SAVE_FILES')
   },
 
-  UPDATE_DOC_BRIEF ({ commit }, obj) {
-    commit('UPDATE_DOC_BRIEF', obj)
-    commit('UPDATE_FILE_ARR')
+  UPDATE_FILE_BRIEF ({ commit }, obj) {
+    commit('UPDATE_FILE_BRIEF', obj)
+    commit('UPDATE_FILES_ARR')
   },
 
   async SET_DOC_BRIEF_FORM_LOCAL ({ dispatch, commit }) {
     const filesContent = await fetchAllLocalDocContent()
     filesContent.forEach(content => {
       content.brief = formatContent(content.data)
-      dispatch('UPDATE_DOC_BRIEF', content)
+      dispatch('UPDATE_FILE_BRIEF', content)
     })
   },
 
-  async ADD_FILES ({ dispatch, commit }, obj) {
+  async ADD_FILE ({ dispatch, commit }, obj) {
     if (obj.type === 'doc') {
       let id = await addDoc(obj.id)
       let content = await fetchLocalDocContent(id)
       content.brief = formatContent(content.data)
-      commit('ADD_FILES', obj)
+      commit('ADD_FILE', obj)
       commit('UPDATE_FILES_MAP')
-      dispatch('UPDATE_DOC_BRIEF', content)
+      dispatch('UPDATE_FILE_BRIEF', content)
       commit('UPDATE_FOLDERS')
       commit('SAVE_FILES')
     } else {
-      commit('ADD_FILES', obj)
+      commit('ADD_FILE', obj)
       commit('UPDATE_FILES_MAP')
       commit('UPDATE_FOLDERS')
       commit('SAVE_FILES')
@@ -165,14 +199,29 @@ const actions = {
 
   DELETE_FILE ({ commit }, id) {
     commit('DELETE_FILE', id)
-    commit('UPDATE_FILES_MAP')
+    commit('UPDATE_FILES_ARR')
     commit('UPDATE_FOLDERS')
     commit('SAVE_FILES')
   },
 
   EDIT_FILE ({ commit }, opts) {
     commit('EDIT_FILE', opts)
-    commit('UPDATE_FILE_ARR')
+    commit('UPDATE_FILES_ARR')
+    commit('UPDATE_FOLDERS')
+    commit('SAVE_FILES')
+  },
+
+  CLEAR_ALL_RECYCLE ({ commit }) {
+    commit('CLEAR_ALL_RECYCLE')
+    commit('UPDATE_FILES_MAP')
+    commit('UPDATE_FILES_ARR')
+    commit('UPDATE_FOLDERS')
+    commit('SAVE_FILES')
+  },
+
+  RESUME_ALL_RECYCLE ({ commit }) {
+    commit('RESUME_ALL_RECYCLE')
+    commit('UPDATE_FILES_ARR')
     commit('UPDATE_FOLDERS')
     commit('SAVE_FILES')
   },
@@ -190,12 +239,12 @@ const actions = {
     await writeFile(`${appPath}/docs/${id}.xml`, html)
     let content = await fetchLocalDocContent(id)
     content.brief = formatContent(content.data)
-    dispatch('UPDATE_DOC_BRIEF', content)
+    dispatch('UPDATE_FILE_BRIEF', content)
   },
 
   SAVE_FILE_TITLE ({ commit }, obj) {
     commit('SAVE_FILE_TITLE', obj)
-    commit('UPDATE_FILE_ARR')
+    commit('UPDATE_FILES_ARR')
     commit('UPDATE_FOLDERS')
     commit('SAVE_FILES')
   }
@@ -206,12 +255,12 @@ const getters = {
     return state.files_map
   },
 
-  GET_FILES_ARRAY () {
+  GET_FILES_ARRAY (state) {
     return state.files_arr
   },
 
   GET_LATEST_FILES (state) {
-    let result = [...state.files_arr]
+    let result = state.files_arr.filter(file => !file.discarded)
     let rootIdx = result.indexOf(state.files_map['000000'])
     result.splice(rootIdx, 1)
     return result
@@ -221,8 +270,8 @@ const getters = {
     return state.folders
   },
 
-  GET_RECYCLE (state) {
-    return state.recycle
+  GET_RECYCLE_FILES (state) {
+    return state.files_arr.filter(file => file.discarded)
   },
 
   GET_CURRENT_FILES (state) {
@@ -232,7 +281,9 @@ const getters = {
     const currentFolder = state.files_map[state.current_folder_id]
     const childFolders = currentFolder.child_folders || []
     const childDocs = currentFolder.child_docs || []
-    return [...childFolders, ...childDocs].map(id => state.files_map[id])
+    return [...childFolders, ...childDocs]
+      .map(id => state.files_map[id])
+      .filter(file => !file.discarded)
   },
 
   GET_CURRENT_FILE (state) {
@@ -300,7 +351,11 @@ function addDoc (id) {
 }
 
 function formatContent (str) {
-  return str.replace(/<[^>].*?>/g, ' ').replace('&nbsp;', ' ')
+  return str.replace(/<[^>].*?>/g, ' ')
+    .replace('&nbsp;', ' ')
+    .replace('&amp;', '&')
+    .replace('&lt;', '<')
+    .replace('&gt;', '>')
 }
 
 export default {

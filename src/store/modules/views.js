@@ -50,7 +50,6 @@ const mutations = {
 
 const actions = {
   SET_VIEW_FOLDER ({ commit }, id) {
-    console.log('SET_VIEW_FOLDER', id)
     commit('SET_VIEW_FOLDER', id)
   },
 

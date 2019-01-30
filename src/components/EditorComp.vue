@@ -16,7 +16,6 @@ import ClassicEditor from '@ckeditor/ckeditor5-build-classic'
 // import Autosave from '@ckeditor/ckeditor5-autosave/src/autosave'
 import '@ckeditor/ckeditor5-build-classic/build/translations/zh-cn'
 import '../assets/styles/editor.css'
-import { writeFile, readFile } from '@/utils/file'
 import EventHub from '@/utils/mixins/eventhub'
 
 export default {

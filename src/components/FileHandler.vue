@@ -9,7 +9,8 @@
         type="text"
         v-model="titleValue"
         @focus="isInputFocused = true"
-        @blur="handleInputBlur">
+        @blur="handleInputBlur"
+        @keyup.enter="handleInputBlur">
       <p class="ellipsis">{{ titleValue }}</p>
     </div>
     <div class="handler">

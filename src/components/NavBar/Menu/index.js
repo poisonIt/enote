@@ -8,7 +8,6 @@ function hookMenuEvent (menu, target) {
     const eventListener = newItem.eventListener
     if (eventListener) {
       newItem[eventListener.eventName] = () => {
-        console.log(target, eventListener.callbackName)
         target[eventListener.callbackName]()
       }
     }

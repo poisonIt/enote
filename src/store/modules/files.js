@@ -1,4 +1,3 @@
-// import { GenNonDuplicateID } from '@/utils/utils'
 import { writeFile, readFile } from '@/utils/file'
 import { remove } from 'lodash'
 import dayjs from 'dayjs'
@@ -44,7 +43,6 @@ const mutations = {
       return
     }
     let parentFolder = state.files_map[obj.parent_folder]
-    // obj.id = GenNonDuplicateID(6)
     let timeStamp = String(dayjs(new Date()).valueOf())
     obj.create_at = timeStamp
     obj.update_at = timeStamp
@@ -59,15 +57,8 @@ const mutations = {
         parentFolder.child_docs = []
       }
       parentFolder.child_docs.push(obj.id)
-      // readFile(`${appPath}/docs/template.xml`).then(data => {
-      //   writeFile(`${appPath}/docs/${obj.id}.xml`, data.data).then(() => {
-      //     console.log('write xml success', obj)
-      //     state.files_arr.push(obj)
-      //   })
-      // })
     }
     state.files_arr.push(obj)
-    // console.log(state)
   },
 
   DELETE_FILE (state, id) {
@@ -119,7 +110,6 @@ const mutations = {
   },
 
   SET_CURRENT_FILE (state, id) {
-    console.log('SET_CURRENT_FILE', id)
     state.current_file_id = id
   },
 
@@ -196,7 +186,6 @@ const actions = {
   },
 
   async SAVE_DOC ({ dispatch, commit }, obj) {
-    console.log('SAVE_DOC', obj)
     const { id, html } = obj
     await writeFile(`${appPath}/docs/${id}.xml`, html)
     let content = await fetchLocalDocContent(id)
@@ -204,7 +193,7 @@ const actions = {
     dispatch('UPDATE_DOC_BRIEF', content)
   },
 
-  SAVE_FILE_TITLE ({ commit }, obj ) {
+  SAVE_FILE_TITLE ({ commit }, obj) {
     commit('SAVE_FILE_TITLE', obj)
     commit('UPDATE_FILE_ARR')
     commit('UPDATE_FOLDERS')
@@ -295,7 +284,7 @@ function fetchAllLocalDocContent () {
     .map(doc => {
       return fetchLocalDocContent(doc.id)
     })
-  
+
   return Promise.all(asyncRead)
 }
 
@@ -311,8 +300,6 @@ function addDoc (id) {
 }
 
 function formatContent (str) {
-  // let start = str.indexOf('>')
-  // let end = str.indexOf('</')
   return str.replace(/<[^>].*?>/g, ' ').replace('&nbsp;', ' ')
 }
 

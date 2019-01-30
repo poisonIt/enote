@@ -24,7 +24,6 @@
 </template>
 
 <script>
-import { cloneDeep } from 'lodash'
 import popup from '@/utils/mixins/popup'
 
 export default {
@@ -84,7 +83,7 @@ export default {
     this.initGroups()
   },
 
-  methods : {
+  methods: {
     initGroups () {
       this.groups = {}
       let group = {
@@ -233,4 +232,3 @@ export default {
   height 1px !important
   background-color #dddee0 !important
 </style>
-

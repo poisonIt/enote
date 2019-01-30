@@ -25,6 +25,5 @@ export function getPropByPath (obj, path, strict) {
 }
 
 export function GenNonDuplicateID (randomLength) {
-  console.log('GenNonDuplicateID')
   return Number(Math.random().toString().substr(3, randomLength) + Date.now()).toString(36)
 }

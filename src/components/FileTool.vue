@@ -57,7 +57,6 @@ export default {
     },
 
     handleMenuClick (value) {
-      console.log('handleMenuClick', value)
       if (value === 'new_doc') {
         this.dispatchHub('newDoc', this)
       }

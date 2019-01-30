@@ -21,14 +21,12 @@ export default class TreeStore {
         this[name] = options[name]
       }
     }
-    console.log(this.data)
 
     this.nodeMap = {}
     this.root = new Node({
       data: this.data,
       store: this
     })
-    console.log(this.root)
   }
 
   setData (newVal) {

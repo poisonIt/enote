@@ -140,7 +140,7 @@ export default {
     },
 
     isSelected (item) {
-      return item.value === this.getGroupValue(item)
+      return item.value === this.getGroupValue(item) && item.type !== 'default'
     },
 
     itemSortType (item, type) {

@@ -1,4 +1,4 @@
-function broadcast(componentName, eventName, params) {
+function broadcast (componentName, eventName, params) {
   this.$children.forEach(child => {
     var name = child.$options._componentTag
 
@@ -12,7 +12,7 @@ function broadcast(componentName, eventName, params) {
 
 export default {
   methods: {
-    dispatch(componentName, eventName, params) {
+    dispatch (componentName, eventName, params) {
       var parent = this.$parent || this.$root
       var name = parent.$options._componentTag
       while (parent && (!name || name !== componentName)) {
@@ -27,7 +27,7 @@ export default {
       }
     },
 
-    broadcast(componentName, eventName, params) {
+    broadcast (componentName, eventName, params) {
       broadcast.call(this, componentName, eventName, params)
     }
   }

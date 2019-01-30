@@ -5,8 +5,12 @@ import dayjs from 'dayjs'
 
 let filesArrTemp = []
 let templateDocSize = ''
+let templateDocContent = ''
 const appPath = '/Users/bowiego/Documents/workspace/enote/public'
-readFile(`${appPath}/docs/template.xml`).then(data => templateDocSize = data.size)
+readFile(`${appPath}/template.xml`).then(data => {
+  templateDocContent = formatContent(data.data)
+  templateDocSize = data.size
+})
 
 const state = {
   files_map: {},
@@ -46,6 +50,7 @@ const mutations = {
     obj.update_at = timeStamp
     obj.ancestor_folders = [...parentFolder.ancestor_folders, parentFolder.id]
     obj.file_size = templateDocSize
+    obj.brief = templateDocContent
     if (obj.type === 'folder') {
       obj.child_folders = []
       parentFolder.child_folders.push(obj.id)
@@ -54,11 +59,12 @@ const mutations = {
         parentFolder.child_docs = []
       }
       parentFolder.child_docs.push(obj.id)
-      readFile(`${appPath}/docs/template.xml`).then(data => {
-        writeFile(`${appPath}/docs/${obj.id}.xml`, data.data).then(() => {
-          console.log('write xml success', obj)
-        })
-      })
+      // readFile(`${appPath}/docs/template.xml`).then(data => {
+      //   writeFile(`${appPath}/docs/${obj.id}.xml`, data.data).then(() => {
+      //     console.log('write xml success', obj)
+      //     state.files_arr.push(obj)
+      //   })
+      // })
     }
     state.files_arr.push(obj)
     // console.log(state)
@@ -113,7 +119,13 @@ const mutations = {
   },
 
   SET_CURRENT_FILE (state, id) {
+    console.log('SET_CURRENT_FILE', id)
     state.current_file_id = id
+  },
+
+  SAVE_FILE_TITLE (state, obj) {
+    const { id, title } = obj
+    state.files_map[id].title = title
   }
 }
 
@@ -136,18 +148,29 @@ const actions = {
   },
 
   async SET_DOC_BRIEF_FORM_LOCAL ({ dispatch, commit }) {
-    const filesContent = await fetchLocalFilesContent()
+    const filesContent = await fetchAllLocalDocContent()
     filesContent.forEach(content => {
       content.brief = formatContent(content.data)
       dispatch('UPDATE_DOC_BRIEF', content)
     })
   },
 
-  ADD_FILES ({ commit }, obj) {
-    commit('ADD_FILES', obj)
-    commit('UPDATE_FILES_MAP')
-    commit('UPDATE_FOLDERS')
-    commit('SAVE_FILES')
+  async ADD_FILES ({ dispatch, commit }, obj) {
+    if (obj.type === 'doc') {
+      let id = await addDoc(obj.id)
+      let content = await fetchLocalDocContent(id)
+      content.brief = formatContent(content.data)
+      commit('ADD_FILES', obj)
+      commit('UPDATE_FILES_MAP')
+      dispatch('UPDATE_DOC_BRIEF', content)
+      commit('UPDATE_FOLDERS')
+      commit('SAVE_FILES')
+    } else {
+      commit('ADD_FILES', obj)
+      commit('UPDATE_FILES_MAP')
+      commit('UPDATE_FOLDERS')
+      commit('SAVE_FILES')
+    }
   },
 
   DELETE_FILE ({ commit }, id) {
@@ -170,6 +193,22 @@ const actions = {
 
   SET_CURRENT_FILE ({ commit }, id) {
     commit('SET_CURRENT_FILE', id)
+  },
+
+  async SAVE_DOC ({ dispatch, commit }, obj) {
+    console.log('SAVE_DOC', obj)
+    const { id, html } = obj
+    await writeFile(`${appPath}/docs/${id}.xml`, html)
+    let content = await fetchLocalDocContent(id)
+    content.brief = formatContent(content.data)
+    dispatch('UPDATE_DOC_BRIEF', content)
+  },
+
+  SAVE_FILE_TITLE ({ commit }, obj ) {
+    commit('SAVE_FILE_TITLE', obj)
+    commit('UPDATE_FILE_ARR')
+    commit('UPDATE_FOLDERS')
+    commit('SAVE_FILES')
   }
 }
 
@@ -241,25 +280,40 @@ function fetchLocalFiles () {
   })
 }
 
-function fetchLocalFilesContent () {
+function fetchLocalDocContent (id) {
+  return new Promise((resolve, reject) => {
+    readFile(`${appPath}/docs/${id}.xml`).then(data => {
+      data.id = id
+      resolve(data)
+    })
+  })
+}
+
+function fetchAllLocalDocContent () {
   let asyncRead = filesArrTemp
     .filter(file => file.type === 'doc')
     .map(doc => {
-      return new Promise((resolve, reject) => {
-        readFile(`${appPath}/docs/${doc.id}.xml`).then(data => {
-          data.id = doc.id
-          resolve(data)
-        })
-      })
+      return fetchLocalDocContent(doc.id)
     })
   
   return Promise.all(asyncRead)
 }
 
+function addDoc (id) {
+  return new Promise((resolve, reject) => {
+    readFile(`${appPath}/template.xml`).then(data => {
+      writeFile(`${appPath}/docs/${id}.xml`, data.data).then(() => {
+        console.log('write xml success', id)
+        resolve(id)
+      })
+    })
+  })
+}
+
 function formatContent (str) {
-  let start = str.indexOf('<p>') + 3
-  let end = str.indexOf('</p>')
-  return str.substr(start, end - start)
+  // let start = str.indexOf('>')
+  // let end = str.indexOf('</')
+  return str.replace(/<[^>].*?>/g, ' ').replace('&nbsp;', ' ')
 }
 
 export default {

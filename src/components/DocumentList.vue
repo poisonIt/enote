@@ -1,9 +1,14 @@
 <template>
   <div class="document-list">
     <div class="header">
-      <div class="button button-back" @click="handleBack"></div>
+      <div class="button button-back"
+        :class="{ disable : viewFileType !== 'new folder' }"
+        @click="handleBack">
+      </div>
       <span class="title ellipsis">{{ viewName }}</span>
-      <div class="button button-listtype expand" @click="handleList">
+      <div class="button button-listtype expand"
+        :class="{ summary : viewFileListType === 'summary' }"
+        @click="handleList">
         <Menu
           :data="menuData"
           :visible="isMenuVisible"
@@ -50,7 +55,7 @@ import dayjs from 'dayjs'
 import EventHub from '@/utils/mixins/eventhub'
 import { readFile } from '@/utils/file'
 import { mapGetters, mapState, mapActions } from 'vuex'
-import { FileCard, FileCardGroup} from './FileCard/index.js'
+import { FileCard, FileCardGroup } from './FileCard/index.js'
 
 export default {
   name: 'DocumentList',
@@ -122,6 +127,7 @@ export default {
       recycle: 'GET_RECYCLE',
       files: 'GET_CURRENT_FILES',
       currentFile: 'GET_CURRENT_FILE',
+      viewFolder: 'GET_VIEW_FOLDER',
       viewFileListType: 'GET_VIEW_FILE_LIST_TYPE',
       viewFileSortType: 'GET_VIEW_FILE_SORT_TYPE',
       viewFileSortOrder: 'GET_VIEW_FILE_SORT_ORDER'
@@ -146,17 +152,26 @@ export default {
           list = this.latesFiles
           break
       }
-      console.log('fileList', list)
       return this.fileListSortFunc(list)
     }
   },
 
   watch: {
-    fileList (val) {
+    fileList (val, oldVal) {
+      if (oldVal.length === 0 && this.viewFileType === 'latest') {
+        this.selectFile(0)
+        this.list = this.fileList
+        this.$nextTick(() => {
+          this.$refs.body.scrollTo(0, 0)
+        })
+      }
+    },
+
+    viewFolder (val, oldVal) {
       if (this.fileList.length > 0) {
         this.selectFile(0)
       }
-      this.list = val
+      this.list = this.fileList
       this.$nextTick(() => {
         this.$refs.body.scrollTo(0, 0)
       })
@@ -180,14 +195,12 @@ export default {
     ]),
 
     selectFile (index) {
-      this.$refs.fileCardGroup.select(index)
-      let file = this.fileList[index]
-      // if (!file) return
+      this.$refs.fileCardGroup.select(index) // visually select file
+      const file = this.fileList[index]
       if (this.currentFile === file) return
       const appPath = '/Users/bowiego/Documents/workspace/enote/public'
 
-      // this.SAVE_EDITOR_CONTENT()
-      if (this.currentFile && this.currentFile.type === 'doc') {
+      if (this.currentFile && this.currentFile.type === 'doc') { // save current doc
         this.dispatchHub('saveEditorContent', this)
       }
       // this.currentFileTempId = file.id
@@ -211,7 +224,6 @@ export default {
 
     handleFileTitleClick (index) {
       let file = this.fileList[index]
-      console.log('handleFileTitleClick', file)
       this.dispatchHub('clickFolder', this, file.id)
     },
 
@@ -253,7 +265,6 @@ export default {
     },
 
     newDoc () {
-      console.log('newDoc')
       this.dispatchHub('newDoc', this)
     }
   }
@@ -317,21 +328,38 @@ export default {
     letter-spacing 1px
 
 .button
+  position relative
   width 40px
   height 24px
   border-radius 4px
   border 1px solid #dedede
-  &.button-back
-    background-image url(../assets/images/rollback.png)
+  &::before
+    content ''
+    display block
+    width 18px
+    height 18px
+    position absolute
+    top 50%
+    left 50%
+    transform translate(-50%, -50%)
     background-repeat no-repeat
-    background-size 48%
+    background-size 100%
     background-position center
+  &.disable
+    &::before
+      opacity 0.4
+  &.button-back
+    &::before
+      background-image url(../assets/images/rollback.png)
   &.expand
-    position relative
-    background-image url(../assets/images/list.png)
-    background-repeat no-repeat
-    background-size 40%
-    background-position 30% 50%
+    &::before
+      width 14px
+      height 14px
+      left 38%
+      background-image url(../assets/images/list.png)
+    &.summary
+      &::before
+        background-image url(../assets/images/list2.png)
     &::after
       content ''
       display block
@@ -344,6 +372,4 @@ export default {
       border-left 4.5px solid #a1a1a1
       border-bottom 2.8px solid transparent
       transform  translateY(-50%) rotate(90deg)
-  // &.button-back
-  // &.button-listtype
 </style>

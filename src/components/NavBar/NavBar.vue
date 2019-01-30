@@ -120,6 +120,8 @@ export default {
   },
 
   mounted () {
+    const curNode = this.$refs.tree.store.currentNode
+    this.handleItemClick(curNode)
   },
 
   methods: {
@@ -127,6 +129,7 @@ export default {
       'ADD_FILES',
       'DELETE_FILE',
       'EDIT_FILE',
+      'SET_VIEW_FOLDER',
       'SET_VIEW_NAME',
       'SET_VIEW_FILE_TYPE',
       'SET_CURRENT_FOLDER',
@@ -209,9 +212,9 @@ export default {
     },
 
     handleItemClick (node) {
-      console.log('handleItemClick', node)
       node.instance.handleClick()
       this.currentNode = node
+      this.SET_VIEW_FOLDER(node.uid)
       this.SET_VIEW_NAME(node.data.title)
       this.SET_VIEW_FILE_TYPE(node.data.link)
       if (node.data.type === 'folder') {
@@ -241,9 +244,8 @@ export default {
       if (this.popupedNode === null ||
         this.popupedNode.data.link === 'latest' ||
         this.popupedNode.data.link === 'recycle') {
-          this.popupedNode = this.getTreeNode('folders')
+        this.popupedNode = this.getTreeNode('folders')
       }
-      console.log('popupedNode', this.popupedNode)
       let id = GenNonDuplicateID(6)
       this.ADD_FILES({
         title: '无标题笔记',
@@ -270,9 +272,8 @@ export default {
       if (this.popupedNode === null ||
         this.popupedNode.data.link === 'latest' ||
         this.popupedNode.data.link === 'recycle') {
-          this.popupedNode = this.getTreeNode('folders')
+        this.popupedNode = this.getTreeNode('folders')
       }
-      console.log('popupedNode', this.popupedNode)
       let id = GenNonDuplicateID(6)
       this.ADD_FILES({
         title: '新建文件夹',

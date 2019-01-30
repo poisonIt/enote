@@ -11,12 +11,12 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapGetters, mapActions } from 'vuex'
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic'
 // import Autosave from '@ckeditor/ckeditor5-autosave/src/autosave'
 import '@ckeditor/ckeditor5-build-classic/build/translations/zh-cn'
 import '../assets/styles/editor.css'
-import { writeFile } from '@/utils/file'
+import { writeFile, readFile } from '@/utils/file'
 import EventHub from '@/utils/mixins/eventhub'
 
 export default {
@@ -68,6 +68,8 @@ export default {
   },
 
   methods: {
+    ...mapActions(['SAVE_DOC']),
+
     onEditorReady (editor) {
       this.editorInstance = editor
       this.handleResize()
@@ -75,12 +77,9 @@ export default {
         this.handleResize()
       })
       this.hookHub('saveEditorContent', 'DocumentList', () => {
-        const appPath = '/Users/bowiego/Documents/workspace/enote/public'
-
-        writeFile(`${appPath}/docs/${this.currentFile.id}.xml`, this.editorHtml).then(data => {
-          // console.log('writeFile-res', data)
-        }).catch(err => {
-          alert(err)
+        this.SAVE_DOC({
+          id: this.currentFile.id,
+          html: this.editorHtml
         })
       })
     },

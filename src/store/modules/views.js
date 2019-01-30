@@ -1,6 +1,7 @@
 const state = {
   view_type: 'expanded',
   name: '最新文档',
+  view_folder: '',
   view_file_type: 'latest',
   view_file_list_type: 'summary',
   view_file_sort_type: 'create_at',
@@ -10,6 +11,10 @@ const state = {
 }
 
 const mutations = {
+  SET_VIEW_FOLDER (state, id) {
+    state.view_folder = id
+  },
+
   SET_VIEW_TYPE (state, type) {
     state.view_type = type
   },
@@ -44,6 +49,11 @@ const mutations = {
 }
 
 const actions = {
+  SET_VIEW_FOLDER ({ commit }, id) {
+    console.log('SET_VIEW_FOLDER', id)
+    commit('SET_VIEW_FOLDER', id)
+  },
+
   SET_VIEW_TYPE ({ commit }, type) {
     commit('SET_VIEW_TYPE', type)
   },
@@ -78,6 +88,10 @@ const actions = {
 }
 
 const getters = {
+  GET_VIEW_FOLDER (state) {
+    return state.view_folder
+  },
+
   GET_VIEW_TYPE (state) {
     return state.view_type
   },

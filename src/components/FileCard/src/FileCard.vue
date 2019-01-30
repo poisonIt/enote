@@ -2,7 +2,7 @@
   <div class="file-card" :class="{ mini : mini, selected : selected }" @click="handleClick">
     <div class="header">
       <div class="icon" :class="type"></div>
-      <div class="title" :class="type" @click.stop="handleClickTitle">{{ title }}</div>
+      <div class="title ellipsis" :class="type" @click.stop="handleClickTitle">{{ title }}</div>
     </div>
     <div class="body" v-if="content.length > 0 && !mini">
       <span class="content ellipsis">{{ content }}</span>
@@ -138,9 +138,12 @@ export default {
   width 18px
   height 18px
   border-radius 3px
-  background-color #198cf0
+  background-image url(../../../assets/images/document.png)
+  background-repeat no-repeat
+  background-position center
+  background-size contain
   &.folder
-    background-color #f0b019
+    background-image url(../../../assets/images/folder.png)
 
 .body
   margin: 12px 0

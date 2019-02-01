@@ -49,15 +49,15 @@
 <script>
 import { cloneDeep } from 'lodash'
 import { mapActions, mapGetters } from 'vuex'
-import Tree from '../Tree'
-import { folderMenu, resourceMenu, recycleMenu, hookMenuEvent } from './Menu'
-import EventHub from '@/utils/mixins/eventhub'
+import { folderMenu, resourceMenu, recycleMenu } from '../Menu'
 import { GenNonDuplicateID } from '@/utils/utils'
+import mixins from '../mixins'
+import Tree from '@/components/Tree'
 
 export default {
   name: 'NavBar',
 
-  mixins: [EventHub],
+  mixins: mixins,
 
   components: {
     Tree
@@ -70,10 +70,12 @@ export default {
       currentNode: null,
       popupedNode: null,
       duplicatedNode: null,
-      folderMenu: null,
-      resourceMenu: null,
-      resourceMenu2: null,
-      recycleMenu: null,
+      nativeMenuData: [
+        folderMenu,
+        [...folderMenu, ...resourceMenu[0]],
+        [...folderMenu, ...resourceMenu[1]],
+        recycleMenu
+      ],
       nodeInput: '',
       nav: [
         {
@@ -110,13 +112,6 @@ export default {
         this.initNav(val)
       }
     }
-  },
-
-  created () {
-    this.initMenus()
-    this.hookHub('newDoc', 'FileTool', () => this.handleNewDoc(true))
-    this.hookHub('newDoc', 'DocumentList', () => this.handleNewDoc(true))
-    this.hookHub('newFolder', 'FileTool', () => this.handleNewFolder(true))
   },
 
   mounted () {
@@ -181,38 +176,6 @@ export default {
       }
     },
 
-    initMenus () {
-      const folderMenuWithEvent = hookMenuEvent(folderMenu, this)
-      const resourceMenuWithEvent1 = hookMenuEvent(resourceMenu[0], this)
-      const resourceMenuWithEvent2 = hookMenuEvent(resourceMenu[1], this)
-      const recycleMenuWithEvent = hookMenuEvent(recycleMenu, this)
-      this.folderMenu = this.createMenu(folderMenuWithEvent)
-      this.resourceMenu = this.createMenu([
-        ...folderMenuWithEvent,
-        ...resourceMenuWithEvent1
-      ])
-      this.resourceMenu2 = this.createMenu([
-        ...folderMenuWithEvent,
-        ...resourceMenuWithEvent2
-      ])
-      this.recycleMenu = this.createMenu(recycleMenuWithEvent)
-    },
-
-    createMenu (itemOpts) {
-      const Menu = this.$remote.Menu
-      const MenuItem = this.$remote.MenuItem
-      let menu = new Menu()
-
-      for (let i = 0, len = itemOpts.length; i < len; i++) {
-        menu.append(new MenuItem(itemOpts[i]))
-      }
-      return menu
-    },
-
-    popupMenu (menu) {
-      menu.popup({ window: this.$remote.getCurrentWindow() })
-    },
-
     handleItemClick (node) {
       node.instance.handleClick()
       this.currentNode = node
@@ -228,14 +191,16 @@ export default {
       this.popupedNode = node
       const d = node.data
       if (d.type === 'folder' && d.link === 'folders') {
-        this.popupMenu(this.folderMenu)
+        this.popupNativeMenu(this.nativeMenus[0])
       }
       if (d.type === 'folder') {
-        const resourceMenu = !this.duplicatedNode ? this.resourceMenu : this.resourceMenu2
-        this.popupMenu(resourceMenu)
+        const resourceMenu = !this.duplicatedNode
+          ? this.nativeMenus[1]
+          : this.nativeMenus[2]
+        this.popupNativeMenu(resourceMenu)
       }
       if (d.type === 'recycle') {
-        this.popupMenu(this.recycleMenu)
+        this.popupNativeMenu(this.nativeMenus[3])
       }
     },
 
@@ -310,6 +275,7 @@ export default {
       this.nodeInput = this.typingNode.data.title
       this.$nextTick(() => {
         const inputEl = document.querySelectorAll('input.node-input.show')
+        console.log('inputEl', inputEl[0])
         inputEl[0].select()
       })
     },
@@ -346,30 +312,27 @@ export default {
       this.popupedNode.instance.insertChild(duplicateData)
     },
 
-    handleDelete () {
-      this.SET_CURRENT_FOLDER(null)
-      this.DELETE_FILE(this.popupedNode.data.id)
-      // console.log(this.$refs.tree.store.root.childNodes[2])
+    clickRecycleNode () {
       this.$nextTick(() => {
         let recycleNode = this.$refs.tree.store.root.childNodes[2]
         this.handleItemClick(recycleNode)
       })
+    },
+
+    handleDelete () {
+      this.SET_CURRENT_FOLDER('000000')
+      this.DELETE_FILE(this.popupedNode.data.id)
+      this.clickRecycleNode()
     },
 
     handleClearRecycle () {
       this.CLEAR_ALL_RECYCLE()
-      this.$nextTick(() => {
-        let recycleNode = this.$refs.tree.store.root.childNodes[2]
-        this.handleItemClick(recycleNode)
-      })
+      this.clickRecycleNode()
     },
 
     handleResumeRecycle () {
       this.RESUME_ALL_RECYCLE()
-      this.$nextTick(() => {
-        let recycleNode = this.$refs.tree.store.root.childNodes[2]
-        this.handleItemClick(recycleNode)
-      })
+      this.clickRecycleNode()
     },
 
     navIcon (node) {
@@ -377,7 +340,7 @@ export default {
     },
 
     handleClickMini (link) {
-      this.dispatchHub('clickNavMini', this, link)
+      this.$hub.dispatchHub('clickNavMini', this, link)
     },
 
     navMiniActive (link) {
@@ -463,11 +426,11 @@ export default {
     &.active
       background-color #eff0f1
   .icon-latest
-    background-image url(../../assets/images/documents.png)
+    background-image url(../../../assets/images/documents.png)
   .icon-folders
-    background-image url(../../assets/images/folders.png)
+    background-image url(../../../assets/images/folders.png)
   .icon-recycle
-    background-image url(../../assets/images/recycle.png)
+    background-image url(../../../assets/images/recycle.png)
 
 .icon-folder
   display block
@@ -475,7 +438,7 @@ export default {
   width 24px
   height 24px
   opacity 0.8
-  background-image url(../../assets/images/folder-open-fill.png)
+  background-image url(../../../assets/images/folder-open-fill.png)
   background-repeat no-repeat
   background-size contain
   background-position center

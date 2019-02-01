@@ -1,12 +1,31 @@
-let cbs = {}
+import Vue from 'vue'
 
-export default {
+export default new Vue({
+  data () {
+    return {
+      pool: [],
+      cbs: {}
+    }
+  },
+
+  watch: {
+    pool (val) {
+      window.onresize = () => {
+        for (let i in this.pool) {
+          this.pool[i]()
+        }
+      }
+    }
+  },
+
   methods: {
     hookHub (eventName, from, cb) {
+      let { cbs } = this
+
       if (!cbs[eventName]) {
         cbs[eventName] = {}
         cbs[eventName][from] = [cb]
-        this.$hub.$on(eventName, (from, params) => {
+        this.$on(eventName, (from, params) => {
           cbs[eventName][from].forEach(cb => cb(params))
         })
       } else {
@@ -19,9 +38,12 @@ export default {
     },
 
     dispatchHub (eventName, from, params) {
+      let { cbs } = this
+      console.log('cbs', cbs)
+
       if (cbs[eventName].hasOwnProperty(from.$options._componentTag)) {
-        this.$hub.$emit(eventName, from.$options._componentTag, params)
+        this.$emit(eventName, from.$options._componentTag, params)
       }
     }
   }
-}
+})

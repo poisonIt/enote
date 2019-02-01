@@ -82,22 +82,35 @@ const mutations = {
   CLEAR_ALL_RECYCLE (state) {
     let recycledFiles = state.files_arr.filter(file => file.discarded)
     recycledFiles.forEach(file => {
+      // handle parentFolder
       let parentFolder = state.files_map[file.parent_folder]
       if (parentFolder) {
-        remove(parentFolder.child_folders, item => item === file.id)
+        if (file.type === 'doc') {
+          remove(parentFolder.child_docs, item => item === file.id)
+        } else if (file.type === 'folder') {
+          remove(parentFolder.child_folders, item => item === file.id)
+        }
       }
 
-      let allChildFile = state.files_arr.filter(fileTemp => {
-        return fileTemp.ancestor_folders.indexOf(file.id) > -1
-      })
+      // handle childFile
+      if (file.type === 'folder') {
+        let allChildFile = state.files_arr.filter(fileTemp => {
+          return fileTemp.ancestor_folders.indexOf(file.id) > -1
+        })
+  
+        allChildFile.forEach(childFile => {
+          remove(state.files_arr, item => item.id === childFile.id)
+          if (childFile.type === 'doc') {
+            // sync
+            deleteFile(`${appPath}/docs/${childFile.id}.xml`)
+          }
+        })
+      }
 
-      allChildFile.forEach(childFile => {
-        remove(state.files_arr, item => item.id === childFile.id)
-        if (childFile.type === 'doc') {
-          // sync
-          deleteFile(`${appPath}/docs/${childFile.id}.xml`)
-        }
-      })
+      // handle file
+      if (file.type === 'doc') {
+        deleteFile(`${appPath}/docs/${file.id}.xml`)
+      }
 
       remove(state.files_arr, item => item.id === file.id)
     })
@@ -274,6 +287,14 @@ const getters = {
     return state.files_arr.filter(file => file.discarded)
   },
 
+  GET_CURRENT_FOLDER (state) {
+    if (!state.current_folder_id) {
+      return []
+    }
+    const currentFolder = state.files_map[state.current_folder_id]
+    return currentFolder
+  },
+
   GET_CURRENT_FILES (state) {
     if (!state.current_folder_id) {
       return []
@@ -281,6 +302,7 @@ const getters = {
     const currentFolder = state.files_map[state.current_folder_id]
     const childFolders = currentFolder.child_folders || []
     const childDocs = currentFolder.child_docs || []
+
     return [...childFolders, ...childDocs]
       .map(id => state.files_map[id])
       .filter(file => !file.discarded)

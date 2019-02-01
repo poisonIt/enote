@@ -18,12 +18,9 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import EventHub from '@/utils/mixins/eventhub'
 
 export default {
   name: 'FileTool',
-
-  mixins: [EventHub],
 
   data () {
     return {
@@ -57,18 +54,17 @@ export default {
     },
 
     newDoc () {
-      this.dispatchHub('newDoc', this)
+      this.$hub.dispatchHub('newDoc', this)
     },
 
     newFolder () {
-      this.dispatchHub('newFolder', this)
+      this.$hub.dispatchHub('newFolder', this)
     },
 
     handleMenuClick (value) {
       if (value === 'new_doc') {
         this.newDoc()
-      }
-      if (value === 'new_folder') {
+      } else if (value === 'new_folder') {
         this.newFolder()
       }
     }

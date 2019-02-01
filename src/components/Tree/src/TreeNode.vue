@@ -39,12 +39,12 @@
 </template>
 
 <script>
-import EventHub from '@/utils/mixins/eventhub'
+import { NodeMixins } from '../mixins'
 
 export default {
   name: 'TreeNode',
 
-  mixins: [EventHub],
+  mixins: NodeMixins,
 
   components: {
     NodeContent: {
@@ -127,17 +127,6 @@ export default {
     if (this.node.level === 1 && this.node.parent.childNodes.indexOf(this.node) === 0) {
       this.handleClick()
     }
-    this.hookHub('clickNavMini', 'NavBar', link => {
-      if (this.node.data.link === link) {
-        this.node.store.instance.$parent.handleItemClick(this.node)
-      }
-    })
-    this.hookHub('clickFolder', 'DocumentList', id => {
-      if (this.node.data.id === id) {
-        this.expandAncestor()
-        this.node.store.instance.$parent.handleItemClick(this.node)
-      }
-    })
   },
 
   methods: {

@@ -31,12 +31,12 @@
 </template>
 
 <script>
-import popup from '@/utils/mixins/popup'
+import mixins from '../mixins'
 
 export default {
   name: 'Modal',
 
-  mixins: [ popup ],
+  mixins: mixins,
 
   props: {
     title: String,

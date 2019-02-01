@@ -17,12 +17,9 @@ import ClassicEditor from '@ckeditor/ckeditor5-build-classic'
 // import Autosave from '@ckeditor/ckeditor5-autosave/src/autosave'
 import '@ckeditor/ckeditor5-build-classic/build/translations/zh-cn'
 import '../assets/styles/editor.css'
-import EventHub from '@/utils/mixins/eventhub'
 
 export default {
   name: 'EditorComp',
-
-  mixins: [EventHub],
 
   data () {
     return {
@@ -76,12 +73,6 @@ export default {
       this.$hub.pool.push(() => {
         this.handleResize()
       })
-      // this.hookHub('saveEditorContent', 'DocumentList', () => {
-      //   this.SAVE_DOC({
-      //     id: this.currentFile.id,
-      //     html: this.editorHtml
-      //   })
-      // })
     },
 
     handleEditorInput () {

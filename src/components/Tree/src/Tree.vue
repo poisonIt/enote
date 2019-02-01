@@ -12,12 +12,12 @@
 <script>
 import TreeNode from './TreeNode'
 import TreeStore from './TreeStore'
-import EventHub from '@/utils/mixins/eventhub'
+import { TreeMixins } from '../mixins'
 
 export default {
   name: 'BTree',
 
-  mixins: [EventHub],
+  mixins: TreeMixins,
 
   data () {
     return {
@@ -110,13 +110,6 @@ export default {
 
     this.root = this.store.root
     this.store.instance = this
-    this.hookHub('navUp', 'DocumentList', () => {
-      const parentInstance = this.store.currentNode.parent.instance
-      if (parentInstance) {
-        const rootParent = this.store.instance.$parent
-        rootParent.handleItemClick(parentInstance.node)
-      }
-    })
   },
 
   methods: {

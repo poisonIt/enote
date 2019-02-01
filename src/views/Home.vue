@@ -35,10 +35,10 @@
 <script>
 import { mapActions, mapGetters } from 'vuex'
 import Move from '@/components/Move'
-import NavBar from '@/components/NavBar/index.js'
+import NavBar from '@/components/NavBar'
 import FileTool from '@/components/FileTool'
 import PageLayout from '@/components/PageLayout.vue'
-import DocumentList from '@/components/DocumentList.vue'
+import DocumentList from '@/components/DocumentList'
 import FileHandler from '@/components/FileHandler.vue'
 import EditorComp from '@/components/EditorComp.vue'
 import FolderComp from '@/components/FolderComp.vue'

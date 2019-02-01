@@ -2,9 +2,10 @@ import Vue from 'vue'
 import App from './App.vue'
 import store from './store'
 import CKEditor from '@ckeditor/ckeditor5-vue'
-import CollapseTransition from './utils/transitions'
-import Modal from './components/Modal'
-import Menu from './components/Menu'
+import EventHub from '@/utils/eventhub'
+import CollapseTransition from '@/utils/transitions'
+import Modal from '@/components/Modal'
+import Menu from '@/components/Menu'
 const { remote, shell, webFrame } = require('electron')
 console.log(remote.app.getAppPath())
 
@@ -16,24 +17,7 @@ Vue.use(Menu)
 Vue.prototype.$remote = remote
 Vue.prototype.$shell = shell
 Vue.prototype.$webFrame = webFrame
-
-Vue.prototype.$hub = new Vue({
-  data () {
-    return {
-      pool: []
-    }
-  },
-
-  watch: {
-    pool (val) {
-      window.onresize = () => {
-        for (let i in this.pool) {
-          this.pool[i]()
-        }
-      }
-    }
-  }
-})
+Vue.prototype.$hub = EventHub
 
 // const curWin = remote.getCurrentWindow()
 // const ses = curWin.webContents.session

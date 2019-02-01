@@ -1,10 +1,22 @@
 <template>
-  <div class="file-card" :class="{ mini : mini, selected : selected }" @click="handleClick">
+  <div class="file-card"
+    :class="{ mini : mini, selected : selected }"
+    @click="handleClick"
+    @contextmenu="handleContextmenu">
     <div class="header">
       <div class="icon" :class="type"></div>
       <div class="title ellipsis"
-        :class="{ folder : viewFileType !== 'recycle' }">
-        <span @click.stop="handleClickTitle">{{ title }}</span>
+        :class="{ folder : viewFileType !== 'recycle' && type === 'folder' }">
+        <input v-show="showTitleInput"
+          ref="titleInput"
+          type="text"
+          v-model="titleValue"
+          @blur="handleTitleInputBlur"
+          @keyup.enter="handleTitleInputBlur">
+        <span v-show="!showTitleInput"
+          @click.stop="handleClickTitle">
+          {{ title }}
+        </span>
       </div>
     </div>
     <div class="body" v-if="content.length > 0 && !mini && type === 'doc'">
@@ -21,17 +33,19 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
-import Emitter from '@/utils/mixins/emitter'
+import { mapGetters, mapActions } from 'vuex'
+import mixins from '../mixins'
 
 export default {
   name: 'FileCard',
 
-  mixins: [Emitter],
+  mixins: mixins,
 
   data () {
     return {
-      selected: false
+      selected: false,
+      titleValue: '',
+      showTitleInput: false
     }
   },
 
@@ -91,6 +105,12 @@ export default {
     }
   },
 
+  watch: {
+    title (val) {
+      this.titleValue = val
+    }
+  },
+
   filters: {
     size (val) {
       val = val + ''
@@ -106,6 +126,10 @@ export default {
     }
   },
 
+  created () {
+    this.titleValue = this.title
+  },
+
   mounted () {
     this.$on('select', index => {
       if (this.$vnode.key === index) {
@@ -118,6 +142,8 @@ export default {
   },
 
   methods: {
+    ...mapActions(['SAVE_FILE_TITLE', 'DELETE_FILE']),
+
     handleClick () {
       this.dispatch('FileCardGroup', 'item-click', this)
       this.selected = true
@@ -130,6 +156,18 @@ export default {
       } else {
         this.handleClick()
       }
+    },
+
+    handleContextmenu () {
+      this.$emit('contextmenu', this.$options.propsData)
+    },
+
+    handleTitleInputBlur () {
+      this.showTitleInput = false
+      this.SAVE_FILE_TITLE({
+        id: this.file_id,
+        title: this.titleValue
+      })
     }
   }
 }
@@ -162,6 +200,16 @@ export default {
     font-size 13px
     &.folder:hover
       text-decoration underline
+    input
+      border none
+      background-color transparent
+      outline-color #6cb5f9
+      color inherit
+      font-size inherit
+      font-weight inheirht
+      font-family inherit
+      &:focus
+        background-color #fff
 
 .icon
   width 18px

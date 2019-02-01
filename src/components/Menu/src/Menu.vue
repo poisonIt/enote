@@ -24,12 +24,12 @@
 </template>
 
 <script>
-import popup from '@/utils/mixins/popup'
+import mixins from '../mixins'
 
 export default {
   name: 'Menu',
 
-  mixins: [ popup ],
+  mixins: mixins,
 
   data () {
     return {

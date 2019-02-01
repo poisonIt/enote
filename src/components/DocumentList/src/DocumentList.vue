@@ -34,7 +34,8 @@
           :content="item.brief"
           :update_at="item.update_at | yyyymmdd"
           :file_size="Number(item.file_size)"
-          :parent_folder="getParentFolder(item.ancestor_folders)">
+          :parent_folder="getParentFolder(item.ancestor_folders)"
+          @contextmenu="handleContextmenu">
         </FileCard>
       </FileCardGroup>
       <div class="no-file" v-if="list.length === 0">
@@ -55,16 +56,18 @@
 </template>
 
 <script>
+import { clone } from 'lodash'
 import dayjs from 'dayjs'
-import EventHub from '@/utils/mixins/eventhub'
+import mixins from '../mixins'
 import { readFile } from '@/utils/file'
 import { mapGetters, mapState, mapActions } from 'vuex'
-import { FileCard, FileCardGroup } from './FileCard/index.js'
+import { FileCard, FileCardGroup } from '@/components/FileCard'
+import { fileHandleMenu, fileCloudMenu, fileInfoMenu } from '../Menu'
 
 export default {
   name: 'DocumentList',
 
-  mixins: [EventHub],
+  mixins: mixins,
 
   components: {
     FileCard,
@@ -74,7 +77,13 @@ export default {
   data () {
     return {
       list: [],
+      fileList: [],
       isMenuVisible: false,
+      nativeMenuData: [
+        fileHandleMenu,
+        fileCloudMenu,
+        fileInfoMenu
+      ],
       menuData: [
         {
           label: '摘要',
@@ -126,48 +135,71 @@ export default {
     ...mapGetters({
       viewName: 'GET_VIEW_NAME',
       viewFileType: 'GET_VIEW_FILE_TYPE',
-      latesFiles: 'GET_LATEST_FILES',
+      allFileMap: 'GET_FILES',
+      latestFiles: 'GET_LATEST_FILES',
       folders: 'GET_FOLEDERS',
       recycle: 'GET_RECYCLE_FILES',
       files: 'GET_CURRENT_FILES',
+      currentFolder: 'GET_CURRENT_FOLDER',
       currentFile: 'GET_CURRENT_FILE',
       viewFolder: 'GET_VIEW_FOLDER',
       viewFileListType: 'GET_VIEW_FILE_LIST_TYPE',
       viewFileSortType: 'GET_VIEW_FILE_SORT_TYPE',
       viewFileSortOrder: 'GET_VIEW_FILE_SORT_ORDER'
-    }),
+    })
+  },
 
-    fileList () {
+  watch: {
+    viewFileType (val) {
+      let currentFiles = this.getCurrentFiles(this.currentFolder)
       let list = []
-      switch (this.viewFileType) {
+      switch (val) {
         case 'latest':
-          list = this.latesFiles
+          list = this.latestFiles
           break
         case 'folders':
-          list = this.files
+          list = currentFiles
           break
         case 'new folder':
-          list = this.files
+          list = currentFiles
           break
         case 'recycle':
           list = this.recycle
           break
         default:
-          list = this.latesFiles
+          list = this.latestFiles
           break
       }
-      return this.fileListSortFunc(list)
-    }
-  },
+      this.fileList = this.fileListSortFunc(clone(list))
+    },
 
-  watch: {
     fileList (val, oldVal) {
       if (oldVal.length === 0 && this.viewFileType === 'latest') {
         this.selectFile(0)
-        this.list = this.fileList
         this.$nextTick(() => {
           this.$refs.body.scrollTo(0, 0)
         })
+      }
+      val.forEach((item, index) => {
+        this.$set(this.list, index, item)
+      })
+    },
+
+    latestFiles (val) {
+      if (this.viewFileType === 'latest') {
+        this.fileList = this.fileListSortFunc(clone(val))
+      }
+    },
+
+    files (val) {
+      if (this.viewFileType === 'folders' || this.viewFileType === 'new folder') {
+        this.fileList = this.fileListSortFunc(clone(val))
+      }
+    },
+
+    recycle (val) {
+      if (this.viewFileType === 'recycle') {
+        this.fileList = this.fileListSortFunc(clone(val))
       }
     },
 
@@ -206,35 +238,21 @@ export default {
       this.$refs.fileCardGroup.select(index) // visually select file
       const appPath = '/Users/bowiego/Documents/workspace/enote/public'
 
-      // if (this.currentFile && this.currentFile.type === 'doc') { // save current doc
-      //   this.dispatchHub('saveEditorContent', this)
-      // }
-      // this.currentFileTempId = file.id
-      // this.currentFile = file
-      // if (this.currentFile) {
-      //   console.log('currentFile', this.currentFile.id)
-      // }
       this.SET_CURRENT_FILE(file.id)
       if (file.type === 'doc') {
         readFile(`${appPath}/docs/${file.id}.xml`).then(data => {
           this.SET_EDITOR_CONTENT(data.data)
-          // this.EDIT_FILE({
-          //   id: file.id,
-          //   attr: 'file_size',
-          //   val: data.size
-          // })
-          // console.log(data)
         })
       }
     },
 
     handleFileTitleClick (index) {
       let file = this.fileList[index]
-      this.dispatchHub('clickFolder', this, file.id)
+      this.clickFolderHub(file.id)
     },
 
     handleBack () {
-      this.dispatchHub('navUp', this)
+      this.navUpHub()
     },
 
     handleList () {
@@ -248,11 +266,6 @@ export default {
         this.SET_VIEW_FILE_SORT_TYPE(value)
         this.SET_VIEW_FILE_SORT_ORDER(item.actived ? 'up' : 'down')
       }
-      // if (index === 0) {
-      //   this.$hub.$emit('newDoc')
-      // } else if (index === 1) {
-      //   this.$hub.$emit('newFolder')
-      // }
     },
 
     fileListSortFunc (list) {
@@ -271,7 +284,41 @@ export default {
     },
 
     newDoc () {
-      this.dispatchHub('newDoc', this)
+      this.$hub.dispatchHub('newDoc', this)
+    },
+
+    handleContextmenu (props) {
+      console.log('handleContextmenu-11', props, this.nativeMenus)
+      this.popupNativeMenu(this.nativeMenus[0])
+    },
+
+    handleRename () {
+      this.$hub.dispatchHub('renameFileCard', this, this.currentFile.id)
+    },
+
+    handleMove () {
+      console.log('handleMove')
+    },
+
+    handleDuplicate () {
+      console.log('handleDuplicate')
+    },
+
+    handleDelete () {
+      console.log('handleDelete')
+      this.$hub.dispatchHub('deleteFileCard', this, this.currentFile.id)
+    },
+
+    getCurrentFiles (currentFolder) {
+      const childFolders = currentFolder.child_folders || []
+      const childDocs = currentFolder.child_docs || []
+      let result = [...childFolders, ...childDocs]
+        .map(id => this.allFileMap[id])
+        .filter(file => !file.discarded)
+
+      return [...childFolders, ...childDocs]
+        .map(id => this.allFileMap[id])
+        .filter(file => !file.discarded)
     }
   }
 }
@@ -356,16 +403,16 @@ export default {
       opacity 0.4
   &.button-back
     &::before
-      background-image url(../assets/images/rollback.png)
+      background-image url(../../../assets/images/rollback.png)
   &.expand
     &::before
       width 14px
       height 14px
       left 38%
-      background-image url(../assets/images/list.png)
+      background-image url(../../../assets/images/list.png)
     &.summary
       &::before
-        background-image url(../assets/images/list2.png)
+        background-image url(../../../assets/images/list2.png)
     &::after
       content ''
       display block

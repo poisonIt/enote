@@ -28,7 +28,7 @@ yarn run lint
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
 
-###已完成UI功能
+### 已完成UI功能
 
 - [ ] 左侧导航栏
   - [x] 缩进切换
@@ -48,7 +48,7 @@ See [Configuration Reference](https://cli.vuejs.org/config/).
   - [x] 选中文件
   - [x] 点击文件夹标题跳转到该文件夹
   - [x] 显示和更新文件路径、修改时间、大小
-  - [x] 笔记类型文件显示内容摘要
+  - [x] 显示笔记内容摘要
   - [x] 显示文件数目总计
 - [ ] 右侧编辑栏
   - [x] 点击标题更改

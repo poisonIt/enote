@@ -79,6 +79,35 @@ const mutations = {
     state.files_map[id][attr] = val
   },
 
+  MOVE_FILE (state, opts) {
+    let { fileId, targetId } = opts
+    let file = state.files_map[fileId]
+    let targetFolder = state.files_map[targetId]
+    let oldParentFolder = state.files_map[file.parent_folder]
+    file.parent_folder = targetFolder.id
+    file.ancestor_folders = [...targetFolder.ancestor_folders, targetFolder.id]
+    console.log('oldParentFolder', oldParentFolder)
+    if (file.type === 'folder') {
+      remove(oldParentFolder.child_folders, item => item === file.id)
+      // update child
+      updateChildAncestorFolders(file, state)
+
+      if (!targetFolder.child_folders) {
+        targetFolder.child_folders = []
+      }
+      targetFolder.child_folders.push(file.id)
+    } else if (file.type === 'doc') {
+      console.log('MOVE_FILE: doc', file, targetFolder)
+      remove(oldParentFolder.child_docs, item => item === file.id)
+
+      if (!targetFolder.child_docs) {
+        targetFolder.child_docs = []
+      }
+      targetFolder.child_docs.push(file.id)
+    }
+    console.log('state', state)
+  },
+
   CLEAR_ALL_RECYCLE (state) {
     let recycledFiles = state.files_arr.filter(file => file.discarded)
     recycledFiles.forEach(file => {
@@ -97,7 +126,7 @@ const mutations = {
         let allChildFile = state.files_arr.filter(fileTemp => {
           return fileTemp.ancestor_folders.indexOf(file.id) > -1
         })
-  
+
         allChildFile.forEach(childFile => {
           remove(state.files_arr, item => item.id === childFile.id)
           if (childFile.type === 'doc') {
@@ -219,6 +248,14 @@ const actions = {
 
   EDIT_FILE ({ commit }, opts) {
     commit('EDIT_FILE', opts)
+    commit('UPDATE_FILES_ARR')
+    commit('UPDATE_FOLDERS')
+    commit('SAVE_FILES')
+  },
+
+  MOVE_FILE ({ commit }, opts) {
+    commit('MOVE_FILE', opts)
+    commit('UPDATE_FILES_MAP')
     commit('UPDATE_FILES_ARR')
     commit('UPDATE_FOLDERS')
     commit('SAVE_FILES')
@@ -369,6 +406,27 @@ function addDoc (id) {
         resolve(id)
       })
     })
+  })
+}
+
+function updateChildAncestorFolders (file, state) {
+  console.log('updateChildAncestorFolders', file, state)
+
+  let childFiles = state.files_arr.filter(item => {
+    if (item.parent_folder) {
+      return item.parent_folder === file.id
+    }
+  })
+
+  console.log('childFiles', childFiles)
+
+  childFiles.forEach(child => {
+    console.log('child-1', child)
+    child.ancestor_folders = [...file.ancestor_folders, file.id]
+    console.log('child-2', child)
+    if (child.type === 'folder') {
+      updateChildAncestorFolders(child, state)
+    }
   })
 }
 

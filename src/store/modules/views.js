@@ -1,6 +1,7 @@
 const state = {
   view_type: 'expanded',
   name: '最新文档',
+  move_file: '',
   view_folder: '',
   view_file_type: 'latest',
   view_file_list_type: 'summary',
@@ -27,7 +28,8 @@ const mutations = {
     state.view_file_type = type
   },
 
-  TOGGLE_SHOW_MOVE_PANEL (state, val) {
+  TOGGLE_SHOW_MOVE_PANEL (state, id) {
+    state.move_file = id || null
     state.show_move_pannel = !state.show_move_pannel
   },
 
@@ -65,8 +67,8 @@ const actions = {
     commit('SET_VIEW_FILE_TYPE', type)
   },
 
-  TOGGLE_SHOW_MOVE_PANEL ({ commit }) {
-    commit('TOGGLE_SHOW_MOVE_PANEL')
+  TOGGLE_SHOW_MOVE_PANEL ({ commit }, id) {
+    commit('TOGGLE_SHOW_MOVE_PANEL', id)
   },
 
   SET_EDITOR_CONTENT ({ commit }, content) {
@@ -105,6 +107,10 @@ const getters = {
 
   GET_SHOW_MOVE_PANEL (state) {
     return state.show_move_pannel
+  },
+
+  GET_MOVE_FILE (state) {
+    return state.move_file
   },
 
   GET_EDITOR_CONTENT (state) {

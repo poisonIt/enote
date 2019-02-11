@@ -77,6 +77,7 @@ export default {
         recycleMenu
       ],
       nodeInput: '',
+      folderIndex: 1,
       nav: [
         {
           title: '最新文档',
@@ -101,17 +102,8 @@ export default {
   computed: {
     ...mapGetters({
       viewType: 'GET_VIEW_TYPE',
-      viewFileType: 'GET_VIEW_FILE_TYPE',
-      folders: 'GET_FOLEDERS'
+      viewFileType: 'GET_VIEW_FILE_TYPE'
     })
-  },
-
-  watch: {
-    folders (val, oldVal) {
-      if (val !== oldVal) {
-        this.initNav(val)
-      }
-    }
   },
 
   mounted () {
@@ -133,45 +125,23 @@ export default {
       'TOGGLE_SHOW_MOVE_PANEL'
     ]),
 
-    initNav (folders) {
-      let rootChildFolders = []
-      for (let i in folders) {
-        if (folders[i].ancestor_folders.length === 0) {
-          rootChildFolders.push(folders[i])
-        }
-      }
-      let rootFolder = rootChildFolders
-        .map(folder => this.translateFolderData(folder, folders))[0]
-      for (let i in rootFolder) {
-        this.$set(this.nav[1], i, rootFolder[i])
-      }
-
-      // let rootNode = this.$refs.tree.store.root
-      // this.$refs.tree.setNodeData(rootNode.childNodes[1].uid, rootFolder)
-
-      // if (this.initFlag) {
-      //   this.handleItemClick(this.$refs.tree.store.root.childNodes[0])
-      //   this.initFlag = false
-      // }
-    },
-
-    translateFolderData (folder, folders) {
-      let result = {}
-      for (let i in folder) {
-        result[i] = folder[i]
-      }
-      result.children = folder.child_folders.map(id => {
-        return this.translateFolderData(folders[id], folders)
-      })
-      return result
-    },
-
     getTreeNode (link) {
       let nodeMap = this.$refs.tree.store.nodeMap
       for (let i in nodeMap) {
         let node = nodeMap[i]
         if (node.data.link === link) {
           return node
+        }
+      }
+    },
+
+    setCurrentFolder (id) {
+      let nodeMap = this.$refs.tree.store.nodeMap
+      for (let i in nodeMap) {
+        let node = nodeMap[i]
+        if (node.data.id === id) {
+          this.handleItemClick(node)
+          return
         }
       }
     },
@@ -299,8 +269,8 @@ export default {
       })
     },
 
-    handleRemove () {
-      this.TOGGLE_SHOW_MOVE_PANEL()
+    handleMove () {
+      this.TOGGLE_SHOW_MOVE_PANEL(this.currentNode.data.id)
     },
 
     handleDuplicate () {

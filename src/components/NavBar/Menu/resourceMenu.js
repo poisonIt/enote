@@ -13,7 +13,7 @@ const resourceMenu1 = [
     label: '移动到',
     eventListener: {
       eventName: 'click',
-      callbackName: 'handleRemove'
+      callbackName: 'handleMove'
     }
   },
   {

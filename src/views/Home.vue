@@ -4,7 +4,7 @@
       <div slot="left">
         <div id="nav">
           <FileTool></FileTool>
-          <NavBar></NavBar>
+          <NavBar ref="navbar"></NavBar>
         </div>
       </div>
       <div slot="middle">
@@ -23,9 +23,9 @@
       title="移动到"
       @close="closeMovePanel"
       :visible.sync="isMovePanelShowed">
-      <Move></Move>
+      <Move ref="move" @handleMove="handleFileMoved"></Move>
       <div class="button-group" slot="footer">
-        <div class="button primary">确定</div>
+        <div class="button primary" @click="confirmMovePanel">确定</div>
         <div class="button" @click="closeMovePanel">取消</div>
       </div>
     </modal>
@@ -70,6 +70,18 @@ export default {
 
     closeMovePanel () {
       this.TOGGLE_SHOW_MOVE_PANEL()
+      this.$refs.move.init()
+    },
+
+    confirmMovePanel () {
+      this.$refs.move.handleMove()
+    },
+
+    handleFileMoved (id) {
+      setTimeout(() => {
+        this.$refs.navbar.setCurrentFolder(id)
+        this.closeMovePanel()
+      }, 300)
     }
   }
 

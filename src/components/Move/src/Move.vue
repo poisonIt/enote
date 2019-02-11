@@ -1,8 +1,8 @@
 <template>
   <div class="container">
     <div class="object">
-      <div class="icon"></div>
-      <span class="name">新建文件夹</span>
+      <div class="icon" :class="moveFile && moveFile.type"></div>
+      <span class="name">{{ moveFile && moveFile.title }}</span>
     </div>
     <div class="document">
       <div class="path ellipsis">移动到:
@@ -18,6 +18,7 @@
           default-expand-all
           ref="tree">
           <div class="nav-node" slot-scope="{ node, data }">
+            <div class="icon-folder"></div>
             <div class="title ellipsis">{{ data.title }}</div>
             <div class="click-mask"
               @click="handleItemClick(node)">
@@ -31,9 +32,13 @@
 
 <script>
 import Tree from '@/components/Tree'
+import mixins from '../mixins'
+import { mapGetters, mapActions } from 'vuex'
 
 export default {
   name: 'Move',
+
+  mixins: mixins,
 
   components: {
     Tree
@@ -41,81 +46,54 @@ export default {
 
   data () {
     return {
-      path: '',
-      nav: [
-        {
-          title: '我的文件夹',
-          link: 'folders',
-          type: 'folder',
-          children: [
-            {
-              title: '我的资源',
-              link: 'resources',
-              type: 'folder',
-              isTyping: true,
-              children: [
-                {
-                  title: '新建文件夹',
-                  link: 'new folder',
-                  type: 'folder',
-                  children: [
-                    {
-                      title: '新建文件夹新建文件夹新建文件夹新建文件夹新建文件夹新建文件夹新建文件夹',
-                      link: 'new folder',
-                      type: 'folder'
-                    }
-                  ]
-                },
-                {
-                  title: '新建文件夹1',
-                  link: 'new folder',
-                  type: 'folder',
-                  children: [
-                    {
-                      title: '新建文件夹2',
-                      link: 'new folder',
-                      type: 'folder'
-                    },
-                    {
-                      title: '1111111',
-                      link: 'new folder',
-                      type: 'folder'
-                    },
-                    {
-                      title: '1111111',
-                      link: 'new folder',
-                      type: 'folder'
-                    },
-                    {
-                      title: '1111111',
-                      link: 'new folder',
-                      type: 'folder'
-                    },
-                    {
-                      title: '1111111',
-                      link: 'new folder',
-                      type: 'folder'
-                    },
-                    {
-                      title: '1111111',
-                      link: 'new folder',
-                      type: 'folder'
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      ]
+      path: '/',
+      targetFolder: null,
+      folderIndex: 0,
+      nav: [{}]
+    }
+  },
+
+  computed: {
+    ...mapGetters({
+      allFileMap: 'GET_FILES',
+      moveFileId: 'GET_MOVE_FILE',
+      currentFolder: 'GET_CURRENT_FOLDER'
+    }),
+
+    moveFile () {
+      return this.allFileMap[this.moveFileId]
     }
   },
 
   methods: {
-    handleClose () {
+    ...mapActions([
+      'MOVE_FILE',
+      'SET_CURRENT_FOLDER'
+    ]),
+
+    init () {
+      this.targetFolder = null
+      // this.$refs.tree.store.currentNode = null
+      this.path = '/'
+    },
+
+    handleMove () {
+      if (this.targetFolder === null) {
+        this.targetFolder = this.$refs.tree.store.root.data[0]
+      }
+
+      this.MOVE_FILE({
+        fileId: this.moveFileId,
+        targetId: this.targetFolder.id
+      })
+
+      this.$emit('handleMove', this.targetFolder.id)
+      this.init()
     },
 
     handleItemClick (node) {
+      node.instance.handleClick()
+      this.targetFolder = node.data
       let pathArr = node.getAncestors()
         .filter(item => item.data.title)
         .map(item => item.data.title)
@@ -151,8 +129,14 @@ export default {
   align-items center
   .icon
     width 30px
-    height 20px
-    background-color orange
+    height 30px
+    border-radius 3px
+    background-image url(../../../assets/images/document.png)
+    background-repeat no-repeat
+    background-position center
+    background-size contain
+    &.folder
+      background-image url(../../../assets/images/folder.png)
   .name
     margin-left 20px
     font-size 12px
@@ -185,4 +169,15 @@ export default {
     position absolute
     width 100%
     height 100%
+
+.icon-folder
+  display block
+  margin-right 6px
+  width 24px
+  height 24px
+  opacity 0.8
+  background-image url(../../../assets/images/folder-open-fill.png)
+  background-repeat no-repeat
+  background-size contain
+  background-position center
 </style>

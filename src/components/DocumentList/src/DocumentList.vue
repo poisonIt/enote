@@ -229,7 +229,8 @@ export default {
       'SET_CURRENT_FILE',
       'SET_VIEW_FILE_LIST_TYPE',
       'SET_VIEW_FILE_SORT_TYPE',
-      'SET_VIEW_FILE_SORT_ORDER'
+      'SET_VIEW_FILE_SORT_ORDER',
+      'TOGGLE_SHOW_MOVE_PANEL'
     ]),
 
     selectFile (index) {
@@ -289,6 +290,7 @@ export default {
 
     handleContextmenu (props) {
       console.log('handleContextmenu-11', props, this.nativeMenus)
+      this.popupedFile = props.file_id
       this.popupNativeMenu(this.nativeMenus[0])
     },
 
@@ -298,6 +300,7 @@ export default {
 
     handleMove () {
       console.log('handleMove')
+      this.TOGGLE_SHOW_MOVE_PANEL(this.popupedFile)
     },
 
     handleDuplicate () {
@@ -312,9 +315,6 @@ export default {
     getCurrentFiles (currentFolder) {
       const childFolders = currentFolder.child_folders || []
       const childDocs = currentFolder.child_docs || []
-      let result = [...childFolders, ...childDocs]
-        .map(id => this.allFileMap[id])
-        .filter(file => !file.discarded)
 
       return [...childFolders, ...childDocs]
         .map(id => this.allFileMap[id])

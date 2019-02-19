@@ -36,8 +36,15 @@ export default {
     }
   },
 
+  watch: {
+    searchText (val) {
+      console.log('watch-searchText', val)
+      this.SET_SEARCH_KEYWORD(val)
+    }
+  },
+
   methods: {
-    ...mapActions(['SET_VIEW_TYPE']),
+    ...mapActions(['SET_VIEW_TYPE', 'SET_SEARCH_KEYWORD']),
 
     isViewButtonActived (type) {
       return type === this.viewType

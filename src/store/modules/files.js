@@ -1,23 +1,19 @@
-import { writeFile, readFile, deleteFile } from '@/utils/file'
 import { remove } from 'lodash'
 import dayjs from 'dayjs'
 import LocalDAO from '../../../db/api'
+import docTemplate from '../../../db/docTemplate'
 
+const docBriefTemplate = formatContent(docTemplate)
 let filesArrTemp = []
-let templateDocSize = ''
-let templateDocContent = ''
-const appPath = '/Users/bowiego/Documents/workspace/enote/public'
-readFile(`${appPath}/template.xml`).then(data => {
-  templateDocContent = formatContent(data.data)
-  templateDocSize = data.size
-})
 
 const state = {
   files_map: {},
   files_arr: [],
+  doc_map: {},
   folders: {},
   current_folder_id: null,
-  current_file_id: null
+  current_file_id: null,
+  search_keyword: ''
 }
 
 const mutations = {
@@ -33,14 +29,12 @@ const mutations = {
   },
 
   UPDATE_FILE_BRIEF (state, obj) {
-    let { id, brief, size } = obj
+    let { id, brief } = obj
     let file = state.files_map[id]
     if (brief) {
       file.brief = brief.slice(0, 20)
     }
-    if (file.file_size !== size) {
-      file.file_size = size
-    }
+    file.file_size = brief.length
   },
 
   ADD_FILE (state, obj) {
@@ -57,8 +51,8 @@ const mutations = {
       obj.child_folders = []
       parentFolder.child_folders.push(obj.id)
     } else if (obj.type === 'doc') {
-      obj.file_size = templateDocSize
-      obj.brief = templateDocContent
+      obj.file_size = docBriefTemplate.length
+      obj.brief = docBriefTemplate
       obj.ancestor_folders.forEach(id => {
         state.files_map[id].file_size = state.files_map[id].file_size + obj.file_size
       })
@@ -87,7 +81,6 @@ const mutations = {
     let oldParentFolder = state.files_map[file.parent_folder]
     file.parent_folder = targetFolder.id
     file.ancestor_folders = [...targetFolder.ancestor_folders, targetFolder.id]
-    console.log('oldParentFolder', oldParentFolder)
     if (file.type === 'folder') {
       remove(oldParentFolder.child_folders, item => item === file.id)
       // update child
@@ -98,7 +91,6 @@ const mutations = {
       }
       targetFolder.child_folders.push(file.id)
     } else if (file.type === 'doc') {
-      console.log('MOVE_FILE: doc', file, targetFolder)
       remove(oldParentFolder.child_docs, item => item === file.id)
 
       if (!targetFolder.child_docs) {
@@ -106,7 +98,6 @@ const mutations = {
       }
       targetFolder.child_docs.push(file.id)
     }
-    console.log('state', state)
   },
 
   CLEAR_ALL_RECYCLE (state) {
@@ -131,18 +122,18 @@ const mutations = {
         allChildFile.forEach(childFile => {
           remove(state.files_arr, item => item.id === childFile.id)
           if (childFile.type === 'doc') {
-            // sync
             LocalDAO.doc.remove({
-              file_id: childFile.id
+              fileId: childFile.id
             })
-            // deleteFile(`${appPath}/docs/${childFile.id}.xml`)
           }
         })
       }
 
       // handle file
       if (file.type === 'doc') {
-        deleteFile(`${appPath}/docs/${file.id}.xml`)
+        LocalDAO.doc.remove({
+          fileId: file.id
+        })
       }
 
       remove(state.files_arr, item => item.id === file.id)
@@ -170,6 +161,13 @@ const mutations = {
     state.files_map = newFiles
   },
 
+  UPDATE_DOC_MAP (state, arr) {
+    state.doc_map = {}
+    arr.forEach(item => {
+      state.doc_map[item.id] = item
+    })
+  },
+
   UPDATE_FOLDERS (state) {
     let newFolders = {}
     state.files_arr.forEach(file => {
@@ -181,7 +179,6 @@ const mutations = {
   },
 
   SAVE_FILES (state) {
-    // writeFile(`${appPath}/mock/files.json`, JSON.stringify(state.files_map))
     LocalDAO.files.saveAll(JSON.stringify(state.files_map))
   },
 
@@ -196,6 +193,10 @@ const mutations = {
   SAVE_FILE_TITLE (state, obj) {
     const { id, title } = obj
     state.files_map[id].title = title
+  },
+
+  SET_SEARCH_KEYWORD (state, str) {
+    state.search_keyword = str
   }
 }
 
@@ -220,6 +221,8 @@ const actions = {
 
   async SET_DOC_BRIEF_FORM_LOCAL ({ dispatch, commit }) {
     const filesContent = await fetchAllLocalDocContent()
+    console.log('filesContent', filesContent)
+    commit('UPDATE_DOC_MAP', filesContent)
     filesContent.forEach(content => {
       content.brief = formatContent(content.data)
       dispatch('UPDATE_FILE_BRIEF', content)
@@ -294,7 +297,7 @@ const actions = {
     const { id, html } = obj
     // await writeFile(`${appPath}/docs/${id}.xml`, html)
     LocalDAO.doc.update({
-      file_id: id,
+      fileId: id,
       content: html
     })
     let content = await fetchLocalDocContent(id)
@@ -307,6 +310,10 @@ const actions = {
     commit('UPDATE_FILES_ARR')
     commit('UPDATE_FOLDERS')
     commit('SAVE_FILES')
+  },
+
+  SET_SEARCH_KEYWORD ({ commit }, str) {
+    commit('SET_SEARCH_KEYWORD', str)
   }
 }
 
@@ -352,19 +359,37 @@ const getters = {
 
     return [...childFolders, ...childDocs]
       .map(id => state.files_map[id])
-      .filter(file => !file.discarded)
+      .filter(file => {
+        if (file.discarded) {
+          return false
+        }
+        if (state.search_keyword !== '') {
+          if (file.title.indexOf(state.search_keyword) > -1) {
+            return true
+          }
+          if (file.id &&
+            state.doc_map[file.id] &&
+            state.doc_map[file.id].data.indexOf(state.search_keyword) > -1) {
+            return true
+          }
+        } else {
+          return true
+        }
+      })
   },
 
   GET_CURRENT_FILE (state) {
     return state.files_map[state.current_file_id]
+  },
+
+  GET_SEARCH_KEYWORD (state) {
+    return state.search_keyword
   }
 }
 
 function fetchLocalFiles () {
   return new Promise((resolve, reject) => {
-    // fetch('../../mock/files.json')
     LocalDAO.files.getAll().then(resp => {
-      console.log(resp)
       return JSON.parse(resp)
     }).then(data => {
       if (!data['000000']) {
@@ -393,23 +418,16 @@ function fetchLocalFiles () {
 
 function fetchLocalDocContent (id) {
   return new Promise((resolve, reject) => {
-    console.log('fetchLocalDocContent', id)
     LocalDAO.doc.get(id).then(res => {
-      console.log(res)
       resolve({
         id: id,
         data: res
       })
     })
-    // readFile(`${appPath}/docs/${id}.xml`).then(data => {
-    //   data.id = id
-    //   resolve(data)
-    // })
   })
 }
 
 function fetchAllLocalDocContent () {
-  console.log('fetchAllLocalDocContent', filesArrTemp)
   let asyncRead = filesArrTemp
     .filter(file => file.type === 'doc')
     .map(doc => {
@@ -421,37 +439,24 @@ function fetchAllLocalDocContent () {
 
 function addDoc (id) {
   return new Promise((resolve, reject) => {
-    readFile(`${appPath}/template.xml`).then(data => {
-      LocalDAO.doc.add({
-        file_id: id,
-        content: data.data
-      }).then(res => {
-        console.log('addDoc', res)
-        resolve(id)
-      })
-      // writeFile(`${appPath}/docs/${id}.xml`, data.data).then(() => {
-      //   console.log('write xml success', id)
-      //   resolve(id)
-      // })
+    LocalDAO.doc.add({
+      fileId: id,
+      content: docTemplate
+    }).then(res => {
+      resolve(id)
     })
   })
 }
 
 function updateChildAncestorFolders (file, state) {
-  console.log('updateChildAncestorFolders', file, state)
-
   let childFiles = state.files_arr.filter(item => {
     if (item.parent_folder) {
       return item.parent_folder === file.id
     }
   })
 
-  console.log('childFiles', childFiles)
-
   childFiles.forEach(child => {
-    console.log('child-1', child)
     child.ancestor_folders = [...file.ancestor_folders, file.id]
-    console.log('child-2', child)
     if (child.type === 'folder') {
       updateChildAncestorFolders(child, state)
     }

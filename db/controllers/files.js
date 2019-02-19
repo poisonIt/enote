@@ -8,9 +8,11 @@ const { filesDB } = remote.app.database
 function saveAll (files) {
   return new Promise((resolve, reject) => {
     filesDB.remove({}, { multi: true }, (err, numRemoved) => {
+      if (err) reject(err)
       filesDB.insert({
         files: files
       }, (err, newDocs) => {
+        if (err) reject(err)
         resolve(newDocs.files)
       })
     })
@@ -121,7 +123,7 @@ function move (opts) {
             filesDB.update(
               { _id: fileId },
               { $set: {
-                parent_folder: targetId ? targetId : null,
+                parent_folder: targetId || null,
                 ancestor_folders: targetId ? [...targetFile.ancestor_folders, targetId] : []
               } }, {},
               () => {
@@ -146,6 +148,7 @@ function updateChildAncestorFolders (file) {
     {}, () => {})
 
   filesDB.find({ parent_folder: file._id }, (err, childFiles) => {
+    if (err) console.error(err)
     childFiles.forEach(childFile => {
       updateChildAncestorFolders(childFile)
     })
@@ -153,7 +156,7 @@ function updateChildAncestorFolders (file) {
 }
 
 function updateChildAndParent (file) {
-  return new Promise ((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     if (file.type === 'folder') {
       updateChildAncestorFolders(file)
     }
@@ -164,7 +167,7 @@ function updateChildAndParent (file) {
 }
 
 function updateParentFile (file) {
-  return new Promise ((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     if (file.type === 'folder') {
       filesDB.update(
         { _id: file.parent_folder },
@@ -186,7 +189,7 @@ function updateParentFile (file) {
 }
 
 function updateTargetFile (file, targetId) {
-  return new Promise ((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     if (file.type === 'folder') {
       filesDB.update(
         { _id: targetId },
@@ -258,8 +261,9 @@ function updateDiscarded (opts) {
 function updateContent (opts) {
   return new Promise((resolve, reject) => {
     const { id, content } = opts
-  
+
     filesDB.findOne({ _id: id }, (err, file) => {
+      if (err) reject(err)
       if (!file) {
         resolve()
       }

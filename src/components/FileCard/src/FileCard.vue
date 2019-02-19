@@ -13,9 +13,13 @@
           v-model="titleValue"
           @blur="handleTitleInputBlur"
           @keyup.enter="handleTitleInputBlur">
-        <span v-show="!showTitleInput"
+        <span v-for="(item, index) in titleStrArr"
+          :key="index"
+          :class="{ highlight : item === searchKeyword }"
+          v-show="!showTitleInput"
+          ref="title"
           @click.stop="handleClickTitle">
-          {{ title }}
+          {{ item }}
         </span>
       </div>
     </div>
@@ -45,6 +49,7 @@ export default {
     return {
       selected: false,
       titleValue: '',
+      titleEllipsis: '',
       showTitleInput: false
     }
   },
@@ -84,7 +89,8 @@ export default {
 
   computed: {
     ...mapGetters({
-      viewFileType: 'GET_VIEW_FILE_TYPE'
+      viewFileType: 'GET_VIEW_FILE_TYPE',
+      searchKeyword: 'GET_SEARCH_KEYWORD'
     }),
 
     isTimeShowed () {
@@ -102,11 +108,22 @@ export default {
       } else {
         return !this.mini
       }
+    },
+
+    titleStrArr () {
+      if (this.searchKeyword === '') {
+        return [this.titleEllipsis]
+      } else {
+        return this.searchSubStr(this.titleEllipsis, this.searchKeyword)
+      }
     }
   },
 
   watch: {
     title (val) {
+      this.titleEllipsis = val.length > 26
+        ? val.slice(0, 26) + '...'
+        : val
       this.titleValue = val
     }
   },
@@ -128,6 +145,9 @@ export default {
 
   created () {
     this.titleValue = this.title
+    this.titleEllipsis = this.title.length > 26
+      ? this.title.slice(0, 26) + '...'
+      : this.title
   },
 
   mounted () {
@@ -168,6 +188,24 @@ export default {
         id: this.file_id,
         title: this.titleValue
       })
+    },
+
+    searchSubStr (str, subStr) {
+      let positions = []
+      let arr = []
+      let start = 0
+      let end = 0
+      let pos = str.indexOf(subStr)
+      while (pos > -1) {
+        positions.push(pos)
+        end = pos
+        arr.push(str.slice(start, end))
+        arr.push(subStr)
+        start = pos
+        pos = str.indexOf(subStr, pos + 1)
+      }
+      arr.push(str.slice(positions[positions.length - 1] + subStr.length, str.length))
+      return arr.filter(item => item !== '')
     }
   }
 }
@@ -198,6 +236,10 @@ export default {
   .title
     margin-left 10px
     font-size 13px
+    span
+      float left
+    span.highlight
+      background-color yellow
     &.folder:hover
       text-decoration underline
     input

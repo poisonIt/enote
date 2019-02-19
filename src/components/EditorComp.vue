@@ -27,7 +27,7 @@ export default {
       editor: ClassicEditor,
       editorHtml: '<p></p>',
       editorConfig: {
-        toolbar: [ 'undo', 'redo', 'heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote' ],
+        // toolbar: [ 'undo', 'redo', 'heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', 'highlight:yellowMarker' ],
         language: 'zh-cn'
         // plugins: [
         //   Autosave

@@ -25,7 +25,7 @@
         @handleSelect="selectFile"
         @titleClick="handleFileTitleClick">
         <FileCard
-          v-for="(item, index) in list"
+          v-for="(item, index) in fileList"
           :key="index"
           :mini="viewFileListType === 'list'"
           :file_id="item.id"
@@ -33,12 +33,12 @@
           :title="item.title"
           :content="item.brief"
           :update_at="item.update_at | yyyymmdd"
-          :file_size="Number(item.file_size)"
+          :file_size="Number(item.file_size || 0)"
           :parent_folder="getParentFolder(item.ancestor_folders)"
           @contextmenu="handleContextmenu">
         </FileCard>
       </FileCardGroup>
-      <div class="no-file" v-if="list.length === 0">
+      <div class="no-file" v-if="fileList.length === 0">
         <span v-if="viewFileType === 'recycle'">回收站为空</span>
         <span v-if="viewFileType !== 'recycle'">没有找到文件</span>
         <div v-if="viewFileType !== 'recycle'"
@@ -59,7 +59,7 @@
 import { clone } from 'lodash'
 import dayjs from 'dayjs'
 import mixins from '../mixins'
-import { readFile } from '@/utils/file'
+// import { readFile } from '@/utils/file'
 import { mapGetters, mapState, mapActions } from 'vuex'
 import { FileCard, FileCardGroup } from '@/components/FileCard'
 import { fileHandleMenu, fileCloudMenu, fileInfoMenu } from '../Menu'
@@ -181,9 +181,10 @@ export default {
           this.$refs.body.scrollTo(0, 0)
         })
       }
-      val.forEach((item, index) => {
-        this.$set(this.list, index, item)
-      })
+      // val.forEach((item, index) => {
+      //   this.$set(this.list, index, item)
+      // })
+      this.list = val
     },
 
     latestFiles (val) {
@@ -215,9 +216,11 @@ export default {
         this.$refs.body.scrollTo(0, 0)
       })
     },
+
     viewFileSortType (val) {
       this.list = this.fileListSortFunc(this.list)
     },
+
     viewFileSortOrder (val) {
       this.list = this.fileListSortFunc(this.list)
     }
@@ -238,7 +241,7 @@ export default {
       const file = this.fileList[index]
       if (this.currentFile === file) return
       this.$refs.fileCardGroup.select(index) // visually select file
-      const appPath = '/Users/bowiego/Documents/workspace/enote/public'
+      // const appPath = '/Users/bowiego/Documents/workspace/enote/public'
 
       this.SET_CURRENT_FILE(file.id)
       if (file.type === 'doc') {

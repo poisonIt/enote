@@ -1,4 +1,4 @@
-import files from './files'
+// import files from './files'
 const { remote } = require('electron')
 const { docsDB } = remote.app.database
 
@@ -17,7 +17,6 @@ function getAll () {
 }
 
 function get (id) {
-  console.log('get', id)
   // docsDB.remove({}, { multi: true }, (err, num) => { console.log('num', num) })
   // return
   return new Promise((resolve, reject) => {
@@ -25,7 +24,6 @@ function get (id) {
       if (err) {
         console.error(err)
       } else {
-        console.log('get-doc', doc)
         resolve(doc.content)
       }
     })
@@ -45,10 +43,10 @@ function get (id) {
 // }
 
 function add (req) {
-  const { file_id, content } = req
+  const { fileId, content } = req
   return new Promise((resolve, reject) => {
     docsDB.insert({
-      file_id: file_id,
+      file_id: fileId,
       content: content
     }, (err, newDoc) => {
       if (err) {
@@ -73,10 +71,10 @@ function add (req) {
 // }
 
 function update (req) {
-  const { file_id, content } = req
+  const { fileId, content } = req
   return new Promise((resolve, reject) => {
     docsDB.update(
-      { file_id: file_id },
+      { file_id: fileId },
       { $set: { content: content } },
       {},
       (err, docs) => {
@@ -111,10 +109,10 @@ function update (req) {
 // }
 
 function remove (req) {
-  const { file_id } = req
+  const { fileId } = req
   return new Promise((resolve, reject) => {
     docsDB.remove(
-      { file_id: file_id },
+      { file_id: fileId },
       {},
       (err, numRemoved) => {
         if (err) {

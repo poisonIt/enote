@@ -1,6 +1,7 @@
 import { writeFile, readFile, deleteFile } from '@/utils/file'
 import { remove } from 'lodash'
 import dayjs from 'dayjs'
+import LocalDAO from '../../../db/api'
 
 let filesArrTemp = []
 let templateDocSize = ''
@@ -131,7 +132,10 @@ const mutations = {
           remove(state.files_arr, item => item.id === childFile.id)
           if (childFile.type === 'doc') {
             // sync
-            deleteFile(`${appPath}/docs/${childFile.id}.xml`)
+            LocalDAO.doc.remove({
+              file_id: childFile.id
+            })
+            // deleteFile(`${appPath}/docs/${childFile.id}.xml`)
           }
         })
       }
@@ -177,7 +181,8 @@ const mutations = {
   },
 
   SAVE_FILES (state) {
-    writeFile(`${appPath}/mock/files.json`, JSON.stringify(state.files_map))
+    // writeFile(`${appPath}/mock/files.json`, JSON.stringify(state.files_map))
+    LocalDAO.files.saveAll(JSON.stringify(state.files_map))
   },
 
   SET_CURRENT_FOLDER (state, id) {
@@ -285,8 +290,13 @@ const actions = {
   },
 
   async SAVE_DOC ({ dispatch, commit }, obj) {
+    console.log('SAVE_DOC')
     const { id, html } = obj
-    await writeFile(`${appPath}/docs/${id}.xml`, html)
+    // await writeFile(`${appPath}/docs/${id}.xml`, html)
+    LocalDAO.doc.update({
+      file_id: id,
+      content: html
+    })
     let content = await fetchLocalDocContent(id)
     content.brief = formatContent(content.data)
     dispatch('UPDATE_FILE_BRIEF', content)
@@ -352,8 +362,10 @@ const getters = {
 
 function fetchLocalFiles () {
   return new Promise((resolve, reject) => {
-    fetch('../../mock/files.json').then(resp => {
-      return resp.json()
+    // fetch('../../mock/files.json')
+    LocalDAO.files.getAll().then(resp => {
+      console.log(resp)
+      return JSON.parse(resp)
     }).then(data => {
       if (!data['000000']) {
         let timeStamp = String(dayjs(new Date()).valueOf())
@@ -381,14 +393,23 @@ function fetchLocalFiles () {
 
 function fetchLocalDocContent (id) {
   return new Promise((resolve, reject) => {
-    readFile(`${appPath}/docs/${id}.xml`).then(data => {
-      data.id = id
-      resolve(data)
+    console.log('fetchLocalDocContent', id)
+    LocalDAO.doc.get(id).then(res => {
+      console.log(res)
+      resolve({
+        id: id,
+        data: res
+      })
     })
+    // readFile(`${appPath}/docs/${id}.xml`).then(data => {
+    //   data.id = id
+    //   resolve(data)
+    // })
   })
 }
 
 function fetchAllLocalDocContent () {
+  console.log('fetchAllLocalDocContent', filesArrTemp)
   let asyncRead = filesArrTemp
     .filter(file => file.type === 'doc')
     .map(doc => {
@@ -401,10 +422,17 @@ function fetchAllLocalDocContent () {
 function addDoc (id) {
   return new Promise((resolve, reject) => {
     readFile(`${appPath}/template.xml`).then(data => {
-      writeFile(`${appPath}/docs/${id}.xml`, data.data).then(() => {
-        console.log('write xml success', id)
+      LocalDAO.doc.add({
+        file_id: id,
+        content: data.data
+      }).then(res => {
+        console.log('addDoc', res)
         resolve(id)
       })
+      // writeFile(`${appPath}/docs/${id}.xml`, data.data).then(() => {
+      //   console.log('write xml success', id)
+      //   resolve(id)
+      // })
     })
   })
 }

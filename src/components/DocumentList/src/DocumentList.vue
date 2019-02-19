@@ -63,6 +63,7 @@ import { readFile } from '@/utils/file'
 import { mapGetters, mapState, mapActions } from 'vuex'
 import { FileCard, FileCardGroup } from '@/components/FileCard'
 import { fileHandleMenu, fileCloudMenu, fileInfoMenu } from '../Menu'
+import LocalDAO from '@/../db/api'
 
 export default {
   name: 'DocumentList',
@@ -241,9 +242,12 @@ export default {
 
       this.SET_CURRENT_FILE(file.id)
       if (file.type === 'doc') {
-        readFile(`${appPath}/docs/${file.id}.xml`).then(data => {
-          this.SET_EDITOR_CONTENT(data.data)
+        LocalDAO.doc.get(file.id).then(res => {
+          this.SET_EDITOR_CONTENT(res)
         })
+        // readFile(`${appPath}/docs/${file.id}.xml`).then(data => {
+        //   this.SET_EDITOR_CONTENT(data.data)
+        // })
       }
     },
 

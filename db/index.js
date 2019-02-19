@@ -2,25 +2,28 @@
 const Datastore = require('nedb')
 const path = require('path')
 
-function db (app) {
-  const files_db = new Datastore({
-    filename: path.join(app.getAppPath(), 'db/files.db')
+// const isDevelopment = process.env.NODE_ENV !== 'production'
+
+function loadDB (app) {
+  let filesDB = null
+  let docsDB = null
+
+  filesDB = new Datastore({
+    filename: path.resolve(app.getAppPath(), '../database/files.db'),
+    autoload: true
   })
 
-  files_db.loadDatabase(function (err) {    // Callback is optional
-    // Now commands will be executed
-    if (err) {
-      console.error(err)
-    } else {
-      console.log('db loaded')
-    }
+  docsDB = new Datastore({
+    filename: path.resolve(app.getAppPath(), '../database/docs.db'),
+    autoload: true
   })
 
   return {
-    files_db: files_db
+    filesDB,
+    docsDB
   }
 }
 
 export {
-  db
+  loadDB
 }

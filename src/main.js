@@ -8,7 +8,6 @@ import Modal from '@/components/Modal'
 import Menu from '@/components/Menu'
 const { remote, shell, webFrame } = require('electron')
 console.log(remote.app.getAppPath())
-console.log(remote.app.database)
 
 Vue.use(CKEditor)
 Vue.use(CollapseTransition)
@@ -26,38 +25,11 @@ Vue.prototype.$hub = EventHub
 // console.log(app, ses.getUserAgent())
 // shell.beep()
 // console.log(curWin.webContents)
-const { files_db } = remote.app.database
+// const { files_db } = remote.app.database
 
 // files_db.remove({}, { multi: true }, function (err, numRemoved) {
 //   console.log(numRemoved + ' docs removed' )
 // })
-
-files_db.find({}, (err, docs) => {
-  if (err) {
-    console.error(err)
-  } else {
-    console.log('all documents in collection files_db:', docs)
-    if (docs.length === 0) {
-      console.log('init files_db')
-      files_db.insert({
-        '000000': {
-          id: '000000',
-          type: 'folder',
-          title: '我的文件夹',
-          content: '',
-          create_at: new Date(),
-          update_at: new Date(),
-          file_size: 0,
-          file_path: ['/'],
-          ancestor_folders: [],
-          child_folders: []
-        }
-      }, () => {
-
-      })
-    }
-  }
-})
 
 Vue.config.productionTip = false
 

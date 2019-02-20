@@ -1,8 +1,9 @@
+import structure from '../controllers/structure'
 import files from '../controllers/files'
 import doc from '../controllers/doc'
-console.log('files', files)
 
 const LocalDAO = {
+  structure,
   files,
   doc
 }

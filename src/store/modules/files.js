@@ -179,7 +179,7 @@ const mutations = {
   },
 
   SAVE_FILES (state) {
-    LocalDAO.files.saveAll(JSON.stringify(state.files_map))
+    LocalDAO.structure.save(JSON.stringify(state.files_map))
   },
 
   SET_CURRENT_FOLDER (state, id) {
@@ -369,7 +369,7 @@ const getters = {
           }
           if (file.id &&
             state.doc_map[file.id] &&
-            state.doc_map[file.id].data.indexOf(state.search_keyword) > -1) {
+            formatContent(state.doc_map[file.id].data).indexOf(state.search_keyword) > -1) {
             return true
           }
         } else {
@@ -389,7 +389,7 @@ const getters = {
 
 function fetchLocalFiles () {
   return new Promise((resolve, reject) => {
-    LocalDAO.files.getAll().then(resp => {
+    LocalDAO.structure.get().then(resp => {
       return JSON.parse(resp)
     }).then(data => {
       if (!data['000000']) {

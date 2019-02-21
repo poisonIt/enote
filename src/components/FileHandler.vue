@@ -14,7 +14,12 @@
       <p class="ellipsis">{{ titleValue }}</p>
     </div>
     <div class="handler">
-      ooooo
+      <div class="handler-item"
+        v-for="(item, index) in handlers"
+        :key="index">
+        <div class="icon"
+          :class="iconClassComputed(item)"></div>
+      </div>
     </div>
   </div>
 </template>
@@ -29,7 +34,8 @@ export default {
     return {
       containerWidth: '0px',
       titleValue: '',
-      isInputFocused: false
+      isInputFocused: false,
+      handlers: ['share', 'fetch', 'search', 'tag', 'more', 'window', 'info']
     }
   },
 
@@ -76,6 +82,10 @@ export default {
         let space = this.viewType === 'expanded' ? 500 : 360
         this.containerWidth = document.body.clientWidth - space + 'px'
       })
+    },
+
+    iconClassComputed (key) {
+      return 'icon-' + key
     }
   }
 }
@@ -121,4 +131,28 @@ export default {
 
 .hide
   opacity 0
+
+.handler
+  display flex
+.icon
+  width 15px
+  height 15px
+  background-size contain
+  background-position center
+  background-repeat no-repeat
+  margin 0 5px
+  &.icon-share
+    background-image url('../assets/images/lanhu/share@2x.png')
+  &.icon-fetch
+    background-image url('../assets/images/lanhu/fetch@2x.png')
+  &.icon-search
+    background-image url('../assets/images/lanhu/search@2x.png')
+  &.icon-tag
+    background-image url('../assets/images/lanhu/tag@2x.png')
+  &.icon-more
+    background-image url('../assets/images/lanhu/more@2x.png')
+  &.icon-window
+    background-image url('../assets/images/lanhu/window@2x.png')
+  &.icon-info
+    background-image url('../assets/images/lanhu/info@2x.png')
 </style>

@@ -391,12 +391,12 @@ export default {
   position relative
   width 40px
   height 24px
-  border-radius 4px
-  border 1px solid #dedede
+  border-radius 0
+  border none
   &::before
     content ''
     display block
-    width 18px
+    width 28px
     height 18px
     position absolute
     top 50%
@@ -410,7 +410,7 @@ export default {
       opacity 0.4
   &.button-back
     &::before
-      background-image url(../../../assets/images/rollback.png)
+      background-image url(../../../assets/images/lanhu/back@2x.png)
   &.expand
     &::before
       width 14px

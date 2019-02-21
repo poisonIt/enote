@@ -257,12 +257,12 @@ export default {
   width 18px
   height 18px
   border-radius 3px
-  background-image url(../../../assets/images/document.png)
+  background-image url(../../../assets/images/lanhu/doc@2x.png)
   background-repeat no-repeat
   background-position center
   background-size contain
   &.folder
-    background-image url(../../../assets/images/folder.png)
+    background-image url(../../../assets/images/lanhu/folder@2x.png)
 
 .body
   margin: 12px 0

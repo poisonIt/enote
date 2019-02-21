@@ -4,7 +4,6 @@
       :editor="editor"
       v-model="editorHtml"
       @ready="onEditorReady"
-      @input="handleEditorInput"
       @blur="saveData"
       :config="editorConfig">
     </ckeditor>
@@ -73,10 +72,6 @@ export default {
       this.$hub.pool.push(() => {
         this.handleResize()
       })
-    },
-
-    handleEditorInput () {
-      // console.log('handleEditorInput', this.editorInstance.getData())
     },
 
     saveData () {

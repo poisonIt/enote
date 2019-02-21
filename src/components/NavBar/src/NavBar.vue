@@ -11,7 +11,9 @@
       ref="tree">
       <div class="nav-node"
         slot-scope="{ node, data }">
-        <div class="icon-folder"></div>
+        <div class="icon"
+          :class="iconClassComputed(node)"
+          v-if="node.data.link"></div>
         <div class="title ellipsis"
           v-show="typingNode !== node">
           {{ data.title }}
@@ -19,7 +21,13 @@
         <div class="click-mask"
           v-show="typingNode !== node"
           @click="handleItemClick(node)"
-          @contextmenu.prevent="handleContextmenu(node)"></div>
+          @contextmenu.prevent="handleContextmenu(node.data)"></div>
+         <div class="clear-tag"
+          v-show="node.data.link === 'tag'"
+          @click="handleClearTag()">
+          <span>X</span>
+          <span>清空</span>
+        </div>
         <input class="node-input"
           :class="{ 'show' : typingNode === node }"
           v-show="typingNode === node"
@@ -89,6 +97,25 @@ export default {
           link: 'folders',
           type: 'folder',
           children: []
+        },
+        {
+          title: '标签',
+          link: 'tags',
+          type: 'tag',
+          children: [
+            {
+              title: '标签一',
+              type: 'select'
+            },
+            {
+              title: '标签二',
+              type: 'select'
+            },
+            {
+              title: '标签三',
+              type: 'select'
+            }
+          ]
         },
         {
           title: '回收站',
@@ -305,9 +332,20 @@ export default {
       this.clickRecycleNode()
     },
 
-    navIcon (node) {
+    handleClearTag () {
+      console.log('handleClearTag')
+    },
+
+    iconClassComputed (node) {
+      if (node.data.type === 'folder') {
+        return node.expanded ? 'icon-folder_open' : 'icon-folder_close'
+      }
       return 'icon-' + node.data.link
     },
+
+    // navIcon (node) {
+    //   return 'icon-' + node.data.link
+    // },
 
     handleClickMini (link) {
       this.$hub.dispatchHub('clickNavMini', this, link)
@@ -346,10 +384,27 @@ export default {
     font-size 14px
     &.ellipsis
       // padding-left 8px
+  .clear-tag
+    position absolute
+    display flex
+    align-items center
+    top 50%
+    right 18px
+    transform translateY(-50%)
+    text-align center
+    font-size 12px
+    color #3161A3
+    & span:nth-of-type(1)
+      display block
+      transform scaleY(0.8)
   .click-mask
     position absolute
     width 100%
     height 100%
+  .icon
+    width 22px
+    height 22px
+    margin-right 10px
   .node-input
     width 98%
     height 26px
@@ -378,7 +433,7 @@ export default {
         width 0
         height 0
         border-top 4px solid transparent
-        border-left 6px solid #a1a1a1
+        border-left 6px solid #13ABC4
         border-bottom 4px solid transparent
       &.icon-expanded::after
         transform rotate(90deg)
@@ -395,13 +450,22 @@ export default {
     background-position center
     &.active
       background-color #eff0f1
-  .icon-latest
-    background-image url(../../../assets/images/documents.png)
-  .icon-folders
-    background-image url(../../../assets/images/folders.png)
-  .icon-recycle
-    background-image url(../../../assets/images/recycle.png)
 
+.icon
+  background-repeat  no-repeat
+  background-size 100%
+  background-position center
+.icon-latest
+  width 28px !important
+  background-image url(../../../assets/images/lanhu/documents@2x.png)
+.icon-folder_open
+  background-image url(../../../assets/images/lanhu/folder_open@2x.png)
+.icon-folder_close
+  background-image url(../../../assets/images/lanhu/folder_close@2x.png)
+.icon-tags
+  background-image url(../../../assets/images/lanhu/tag@2x.png)
+.icon-recycle
+  background-image url(../../../assets/images/lanhu/recycle@2x.png)
 .icon-folder
   display block
   margin-right 6px

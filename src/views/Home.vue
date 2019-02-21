@@ -12,6 +12,7 @@
       </div>
       <div slot="right">
         <FileHandler></FileHandler>
+        <TagHandler></TagHandler>
         <EditorComp style="height: 100%" v-show="currentFile && currentFile.type === 'doc'"></EditorComp>
         <FolderComp style="height: 100%" v-show="currentFile && currentFile.type === 'folder'"></FolderComp>
       </div>
@@ -40,6 +41,7 @@ import FileTool from '@/components/FileTool'
 import PageLayout from '@/components/PageLayout.vue'
 import DocumentList from '@/components/DocumentList'
 import FileHandler from '@/components/FileHandler.vue'
+import TagHandler from '@/components/TagHandler.vue'
 import EditorComp from '@/components/EditorComp.vue'
 import FolderComp from '@/components/FolderComp.vue'
 
@@ -53,6 +55,7 @@ export default {
     PageLayout,
     DocumentList,
     FileHandler,
+    TagHandler,
     EditorComp,
     FolderComp
   },

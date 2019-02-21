@@ -25,6 +25,10 @@
       </i> -->
       <!-- <input type="checkbox"> -->
       <node-content :node="node"></node-content>
+      <div class="icon-select"
+        :class="{ selected : node.selected }"
+        v-if="node.data.type === 'select'">
+      </div>
     </div>
     <!-- <collapse-transition> -->
       <div class="tree-node_children" v-show="expanded">
@@ -134,6 +138,10 @@ export default {
       const store = this.tree.store
       this.tree.store.expandOnClickNode && this.handleExpand()
       store.setCurrentNode(this.node)
+      if (this.node.data.type === 'select') {
+        this.node.selected = !this.node.selected
+        console.log(this.node, this.node.selected)
+      }
     },
 
     handleExpand () {
@@ -205,11 +213,25 @@ export default {
   &.icon-arrow::after
     width 0
     height 0
-    border-top 4px solid transparent
-    border-left 6px solid #a1a1a1
-    border-bottom 4px solid transparent
+    border-top 3px solid transparent
+    border-left 4px solid #13ABC4
+    border-bottom 3px solid transparent
   &.is-expanded::after
     transform rotate(90deg)
+
+.icon-select
+  position absolute
+  top 50%
+  right 10px
+  transform translateY(-50%)
+  width 14px
+  height 14px
+  background-size contain
+  border-radius 50%
+  border 1px solid #13ABC4
+  &.selected
+    border none
+    background-image url('../../../assets/images/icon_selected_fill.png')
 
 .transparent
   opacity 0

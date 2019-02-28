@@ -16,9 +16,35 @@
     <div class="handler">
       <div class="handler-item"
         v-for="(item, index) in handlers"
-        :key="index">
+        :key="index"
+        :data="'FileHandler-' + item"
+        @click="handleClick(item)">
         <div class="icon"
-          :class="iconClassComputed(item)"></div>
+          :class="iconClassComputed(item)"
+          :data="'FileHandler-' + item"></div>
+      </div>
+      <div class="more" v-show="isMoreShowed">
+        <div class="item" @click="handleExport">导出为PDF</div>
+        <div class="item" @click="handleDelete">删除笔记</div>
+        <div class="item" @click="showHistory">查看历史版本</div>
+      </div>
+      <div class="info" v-show="isInfoShowed">
+        <div class="item">
+          <span>创建于：</span>
+          <span>2018年12月31日 13:29:01</span>
+        </div>
+        <div class="item">
+          <span>更新于：</span>
+          <span>2018年12月31日 13:29:01</span>
+        </div>
+        <div class="item">
+          <span>作者：</span>
+          <span>张三</span>
+        </div>
+        <div class="item">
+          <span>文件大小：</span>
+          <span>19KB</span>
+        </div>
       </div>
     </div>
   </div>
@@ -35,7 +61,9 @@ export default {
       containerWidth: '0px',
       titleValue: '',
       isInputFocused: false,
-      handlers: ['share', 'fetch', 'search', 'tag', 'more', 'window', 'info']
+      handlers: ['share', 'fetch', 'search', 'tag', 'more', 'window', 'info'],
+      isMoreShowed: false,
+      isInfoShowed: false
     }
   },
 
@@ -43,7 +71,8 @@ export default {
     ...mapGetters({
       currentFile: 'GET_CURRENT_FILE',
       viewType: 'GET_VIEW_TYPE',
-      viewFileType: 'GET_VIEW_FILE_TYPE'
+      viewFileType: 'GET_VIEW_FILE_TYPE',
+      isTagShowed: 'GET_SHOW_TAG_HANDLER'
     })
   },
 
@@ -64,10 +93,20 @@ export default {
     this.$hub.pool.push(() => {
       this.handleResize()
     })
+
+    window.addEventListener('click', this.handleWindowClick)
+  },
+
+  destroyed () {
+    window.removeEventListener('click', this.handleWindowClick)
   },
 
   methods: {
-    ...mapActions(['SAVE_FILE_TITLE']),
+    ...mapActions([
+      'SAVE_FILE_TITLE',
+      'TOGGLE_SHOW_TAG_HANDLER',
+      'TOGGLE_SHOW_SHARE_PANEL'
+    ]),
 
     handleInputBlur () {
       this.isInputFocused = false
@@ -84,8 +123,90 @@ export default {
       })
     },
 
+    handleWindowClick (e) {
+      let dataAttr = e.target.getAttribute('data')
+      if (dataAttr !== 'FileHandler-info') {
+        this.isInfoShowed = false
+      }
+      if (dataAttr !== 'FileHandler-more') {
+        this.isMoreShowed = false
+      }
+      if (dataAttr !== 'FileHandler-tag') {
+        this.TOGGLE_SHOW_TAG_HANDLER(false)
+      }
+    },
+
     iconClassComputed (key) {
       return 'icon-' + key
+    },
+
+    handleClick (key) {
+      switch (key) {
+        case 'share':
+          this.share()
+          break
+        case 'fetch':
+          this.fetch()
+          break
+        case 'search':
+          this.search()
+          break
+        case 'tag':
+          this.showTag()
+          break
+        case 'more':
+          this.showMore()
+          break
+        case 'window':
+          this.newWindow()
+          break
+        case 'info':
+          this.showInfo()
+          break
+        default:
+          break
+      }
+    },
+
+    fetch () {
+      console.log('fetch')
+    },
+
+    search () {
+      console.log('search')
+    },
+
+    share () {
+      console.log('share')
+      this.TOGGLE_SHOW_SHARE_PANEL(true)
+    },
+
+    showTag () {
+      this.TOGGLE_SHOW_TAG_HANDLER(!this.isTagShowed)
+    },
+
+    showMore () {
+      this.isMoreShowed = !this.isMoreShowed
+    },
+
+    newWindow () {
+      console.log('newWindow')
+    },
+
+    showInfo () {
+      this.isInfoShowed = !this.isInfoShowed
+    },
+
+    handleExport () {
+      console.log('handleExport')
+    },
+
+    handleDelete () {
+      console.log('handleDelete')
+    },
+
+    showHistory () {
+      console.log('showHistory')
     }
   }
 }
@@ -133,7 +254,11 @@ export default {
   opacity 0
 
 .handler
+  width 40%
   display flex
+  position relative
+  justify-content space-between
+
 .icon
   width 15px
   height 15px
@@ -155,4 +280,35 @@ export default {
     background-image url('../assets/images/lanhu/window@2x.png')
   &.icon-info
     background-image url('../assets/images/lanhu/info@2x.png')
+
+.more, .info
+  position absolute
+  top 24px
+  border 1px solid #13ABC4
+  background-color #fff
+  padding 10px 0
+  font-size 10px
+  line-height 20px
+  font-weight 600
+  z-index 9999
+  .item
+    padding 0 10px
+
+.more
+  padding 0
+  right 60px
+  .item
+    padding 4px 10px
+  .item:hover
+    background-color #13ABC4
+    color #fff
+
+.info
+  width 100%
+  height 100px
+  .item
+    span:nth-of-type(1)
+      display inline-block
+      width 50px
+      text-align right
 </style>

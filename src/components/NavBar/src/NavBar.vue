@@ -21,7 +21,7 @@
         <div class="click-mask"
           v-show="typingNode !== node"
           @click="handleItemClick(node)"
-          @contextmenu.prevent="handleContextmenu(node.data)"></div>
+          @contextmenu.prevent="handleContextmenu(node)"></div>
          <div class="clear-tag"
           v-show="node.data.link === 'tag'"
           @click="handleClearTag()">
@@ -42,7 +42,7 @@
         :class="{ active : navMiniActive('latest') }"
         @click="handleClickMini('latest')">
       </div>
-      <div class="icon icon-folders"
+      <div class="icon icon-folder_open"
         :class="{ active : navMiniActive(['folders', 'new folder']) }"
         @click="handleClickMini('folders')">
       </div>
@@ -443,7 +443,7 @@ export default {
   display flex
   flex-direction column
   .icon
-    width 80px
+    width 80px !important
     height 80px
     background-repeat  no-repeat
     background-size 28%

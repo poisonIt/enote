@@ -2,6 +2,7 @@
   <div id="app">
     <AppHeader></AppHeader>
     <Home></Home>
+    <!-- <div class="click-mask"></div> -->
   </div>
 </template>
 
@@ -105,4 +106,14 @@ ul, li
     border none
     background-color #198cf0
     color #fff
+
+.click-mask
+  position fixed
+  top 0
+  bottom 0
+  left 0
+  right 0
+  width 100%
+  height 100%
+  background-color transparent
 </style>

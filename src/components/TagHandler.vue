@@ -1,6 +1,7 @@
 <template>
   <div class="container"
-    ref="container">
+    ref="container"
+    v-if="isShowed">
     <div class="tag-list">标签</div>
     <div class="tag-item"
       v-for="(item, index) in tags"
@@ -34,6 +35,7 @@ export default {
 
   computed: {
     ...mapGetters({
+      isShowed: 'GET_SHOW_TAG_HANDLER'
     })
   },
 
@@ -90,6 +92,7 @@ export default {
 
 .tag-item
   position relative
+  height 21px
   margin-right 10px
   font-size 10px
   font-weight 600
@@ -97,6 +100,7 @@ export default {
   border-radius 4px
   padding 3px 16px
   font-size 10px
+  white-space nowrap
   &:hover
     &::after
       position absolute

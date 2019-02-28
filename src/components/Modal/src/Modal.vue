@@ -51,6 +51,10 @@ export default {
     height: {
       type: String,
       default: 'auto'
+    },
+    top: {
+      type: String,
+      default: '10vh'
     }
   },
 
@@ -58,7 +62,8 @@ export default {
     modalStyle () {
       return {
         width: this.width,
-        height: this.height
+        height: this.height,
+        margin: this.top + ' auto'
       }
     }
   },
@@ -87,7 +92,7 @@ export default {
   z-index 10001
 .modal
   position relative
-  margin 10vh auto
+  // margin 10vh auto
   background-color #f5f5f5
   box-shadow 0px 3px 10px 1px rgba(0, 0, 0, 0.3)
 

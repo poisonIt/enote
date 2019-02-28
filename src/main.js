@@ -5,13 +5,19 @@ import CKEditor from '@ckeditor/ckeditor5-vue'
 import EventHub from '@/utils/eventhub'
 import CollapseTransition from '@/utils/transitions'
 import Modal from '@/components/Modal'
+import BSelect from '@/components/Select'
+import BOption from '@/components/Option'
 import Menu from '@/components/Menu'
+import '@/assets/css/font-awesome.min.css'
+
 const { remote, shell, webFrame } = require('electron')
 console.log(remote.app.getAppPath())
 
 Vue.use(CKEditor)
 Vue.use(CollapseTransition)
 Vue.use(Modal)
+Vue.use(BSelect)
+Vue.use(BOption)
 Vue.use(Menu)
 
 Vue.prototype.$remote = remote

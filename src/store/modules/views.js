@@ -7,6 +7,7 @@ const state = {
   view_file_list_type: 'summary',
   view_file_sort_type: 'create_at',
   view_file_sort_order: 'down',
+  selected_tags: [],
   show_move_pannel: false,
   show_user_panel: false,
   show_share_panel: false,
@@ -29,6 +30,11 @@ const mutations = {
 
   SET_VIEW_FILE_TYPE (state, type) {
     state.view_file_type = type
+  },
+
+  SET_SELECTED_TAGS (state, tags) {
+    console.log('SET_SELECTED_TAGS', tags)
+    state.selected_tags = tags
   },
 
   SET_EDITOR_CONTENT (state, content) {
@@ -82,6 +88,10 @@ const actions = {
     commit('SET_VIEW_FILE_TYPE', type)
   },
 
+  SET_SELECTED_TAGS ({ commit }, tags) {
+    commit('SET_SELECTED_TAGS', tags)
+  },
+
   SET_EDITOR_CONTENT ({ commit }, content) {
     commit('SET_EDITOR_CONTENT', content)
   },
@@ -130,6 +140,10 @@ const getters = {
 
   GET_VIEW_FILE_TYPE (state) {
     return state.view_file_type
+  },
+
+  GET_SELECTED_TAGS (state) {
+    return state.selected_tags
   },
 
   GET_MOVE_FILE (state) {

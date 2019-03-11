@@ -2,6 +2,7 @@ import { remove } from 'lodash'
 import dayjs from 'dayjs'
 import LocalDAO from '../../../db/api'
 import docTemplate from '../../../db/docTemplate'
+import { GenNonDuplicateID } from '@/utils/utils'
 
 const docBriefTemplate = formatContent(docTemplate)
 let filesArrTemp = []
@@ -10,6 +11,7 @@ const state = {
   files_map: {},
   files_arr: [],
   doc_map: {},
+  tags_arr: [],
   folders: {},
   current_folder_id: null,
   current_file_id: null,
@@ -35,6 +37,11 @@ const mutations = {
       file.brief = brief.slice(0, 20)
     }
     file.file_size = brief.length
+  },
+
+  UPDATE_FILE_UPDATE_AT (state, id) {
+    let file = state.files_map[id]
+    file.update_at = String(dayjs(new Date()).valueOf())
   },
 
   ADD_FILE (state, obj) {
@@ -98,6 +105,37 @@ const mutations = {
       }
       targetFolder.child_docs.push(file.id)
     }
+  },
+
+  SET_TAGS (state, tags) {
+    console.log('SET_TAGS', tags)
+    state.tags_arr = tags
+  },
+
+  ADD_FILE_TAG (state, opts) {
+    let { fileId, tagId } = opts
+    let file = state.files_map[fileId]
+    if (!file.tags) file.tags = []
+    file.tags.push(tagId)
+  },
+
+  REMOVE_FILE_TAG (state, opts) {
+    let { fileId, tagId } = opts
+    let file = state.files_map[fileId]
+    console.log('REMOVE_FILE_TAG', file)
+    remove(file.tags, tagId)
+    console.log('REMOVE_FILE_TAG', file)
+    // LocalDAO.tag.getByName(tag).then(tagObj => {
+    //   if (tagObj) {
+    //     LocalDAO.tag.removeFile({
+    //       fileId: id,
+    //       name: tag
+    //     }).then(() => {
+    //       remove(file.tags, item => item === tagObj._id)
+    //       LocalDAO.structure.save(JSON.stringify(state.files_map))
+    //     })
+    //   }
+    // })
   },
 
   CLEAR_ALL_RECYCLE (state) {
@@ -219,9 +257,13 @@ const actions = {
     commit('UPDATE_FILES_ARR')
   },
 
+  UPDATE_FILE_UPDATE_AT ({ commit }, id) {
+    commit('UPDATE_FILE_UPDATE_AT', id)
+  },
+
   async SET_DOC_BRIEF_FORM_LOCAL ({ dispatch, commit }) {
     const filesContent = await fetchAllLocalDocContent()
-    console.log('filesContent', filesContent)
+    // console.log('filesContent', filesContent)
     commit('UPDATE_DOC_MAP', filesContent)
     filesContent.forEach(content => {
       content.brief = formatContent(content.data)
@@ -256,6 +298,7 @@ const actions = {
 
   EDIT_FILE ({ commit }, opts) {
     commit('EDIT_FILE', opts)
+    commit('UPDATE_FILE_UPDATE_AT', opts.id)
     commit('UPDATE_FILES_ARR')
     commit('UPDATE_FOLDERS')
     commit('SAVE_FILES')
@@ -263,10 +306,66 @@ const actions = {
 
   MOVE_FILE ({ commit }, opts) {
     commit('MOVE_FILE', opts)
+    commit('UPDATE_FILE_UPDATE_AT', opts.fileId)
+    commit('UPDATE_FILE_UPDATE_AT', opts.targetId)
     commit('UPDATE_FILES_MAP')
     commit('UPDATE_FILES_ARR')
     commit('UPDATE_FOLDERS')
     commit('SAVE_FILES')
+  },
+
+  SET_TAGS_FROM_LOCAL ({ commit }) {
+    LocalDAO.tag.getAll().then(res => {
+      console.log('SET_TAGS_FROM_LOCAL', res)
+      commit('SET_TAGS', res)
+    })
+  },
+
+  async ADD_FILE_TAG ({ commit }, opts) {
+    let { id, tag } = opts
+    await LocalDAO.tag.getByName(tag).then(tagObj => {
+      if (!tagObj) {
+        LocalDAO.tag.add({
+          fileId: id,
+          name: tag
+        }).then(tagId => {
+          commit('ADD_FILE_TAG', {
+            fileId: id,
+            tagId: tagId
+          })
+          commit('SAVE_FILES')
+        })
+      } else {
+        LocalDAO.tag.addFile({
+          fileId: id,
+          name: tag
+        }).then(() => {
+          commit('ADD_FILE_TAG', {
+            fileId: id,
+            tagId: tagObj._id
+          })
+          commit('SAVE_FILES')
+        })
+      }
+    })
+  },
+
+  REMOVE_FILE_TAG ({ commit }, opts) {
+    let { id, tag } = opts
+    LocalDAO.tag.getByName(tag).then(tagObj => {
+      if (tagObj) {
+        LocalDAO.tag.removeFile({
+          fileId: id,
+          name: tag
+        })
+        commit('REMOVE_FILE_TAG', {
+          fileId: id,
+          tagId: tagObj._id
+        })
+        commit('SAVE_FILES')
+      }
+    })
+    // commit('REMOVE_FILE_TAG', opts)
   },
 
   CLEAR_ALL_RECYCLE ({ commit }) {
@@ -302,11 +401,19 @@ const actions = {
     })
     let content = await fetchLocalDocContent(id)
     content.brief = formatContent(content.data)
-    dispatch('UPDATE_FILE_BRIEF', content)
+    await dispatch('UPDATE_FILE_BRIEF', content)
+    await dispatch('UPDATE_FILE_UPDATE_AT', id)
+    commit('UPDATE_FILES_ARR')
+    commit('SAVE_FILES')
+    // dispatch('UPDATE_FILE_BRIEF', content).then(() => {
+    //   dispatch('UPDATE_FILE_UPDATE_AT', id).then(() => {
+    //   })
+    // })
   },
 
   SAVE_FILE_TITLE ({ commit }, obj) {
     commit('SAVE_FILE_TITLE', obj)
+    commit('UPDATE_FILE_UPDATE_AT', obj.id)
     commit('UPDATE_FILES_ARR')
     commit('UPDATE_FOLDERS')
     commit('SAVE_FILES')
@@ -381,6 +488,20 @@ const getters = {
   GET_CURRENT_FILE (state) {
     return state.files_map[state.current_file_id]
   },
+
+
+  GET_ALL_TAGS (state) {
+    return state.tags_arr
+  },
+
+  // GET_ALL_TAGS_MAP (state) {
+  //   return state.tags_map
+  // },
+
+  // GET_CURRENT_FILE_TAGS (state) {
+  //   let tagArr = state.files_map[state.current_file_id].tags || []
+  //   return tagArr.map(tagId => state.tags_map[tagId])
+  // },
 
   GET_SEARCH_KEYWORD (state) {
     return state.search_keyword

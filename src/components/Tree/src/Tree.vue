@@ -86,6 +86,7 @@ export default {
     data: {
       handler: function (newVal) {
         this.store.setData(newVal)
+        this.$emit('input', [])
       },
       deep: true
     }

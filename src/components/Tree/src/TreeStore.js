@@ -23,6 +23,7 @@ export default class TreeStore {
     }
 
     this.nodeMap = {}
+    this.selectedNodes = []
     this.root = new Node({
       data: this.data,
       store: this
@@ -31,6 +32,7 @@ export default class TreeStore {
 
   setData (newVal) {
     this.nodeMap = {}
+    this.selectedNodes = []
     this.root.setData(newVal)
   }
 

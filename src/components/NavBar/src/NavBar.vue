@@ -3,6 +3,7 @@
     <Tree
       v-show="viewType === 'expanded'"
       :data="nav"
+      v-model="selectedTags"
       :labelProxy="'name'"
       :expand-on-click-node="false"
       :prevent-default-click="true"
@@ -61,6 +62,7 @@ import { folderMenu, resourceMenu, recycleMenu } from '../Menu'
 import { GenNonDuplicateID } from '@/utils/utils'
 import mixins from '../mixins'
 import Tree from '@/components/Tree'
+import LocalDAO from '../../../../db/api'
 
 export default {
   name: 'NavBar',
@@ -86,6 +88,7 @@ export default {
       ],
       nodeInput: '',
       folderIndex: 1,
+      selectedTags: [],
       nav: [
         {
           title: '最新文档',
@@ -102,20 +105,7 @@ export default {
           title: '标签',
           link: 'tags',
           type: 'tag',
-          children: [
-            {
-              title: '标签一',
-              type: 'select'
-            },
-            {
-              title: '标签二',
-              type: 'select'
-            },
-            {
-              title: '标签三',
-              type: 'select'
-            }
-          ]
+          children: []
         },
         {
           title: '回收站',
@@ -129,13 +119,41 @@ export default {
   computed: {
     ...mapGetters({
       viewType: 'GET_VIEW_TYPE',
-      viewFileType: 'GET_VIEW_FILE_TYPE'
-    })
+      viewFileType: 'GET_VIEW_FILE_TYPE',
+      allTags: 'GET_ALL_TAGS'
+    }),
+
+    // selectedNodes () {
+    //   let result = []
+    //   for (let i in this.$refs.tree.store.nodeMap) {
+    //     if (this.$refs.tree.store.nodeMap[i].selected) {
+    //       result.push(this.$refs.tree.store.nodeMap[i])
+    //     }
+    //   }
+    //   console.log('selectedNodes', result)
+    //   return result
+    // }
+  },
+
+  watch: {
+    allTags (val) {
+      console.log('allTags', val)
+      this.updateTags(val)
+    },
+
+    selectedTags (val) {
+      this.SET_VIEW_NAME(val.map(item => item.data.title).join('、'))
+      console.log('3333', val)
+      this.SET_SELECTED_TAGS(val.map(item => item.data.id))
+    }
   },
 
   mounted () {
     const curNode = this.$refs.tree.store.currentNode
     this.handleItemClick(curNode)
+    LocalDAO.tag.getAll().then(res => {
+      this.updateTags(res)
+    })
   },
 
   methods: {
@@ -149,7 +167,8 @@ export default {
       'SET_VIEW_NAME',
       'SET_VIEW_FILE_TYPE',
       'SET_CURRENT_FOLDER',
-      'TOGGLE_SHOW_MOVE_PANEL'
+      'TOGGLE_SHOW_MOVE_PANEL',
+      'SET_SELECTED_TAGS'
     ]),
 
     getTreeNode (link) {
@@ -177,8 +196,14 @@ export default {
       node.instance.handleClick()
       this.currentNode = node
       this.SET_VIEW_FOLDER(node.uid)
-      this.SET_VIEW_NAME(node.data.title)
-      this.SET_VIEW_FILE_TYPE(node.data.link)
+      if (node.data.type !== 'select') {
+        this.SET_VIEW_NAME(node.data.title)
+      }
+      if (node.data.type === 'select') {
+        this.SET_VIEW_FILE_TYPE('tags')
+      } else {
+        this.SET_VIEW_FILE_TYPE(node.data.link)
+      }
       if (node.data.type === 'folder') {
         this.SET_CURRENT_FOLDER(node.data.id)
       }
@@ -357,6 +382,22 @@ export default {
       } else {
         return this.viewFileType === link
       }
+    },
+
+    updateTags (allTags) {
+      this.$set(
+        this.nav[2],
+        'children',
+        allTags.filter(item => item.file_ids.length > 0).sort((a, b) => {
+          return a.create_at.getTime() - b.create_at.getTime()
+        }).map(item => {
+          return {
+            id: item._id,
+            title: item.name,
+            type: 'select'
+          }
+        })
+      )
     }
   }
 }

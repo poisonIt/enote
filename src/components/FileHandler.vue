@@ -31,11 +31,11 @@
       <div class="info" v-show="isInfoShowed">
         <div class="item">
           <span>创建于：</span>
-          <span>2018年12月31日 13:29:01</span>
+          <span>{{ currentFile.create_at | date }}</span>
         </div>
         <div class="item">
           <span>更新于：</span>
-          <span>2018年12月31日 13:29:01</span>
+          <span>{{ currentFile.update_at | date }}</span>
         </div>
         <div class="item">
           <span>作者：</span>
@@ -43,7 +43,7 @@
         </div>
         <div class="item">
           <span>文件大小：</span>
-          <span>19KB</span>
+          <span>{{ currentFile.file_size | size }}</span>
         </div>
       </div>
     </div>
@@ -51,6 +51,7 @@
 </template>
 
 <script>
+import dayjs from 'dayjs'
 import { mapGetters, mapActions } from 'vuex'
 
 export default {
@@ -83,7 +84,27 @@ export default {
 
     currentFile (val) {
       if (val) {
+        console.log('currentFile', val)
         this.titleValue = val.title
+      }
+    }
+  },
+
+  filters: {
+    date (timeStamp) {
+      return dayjs(Number(timeStamp)).format('YYYY年MM月DD日 hh:mm:ss')
+    },
+
+    size (val) {
+      val = val + ''
+      if (val.length <= 3) {
+        return val + ' B'
+      } else if (val.length <= 6) {
+        return (parseInt(val) / 1000).toFixed(2) + ' KB'
+      } else if (val.length <= 9) {
+        return (parseInt(val) / 1000000).toFixed(2) + ' MB'
+      } else if (val.length <= 12) {
+        return (parseInt(val) / 1000000000).toFixed(2) + ' GB'
       }
     }
   },
@@ -132,7 +153,7 @@ export default {
         this.isMoreShowed = false
       }
       if (dataAttr !== 'FileHandler-tag') {
-        this.TOGGLE_SHOW_TAG_HANDLER(false)
+        // this.TOGGLE_SHOW_TAG_HANDLER(false)
       }
     },
 
@@ -304,8 +325,9 @@ export default {
     color #fff
 
 .info
-  width 100%
   height 100px
+  right 10%
+  white-space nowrap
   .item
     span:nth-of-type(1)
       display inline-block

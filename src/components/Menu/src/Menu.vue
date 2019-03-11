@@ -1,5 +1,5 @@
 <template>
-  <transition name="fade">
+  <transition :name="transition">
     <div class="menu"
       v-show="visible"
       :style="{ width: width + 'px', top: top + 'px' }">
@@ -64,6 +64,10 @@ export default {
       default: () => {
         return []
       }
+    },
+    transition: {
+      type: String,
+      default: 'dropdown'
     }
   },
 

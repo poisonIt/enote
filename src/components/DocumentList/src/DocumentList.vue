@@ -56,7 +56,7 @@
 </template>
 
 <script>
-import { clone } from 'lodash'
+import { clone, intersection } from 'lodash'
 import dayjs from 'dayjs'
 import mixins from '../mixins'
 // import { readFile } from '@/utils/file'
@@ -146,7 +146,8 @@ export default {
       viewFolder: 'GET_VIEW_FOLDER',
       viewFileListType: 'GET_VIEW_FILE_LIST_TYPE',
       viewFileSortType: 'GET_VIEW_FILE_SORT_TYPE',
-      viewFileSortOrder: 'GET_VIEW_FILE_SORT_ORDER'
+      viewFileSortOrder: 'GET_VIEW_FILE_SORT_ORDER',
+      selectedTags: 'GET_SELECTED_TAGS'
     })
   },
 
@@ -164,12 +165,37 @@ export default {
         case 'new folder':
           list = currentFiles
           break
+        case 'tags':
+          console.log('11222', this.latestFiles, this.selectedTags)
+          if (this.selectedTags.length === 0) {
+            list = this.latestFiles
+            break
+          }
+          list = this.latestFiles.filter(item => intersection(item.tags, this.selectedTags).length === this.selectedTags.length)
+          break
         case 'recycle':
           list = this.recycle
           break
         default:
           list = this.latestFiles
           break
+      }
+      this.fileList = this.fileListSortFunc(clone(list))
+    },
+
+    selectedTags (val) {
+      console.log('watch-selectedTags', val)
+      let list = []
+      if (this.viewFileType === 'tags') {
+        if (val.length === 0) {
+          list = this.latestFiles
+        } else {
+          for (let i in this.latestFiles) {
+            console.log('1111', this.latestFiles[i])
+            console.log('2222', intersection(this.latestFiles[i].tags, val))
+          }
+          list = this.latestFiles.filter(item => intersection(item.tags, val).length === val.length)
+        }
       }
       this.fileList = this.fileListSortFunc(clone(list))
     },

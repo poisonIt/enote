@@ -27,7 +27,7 @@ export default {
       isMenuVisible: false,
       menuData: [
         {
-          label: '新建模版笔记',
+          label: '新建模板笔记',
           value: 'new_doc'
         },
         {

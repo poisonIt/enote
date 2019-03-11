@@ -44,6 +44,7 @@
 
 <script>
 import { NodeMixins } from '../mixins'
+import { remove } from 'lodash'
 
 export default {
   name: 'TreeNode',
@@ -140,7 +141,12 @@ export default {
       store.setCurrentNode(this.node)
       if (this.node.data.type === 'select') {
         this.node.selected = !this.node.selected
-        console.log(this.node, this.node.selected)
+        if (this.node.selected) {
+          this.node.store.selectedNodes.push(this.node)
+        } else {
+          this.$delete(this.node.store.selectedNodes, this.node.store.selectedNodes.indexOf(this.node))
+        }
+        this.node.store.instance.$emit('input', this.node.store.selectedNodes)
       }
     },
 

@@ -266,6 +266,7 @@ const actions = {
     // console.log('filesContent', filesContent)
     commit('UPDATE_DOC_MAP', filesContent)
     filesContent.forEach(content => {
+      console.log('1111111', content)
       content.brief = formatContent(content.data)
       dispatch('UPDATE_FILE_BRIEF', content)
     })
@@ -392,7 +393,7 @@ const actions = {
   },
 
   async SAVE_DOC ({ dispatch, commit }, obj) {
-    console.log('SAVE_DOC')
+    console.log('SAVE_DOC', obj)
     const { id, html } = obj
     // await writeFile(`${appPath}/docs/${id}.xml`, html)
     LocalDAO.doc.update({

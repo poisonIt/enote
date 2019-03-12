@@ -12,7 +12,8 @@ const state = {
   show_user_panel: false,
   show_share_panel: false,
   show_tag_handler: false,
-  editor_content: ''
+  editor_content: '',
+  editor_content_cache: ''
 }
 
 const mutations = {
@@ -39,6 +40,10 @@ const mutations = {
 
   SET_EDITOR_CONTENT (state, content) {
     state.editor_content = content
+  },
+
+  SET_EDITOR_CONTENT_CACHE (state, content) {
+    state.editor_content_cache = content
   },
 
   SET_VIEW_FILE_LIST_TYPE (state, type) {
@@ -94,6 +99,10 @@ const actions = {
 
   SET_EDITOR_CONTENT ({ commit }, content) {
     commit('SET_EDITOR_CONTENT', content)
+  },
+
+  SET_EDITOR_CONTENT_CACHE ({ commit }, content) {
+    commit('SET_EDITOR_CONTENT_CACHE', content)
   },
 
   SET_VIEW_FILE_LIST_TYPE ({ commit }, type) {
@@ -152,6 +161,10 @@ const getters = {
 
   GET_EDITOR_CONTENT (state) {
     return state.editor_content
+  },
+
+  GET_EDITOR_CONTENT_CACHE (state) {
+    return state.editor_content_cache
   },
 
   GET_VIEW_FILE_LIST_TYPE (state) {

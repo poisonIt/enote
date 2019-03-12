@@ -12,6 +12,7 @@ export default new Vue({
     pool (val) {
       window.onresize = () => {
         for (let i in this.pool) {
+          console.log(this.pool)
           this.pool[i]()
         }
       }

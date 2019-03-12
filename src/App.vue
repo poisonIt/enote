@@ -2,6 +2,7 @@
   <div id="app">
     <AppHeader></AppHeader>
     <Home></Home>
+    <div ref="youdaoEditor"></div>
     <!-- <div class="click-mask"></div> -->
   </div>
 </template>
@@ -17,11 +18,45 @@ export default {
     Home
   },
 
+  data () {
+    return {
+      content: `<?xml version="1.0"?>
+<note xmlns="http://note.youdao.com" schema-version="1.0.3" file-version="0"><head xmlns=""/><body xmlns=""><para><coId>5356-1552362458797</coId><text>测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试</text><inline-styles/><styles/></para><para><coId>3300-1552362473769</coId><text></text><inline-styles/><styles/></para><para><coId>2872-1552362471335</coId><text>测试测试测试测试测试测试</text><inline-styles/><styles/></para></body></note>`
+    }
+  },
+
   created () {
     this.SET_FILES_FROM_LOCAL()
   },
 
   mounted () {
+    (authBulbEditor({
+      url: 'http://updateinfo.youdao.com/editorapi',
+      pkn: 'com.youdao.com',
+      appKey: '656d2fdc0a922cc6',
+      version: 'v1',
+      sdkVersion: 'v1',
+      appSecret: 'fPduC1Gw2UnS7zqs9k9fsKcVxcuoiUmI',
+    })).then((BulbEditor) => {
+      console.log('BulbEditor', BulbEditor.toString())
+      this.youdaoEditor = new BulbEditor({
+        el: this.$refs.youdaoEditor
+      })
+
+      this.youdaoEditor.setContent(this.content, {
+        async: true,
+      }).then(() => {
+        console.log('done')
+      })
+
+      this.youdaoEditor.getContent({
+        type: 'html',
+        async: true
+      }).then(html => {
+        console.log('ojojojjojo', html)
+      })
+    })
+
     document.addEventListener('drop', function (e) {
       e.preventDefault()
       e.stopPropagation()

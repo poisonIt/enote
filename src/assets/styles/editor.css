@@ -1,3 +1,24 @@
+#cke_editor-container {
+  border: none;
+}
+#cke_1_bottom {
+  border: none;
+}
+.cke_top {
+  border-color: #eee !important;
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+}
+
+.w-e-toolbar {
+  flex-wrap: wrap !important;
+  border: none !important;
+}
+.w-e-text-container {
+  border: none !important;
+  padding-bottom: 30px;
+}
+
 .ck.ck-editor {
   /* flex: 1; */
   display: flex;

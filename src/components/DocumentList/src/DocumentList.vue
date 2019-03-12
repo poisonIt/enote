@@ -30,7 +30,7 @@
           :mini="viewFileListType === 'list'"
           :file_id="item.id"
           :type="item.type"
-          :title="item.title"
+          :title="item.title + ' ' + item.id"
           :content="item.brief"
           :update_at="item.update_at | yyyymmdd"
           :file_size="Number(item.file_size || 0)"
@@ -134,6 +134,7 @@ export default {
       views: state => state.views
     }),
     ...mapGetters({
+      contentCache: 'GET_EDITOR_CONTENT_CACHE',
       viewName: 'GET_VIEW_NAME',
       viewFileType: 'GET_VIEW_FILE_TYPE',
       allFileMap: 'GET_FILES',
@@ -254,6 +255,7 @@ export default {
 
   methods: {
     ...mapActions([
+      'SAVE_DOC',
       'SET_EDITOR_CONTENT',
       'EDIT_FILE',
       'SET_CURRENT_FILE',
@@ -264,6 +266,13 @@ export default {
     ]),
 
     selectFile (index) {
+      if (this.currentFile) {
+        this.SAVE_DOC({
+          id: this.currentFile.id,
+          html: this.contentCache
+        })
+      }
+
       const file = this.fileList[index]
       if (this.currentFile === file) return
       this.$refs.fileCardGroup.select(index) // visually select file

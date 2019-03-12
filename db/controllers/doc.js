@@ -24,7 +24,9 @@ function get (id) {
       if (err) {
         console.error(err)
       } else {
-        resolve(doc.content)
+        if (doc) {
+          resolve(doc.content)
+        }
       }
     })
   })

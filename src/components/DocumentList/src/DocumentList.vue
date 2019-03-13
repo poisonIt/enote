@@ -266,15 +266,14 @@ export default {
     ]),
 
     selectFile (index) {
+      const file = this.fileList[index]
+      if (this.currentFile === file) return
       if (this.currentFile) {
         this.SAVE_DOC({
           id: this.currentFile.id,
           html: this.contentCache
         })
       }
-
-      const file = this.fileList[index]
-      if (this.currentFile === file) return
       this.$refs.fileCardGroup.select(index) // visually select file
       // const appPath = '/Users/bowiego/Documents/workspace/enote/public'
 

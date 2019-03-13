@@ -59,6 +59,10 @@ export default {
       console.log('99999')
       // this.editor.resetUndo()
     })
+    console.log('ready', this.$remote.globalShortcut)
+    // this.$remote.globalShortcut.register('CommandOrControl+A', () => {
+    //   this.editor.setData('<p>aaa</p>')
+    // })
     // const editorParser = new CKEDITOR.htmlParser()
     // console.log('editorParser-1111', editorParser.parse('<!-- Example --><b>Hello</b>'))
     // this.editor.on('blur', () => {

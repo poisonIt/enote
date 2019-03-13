@@ -138,7 +138,12 @@ let template = [{
 protocol.registerStandardSchemes(['app'], { secure: true })
 function createWindow () {
   // Create the browser window.
-  win = new BrowserWindow({ width: 960, height: 640 })
+  win = new BrowserWindow({
+    width: 960,
+    height: 640,
+    // frame: false,
+    titleBarStyle: 'hiddenInset'
+  })
   win.setMinimumSize(960, 640)
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {

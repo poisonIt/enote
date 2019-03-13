@@ -72,8 +72,9 @@ export default {
   flex-direction row
   justify-content space-between
   align-items center
-  padding 0 20px
+  padding 0 20px 0 80px
   background-color #1985D7
+  -webkit-app-region drag
 
 .tools
   display flex

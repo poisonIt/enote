@@ -83,6 +83,7 @@ const mutations = {
 
   MOVE_FILE (state, opts) {
     let { fileId, targetId } = opts
+    if (fileId === targetId) return
     let file = state.files_map[fileId]
     let targetFolder = state.files_map[targetId]
     let oldParentFolder = state.files_map[file.parent_folder]
@@ -266,7 +267,7 @@ const actions = {
     // console.log('filesContent', filesContent)
     commit('UPDATE_DOC_MAP', filesContent)
     filesContent.forEach(content => {
-      console.log('1111111', content)
+      console.log('filesContent', content)
       content.brief = formatContent(content.data)
       dispatch('UPDATE_FILE_BRIEF', content)
     })

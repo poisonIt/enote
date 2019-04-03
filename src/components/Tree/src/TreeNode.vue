@@ -7,6 +7,7 @@
     v-show="node.visible">
     <div class="tree-node__content"
       :style="{ paddingLeft: node.level * 20 - 10 + 'px', height: 'auto' }">
+      <div class="highlight-mask" v-if="isHighlight"></div>
       <div class="icon icon-arrow"
         :class="{
           'transparent' : node.childNodes.length === 0,
@@ -80,7 +81,8 @@ export default {
 
   data () {
     return {
-      expanded: false
+      expanded: false,
+      isHighlight: false
     }
   },
 
@@ -175,6 +177,13 @@ export default {
         this.node.parent.expand()
         this.node.parent.instance.expandAncestor()
       }
+    },
+
+    toggleHightlight (val) {
+      for (let i in this.node.store.nodeMap) {
+        this.node.store.nodeMap[i].instance.isHighlight = false
+      }
+      this.isHighlight = val
     }
   }
 }
@@ -190,10 +199,18 @@ export default {
   position relative
   height 26px
   display -webkit-box
+  box-sizing border-box
   -webkit-box-orient horizontal
   -webkit-box-direction normal
   -webkit-box-align center
   -webkit-box-flex 0
+  .highlight-mask
+    width 100%
+    height 100%
+    position absolute
+    left 0
+    top 0
+    border 2px dashed #73a8d6
   // flex-direction row
   // align-items center
   // cursor pointer

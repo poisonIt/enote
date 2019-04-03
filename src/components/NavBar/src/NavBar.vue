@@ -11,7 +11,12 @@
       default-expand-all
       ref="tree">
       <div class="nav-node"
+        :draggable="data.type === 'folder'"
+        @dragstart="handleDragStart(node)"
+        @dragend="handleDragEnd"
+        @dragover="handleDragOver(node)"
         slot-scope="{ node, data }">
+        <!-- <div class="dragover-mask" v-if="dragOverNode === node"></div> -->
         <div class="icon"
           :class="iconClassComputed(node)"
           v-if="node.data.link"></div>
@@ -80,6 +85,8 @@ export default {
       currentNode: null,
       popupedNode: null,
       duplicatedNode: null,
+      dragNode: null,
+      dragOverNode: null,
       nativeMenuData: [
         folderMenu,
         [...folderMenu, ...resourceMenu[0]],
@@ -161,6 +168,7 @@ export default {
       'ADD_FILE',
       'DELETE_FILE',
       'EDIT_FILE',
+      'MOVE_FILE',
       'CLEAR_ALL_RECYCLE',
       'RESUME_ALL_RECYCLE',
       'SET_VIEW_FOLDER',
@@ -336,7 +344,7 @@ export default {
 
     clickRecycleNode () {
       this.$nextTick(() => {
-        let recycleNode = this.$refs.tree.store.root.childNodes[2]
+        let recycleNode = this.$refs.tree.store.root.childNodes[3]
         this.handleItemClick(recycleNode)
       })
     },
@@ -398,6 +406,26 @@ export default {
           }
         })
       )
+    },
+
+    handleDragStart (node) {
+      this.dragNode = node
+    },
+
+    handleDragEnd () {
+      console.log(this.dragNode, this.dragOverNode)
+      this.MOVE_FILE({
+        fileId: this.dragNode.data.id,
+        targetId: this.dragOverNode.data.id
+      })
+      this.dragNode = null
+      this.dragOverNode = null
+    },
+
+    handleDragOver (node) {
+      if (node.data.type !== 'folder') return
+      this.dragOverNode = node
+      node.instance.toggleHightlight(true)
     }
   }
 }
@@ -442,6 +470,14 @@ export default {
     position absolute
     width 100%
     height 100%
+    padding 0 40px
+  .dragover-mask
+    position absolute
+    top 0
+    left 0
+    width 100%
+    height 100%
+    border 2px dashed #73a8d6
   .icon
     width 22px
     height 22px

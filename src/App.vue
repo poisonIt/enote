@@ -38,7 +38,6 @@ export default {
       sdkVersion: 'v1',
       appSecret: 'fPduC1Gw2UnS7zqs9k9fsKcVxcuoiUmI',
     })).then((BulbEditor) => {
-      console.log('BulbEditor', BulbEditor.toString())
       this.youdaoEditor = new BulbEditor({
         el: this.$refs.youdaoEditor
       })
@@ -53,7 +52,7 @@ export default {
         type: 'html',
         async: true
       }).then(html => {
-        console.log('ojojojjojo', html)
+        console.log('youdao', html)
       })
     })
 

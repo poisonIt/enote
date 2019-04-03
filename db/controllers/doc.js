@@ -21,6 +21,7 @@ function get (id) {
   // return
   return new Promise((resolve, reject) => {
     docsDB.findOne({ file_id: id }, (err, doc) => {
+      console.log('get-doc', id, doc)
       if (err) {
         console.error(err)
       } else {
@@ -73,6 +74,7 @@ function add (req) {
 // }
 
 function update (req) {
+  console.log('update-doc', req)
   const { fileId, content } = req
   return new Promise((resolve, reject) => {
     docsDB.update(

@@ -43,6 +43,7 @@ const mutations = {
   },
 
   SET_EDITOR_CONTENT_CACHE (state, content) {
+    console.log('SET_EDITOR_CONTENT_CACHE', content)
     state.editor_content_cache = content
   },
 

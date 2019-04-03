@@ -67,14 +67,12 @@ export default {
   watch: {
     showInput (val) {
       if (val) {
-        console.log(this.$refs.input)
         this.$refs.input.select()
       }
     },
 
     currentFile (val) {
       if (val) {
-        console.log('1111', val, this.tagsMap)
         LocalDAO.tag.getAll().then(res => {
           console.log('getAllTags', res)
         })

@@ -38,10 +38,6 @@ export default {
   },
 
   mounted () {
-    CKEDITOR.on('instanceReady', (ev) => {
-      // ev.editor.fire('contentDom');
-      this.onEditorReady()
-    })
     this.editor = CKEDITOR.replace('editor-container', {
       uiColor: '#FFFFFF',
       toolbarGroups: [
@@ -51,12 +47,16 @@ export default {
       ],
       removeButtons: 'Source,NewPage,Preview,Print,Templates,Save,Cut,Copy,Paste,PasteText,PasteFromWord,SelectAll,Scayt,Replace,Form,Checkbox,Radio,TextField,Textarea,Select,Button,ImageButton,HiddenField,Anchor,Unlink,Flash,HorizontalRule,Smiley,SpecialChar,PageBreak,Iframe,CopyFormatting'
     })
-
+    this.editor.on('instanceReady', (ev) => {
+      // ev.editor.fire('contentDom');
+      this.onEditorReady()
+    })
     this.editor.on('change', () => {
+      console.log('change', this.editor.getData())
       this.SET_EDITOR_CONTENT_CACHE(this.editor.getData())
     })
     this.editor.on('dataReady', () => {
-      console.log('99999')
+      console.log('dataReady', this.editor.getData())
       // this.editor.resetUndo()
     })
     console.log('ready', this.$remote.globalShortcut)
@@ -75,6 +75,8 @@ export default {
     ...mapActions(['SAVE_DOC', 'SET_EDITOR_CONTENT_CACHE']),
 
     onEditorReady () {
+      console.log('editorReady')
+      this.SET_EDITOR_CONTENT_CACHE(this.content)
       this.handleResize()
       this.$hub.pool.push(() => {
         this.handleResize()
@@ -91,7 +93,7 @@ export default {
 
     handleResize () {
       console.log('handleResize')
-      this.editor.setData(this.content)
+      // this.editor.setData(this.content)
       let space = this.viewType === 'expanded' ? 500 : 360
       let w = document.body.clientWidth - space
       let h = document.body.clientHeight - document.getElementById('cke_1_top').getBoundingClientRect().height - 100

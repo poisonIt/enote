@@ -77,6 +77,7 @@ export default {
 
   data () {
     return {
+      isFirstSelect: true,
       list: [],
       fileList: [],
       isMenuVisible: false,
@@ -167,7 +168,6 @@ export default {
           list = currentFiles
           break
         case 'tags':
-          console.log('11222', this.latestFiles, this.selectedTags)
           if (this.selectedTags.length === 0) {
             list = this.latestFiles
             break
@@ -191,17 +191,16 @@ export default {
         if (val.length === 0) {
           list = this.latestFiles
         } else {
-          for (let i in this.latestFiles) {
-            console.log('1111', this.latestFiles[i])
-            console.log('2222', intersection(this.latestFiles[i].tags, val))
-          }
           list = this.latestFiles.filter(item => intersection(item.tags, val).length === val.length)
         }
+      } else {
+        return
       }
       this.fileList = this.fileListSortFunc(clone(list))
     },
 
     fileList (val, oldVal) {
+      console.log('fileList', val)
       if (oldVal.length === 0 && this.viewFileType === 'latest') {
         this.selectFile(0)
         this.$nextTick(() => {
@@ -267,12 +266,17 @@ export default {
 
     selectFile (index) {
       const file = this.fileList[index]
-      if (this.currentFile === file) return
-      if (this.currentFile) {
-        this.SAVE_DOC({
-          id: this.currentFile.id,
-          html: this.contentCache
-        })
+      console.log('selectFile', file, this.contentCache)
+      if (!this.isFirstSelect) {
+        if (this.currentFile === file) return
+        if (this.currentFile) {
+          this.SAVE_DOC({
+            id: this.currentFile.id,
+            html: this.contentCache
+          })
+        }
+      } else {
+        this.isFirstSelect = false
       }
       this.$refs.fileCardGroup.select(index) // visually select file
       // const appPath = '/Users/bowiego/Documents/workspace/enote/public'
@@ -280,6 +284,7 @@ export default {
       this.SET_CURRENT_FILE(file.id)
       if (file.type === 'doc') {
         LocalDAO.doc.get(file.id).then(res => {
+          console.log('SET_EDITOR_CONTENT', res)
           this.SET_EDITOR_CONTENT(res)
         })
         // readFile(`${appPath}/docs/${file.id}.xml`).then(data => {

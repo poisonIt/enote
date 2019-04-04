@@ -142,7 +142,7 @@ function createWindow () {
     width: 960,
     height: 640,
     // frame: false,
-    titleBarStyle: 'hiddenInset'
+    titleBarStyle: 'hidden'
   })
   win.setMinimumSize(960, 640)
 

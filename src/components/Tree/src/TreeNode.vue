@@ -1,13 +1,17 @@
 <template>
   <div class="tree-node"
     :class="{
+      'dark' : theme === 'dark',
       'is-expanded' : expanded,
       'is-selected' : tree.store.currentNode === node
     }"
     v-show="node.visible">
     <div class="tree-node__content"
       :style="{ paddingLeft: node.level * 20 - 10 + 'px', height: 'auto' }">
-      <div class="highlight-mask" v-if="isHighlight"></div>
+      <div class="highlight-mask-line"
+        v-if="isHighlight"
+        :style="{ left: node.level * 20 + 'px' }"></div>
+      <!-- <div class="highlight-mask" v-if="isHighlight"></div> -->
       <div class="icon icon-arrow"
         :class="{
           'transparent' : node.childNodes.length === 0,
@@ -36,6 +40,7 @@
         <tree-node
           v-for="child in node.childNodes"
           :key="child.uid"
+          :theme="theme"
           :node="child">
         </tree-node>
       </div>
@@ -91,6 +96,11 @@ export default {
       default () {
         return {}
       }
+    },
+
+    theme: {
+      type: String,
+      default: 'default'
     },
 
     renderContent: Function
@@ -191,10 +201,28 @@ export default {
 
 <style lang="stylus" scoped>
 .tree-node
+  position relative
+  background-color #fff
+  color #333
   &.is-selected
-    background-color #d8dadc
+    background-color #FFF5E2
+    color #DDAF59
+    .tree-node__content
+      border-right 2px solid #DDAF59
     & .tree-node
+      color #333
       background-color #fff
+      .tree-node__content
+        border none
+  &.dark
+    background-color #3C3E44
+    color #C2C2C2
+    &.is-selected
+      background-color #313336
+      color #DDAF59
+      & .tree-node
+        color #C2C2C2
+        background-color #3C3E44
 .tree-node__content
   position relative
   height 26px
@@ -204,13 +232,34 @@ export default {
   -webkit-box-direction normal
   -webkit-box-align center
   -webkit-box-flex 0
-  .highlight-mask
-    width 100%
-    height 100%
+  color inherit
+
+.highlight-mask-line
+  width 100%
+  height 1px
+  position absolute
+  left 30px
+  top 36px
+  border .5px solid #DDAF59
+  &::before
+    content ''
+    display block
     position absolute
-    left 0
-    top 0
-    border 2px dashed #73a8d6
+    left -7px
+    top 50%
+    transform translateY(-50%)
+    width 4px
+    height 4px
+    border-radius 50%
+    border 1px solid #DDAF59
+
+.highlight-mask
+  width 100%
+  height 100%
+  position absolute
+  left 0
+  top 0
+  border 2px dashed #DDAF59
   // flex-direction row
   // align-items center
   // cursor pointer
@@ -237,10 +286,18 @@ export default {
     width 0
     height 0
     border-top 3px solid transparent
-    border-left 4px solid #13ABC4
+    border-left 4px solid #C2C2C2
     border-bottom 3px solid transparent
   &.is-expanded::after
     transform rotate(90deg)
+
+.tree-node.is-selected
+  .icon
+    &::after
+      border-left 4px solid #DDAF59
+  & .tree-node .icon
+    &::after
+      border-left 4px solid #D8D8D8
 
 .icon-select
   position absolute
@@ -249,11 +306,11 @@ export default {
   transform translateY(-50%)
   width 14px
   height 14px
-  background-size contain
   border-radius 50%
-  border 1px solid #13ABC4
+  border 1px solid #DDAF59
   &.selected
     border none
+    background-size 110%
     background-image url('../../../assets/images/icon_selected_fill.png')
 
 .transparent

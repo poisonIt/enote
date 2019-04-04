@@ -215,9 +215,9 @@ export default {
 .file-card
   width 100%
   padding 14px 10px
-  border-bottom 1px solid #e6e6e6
+  border-bottom 1px solid #E9E9E9
   &.selected
-    background-color #eff0f1
+    background-color #FFF5E2
   &.mini
     height 50px
     display flex

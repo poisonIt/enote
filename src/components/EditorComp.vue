@@ -94,7 +94,7 @@ export default {
     handleResize () {
       console.log('handleResize')
       // this.editor.setData(this.content)
-      let space = this.viewType === 'expanded' ? 500 : 360
+      let space = this.viewType === 'expanded' ? 540 : 360
       let w = document.body.clientWidth - space
       let h = document.body.clientHeight - document.getElementById('cke_1_top').getBoundingClientRect().height - 100
       this.editor.resize(w, h, true)

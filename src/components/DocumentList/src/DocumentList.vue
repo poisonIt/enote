@@ -5,7 +5,8 @@
         :class="{ disable : viewFileType !== 'new folder' }"
         @click="handleBack">
       </div>
-      <span class="title ellipsis">{{ viewName }}</span>
+      <SearchBar></SearchBar>
+      <!-- <span class="title ellipsis">{{ viewName }}</span> -->
       <div class="button button-listtype expand"
         :class="{ summary : viewFileListType === 'summary' }"
         @click="handleList">
@@ -30,7 +31,7 @@
           :mini="viewFileListType === 'list'"
           :file_id="item.id"
           :type="item.type"
-          :title="item.title + ' ' + item.id"
+          :title="item.title"
           :content="item.brief"
           :update_at="item.update_at | yyyymmdd"
           :file_size="Number(item.file_size || 0)"
@@ -49,7 +50,7 @@
     </div>
     <div class="footer">
       <div class="num">
-        总计 {{ fileList.length }} 项
+        总共 {{ fileList.length }} 项
       </div>
     </div>
   </div>
@@ -61,6 +62,7 @@ import dayjs from 'dayjs'
 import mixins from '../mixins'
 // import { readFile } from '@/utils/file'
 import { mapGetters, mapState, mapActions } from 'vuex'
+import SearchBar from '@/components/SearchBar'
 import { FileCard, FileCardGroup } from '@/components/FileCard'
 import { fileHandleMenu, fileCloudMenu, fileInfoMenu } from '../Menu'
 import LocalDAO from '@/../db/api'
@@ -71,6 +73,7 @@ export default {
   mixins: mixins,
 
   components: {
+    SearchBar,
     FileCard,
     FileCardGroup
   },
@@ -384,6 +387,7 @@ export default {
     justify-content space-between
     align-items center
     border-bottom 1px solid #e6e6e6
+    -webkit-app-region drag
     .title
       flex .85
       text-align center
@@ -391,7 +395,7 @@ export default {
 
 .body
   height 100%
-  padding-bottom 100px
+  padding-bottom 90px
   overflow-y scroll
   .no-file
     height 100%
@@ -400,16 +404,16 @@ export default {
     align-items center
     justify-content center
     font-size 12px
-    color #777
+    color #999
   .new-doc_button
     width 110px
     height 36px
     margin-top 10px
     border-radius 3px
-    background-color #3161a3
+    background-color #DDAF59
     color #fff
     font-size 12px
-    font-weight 600
+    font-weight 500
     text-align center
     line-height 36px
 
@@ -418,10 +422,10 @@ export default {
   position absolute
   bottom 0
   border-top 1px solid #e6e6e6
-  background-color #fff
+  background-color #FCFBF7
   .num
-    height 40px
-    line-height 40px
+    height 30px
+    line-height 30px
     padding-left 20px
     font-size 12px
     letter-spacing 1px
@@ -431,6 +435,7 @@ export default {
   width 40px
   height 24px
   border-radius 0
+  background-color inherit
   border none
   &::before
     content ''
@@ -444,31 +449,16 @@ export default {
     background-repeat no-repeat
     background-size 100%
     background-position center
-  &.disable
-    &::before
-      opacity 0.4
   &.button-back
     &::before
       background-image url(../../../assets/images/lanhu/back@2x.png)
+    &.disable
+      &::before
+        background-image url(../../../assets/images/lanhu/back_dis@2x.png)
   &.expand
     &::before
-      width 14px
-      height 14px
-      left 38%
-      background-image url(../../../assets/images/list.png)
+      background-image url(../../../assets/images/lanhu/view@2x.png)
     &.summary
       &::before
-        background-image url(../../../assets/images/list2.png)
-    &::after
-      content ''
-      display block
-      width 0
-      height 0
-      position absolute
-      top 50%
-      right 6px
-      border-top 2.8px solid transparent
-      border-left 4.5px solid #a1a1a1
-      border-bottom 2.8px solid transparent
-      transform  translateY(-50%) rotate(90deg)
+        background-image url(../../../assets/images/lanhu/view@2x.png)
 </style>

@@ -3,6 +3,7 @@
     <Tree
       v-show="viewType === 'expanded'"
       :data="nav"
+      theme="dark"
       v-model="selectedTags"
       :labelProxy="'name'"
       :expand-on-click-node="false"
@@ -45,15 +46,38 @@
     </Tree>
     <div class="nav-mini" v-show="viewType === 'unexpanded'">
       <div class="icon icon-latest"
-        :class="{ active : navMiniActive('latest') }"
+        :class="{
+          active : navMiniActive('latest'),
+          highlight : navMiniActive('latest')
+        }"
         @click="handleClickMini('latest')">
       </div>
+      <div class="icon icon-share"
+        :class="{
+          active : navMiniActive(['share']),
+          highlight : navMiniActive(['share'])
+        }"
+        @click="handleClickMini('share')">
+      </div>
       <div class="icon icon-folder_open"
-        :class="{ active : navMiniActive(['folders', 'new folder']) }"
+        :class="{
+          active : navMiniActive(['folders', 'new folder']),
+          highlight : navMiniActive(['folders', 'new folder'])
+        }"
         @click="handleClickMini('folders')">
       </div>
+      <div class="icon icon-tags"
+        :class="{
+          active : navMiniActive('tags'),
+          highlight : navMiniActive('tags')
+        }"
+        @click="handleClickMini('tags')">
+      </div>
       <div class="icon icon-recycle"
-        :class="{ active : navMiniActive('recycle') }"
+        :class="{
+          active : navMiniActive('recycle'),
+          highlight : navMiniActive('recycle')
+        }"
         @click="handleClickMini('recycle')">
       </div>
     </div>
@@ -370,10 +394,13 @@ export default {
     },
 
     iconClassComputed (node) {
+      let pre = ''
       if (node.data.type === 'folder') {
-        return node.expanded ? 'icon-folder_open' : 'icon-folder_close'
+        pre = (node.expanded ? 'icon-folder_open' : 'icon-folder_close')
+      } else {
+        pre = `icon-${node.data.link}`
       }
-      return 'icon-' + node.data.link
+      return `${pre} ${node.store.currentNode === node ? 'highlight' : ''}`
     },
 
     // navIcon (node) {
@@ -433,6 +460,7 @@ export default {
 
 <style lang="stylus" scoped>
 #navbar
+  position relative
   flex 1
   padding-bottom 30px
   overflow-y scroll
@@ -462,7 +490,7 @@ export default {
     transform translateY(-50%)
     text-align center
     font-size 12px
-    color #3161A3
+    color #DDAF59
     & span:nth-of-type(1)
       display block
       transform scaleY(0.8)
@@ -520,13 +548,23 @@ export default {
   display flex
   flex-direction column
   .icon
-    width 80px !important
-    height 80px
+    position relative
+    width 70px !important
+    height 60px
     background-repeat  no-repeat
-    background-size 28%
+    background-size 40%
     background-position center
     &.active
-      background-color #eff0f1
+      background-color #313336
+      &::after
+        content ''
+        display block
+        position absolute
+        right 0
+        top 0
+        width 2px
+        height 100%
+        background-color #DDAF59
 
 .icon
   background-repeat  no-repeat
@@ -535,14 +573,28 @@ export default {
 .icon-latest
   width 28px !important
   background-image url(../../../assets/images/lanhu/documents@2x.png)
+  &.highlight
+    background-image url(../../../assets/images/lanhu/documents_highlight@2x.png)
+.icon-share
+  background-image url(../../../assets/images/lanhu/normal@2x.png)
+  &.highlight
+    background-image url(../../../assets/images/lanhu/normal_highlight@2x.png)
 .icon-folder_open
   background-image url(../../../assets/images/lanhu/folder_open@2x.png)
+  &.highlight
+    background-image url(../../../assets/images/lanhu/folder_open_highlight@2x.png)
 .icon-folder_close
   background-image url(../../../assets/images/lanhu/folder_close@2x.png)
+  &.highlight
+    background-image url(../../../assets/images/lanhu/folder_close_highlight@2x.png)
 .icon-tags
   background-image url(../../../assets/images/lanhu/tag@2x.png)
+  &.highlight
+    background-image url(../../../assets/images/lanhu/tag_highlight@2x.png)
 .icon-recycle
   background-image url(../../../assets/images/lanhu/recycle@2x.png)
+  &.highlight
+    background-image url(../../../assets/images/lanhu/recycle_highlight@2x.png)
 .icon-folder
   display block
   margin-right 6px
@@ -553,4 +605,16 @@ export default {
   background-repeat no-repeat
   background-size contain
   background-position center
+
+// .tree-node.is-selected
+//   .icon-latest
+//     background-image url(../../../assets/images/lanhu/documents_highlight@2x.png)
+//   .icon-folder_open
+//     background-image url(../../../assets/images/lanhu/folder_open_highlight@2x.png)
+//   .icon-folder_close
+//     background-image url(../../../assets/images/lanhu/folder_close_highlight@2x.png)
+//   .icon-tags
+//     background-image url(../../../assets/images/lanhu/tag_highlight@2x.png)
+//   .icon-recycle
+//     background-image url(../../../assets/images/lanhu/recycle_highlight@2x.png)
 </style>

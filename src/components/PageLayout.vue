@@ -1,9 +1,9 @@
 <template>
   <div class="page-layout">
-    <div class="section left" :class="viewType">
+    <div class="section left" :class="viewType" style="background-color: #3C3E44;">
       <slot name="left"></slot>
     </div>
-    <div class="section middle">
+    <div class="section middle" style="background-color: #FCFBF7;">
       <slot name="middle"></slot>
     </div>
     <div class="section right">
@@ -36,14 +36,15 @@ export default {
     &.left
       width 220px
       &.unexpanded
-        width 80px
+        width 70px
       > div
         height 100%
     &.middle
-      width 280px
+      width 320px
       border-left 1px solid #e6e6e6
       border-right 1px solid #e6e6e6
       div
+        position relative
         height 100%
     &.right
       flex 1

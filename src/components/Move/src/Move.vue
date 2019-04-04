@@ -18,7 +18,7 @@
           default-expand-all
           ref="tree">
           <div class="nav-node" slot-scope="{ node, data }">
-            <div class="icon-folder"></div>
+            <div class="icon-folder" :class="iconClassComputed(node)"></div>
             <div class="title ellipsis">{{ data.title }}</div>
             <div class="click-mask"
               @click="handleItemClick(node)">
@@ -107,7 +107,17 @@ export default {
         pathArr[0] = '..'
       }
       this.path = pathArr.join('/')
-    }
+    },
+
+    iconClassComputed (node) {
+      let pre = ''
+      if (node.data.type === 'folder') {
+        pre = (node.expanded ? 'icon-folder_open' : 'icon-folder_close')
+      } else {
+        pre = `icon-${node.data.link}`
+      }
+      return `${pre} ${node.store.currentNode === node ? 'highlight' : ''}`
+    },
   }
 }
 </script>
@@ -170,13 +180,22 @@ export default {
     width 100%
     height 100%
 
+.icon-folder_open
+  background-image url(../../../assets/images/lanhu/folder_open@2x.png)
+  &.highlight
+    background-image url(../../../assets/images/lanhu/folder_open_highlight@2x.png)
+.icon-folder_close
+  background-image url(../../../assets/images/lanhu/folder_close@2x.png)
+  &.highlight
+    background-image url(../../../assets/images/lanhu/folder_close_highlight@2x.png)
+
 .icon-folder
   display block
   margin-right 6px
   width 24px
   height 24px
   opacity 0.8
-  background-image url(../../../assets/images/folder-open-fill.png)
+  background-image url(../../../assets/images/lanhu/folder_open_highlight@2x.png)
   background-repeat no-repeat
   background-size contain
   background-position center

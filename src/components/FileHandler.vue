@@ -139,7 +139,7 @@ export default {
 
     handleResize () {
       this.$nextTick(() => {
-        let space = this.viewType === 'expanded' ? 500 : 360
+        let space = this.viewType === 'expanded' ? 540 : 360
         this.containerWidth = document.body.clientWidth - space + 'px'
       })
     },
@@ -238,7 +238,7 @@ export default {
   // width 100%
   height 60px !important
   position absolute
-  top 40px
+  top 0
   // right 0
   display flex
   flex-direction row
@@ -246,6 +246,7 @@ export default {
   align-items center
   border-bottom 1px solid #e6e6e6
   padding: 0 20px
+  -webkit-app-region drag
 
 .title
   position relative
@@ -275,7 +276,7 @@ export default {
   opacity 0
 
 .handler
-  width 40%
+  // width 40%
   display flex
   position relative
   justify-content space-between
@@ -294,7 +295,7 @@ export default {
   &.icon-search
     background-image url('../assets/images/lanhu/search@2x.png')
   &.icon-tag
-    background-image url('../assets/images/lanhu/tag@2x.png')
+    background-image url('../assets/images/lanhu/tag_grey@2x.png')
   &.icon-more
     background-image url('../assets/images/lanhu/more@2x.png')
   &.icon-window

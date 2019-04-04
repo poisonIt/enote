@@ -190,7 +190,7 @@ export default {
   margin 0 auto
   width auto
   height auto
-  border-radius 3px
+  border-radius 2px
   overflow hidden
   box-shadow 0 2px 6px 2px rgba(0, 0, 0, 0.3)
   z-index 9999
@@ -202,9 +202,11 @@ export default {
       font-size 14px
       display flex
       align-items center
+      color #333
       transition background-color ease 0.1s
       &:hover
-        background-color #dddee0 !important
+        background-color #FFF5E2 !important
+        color #DDAF59
       &::after
         position absolute
         top 50%

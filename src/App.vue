@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <AppHeader></AppHeader>
+    <!-- <AppHeader></AppHeader> -->
     <Home></Home>
     <div ref="youdaoEditor"></div>
     <!-- <div class="click-mask"></div> -->
@@ -9,12 +9,12 @@
 
 <script>
 import { mapActions } from 'vuex'
-import AppHeader from '@/components/AppHeader'
+// import AppHeader from '@/components/AppHeader'
 import Home from '@/views/Home'
 
 export default {
   components: {
-    AppHeader,
+    // AppHeader,
     Home
   },
 
@@ -106,7 +106,7 @@ ul, li
   color #2c3e50
   width 100%
   height 100%
-  padding-top 40px
+  // padding-top 40px
   // display flex
   // flex-direction row
   overflow hidden
@@ -118,7 +118,7 @@ ul, li
   text-overflow ellipsis
 
 .button-group
-  width 80%
+  width 50%
   position absolute
   bottom 30px
   left 50%
@@ -127,18 +127,20 @@ ul, li
   flex-direction row
   align-items center
   justify-content space-around
-  margin-top 30px
 .button
-  width 80px
-  height 32px
+  width 70px
+  height 28px
   border-radius 4px
   background-color #fff
   text-align center
   line-height 32px
-  border 1px solid #c3c1c1
+  border 1px solid #E9E9E9
+  font-size 13px
+  line-height 28px
+  color #666
   &.primary
     border none
-    background-color #198cf0
+    background-color #DDAF59
     color #fff
 
 .click-mask

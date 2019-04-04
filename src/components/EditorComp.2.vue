@@ -4,7 +4,7 @@
 
 <script>
 // import '../lib/bulb/bulb.min.css'
-// import BulbEditor from '../lib/bulb/bulb.min.js'
+import BulbEditor from '../lib/bulb/bulb.min.js'
 import { mapGetters, mapActions } from 'vuex'
 
 export default {
@@ -51,7 +51,7 @@ export default {
   },
 
   mounted () {
-    // console.log('BulbEditor', window.BulbEditor)
+    console.log('BulbEditor', BulbEditor)
     (authBulbEditor({
       url: 'http://updateinfo.youdao.com/editorapi',
       pkn: 'com.youdao.com',

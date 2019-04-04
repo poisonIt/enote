@@ -3,11 +3,14 @@
     <PageLayout>
       <div slot="left">
         <div id="nav">
+          <User></User>
           <FileTool></FileTool>
           <NavBar ref="navbar"></NavBar>
+          <div v-if="viewType === 'unexpanded'" class="expand-button" :class="{ unexpanded : viewType === 'unexpanded' }" @click="changeViewType"></div>
         </div>
       </div>
       <div slot="middle">
+        <div v-if="viewType === 'expanded'" class="expand-switch" :class="{ unexpanded : viewType === 'unexpanded' }" @click="changeViewType"></div>
         <DocumentList></DocumentList>
       </div>
       <div slot="right">
@@ -19,27 +22,28 @@
     </PageLayout>
     <modal
       width="400px"
-      height="500px"
+      height="464px"
       transition-name="fade-in-down"
       title="移动到"
       @close="closeMovePanel"
       :visible.sync="isMovePanelShowed">
       <Move ref="move" @handleMove="handleFileMoved"></Move>
       <div class="button-group" slot="footer">
-        <div class="button primary" @click="confirmMovePanel">确定</div>
+        <div class="button primary" @click="confirmMovePanel">保存</div>
         <div class="button" @click="closeMovePanel">取消</div>
       </div>
     </modal>
     <modal
       width="380px"
-      height="440px"
+      height="240px"
+      top="30vh"
       transition-name="fade-in-down"
       title="个人信息"
       @close="closeUserPanel"
       :visible.sync="isUserPanelShowed">
       <div class="user-info">
         <div class="item">
-          <span>员工姓名</span>
+          <span>员工信息</span>
           <span>哈啊哈</span>
         </div>
         <div class="item">
@@ -50,19 +54,6 @@
           <span>所属岗位</span>
           <span>研究员</span>
         </div>
-        <div class="item">
-          <span>有道云账号</span>
-          <span>尚未绑定有道云账号</span>
-          <span style="color: #3161A3; display: inline-block; margin-left: 30px">绑定账号</span>
-        </div>
-        <div class="item">
-          <span>同步时间</span>
-          <span>2018-12-31 15:13</span>
-        </div>
-      </div>
-      <div class="button-group" slot="footer">
-        <div class="button primary" @click="asyncUser">开始同步</div>
-        <div class="button" @click="closeUserPanel">关闭</div>
       </div>
     </modal>
     <modal
@@ -79,7 +70,7 @@
     <modal
       width="500px"
       height="340px"
-      top="20vh"
+      top="30vh"
       transition-name="fade-in-down"
       title="分享链接"
       @close="closeSharePanel"
@@ -139,6 +130,7 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex'
+import User from '@/components/User'
 import Move from '@/components/Move'
 import NavBar from '@/components/NavBar'
 import FileTool from '@/components/FileTool'
@@ -154,6 +146,7 @@ export default {
   name: 'home',
 
   components: {
+    User,
     Move,
     NavBar,
     FileTool,
@@ -206,6 +199,7 @@ export default {
   computed: {
     ...mapGetters({
       viewFileType: 'GET_VIEW_FILE_TYPE',
+      viewType: 'GET_VIEW_TYPE',
       currentFile: 'GET_CURRENT_FILE',
       isMovePanelShowed: 'GET_SHOW_MOVE_PANEL',
       isUserPanelShowed: 'GET_SHOW_USER_PANEL',
@@ -223,7 +217,8 @@ export default {
     ...mapActions([
       'TOGGLE_SHOW_MOVE_PANEL',
       'TOGGLE_SHOW_USER_PANEL',
-      'TOGGLE_SHOW_SHARE_PANEL'
+      'TOGGLE_SHOW_SHARE_PANEL',
+      'SET_VIEW_TYPE'
     ]),
 
     closeMovePanel () {
@@ -269,6 +264,10 @@ export default {
 
     closeSharePanel () {
       this.TOGGLE_SHOW_SHARE_PANEL(false)
+    },
+
+    changeViewType () {
+      this.SET_VIEW_TYPE(this.viewType === 'unexpanded' ? 'expanded' : 'unexpanded')
     }
   }
 
@@ -283,6 +282,7 @@ export default {
   flex-direction column
 
 #nav
+  position relative
   width 100%
   height 100%
   display flex
@@ -295,15 +295,15 @@ export default {
       color #42b983
 
 .user-info
-  font-size 14px
+  font-size 12px
   line-height 48px
-  color #000
+  color #333
   font-weight 600
   .item
     span:nth-of-type(1)
       display inline-block
       width 80px
-      color #4A4A4A
+      color #999999
       text-align right
       margin-right 20px
 
@@ -348,4 +348,40 @@ export default {
   text-align center
   background-color #3EB135
   color #fff
+
+.expand-button
+  width 70px
+  height 60px !important
+  position absolute !important
+  left 0
+  bottom 0
+  background-image url('../assets/images/lanhu/view_expand@2x.png')
+  background-size 40%
+  background-position center
+  background-repeat no-repeat
+
+.expand-switch
+  width 17px
+  height 31px !important
+  position absolute !important
+  left -1px
+  bottom 0
+  border-radius 0 4px 4px 0
+  background-color #3C3E44
+  z-index 1
+  &::after
+    position absolute
+    left 50%
+    top 50%
+    transform translate(-50%, -50%) rotate(180deg)
+    content ''
+    display block
+    width 0
+    height 0
+    border-top 3px solid transparent
+    border-left 4px solid #C2C2C2
+    border-bottom 3px solid transparent
+  &.unexpanded
+    &::after
+      transform translate(-50%, -50%) rotate(0)
 </style>

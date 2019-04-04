@@ -93,23 +93,27 @@ export default {
 .modal
   position relative
   // margin 10vh auto
-  background-color #f5f5f5
-  box-shadow 0px 3px 10px 1px rgba(0, 0, 0, 0.3)
+  background-color #fff
+  border-radius 4px
+  box-shadow 0px 0px 13px 0px rgba(0,0,0,0.15)
 
 .modal__header
-  height 40px
+  height 42px
   position relative
   display flex
   flex-direction row
   align-items center
-  border-bottom 1px solid #c5c5c5
-  background linear-gradient(#eff0f1, #dddee0)
+  border-bottom 1px solid #E9E9E9
+  background-color #fff
 .modal__title
   flex 1
   font-size 14px
+  font-weight 500
   text-align center
+  color #333
 .modal__body
   padding 20px 30px 0
+  background-color #fff
 // .icon-close
 //   position absolute
 //   top 20px
@@ -117,9 +121,10 @@ export default {
 //   cursor pointer
 .icon-close
   position absolute
-  left 10px
+  right 20px
   width 13px
   height 13px
   background-image url('../../../assets/images/close.png')
   background-size cover
+  opacity .3
 </style>

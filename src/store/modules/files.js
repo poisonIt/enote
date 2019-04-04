@@ -513,6 +513,7 @@ const getters = {
 function fetchLocalFiles () {
   return new Promise((resolve, reject) => {
     LocalDAO.structure.get().then(resp => {
+      console.log('structure', JSON.parse(resp))
       return JSON.parse(resp)
     }).then(data => {
       if (!data['000000']) {

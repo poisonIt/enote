@@ -4,6 +4,7 @@
       v-for="child in root.childNodes"
       :key="child.uid"
       :node="child"
+      :theme="theme"
       :render-content="renderContent">
     </tree-node>
   </div>
@@ -33,6 +34,10 @@ export default {
     styles: {
       type: Object,
       default: () => ({})
+    },
+    theme: {
+      type: String,
+      default: 'default'
     },
     width: String,
     itemHeight: String,

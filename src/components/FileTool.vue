@@ -1,11 +1,14 @@
 <template>
-  <div class="container">
+  <div class="container" :class="{ 'is-expanded' : viewType === 'expanded' }">
     <div class="expanded" v-if="viewType === 'expanded'">
-      <div class="item new" @click="newDoc">
-        <span>新建笔记</span>
+      <div class="item new" @click="toggleMenu">
+        <span>新建</span>
       </div>
-      <div class="item expand" @click="toggleMenu"></div>
+      <div class="item sync">
+        <span>同步</span>
+      </div>
     </div>
+    <div class="button-sync" v-if="viewType === 'unexpanded'"></div>
     <div class="unexpanded" v-if="viewType === 'unexpanded'">+</div>
     <Menu
       :data="menuData"
@@ -76,8 +79,24 @@ export default {
 .container
   position relative
   width 100%
-  height 60px
-  border-bottom 1px solid #e6e6e6
+  height 120px
+  display flex
+  flex-direction column
+  justify-content space-evenly
+  align-items center
+  &.is-expanded
+    height 60px
+    display block
+  &::after
+    content ''
+    display block
+    width 100%
+    height 1px
+    background-color #000
+    position absolute
+    bottom 0
+    left 50%
+    transform translateX(-50%) scaleY(.3)
 
 .expanded
   width 100%
@@ -86,26 +105,47 @@ export default {
   flex-direction row
   justify-content space-between
   align-items center
-  padding 0 20px
+  padding 0 10px
 
-.new
+.item
   width 135px
   height 36px
   display flex
   flex-direction row
-  justify-content flex-start
+  justify-content space-evenly
   align-items center
   padding 10px
   border-radius 3px
   font-size 14px
-  color #fff
-  background-color #3161A3
+  color #C2C2C2
   &::before
-    content '+'
+    content ''
+    width 19px
+    height 19px
     display block
     font-size 20px
     font-weight 600
     margin-right 10px
+    background-repeat no-repeat
+    background-size contain
+    background-position center
+
+.new
+  &::before
+    background-image url(../assets/images/lanhu/new@2x.png)
+  &::after
+    content ''
+    width 0
+    height 0
+    margin-left 10px
+    border-top 3px solid transparent
+    border-left 4px solid #C2C2C2
+    border-bottom 3px solid transparent
+    transform rotate(90deg)
+
+.sync
+  &::before
+    background-image url(../assets/images/lanhu/sync@2x.png)
 
 .expand
   position relative
@@ -124,18 +164,25 @@ export default {
     font-weight 500
     transform scaleX(1.8) translate(-50%, -50%) rotate(90deg)
 
+.button-sync,.unexpanded
+  width 26px
+  height 26px
+
+.button-sync
+  background-image url(../assets/images/lanhu/sync@2x.png)
+  background-repeat no-repeat
+  background-size contain
+  background-position center
+
 .unexpanded
-  width 36px
-  height 36px
-  position absolute
-  top 50%
-  left 50%
-  transform translate(-50%, -50%)
-  border-radius 4px
-  font-size 26px
+  // position absolute
+  // top 50%
+  // left 50%
+  // transform translate(-50%, -50%)
+  border-radius 50%
+  font-size 20px
   color #fff
   text-align center
-  line-height 36px
-  background-color #3161A3
-  box-shadow 0px 2px 12px 1px rgba(0, 0, 0, 0.3)
+  line-height 28px
+  background-color #DDAF59
 </style>

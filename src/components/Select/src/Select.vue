@@ -112,15 +112,15 @@ export default {
   width 100%
   height 100%
   background-color #fff
-  border 1px solid #13ABC4
-  border-radius 2px
+  border 1px solid #E9E9E9
+  border-radius 4px
   vertical-align middle
   padding-left 10px
   cursor pointer
   &:hover
-    border-color #0b8194
+    border-color #DDAF59
   &.active
-    border-color #0b8194
+    border-color #DDAF59
   &::placeholder
     color #b5b5b5
 </style>

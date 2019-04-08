@@ -68,15 +68,15 @@
       <ProgressBar :value="syncProgress"></ProgressBar>
     </modal>
     <modal
-      width="500px"
-      height="340px"
-      top="30vh"
+      width="465px"
+      height="317px"
+      top="20vh"
       transition-name="fade-in-down"
       title="分享链接"
       @close="closeSharePanel"
       :visible.sync="isSharePanelShowed">
       <div class="share-panel">
-        <p style="font-size: 12px;">链接生成成功，复制链接分享给好友吧</p>
+        <p style="font-size: 12px;margin-top: -10px;">链接生成成功，复制链接分享给好友吧</p>
         <div class="link" style="width: 100%; display: flex;">
           <input type="text">
           <div class="button primary">复制链接</div>
@@ -115,14 +115,56 @@
               :children="item.children">
             </b-option>
           </BSelect>
+          <div class="add-mem-button" @click="showFrdPanel">
+            <div class="icon-mem"></div>
+            添加可查看成员
+          </div>
         </div>
         <div class="footer">
-          <span>分享至</span>
+          <!-- <span>分享至</span>
           <span class="icon-weixin">
             <i class="fa fa-weixin" aria-hidden="true"></i>
-          </span>
-          <span style="color: #3161A3" @click="closeSharePanel">取消分享</span>
+          </span> -->
+          <span class="cancel-button" @click="closeSharePanel">取消分享</span>
         </div>
+      </div>
+    </modal>
+    <modal
+      class="frd-panel"
+      width="408px"
+      height="506px"
+      top="10vh"
+      transition-name="fade-in-down"
+      title="选择微信好友"
+      @close="closeFrdPanel"
+      :visible.sync="isFrdPanelShowed">
+      <div class="content">
+        <div class="mem-list">
+          <div class="search-input">
+            <input type="text">
+          </div>
+          <ul>
+            <li class="mem-item" v-for="item in 10" :key="item">
+              <img class="avatar" src="https://avatar.saraba1st.com/images/noavatar_middle.gif" alt="">
+              <span class="name">张小仙</span>
+              <input type="checkbox">
+            </li>
+          </ul>
+        </div>
+        <div class="mem-selected">
+          <div class="title">已选择({{4}})</div>
+          <ul>
+            <li class="mem-item" v-for="item in 10" :key="item">
+              <img class="avatar" src="https://avatar.saraba1st.com/images/noavatar_middle.gif" alt="">
+              <span class="name">张小仙</span>
+              <input type="checkbox">
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="button-group" slot="footer">
+        <div class="button primary">完成</div>
+        <div class="button" @click="isFrdPanelShowed = false">取消</div>
       </div>
     </modal>
   </div>
@@ -162,6 +204,7 @@ export default {
   data () {
     return {
       isSyncPanelShowed: false,
+      isFrdPanelShowed: false,
       syncProgress: 0,
       validity: '000',
       validities: [
@@ -266,6 +309,15 @@ export default {
       this.TOGGLE_SHOW_SHARE_PANEL(false)
     },
 
+    showFrdPanel () {
+      console.log('showFrdPanel', this.isFrdPanelShowed)
+      this.isFrdPanelShowed = true
+    },
+
+    closeFrdPanel () {
+      this.isFrdPanelShowed = false
+    },
+
     changeViewType () {
       this.SET_VIEW_TYPE(this.viewType === 'unexpanded' ? 'expanded' : 'unexpanded')
     }
@@ -310,17 +362,18 @@ export default {
 .share-panel
   font-size 13px
   line-height 40px
-  color #4A4A4A
+  color #999
+  padding 20px 30px 0
   .link
     input
-      width 360px
-      border 1px solid #13ABC4
-      border-radius 2px
+      width 320px
+      border 1px solid #E9E9E9
+      border-radius 4px
       padding-left 10px
-      margin-right 20px
+      margin-right 10px
       outline none
   .password
-    input
+    input[type="checkbox"]
       margin-right 10px
   .label
     width 100px
@@ -328,10 +381,41 @@ export default {
     display flex
     align-items center
   .footer
-    display flex
-    flex 1
-    justify-content space-between
-    margin-top 20px
+    // display flex
+    // flex 1
+    // justify-content space-between
+    margin-top 30px
+  .cancel-button
+    width 70px
+    height 28px
+    line-height 28px
+    font-size 13px
+    text-align center
+    float right
+    color #666666
+    border 1px solid #E9E9E9
+    border-radius 4px
+
+.add-mem-button
+  margin-left 14px
+  padding 0 8px
+  height 28px
+  line-height 28px
+  color #DDAF59
+  border 1px solid #DDAF59
+  border-radius 4px
+  text-align center
+  display flex
+  align-items center
+
+.icon-mem
+  width 12px
+  height 12px
+  margin-right 4px
+  background-image url('../assets/images/lanhu/mem@2x.png')
+  background-size contain
+  background-position center
+  background-repeat no-repeat
 
 .icon-weixin
   width 30px
@@ -384,4 +468,84 @@ export default {
   &.unexpanded
     &::after
       transform translate(-50%, -50%) rotate(0)
+
+.frd-panel
+  // margin-top -20px
+  .modal__body
+    padding 0 !important
+  .content
+    position relative
+    display flex
+    flex-direction row
+    &::after
+      content ''
+      display block
+      background-color #E9E9E9
+      height 1px
+      width 408px
+      position absolute
+      bottom 0
+      left 0
+    .mem-list
+      flex .5
+      border-right 1px solid #E9E9E9
+      .search-input
+        margin 10px 0
+        position relative
+        input
+          width 151px
+          height 24px
+          line-height 24px
+          outline none
+          padding-left 30px
+          margin-left 26px
+          border 1px solid #E9E9E9
+          border-radius 16px
+        &::before
+          position absolute
+          left 36px
+          top 50%
+          transform translateY(-50%)
+          content ''
+          display block
+          width 12px
+          height 12px
+          background-image url('../assets/images/lanhu/search_normal@2x.png')
+          background-size contain
+          background-position center
+          background-repeat no-repeat
+      ul
+        height 360px
+        overflow-y scroll
+    .mem-item
+      display flex
+      height 50px
+      flex-direction row
+      justify-content space-between
+      align-items center
+      padding 0 20px
+      .avatar
+        width 34px
+        height 34px
+        border-radius 50%
+      .name
+        flex .8
+        margin 0 10px
+        font-size 12px
+        color #333333
+    .mem-selected
+      flex .5
+      ul
+        height 360px
+        overflow-y scroll
+      .title
+        font-size 12px
+        color #999
+        margin 14px 20px 13px
+  .button-group
+    position relative
+    margin 0 auto
+    top 16px
+    left 0
+    transform none
 </style>

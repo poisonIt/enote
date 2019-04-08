@@ -22,7 +22,7 @@ export default {
   left 0
   margin 5px 0
   background-color #fff
-  border 1px solid #13ABC4
+  border 1px solid #DDAF59
   border-radius 2px
   box-shadow 0 2px 12px 0 rgba(0,0,0,.1)
   z-index 9999
@@ -41,7 +41,7 @@ export default {
   border-top-width 0
   border-style solid
   border-color transparent
-  border-bottom-color #13ABC4
+  border-bottom-color #DDAF59
   filter drop-shadow(0 2px 12px rgba(0, 0, 0, .03))
   &::after
     content " "

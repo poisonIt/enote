@@ -109,10 +109,11 @@ export default {
   flex 1
   font-size 14px
   font-weight 500
-  text-align center
+  text-align left
+  padding 0 30px
   color #333
 .modal__body
-  padding 20px 30px 0
+  // padding 20px 30px 0
   background-color #fff
 // .icon-close
 //   position absolute

@@ -192,7 +192,7 @@ export default {
   height auto
   border-radius 2px
   overflow hidden
-  box-shadow 0 2px 6px 2px rgba(0, 0, 0, 0.3)
+  box-shadow 0px 0px 6px 0px rgba(0,0,0,0.15)
   z-index 9999
   .item-list
     z-index 1
@@ -214,8 +214,8 @@ export default {
         transform translateY(-50%)
         content ''
         display block
-        width 18px
-        height 18px
+        width 16px
+        height 16px
         background-repeat no-repeat
         background-size contain
         background-position center
@@ -231,8 +231,8 @@ export default {
           transform rotate(180deg)
       &.sortDown
         &::after
-          width 16px
-          height 16px
+          width 13px
+          height 13px
           background-image url(../../../assets/images/arrows_down.png)
 .separator
   height 1px !important

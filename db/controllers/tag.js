@@ -110,10 +110,10 @@ function add (req) {
 // }
 
 function addFile (req) {
-  const { fileId, name } = req
+  const { fileId, tagId } = req
   return new Promise((resolve, reject) => {
     tagsDB.update(
-      { name: name },
+      { _id: tagId },
       { $push: { file_ids: fileId } },
       {},
       (err, docs) => {
@@ -127,10 +127,10 @@ function addFile (req) {
 }
 
 function removeFile (req) {
-  const { fileId, name } = req
+  const { fileId, tagId } = req
   return new Promise((resolve, reject) => {
     tagsDB.update(
-      { name: name },
+      { _id: tagId },
       { $pull: { file_ids: fileId } },
       {
         returnUpdatedDocs: true

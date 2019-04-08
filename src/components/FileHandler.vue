@@ -23,29 +23,33 @@
           :class="iconClassComputed(item)"
           :data="'FileHandler-' + item"></div>
       </div>
-      <div class="more" v-show="isMoreShowed">
-        <div class="item" @click="handleExport">导出为PDF</div>
-        <div class="item" @click="handleDelete">删除笔记</div>
-        <div class="item" @click="showHistory">查看历史版本</div>
-      </div>
-      <div class="info" v-show="isInfoShowed">
-        <div class="item">
-          <span>创建于：</span>
-          <span>{{ currentFile.create_at | date }}</span>
+      <transition name="fade-in-down">
+        <div class="more" v-show="isMoreShowed">
+          <div class="item" @click="handleExport">导出为PDF</div>
+          <div class="item" @click="handleDelete">删除笔记</div>
+          <div class="item" @click="showHistory">查看历史版本</div>
         </div>
-        <div class="item">
-          <span>更新于：</span>
-          <span>{{ currentFile.update_at | date }}</span>
+      </transition>
+      <transition name="fade-in-down">
+        <div class="info" v-show="isInfoShowed">
+          <div class="item">
+            <span>创建于：</span>
+            <span>{{ currentFile.create_at | date }}</span>
+          </div>
+          <div class="item">
+            <span>更新于：</span>
+            <span>{{ currentFile.update_at | date }}</span>
+          </div>
+          <div class="item">
+            <span>作者：</span>
+            <span>张三</span>
+          </div>
+          <div class="item">
+            <span>文件大小：</span>
+            <span>{{ currentFile.file_size | size }}</span>
+          </div>
         </div>
-        <div class="item">
-          <span>作者：</span>
-          <span>张三</span>
-        </div>
-        <div class="item">
-          <span>文件大小：</span>
-          <span>{{ currentFile.file_size | size }}</span>
-        </div>
-      </div>
+      </transition>
     </div>
   </div>
 </template>
@@ -139,13 +143,15 @@ export default {
 
     handleResize () {
       this.$nextTick(() => {
-        let space = this.viewType === 'expanded' ? 540 : 360
+        let space = this.viewType === 'expanded' ? 540 : 390
+        console.log('1111', document.body.clientWidth, space)
         this.containerWidth = document.body.clientWidth - space + 'px'
       })
     },
 
     handleWindowClick (e) {
       let dataAttr = e.target.getAttribute('data')
+      console.log('handleWindowClick', e)
       if (dataAttr !== 'FileHandler-info') {
         this.isInfoShowed = false
       }
@@ -306,11 +312,12 @@ export default {
 .more, .info
   position absolute
   top 24px
-  border 1px solid #13ABC4
   background-color #fff
+  box-shadow 0px 0px 6px 0px rgba(0,0,0,0.15)
   padding 10px 0
-  font-size 10px
-  line-height 20px
+  font-size 12px
+  color #333
+  line-height 24px
   font-weight 600
   z-index 9999
   .item
@@ -320,13 +327,13 @@ export default {
   padding 0
   right 60px
   .item
-    padding 4px 10px
+    padding 6px 14px
   .item:hover
-    background-color #13ABC4
+    background-color #DDAF59
     color #fff
 
 .info
-  height 100px
+  // height 100px
   right 10%
   white-space nowrap
   .item

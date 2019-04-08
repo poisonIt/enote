@@ -174,7 +174,6 @@ export default {
 
     selectedTags (val) {
       this.SET_VIEW_NAME(val.map(item => item.data.title).join('、'))
-      console.log('3333', val)
       this.SET_SELECTED_TAGS(val.map(item => item.data.id))
     }
   },

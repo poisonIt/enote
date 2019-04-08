@@ -16,6 +16,7 @@
           :width="140"
           :top="40"
           :fontSize="13"
+          :transition="'fade-in-down'"
           @itemClick="handleMenuClick">
         </Menu>
       </div>
@@ -270,6 +271,7 @@ export default {
     selectFile (index) {
       const file = this.fileList[index]
       console.log('selectFile', file, this.contentCache)
+      if (!file) return
       if (!this.isFirstSelect) {
         if (this.currentFile === file) return
         if (this.currentFile) {
@@ -284,15 +286,17 @@ export default {
       this.$refs.fileCardGroup.select(index) // visually select file
       // const appPath = '/Users/bowiego/Documents/workspace/enote/public'
 
-      this.SET_CURRENT_FILE(file.id)
-      if (file.type === 'doc') {
-        LocalDAO.doc.get(file.id).then(res => {
-          console.log('SET_EDITOR_CONTENT', res)
-          this.SET_EDITOR_CONTENT(res)
-        })
-        // readFile(`${appPath}/docs/${file.id}.xml`).then(data => {
-        //   this.SET_EDITOR_CONTENT(data.data)
-        // })
+      if (this.currentFile !== file) {
+        this.SET_CURRENT_FILE(file.id)
+        if (file.type === 'doc') {
+          LocalDAO.doc.get(file.id).then(res => {
+            console.log('SET_EDITOR_CONTENT', res)
+            this.SET_EDITOR_CONTENT(res)
+          })
+          // readFile(`${appPath}/docs/${file.id}.xml`).then(data => {
+          //   this.SET_EDITOR_CONTENT(data.data)
+          // })
+        }
       }
     },
 

@@ -123,20 +123,7 @@ const mutations = {
   REMOVE_FILE_TAG (state, opts) {
     let { fileId, tagId } = opts
     let file = state.files_map[fileId]
-    console.log('REMOVE_FILE_TAG', file)
     remove(file.tags, tagId)
-    console.log('REMOVE_FILE_TAG', file)
-    // LocalDAO.tag.getByName(tag).then(tagObj => {
-    //   if (tagObj) {
-    //     LocalDAO.tag.removeFile({
-    //       fileId: id,
-    //       name: tag
-    //     }).then(() => {
-    //       remove(file.tags, item => item === tagObj._id)
-    //       LocalDAO.structure.save(JSON.stringify(state.files_map))
-    //     })
-    //   }
-    // })
   },
 
   CLEAR_ALL_RECYCLE (state) {
@@ -333,14 +320,14 @@ const actions = {
         }).then(tagId => {
           commit('ADD_FILE_TAG', {
             fileId: id,
-            tagId: tagId
+            tagId: tagObj._id
           })
           commit('SAVE_FILES')
         })
       } else {
         LocalDAO.tag.addFile({
           fileId: id,
-          name: tag
+          tagId: tagObj._id
         }).then(() => {
           commit('ADD_FILE_TAG', {
             fileId: id,
@@ -353,20 +340,16 @@ const actions = {
   },
 
   REMOVE_FILE_TAG ({ commit }, opts) {
-    let { id, tag } = opts
-    LocalDAO.tag.getByName(tag).then(tagObj => {
-      if (tagObj) {
-        LocalDAO.tag.removeFile({
-          fileId: id,
-          name: tag
-        })
-        commit('REMOVE_FILE_TAG', {
-          fileId: id,
-          tagId: tagObj._id
-        })
-        commit('SAVE_FILES')
-      }
+    let { fileId, tagId } = opts
+    // LocalDAO.tag.getByName(tagName).then(tagObj => {
+    // if (tagObj) {
+    commit('REMOVE_FILE_TAG', {
+      fileId: fileId,
+      tagId: tagId
     })
+    commit('SAVE_FILES')
+    // }
+    // })
     // commit('REMOVE_FILE_TAG', opts)
   },
 

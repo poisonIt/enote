@@ -146,7 +146,7 @@
           <ul>
             <li class="mem-item" v-for="item in 10" :key="item">
               <img class="avatar" src="https://avatar.saraba1st.com/images/noavatar_middle.gif" alt="">
-              <span class="name">张小仙</span>
+              <label class="name">张小仙</label>
               <input type="checkbox">
             </li>
           </ul>
@@ -156,7 +156,7 @@
           <ul>
             <li class="mem-item" v-for="item in 10" :key="item">
               <img class="avatar" src="https://avatar.saraba1st.com/images/noavatar_middle.gif" alt="">
-              <span class="name">张小仙</span>
+              <label class="name">张小仙</label>
               <input type="checkbox">
             </li>
           </ul>

@@ -59,6 +59,10 @@ export default {
       console.log('dataReady', this.editor.getData())
       // this.editor.resetUndo()
     })
+    this.editor.on('blur', () => {
+      this.saveData()
+      // this.editor.resetUndo()
+    })
     console.log('ready', this.$remote.globalShortcut)
     // this.$remote.globalShortcut.register('CommandOrControl+A', () => {
     //   this.editor.setData('<p>aaa</p>')
@@ -92,9 +96,9 @@ export default {
     },
 
     handleResize () {
-      console.log('handleResize')
+      console.log('handleResize', this.viewType)
       // this.editor.setData(this.content)
-      let space = this.viewType === 'expanded' ? 540 : 360
+      let space = this.viewType === 'expanded' ? 540 : 390
       let w = document.body.clientWidth - space
       let h = document.body.clientHeight - document.getElementById('cke_1_top').getBoundingClientRect().height - 100
       this.editor.resize(w, h, true)

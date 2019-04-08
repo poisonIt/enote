@@ -99,6 +99,23 @@ html, body
 ul, li
   list-style-type none
 
+input[type="checkbox"]:checked
+  position relative
+input[type="checkbox"]:checked::before
+  content ''
+  display inline-block
+  position absolute
+  left 0
+  top 0
+  vertical-align -2px
+  width 12px
+  height 12px
+  margin-right 6px
+  background-image url('./assets/images/lanhu/checked@2x.png')
+  background-size contain
+  background-position center
+  background-repeat no-repeat
+
 #app
   font-family 'Avenir', Helvetica, Arial, sans-serif
   -webkit-font-smoothing antialiased

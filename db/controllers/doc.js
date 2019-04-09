@@ -3,7 +3,6 @@ const { remote } = require('electron')
 const { docsDB } = remote.app.database
 
 function getAll () {
-  docsDB.remove({}, { multi: true }, (err, num) => { console.log('num', num) })
   return new Promise((resolve, reject) => {
     docsDB.find({}, (err, docs) => {
       if (err) {
@@ -13,6 +12,12 @@ function getAll () {
         resolve(docs)
       }
     })
+  })
+}
+
+function removeAll () {
+  return new Promise((resolve, reject) => {
+    docsDB.remove({}, { multi: true }, (err, num) => { console.log('num', num) })
   })
 }
 
@@ -130,6 +135,7 @@ function remove (req) {
 
 export default {
   getAll,
+  removeAll,
   get,
   add,
   update,

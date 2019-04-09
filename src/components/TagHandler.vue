@@ -121,7 +121,8 @@ export default {
   },
 
   methods: {
-    ...mapActions(['SAVE_FILE_TITLE',
+    ...mapActions([
+      'SAVE_FILE_TITLE',
       'ADD_FILE_TAG',
       'REMOVE_FILE_TAG',
       'SET_TAGS_FROM_LOCAL'

@@ -34,7 +34,6 @@ const mutations = {
   },
 
   SET_SELECTED_TAGS (state, tags) {
-    console.log('SET_SELECTED_TAGS', tags)
     state.selected_tags = tags
   },
 
@@ -43,7 +42,6 @@ const mutations = {
   },
 
   SET_EDITOR_CONTENT_CACHE (state, content) {
-    console.log('SET_EDITOR_CONTENT_CACHE', content)
     state.editor_content_cache = content
   },
 

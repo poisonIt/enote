@@ -15,11 +15,14 @@ function save (files) {
   })
 }
 
+function remove () {
+  return new Promise((resolve, reject) => {
+    structureDB.remove({}, { multi: true }, (err, numRemoved) => { console.log('numRemoved', numRemoved) })
+  })
+}
+ 
 function get () {
   return new Promise((resolve, reject) => {
-    console.log('get')
-    // structureDB.remove({}, { multi: true }, (err, numRemoved) => { console.log('numRemoved', numRemoved) })
-    // return
     structureDB.find({}, (err, docs) => {
       if (err) {
         reject(err)
@@ -33,5 +36,6 @@ function get () {
 
 export default {
   save,
+  remove,
   get
 }

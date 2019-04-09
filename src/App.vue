@@ -4,6 +4,7 @@
     <Home></Home>
     <div ref="youdaoEditor"></div>
     <!-- <div class="click-mask"></div> -->
+    <button style="position: fixed;top: 30px;left: 20px;" @click="resetData">reset</button>
   </div>
 </template>
 
@@ -11,6 +12,7 @@
 import { mapActions } from 'vuex'
 // import AppHeader from '@/components/AppHeader'
 import Home from '@/views/Home'
+import LocalDAO from '../db/api'
 
 export default {
   components: {
@@ -79,7 +81,13 @@ export default {
       'SET_FILES_FROM_LOCAL',
       'SET_FILES',
       'SET_ALL_DOC_CONTENT'
-    ])
+    ]),
+
+    resetData () {
+      LocalDAO.doc.removeAll()
+      LocalDAO.tag.removeAll()
+      LocalDAO.structure.remove()
+    }
   }
 }
 </script>

@@ -142,7 +142,10 @@ function createWindow () {
     width: 960,
     height: 640,
     // frame: false,
-    titleBarStyle: 'hidden'
+    titleBarStyle: 'hidden',
+    webPreferences: {
+      webSecurity: false
+    }
   })
   win.setMinimumSize(960, 640)
 

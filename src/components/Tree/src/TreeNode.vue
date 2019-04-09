@@ -9,9 +9,14 @@
     <div class="tree-node__content"
       :style="{ paddingLeft: node.level * 20 - 10 + 'px', height: 'auto' }">
       <div class="highlight-mask-line"
-        v-if="isHighlight"
-        :style="{ left: node.level * 20 + 'px' }"></div>
-      <!-- <div class="highlight-mask" v-if="isHighlight"></div> -->
+        v-if="isHighlightLine"
+        ref="hightLightLine"
+        :style="{
+          left: node.level * 20 + 13 + 'px',
+          top: hightlightTop ? '-4px' : null,
+          bottom: hightlightTop ? null : '-4px',
+        }"></div>
+      <div class="highlight-mask" v-if="isHighlight"></div>
       <div class="icon icon-arrow"
         :class="{
           'transparent' : node.childNodes.length === 0,
@@ -87,7 +92,9 @@ export default {
   data () {
     return {
       expanded: false,
-      isHighlight: false
+      isHighlight: false,
+      isHighlightLine: false,
+      hightlightTop: false
     }
   },
 
@@ -192,8 +199,34 @@ export default {
     toggleHightlight (val) {
       for (let i in this.node.store.nodeMap) {
         this.node.store.nodeMap[i].instance.isHighlight = false
+        this.node.store.nodeMap[i].instance.isHighlightLine = false
       }
       this.isHighlight = val
+      this.isHighlightLine = false
+      console.log('toggleHightlight', this.isHighlightLine, this.isHighlight)
+    },
+
+    toggleHightlightTop (val) {
+      console.log('111111', this.$refs)
+      this.hightlightTop = true
+      for (let i in this.node.store.nodeMap) {
+        this.node.store.nodeMap[i].instance.isHighlight = false
+        this.node.store.nodeMap[i].instance.isHighlightLine = false
+      }
+      this.isHighlightLine = val
+      this.isHighlight = false
+      console.log('toggleHightlightBottom', this.isHighlightLine, this.isHighlight)
+    },
+
+    toggleHightlightBottom (val) {
+      this.hightlightTop = false
+      for (let i in this.node.store.nodeMap) {
+        this.node.store.nodeMap[i].instance.isHighlight = false
+        this.node.store.nodeMap[i].instance.isHighlightLine = false
+      }
+      this.isHighlightLine = val
+      this.isHighlight = false
+      console.log('toggleHightlightBottom', this.isHighlightLine, this.isHighlight)
     }
   }
 }
@@ -208,7 +241,7 @@ export default {
     background-color #FFF5E2
     color #DDAF59
     .tree-node__content
-      border-right 2px solid #DDAF59
+      border-right 3px solid #DDAF59
     & .tree-node
       color #333
       background-color #fff
@@ -238,7 +271,7 @@ export default {
   width 100%
   height 1px
   position absolute
-  left 30px
+  left 73px
   top 36px
   border .5px solid #DDAF59
   &::before

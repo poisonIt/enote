@@ -56,7 +56,9 @@ const mutations = {
     obj.file_size = 0
     if (obj.type === 'folder') {
       obj.child_folders = []
+      obj.child_docs = []
       parentFolder.child_folders.push(obj.id)
+      obj.seq = parentFolder.child_folders.length
     } else if (obj.type === 'doc') {
       obj.file_size = docBriefTemplate.length
       obj.brief = docBriefTemplate
@@ -67,6 +69,7 @@ const mutations = {
         parentFolder.child_docs = []
       }
       parentFolder.child_docs.push(obj.id)
+      obj.seq = parentFolder.child_docs.length
     }
     state.files_arr.push(obj)
   },
@@ -81,7 +84,7 @@ const mutations = {
     state.files_map[id][attr] = val
   },
 
-  MOVE_FILE (state, opts) {
+  APPEND_FILE (state, opts) {
     let { fileId, targetId } = opts
     if (fileId === targetId) return
     let file = state.files_map[fileId]
@@ -89,27 +92,58 @@ const mutations = {
     let oldParentFolder = state.files_map[file.parent_folder]
     file.parent_folder = targetFolder.id
     file.ancestor_folders = [...targetFolder.ancestor_folders, targetFolder.id]
+
     if (file.type === 'folder') {
       remove(oldParentFolder.child_folders, item => item === file.id)
-      // update child
-      updateChildAncestorFolders(file, state)
-
       if (!targetFolder.child_folders) {
         targetFolder.child_folders = []
       }
+      updateChildFiles(oldParentFolder, state)
+
       targetFolder.child_folders.push(file.id)
+      updateChildFiles(targetFolder, state)
     } else if (file.type === 'doc') {
       remove(oldParentFolder.child_docs, item => item === file.id)
-
       if (!targetFolder.child_docs) {
         targetFolder.child_docs = []
       }
+      updateChildFiles(oldParentFolder, state)
+
       targetFolder.child_docs.push(file.id)
+      updateChildFiles(targetFolder, state)
+    }
+  },
+
+  MOVE_FILE (state, opts) {
+    let { fileId, broId, type } = opts // type: 'before', 'after'
+    if (fileId === broId) return
+    let file = state.files_map[fileId]
+    let broFolder = state.files_map[broId]
+    let targetFolder = state.files_map[broFolder.parent_folder]
+    let oldParentFolder = state.files_map[file.parent_folder]
+    file.parent_folder = targetFolder.id
+    file.ancestor_folders = [...targetFolder.ancestor_folders, targetFolder.id]
+
+    if (file.type === 'folder') {
+      remove(oldParentFolder.child_folders, item => item === file.id)
+      if (!targetFolder.child_folders) {
+        targetFolder.child_folders = []
+      }
+      updateChildFiles(oldParentFolder, state)
+
+      let broFolderIdx = targetFolder.child_folders.indexOf(broFolder.id)
+      if (type === 'before') {
+        targetFolder.child_folders.splice(broFolderIdx, 0, file.id)
+      } else {
+        targetFolder.child_folders.splice(broFolderIdx + 1, 0, file.id)
+      }
+      updateChildFiles(targetFolder, state)
+    } else {
+      return
     }
   },
 
   SET_TAGS (state, tags) {
-    console.log('SET_TAGS', tags)
     state.tags_arr = tags
   },
 
@@ -293,10 +327,20 @@ const actions = {
     commit('SAVE_FILES')
   },
 
+  APPEND_FILE ({ commit }, opts) {
+    commit('APPEND_FILE', opts)
+    // commit('UPDATE_FILE_UPDATE_AT', opts.fileId)
+    // commit('UPDATE_FILE_UPDATE_AT', opts.targetId)
+    commit('UPDATE_FILES_MAP')
+    commit('UPDATE_FILES_ARR')
+    commit('UPDATE_FOLDERS')
+    commit('SAVE_FILES')
+  },
+
   MOVE_FILE ({ commit }, opts) {
     commit('MOVE_FILE', opts)
-    commit('UPDATE_FILE_UPDATE_AT', opts.fileId)
-    commit('UPDATE_FILE_UPDATE_AT', opts.targetId)
+    // commit('UPDATE_FILE_UPDATE_AT', opts.fileId)
+    // commit('UPDATE_FILE_UPDATE_AT', opts.targetId)
     commit('UPDATE_FILES_MAP')
     commit('UPDATE_FILES_ARR')
     commit('UPDATE_FOLDERS')
@@ -555,7 +599,7 @@ function addDoc (id) {
   })
 }
 
-function updateChildAncestorFolders (file, state) {
+function updateChildFiles (file, state) {
   let childFiles = state.files_arr.filter(item => {
     if (item.parent_folder) {
       return item.parent_folder === file.id
@@ -565,7 +609,10 @@ function updateChildAncestorFolders (file, state) {
   childFiles.forEach(child => {
     child.ancestor_folders = [...file.ancestor_folders, file.id]
     if (child.type === 'folder') {
-      updateChildAncestorFolders(child, state)
+      child.seq = file.child_folders.indexOf(child.id) + 1
+      updateChildFiles(child, state)
+    } else {
+      child.seq = file.child_docs.indexOf(child.id) + 1
     }
   })
 }

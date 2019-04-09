@@ -16,6 +16,12 @@ function getAll () {
   })
 }
 
+function removeAll () {
+  return new Promise((resolve, reject) => {
+    tagsDB.remove({}, { multi: true }, (err, num) => { console.log('num', num) })
+  })
+}
+
 function getById (id) {
   // tagsDB.remove({}, { multi: true }, (err, num) => { console.log('num', num) })
   // return
@@ -185,6 +191,7 @@ function remove (req) {
 
 export default {
   getAll,
+  removeAll,
   getById,
   getByName,
   getByFileId,

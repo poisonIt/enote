@@ -144,14 +144,12 @@ export default {
     handleResize () {
       this.$nextTick(() => {
         let space = this.viewType === 'expanded' ? 540 : 390
-        console.log('1111', document.body.clientWidth, space)
         this.containerWidth = document.body.clientWidth - space + 'px'
       })
     },
 
     handleWindowClick (e) {
       let dataAttr = e.target.getAttribute('data')
-      console.log('handleWindowClick', e)
       if (dataAttr !== 'FileHandler-info') {
         this.isInfoShowed = false
       }
@@ -204,7 +202,6 @@ export default {
     },
 
     share () {
-      console.log('share')
       this.TOGGLE_SHOW_SHARE_PANEL(true)
     },
 

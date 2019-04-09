@@ -14,10 +14,9 @@
       <div class="nav-node"
         :draggable="data.type === 'folder'"
         @dragstart="handleDragStart(node)"
+        @dragover="handleDragOver(node, $event)"
         @dragend="handleDragEnd"
-        @dragover="handleDragOver(node)"
         slot-scope="{ node, data }">
-        <!-- <div class="dragover-mask" v-if="dragOverNode === node"></div> -->
         <div class="icon"
           :class="iconClassComputed(node)"
           v-if="node.data.link"></div>
@@ -191,6 +190,7 @@ export default {
       'ADD_FILE',
       'DELETE_FILE',
       'EDIT_FILE',
+      'APPEND_FILE',
       'MOVE_FILE',
       'CLEAR_ALL_RECYCLE',
       'RESUME_ALL_RECYCLE',
@@ -438,20 +438,78 @@ export default {
       this.dragNode = node
     },
 
-    handleDragEnd () {
-      console.log(this.dragNode, this.dragOverNode)
-      this.MOVE_FILE({
-        fileId: this.dragNode.data.id,
-        targetId: this.dragOverNode.data.id
-      })
+    handleDragEnd (e) {
+      if (this.dragOverNode == null) return
+      if (this.dragNode === this.dragOverNode) {
+        this.dragOverNode.instance.toggleHightlight(false)
+        this.dragOverNode.instance.toggleHightlightBottom(false)
+        this.dragNode = null
+        this.dragOverNode = null
+        return
+      }
+
+      const nodeElRect = this.dragOverNode.instance.$el.getBoundingClientRect()
+
+      let eventArea = {
+        x: e.clientX,
+        y: e.clientY
+      }
+
+      if (eventArea.y < nodeElRect.top + 40 * 0.2) {
+        console.log('top')
+        this.MOVE_FILE({
+          fileId: this.dragNode.data.id,
+          broId: this.dragOverNode.data.id,
+          type: 'before'
+        })
+      } else if (eventArea.y > nodeElRect.top + 40 * 0.8) {
+        console.log('bottom')
+        this.MOVE_FILE({
+          fileId: this.dragNode.data.id,
+          broId: this.dragOverNode.data.id,
+          type: 'after'
+        })
+      } else {
+        if (this.dragNode.parent !== this.dragOverNode) {
+          this.APPEND_FILE({
+            fileId: this.dragNode.data.id,
+            targetId: this.dragOverNode.data.id
+          })
+        }
+      }
+
+      this.dragOverNode.instance.toggleHightlight(false)
+      this.dragOverNode.instance.toggleHightlightBottom(false)
       this.dragNode = null
       this.dragOverNode = null
+
     },
 
-    handleDragOver (node) {
+    handleDragOver (node, e) {
+      if (node === this.dragNode) {
+        this.dragOverNode && this.dragOverNode.instance.toggleHightlight(false)
+        this.dragOverNode && this.dragOverNode.instance.toggleHightlightBottom(false)
+        this.dragOverNode = null
+        return
+      }
       if (node.data.type !== 'folder') return
       this.dragOverNode = node
-      node.instance.toggleHightlight(true)
+      const nodeElRect = node.instance.$el.getBoundingClientRect()
+      
+      let eventArea = {
+        x: e.clientX,
+        y: e.clientY
+      }
+
+      if (eventArea.y < nodeElRect.top + 40 * 0.2) {
+        if (node.level === 1) return
+        node.instance.toggleHightlightTop(true)
+      } else if (eventArea.y > nodeElRect.top + 40 * 0.8) {
+        if (node.expanded && node.childNodes.length > 0) return
+        node.instance.toggleHightlightBottom(true)
+      } else {
+        node.instance.toggleHightlight(true)
+      }
     }
   }
 }
@@ -503,8 +561,13 @@ export default {
     top 0
     left 0
     width 100%
-    height 100%
-    border 2px dashed #73a8d6
+    height 80%
+  .dragover-bottom-mask
+    width 100%
+    height 20%
+    position absolute
+    bottom 0
+    left 0
   .icon
     width 22px
     height 22px

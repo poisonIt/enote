@@ -67,7 +67,7 @@ export default {
 
   methods: {
     ...mapActions([
-      'MOVE_FILE',
+      'APPEND_FILE',
       'SET_CURRENT_FOLDER'
     ]),
 
@@ -82,7 +82,7 @@ export default {
         this.targetFolder = this.$refs.tree.store.root.data[0]
       }
 
-      this.MOVE_FILE({
+      this.APPEND_FILE({
         fileId: this.moveFileId,
         targetId: this.targetFolder.id
       })

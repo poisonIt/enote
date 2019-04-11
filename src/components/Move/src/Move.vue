@@ -138,17 +138,17 @@ export default {
   flex-direction row
   align-items center
   .icon
-    width 30px
-    height 30px
+    width 20px
+    height 20px
     border-radius 3px
     background-image url(../../../assets/images/document.png)
     background-repeat no-repeat
     background-position center
     background-size contain
     &.folder
-      background-image url(../../../assets/images/folder.png)
+      background-image url(../../../assets/images/lanhu/folder@2x.png)
   .name
-    margin-left 20px
+    margin-left 10px
     font-size 12px
     line-height 48px
 .document

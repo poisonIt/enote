@@ -1,6 +1,10 @@
 const resourceMenu1 = [
   {
-    type: 'separator'
+    label: '移动',
+    eventListener: {
+      eventName: 'click',
+      callbackName: 'handleMove'
+    }
   },
   {
     label: '重命名',
@@ -9,20 +13,13 @@ const resourceMenu1 = [
       callbackName: 'handleRename'
     }
   },
-  {
-    label: '移动到',
-    eventListener: {
-      eventName: 'click',
-      callbackName: 'handleMove'
-    }
-  },
-  {
-    label: '复制',
-    eventListener: {
-      eventName: 'click',
-      callbackName: 'handleDuplicate'
-    }
-  },
+  // {
+  //   label: '复制',
+  //   eventListener: {
+  //     eventName: 'click',
+  //     callbackName: 'handleDuplicate'
+  //   }
+  // },
   {
     label: '删除',
     eventListener: {

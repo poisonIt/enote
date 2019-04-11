@@ -34,6 +34,7 @@
           :type="item.type"
           :title="item.title"
           :content="item.brief"
+          :isTop="stickTopFiles.indexOf(item.id) > -1"
           :update_at="item.update_at | yyyymmdd"
           :file_size="Number(item.file_size || 0)"
           :parent_folder="getParentFolder(item.ancestor_folders)"
@@ -65,7 +66,7 @@ import mixins from '../mixins'
 import { mapGetters, mapState, mapActions } from 'vuex'
 import SearchBar from '@/components/SearchBar'
 import { FileCard, FileCardGroup } from '@/components/FileCard'
-import { fileHandleMenu, fileCloudMenu, fileInfoMenu } from '../Menu'
+import { docHandleMenu1, docHandleMenu2, folderHandleMenu, fileCloudMenu, fileInfoMenu } from '../Menu'
 import LocalDAO from '@/../db/api'
 
 export default {
@@ -85,8 +86,11 @@ export default {
       list: [],
       fileList: [],
       isMenuVisible: false,
+      isFileMenuVisible: false,
       nativeMenuData: [
-        fileHandleMenu,
+        docHandleMenu1,
+        docHandleMenu2,
+        folderHandleMenu,
         fileCloudMenu,
         fileInfoMenu
       ],
@@ -149,6 +153,7 @@ export default {
       files: 'GET_CURRENT_FILES',
       currentFolder: 'GET_CURRENT_FOLDER',
       currentFile: 'GET_CURRENT_FILE',
+      stickTopFiles: 'GET_STICK_TOP_FILES',
       viewFolder: 'GET_VIEW_FOLDER',
       viewFileListType: 'GET_VIEW_FILE_LIST_TYPE',
       viewFileSortType: 'GET_VIEW_FILE_SORT_TYPE',
@@ -253,6 +258,10 @@ export default {
 
     viewFileSortOrder (val) {
       this.list = this.fileListSortFunc(this.list)
+    },
+
+    stickTopFiles (val) {
+      this.fileList = this.fileListSortFunc(this.list)
     }
   },
 
@@ -261,6 +270,8 @@ export default {
       'SAVE_DOC',
       'SET_EDITOR_CONTENT',
       'EDIT_FILE',
+      'STICK_TOP_FILE',
+      'CANCEL_STICK_TOP_FILE',
       'SET_CURRENT_FILE',
       'SET_VIEW_FILE_LIST_TYPE',
       'SET_VIEW_FILE_SORT_TYPE',
@@ -270,7 +281,6 @@ export default {
 
     selectFile (index) {
       const file = this.fileList[index]
-      console.log('selectFile', file, this.contentCache)
       if (!file) return
       if (!this.isFirstSelect) {
         if (this.currentFile === file) return
@@ -322,11 +332,22 @@ export default {
       }
     },
 
+    handleFileMenuClick (value, item) {
+      console.log('handleFileMenuClick', value, item)
+    },
+
     fileListSortFunc (list) {
+      let topList = this.stickTopFiles.map(id => {
+        return this.allFileMap[id]
+      }).filter(file => list.indexOf(file) > -1)
+
       let order = this.viewFileSortOrder === 'down' ? -1 : 1
-      return list.sort((a, b) => {
+      let downList = list.sort((a, b) => {
         return (Number(a[this.viewFileSortType]) - Number(b[this.viewFileSortType])) * order
-      })
+      }).filter(file => this.stickTopFiles.indexOf(file.id) === -1)
+
+      console.log('fileListSortFunc', topList, downList)
+      return [...topList, ...downList]
     },
 
     getParentFolder (folders) {
@@ -344,7 +365,20 @@ export default {
     handleContextmenu (props) {
       console.log('handleContextmenu-11', props, this.nativeMenus)
       this.popupedFile = props.file_id
-      this.popupNativeMenu(this.nativeMenus[0])
+      if (props.type === 'doc') {
+        let idx = this.stickTopFiles.indexOf(props.file_id) === -1 ? 0 : 1
+        this.popupNativeMenu(this.nativeMenus[idx])
+      } else if (props.type === 'folder') {
+        this.popupNativeMenu(this.nativeMenus[2])
+      }
+    },
+
+    handleStickTop () {
+      this.STICK_TOP_FILE(this.popupedFile)
+    },
+
+    handleCancelStickTop () {
+      this.CANCEL_STICK_TOP_FILE(this.popupedFile)
     },
 
     handleRename () {

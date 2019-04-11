@@ -86,7 +86,7 @@
 <script>
 import { cloneDeep } from 'lodash'
 import { mapActions, mapGetters } from 'vuex'
-import { folderMenu, resourceMenu, recycleMenu } from '../Menu'
+import { folderMenu, rootFolderMenu, resourceMenu, recycleMenu } from '../Menu'
 import { GenNonDuplicateID } from '@/utils/utils'
 import mixins from '../mixins'
 import Tree from '@/components/Tree'
@@ -111,7 +111,7 @@ export default {
       dragNode: null,
       dragOverNode: null,
       nativeMenuData: [
-        folderMenu,
+        rootFolderMenu,
         [...folderMenu, ...resourceMenu[0]],
         [...folderMenu, ...resourceMenu[1]],
         recycleMenu
@@ -257,7 +257,7 @@ export default {
       }
     },
 
-    handleNewDoc (isCurrent) {
+    handleNewDoc (isCurrent, isTemp) {
       if (isCurrent) {
         this.popupedNode = this.currentNode
       }
@@ -271,7 +271,8 @@ export default {
         title: '无标题笔记',
         type: 'doc',
         id: id,
-        parent_folder: this.popupedNode.data.id
+        parent_folder: this.popupedNode.data.id,
+        isTemp: isTemp
       }).then(() => {
         this.$nextTick(() => {
           for (let i in this.popupedNode.store.nodeMap) {
@@ -283,6 +284,10 @@ export default {
           }
         })
       })
+    },
+
+    handleNewTemplateDoc (isCurrent) {
+      this.handleNewDoc(isCurrent, true)
     },
 
     handleNewFolder (isCurrent) {

@@ -13,6 +13,7 @@ const state = {
   doc_map: {},
   tags_arr: [],
   folders: {},
+  stick_top_files: [],
   current_folder_id: null,
   current_file_id: null,
   search_keyword: ''
@@ -60,8 +61,8 @@ const mutations = {
       parentFolder.child_folders.push(obj.id)
       obj.seq = parentFolder.child_folders.length
     } else if (obj.type === 'doc') {
-      obj.file_size = docBriefTemplate.length
-      obj.brief = docBriefTemplate
+      obj.file_size = obj.isTemp ? docBriefTemplate.length : 0
+      obj.brief =  obj.isTemp ? docBriefTemplate : ''
       obj.ancestor_folders.forEach(id => {
         state.files_map[id].file_size = state.files_map[id].file_size + obj.file_size
       })
@@ -257,11 +258,33 @@ const mutations = {
 
   SET_SEARCH_KEYWORD (state, str) {
     state.search_keyword = str
+  },
+
+  STICK_TOP_FILE (state, id) {
+    if (state.stick_top_files.indexOf(id) === -1) {
+      state.stick_top_files.unshift(id)
+    }
+  },
+
+  CANCEL_STICK_TOP_FILE (state, id) {
+    let idx = state.stick_top_files.indexOf(id)
+    state.stick_top_files.splice(idx, 1)
+  },
+
+  SET_STICK_TOP_FILES (state, arr) {
+    state.stick_top_files = arr
+  },
+
+  SAVE_STICK_TOP_FILES (state) {
+    LocalDAO.tops.save(state.stick_top_files)
   }
 }
 
 const actions = {
   async SET_FILES_FROM_LOCAL ({ dispatch, commit }) {
+    fetchLocalTops().then(topFiles => {
+      commit('SET_STICK_TOP_FILES', topFiles)
+    })
     dispatch('SET_FILES', await fetchLocalFiles()).then(() => {
       dispatch('SET_DOC_BRIEF_FORM_LOCAL')
     })
@@ -285,10 +308,8 @@ const actions = {
 
   async SET_DOC_BRIEF_FORM_LOCAL ({ dispatch, commit }) {
     const filesContent = await fetchAllLocalDocContent()
-    // console.log('filesContent', filesContent)
     commit('UPDATE_DOC_MAP', filesContent)
     filesContent.forEach(content => {
-      console.log('filesContent', content)
       content.brief = formatContent(content.data)
       dispatch('UPDATE_FILE_BRIEF', content)
     })
@@ -296,7 +317,7 @@ const actions = {
 
   async ADD_FILE ({ dispatch, commit }, obj) {
     if (obj.type === 'doc') {
-      let id = await addDoc(obj.id)
+      let id = await addDoc(obj.id, obj.isTemp)
       let content = await fetchLocalDocContent(id)
       content.brief = formatContent(content.data)
       commit('ADD_FILE', obj)
@@ -349,7 +370,6 @@ const actions = {
 
   SET_TAGS_FROM_LOCAL ({ commit }) {
     LocalDAO.tag.getAll().then(res => {
-      console.log('SET_TAGS_FROM_LOCAL', res)
       commit('SET_TAGS', res)
     })
   },
@@ -421,16 +441,19 @@ const actions = {
   },
 
   async SAVE_DOC ({ dispatch, commit }, obj) {
-    console.log('SAVE_DOC', obj)
     const { id, html } = obj
     // await writeFile(`${appPath}/docs/${id}.xml`, html)
-    LocalDAO.doc.update({
-      fileId: id,
+    LocalDAO.files.updateContent({
+      id: id,
       content: html
     })
-    let content = await fetchLocalDocContent(id)
-    content.brief = formatContent(content.data)
-    await dispatch('UPDATE_FILE_BRIEF', content)
+    // LocalDAO.doc.update({
+    //   fileId: id,
+    //   content: html
+    // })
+    // let content = await fetchLocalDocContent(id)
+    // content.brief = formatContent(content.data)
+    // await dispatch('UPDATE_FILE_BRIEF', content)
     await dispatch('UPDATE_FILE_UPDATE_AT', id)
     commit('UPDATE_FILES_ARR')
     commit('SAVE_FILES')
@@ -450,6 +473,16 @@ const actions = {
 
   SET_SEARCH_KEYWORD ({ commit }, str) {
     commit('SET_SEARCH_KEYWORD', str)
+  },
+
+  STICK_TOP_FILE ({ commit }, id) {
+    commit('STICK_TOP_FILE', id)
+    commit('SAVE_STICK_TOP_FILES')
+  },
+
+  CANCEL_STICK_TOP_FILE ({ commit }, id) {
+    commit('CANCEL_STICK_TOP_FILE', id)
+    commit('SAVE_STICK_TOP_FILES')
   }
 }
 
@@ -534,6 +567,10 @@ const getters = {
 
   GET_SEARCH_KEYWORD (state) {
     return state.search_keyword
+  },
+
+  GET_STICK_TOP_FILES (state) {
+    return state.stick_top_files
   }
 }
 
@@ -588,11 +625,23 @@ function fetchAllLocalDocContent () {
   return Promise.all(asyncRead)
 }
 
-function addDoc (id) {
+function fetchLocalTops () {
+  return LocalDAO.tops.get()
+  // return new Promise((resolve, reject) => {
+  //   LocalDAO.tops.get().then(resp => {
+  //     console.log('structure', resp)
+  //     return resp
+  //   }).then(tops => {
+  //     resolve(data)
+  //   })
+  // })
+}
+
+function addDoc (id, isTemp) {
   return new Promise((resolve, reject) => {
     LocalDAO.doc.add({
       fileId: id,
-      content: docTemplate
+      content: isTemp ? docTemplate : ''
     }).then(res => {
       resolve(id)
     })

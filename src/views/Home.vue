@@ -24,10 +24,12 @@
       width="400px"
       height="464px"
       transition-name="fade-in-down"
-      title="移动到"
+      title="移动到文件夹"
       @close="closeMovePanel"
       :visible.sync="isMovePanelShowed">
-      <Move ref="move" @handleMove="handleFileMoved"></Move>
+      <div style="padding: 10px 20px;">
+        <Move ref="move" @handleMove="handleFileMoved"></Move>
+      </div>
       <div class="button-group" slot="footer">
         <div class="button primary" @click="confirmMovePanel">保存</div>
         <div class="button" @click="closeMovePanel">取消</div>

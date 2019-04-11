@@ -262,28 +262,45 @@ function updateContent (opts) {
   return new Promise((resolve, reject) => {
     const { id, content } = opts
 
+    // filesDB.update(
+    //   { _id: id },
+    //   { $set: {
+    //     content: content,
+    //     file_size: content.length
+    //   }},
+    //   {
+    //     returnUpdatedDocs: true
+    //   },
+    //   (err, num, doc) => {
+    //     if (err) reject(err)
+    //     console.log('docs', doc)
+    //     resolve(doc)
+    //   }
+    // )
+
     filesDB.findOne({ _id: id }, (err, file) => {
       if (err) reject(err)
       if (!file) {
         resolve()
       }
+      console.log('updateContent', id, file)
       if (file.type === 'doc') {
-        doc.update({
-          id: file.doc_id,
-          content: content
-        }).then(() => {
-          filesDB.update(
-            { _id: id },
-            { $set: { file_size: content.length } },
-            {},
-            (err, docs) => {
-              if (err) {
-                reject(err)
-              } else {
-                resolve(docs)
-              }
-            })
-        })
+        // doc.update({
+        //   id: file.doc_id,
+        //   content: content
+        // }).then(() => {
+        //   filesDB.update(
+        //     { _id: id },
+        //     { $set: { file_size: content.length } },
+        //     {},
+        //     (err, docs) => {
+        //       if (err) {
+        //         reject(err)
+        //       } else {
+        //         resolve(docs)
+        //       }
+        //     })
+        // })
       }
     })
   })

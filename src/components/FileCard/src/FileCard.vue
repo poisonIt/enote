@@ -22,6 +22,7 @@
           {{ item }}
         </span>
       </div>
+      <div class="icon stick-top" v-if="isTop"></div>
     </div>
     <div class="body" v-if="content.length > 0 && !mini && type === 'doc'">
       <span class="content ellipsis">{{ content }}</span>
@@ -84,6 +85,10 @@ export default {
     },
     parent_folder: {
       type: String
+    },
+    isTop: {
+      type: Boolean,
+      default: false
     }
   },
 
@@ -214,7 +219,7 @@ export default {
 <style lang="stylus" scoped>
 .file-card
   width 100%
-  padding 14px 10px
+  padding 14px 20px
   border-bottom 1px solid #E9E9E9
   &.selected
     background-color #FFF5E2
@@ -263,6 +268,8 @@ export default {
   background-size contain
   &.folder
     background-image url(../../../assets/images/lanhu/folder@2x.png)
+  &.stick-top
+    background-image url(../../../assets/images/lanhu/stick_top@2x.png)
 
 .body
   margin: 12px 0

@@ -38,6 +38,7 @@ export default {
   },
 
   mounted () {
+    // console.log(CKEDITOR)
     this.editor = CKEDITOR.replace('editor-container', {
       uiColor: '#FFFFFF',
       toolbarGroups: [

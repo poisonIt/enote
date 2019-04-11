@@ -207,7 +207,6 @@ export default {
     },
 
     toggleHightlightTop (val) {
-      console.log('111111', this.$refs)
       this.hightlightTop = true
       for (let i in this.node.store.nodeMap) {
         this.node.store.nodeMap[i].instance.isHighlight = false
@@ -292,7 +291,8 @@ export default {
   position absolute
   left 0
   top 0
-  border 2px dashed #DDAF59
+  border 1px dashed #DDAF59
+  background-color rgba(221, 175, 89, .1)
   // flex-direction row
   // align-items center
   // cursor pointer

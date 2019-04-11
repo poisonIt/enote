@@ -75,7 +75,7 @@ export default {
     },
     handleWrapperClick () {
       // return
-      // this.handleClose()
+      this.handleClose()
     }
   }
 }

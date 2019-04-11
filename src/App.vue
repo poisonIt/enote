@@ -32,31 +32,31 @@ export default {
   },
 
   mounted () {
-    (authBulbEditor({
-      url: 'http://updateinfo.youdao.com/editorapi',
-      pkn: 'com.youdao.com',
-      appKey: '656d2fdc0a922cc6',
-      version: 'v1',
-      sdkVersion: 'v1',
-      appSecret: 'fPduC1Gw2UnS7zqs9k9fsKcVxcuoiUmI',
-    })).then((BulbEditor) => {
-      this.youdaoEditor = new BulbEditor({
-        el: this.$refs.youdaoEditor
-      })
+    // (authBulbEditor({
+    //   url: 'http://updateinfo.youdao.com/editorapi',
+    //   pkn: 'com.youdao.com',
+    //   appKey: '656d2fdc0a922cc6',
+    //   version: 'v1',
+    //   sdkVersion: 'v1',
+    //   appSecret: 'fPduC1Gw2UnS7zqs9k9fsKcVxcuoiUmI',
+    // })).then((BulbEditor) => {
+    //   this.youdaoEditor = new BulbEditor({
+    //     el: this.$refs.youdaoEditor
+    //   })
 
-      this.youdaoEditor.setContent(this.content, {
-        async: true,
-      }).then(() => {
-        console.log('done')
-      })
+    //   this.youdaoEditor.setContent(this.content, {
+    //     async: true,
+    //   }).then(() => {
+    //     console.log('done')
+    //   })
 
-      this.youdaoEditor.getContent({
-        type: 'html',
-        async: true
-      }).then(html => {
-        console.log('youdao', html)
-      })
-    })
+    //   this.youdaoEditor.getContent({
+    //     type: 'html',
+    //     async: true
+    //   }).then(html => {
+    //     console.log('youdao', html)
+    //   })
+    // })
 
     document.addEventListener('drop', function (e) {
       e.preventDefault()
@@ -87,6 +87,7 @@ export default {
       LocalDAO.doc.removeAll()
       LocalDAO.tag.removeAll()
       LocalDAO.structure.remove()
+      LocalDAO.tops.remove()
     }
   }
 }

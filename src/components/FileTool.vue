@@ -57,7 +57,8 @@ export default {
     },
 
     newDoc () {
-      this.$hub.dispatchHub('newDoc', this)
+      // this.$hub.dispatchHub('newDoc', this)
+      this.$hub.dispatchHub('newTemplateDoc', this)
     },
 
     newFolder () {

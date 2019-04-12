@@ -22,7 +22,6 @@ export default class FileTree {
   }
 
   init (data) {
-    console.log('init', data)
     data.forEach(item => {
       this.addFile(item)
     })
@@ -31,10 +30,10 @@ export default class FileTree {
   }
 
   addFile (data) {
-    console.log('addFile-1111', data)
     let newFile = new File({
       id: data._id,
       data: data,
+      need_push_remotely: data.need_push,
       store: this
     })
     this.map[data._id] = newFile
@@ -57,6 +56,10 @@ export default class FileTree {
       this.flat_map[i] = flat_file
     }
   }
+
+  finishPushLocally (id) {
+    this.map[id].need_push_locally = false
+  }
 }
 
 function createFlatFile (file) {
@@ -66,10 +69,15 @@ function createFlatFile (file) {
     type: file.type,
     title: file.title,
     parent_folder: file.parent_folder,
+    ancestor_folders: file.getAncestorFolders(),
     discarded: file.discarded,
     link: file.link,
     create_at: file.create_at,
     update_at: file.update_at,
-    children: file.getChildFolders()
+    need_push_locally: file.need_push_locally,
+    need_push_remotely: file.need_push_remotely,
+    children: file.children,
+    child_folders: file.child_folders,
+    child_docs: file.child_docs
   }
 }

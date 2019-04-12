@@ -13,7 +13,8 @@ const state = {
   show_share_panel: false,
   show_tag_handler: false,
   editor_content: '',
-  editor_content_cache: ''
+  editor_content_cache: '',
+  current_nav: null
 }
 
 const mutations = {
@@ -72,6 +73,10 @@ const mutations = {
 
   TOGGLE_SHOW_TAG_HANDLER (state, val) {
     state.show_tag_handler = !!val
+  },
+
+  SET_CURRENT_NAV (state, val) {
+    state.current_nav = val
   }
 }
 
@@ -130,6 +135,10 @@ const actions = {
 
   TOGGLE_SHOW_TAG_HANDLER ({ commit }, val) {
     commit('TOGGLE_SHOW_TAG_HANDLER', val)
+  },
+
+  SET_CURRENT_NAV ({ commit }, val) {
+    commit('SET_CURRENT_NAV', val)
   }
 }
 
@@ -192,6 +201,10 @@ const getters = {
 
   GET_SHOW_TAG_HANDLER (state) {
     return state.show_tag_handler
+  },
+
+  GET_CURRENT_NAV (state) {
+    return state.current_nav
   }
 }
 

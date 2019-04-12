@@ -17,6 +17,7 @@
         @dragover="handleDragOver(node, $event)"
         @dragend="handleDragEnd"
         slot-scope="{ node, data }">
+        <span v-if="node.data.need_push_remotely" class="push-mark"></span>
         <div class="icon"
           :class="iconClassComputed(node)"
           v-if="node.data.link"></div>
@@ -199,7 +200,8 @@ export default {
       'SET_VIEW_FILE_TYPE',
       'SET_CURRENT_FOLDER',
       'TOGGLE_SHOW_MOVE_PANEL',
-      'SET_SELECTED_TAGS'
+      'SET_SELECTED_TAGS',
+      'SET_CURRENT_NAV'
     ]),
 
     getTreeNode (link) {
@@ -238,6 +240,7 @@ export default {
       if (node.data.type === 'folder') {
         this.SET_CURRENT_FOLDER(node.data.id)
       }
+      this.SET_CURRENT_NAV(node.data)
     },
 
     handleContextmenu (node) {
@@ -688,4 +691,12 @@ export default {
 //     background-image url(../../../assets/images/lanhu/tag_highlight@2x.png)
 //   .icon-recycle
 //     background-image url(../../../assets/images/lanhu/recycle_highlight@2x.png)
+.push-mark
+  position absolute
+  top 10px
+  left 10px
+  width 4px
+  height 4px
+  background-color red
+  border-radius 50%
 </style>

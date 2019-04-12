@@ -44,10 +44,7 @@ const mutations = {
     markShouldUpdate(file, true)
   },
 
-  EDIT_FILE (state, opts) {
-    state.push_files_locally.indexOf(opts.id) === -1 &&
-      state.push_files_locally.push(opts.id)
-
+  UPDATE_FILE (state, opts) {
     fileTree.updateFile(opts)
   },
 
@@ -175,13 +172,13 @@ const mutations = {
     })
   },
 
-  UPDATE_FILES (state) {
+  REFRESH_FILES (state) {
     state.files_map = cloneDeep(fileTree.flat_map)
     state.files_arr = []
     for (let i in state.files_map) {
       state.files_arr.push(state.files_map[i])
     }
-    console.log('UPDATE_FILES', state)
+    console.log('REFRESH_FILES', state)
   },
 
   UPDATE_FILES_ARR (state) {
@@ -218,22 +215,31 @@ const mutations = {
     console.log('UPDATE_FOLDERS', state.folders)
   },
 
-  SAVE_FILES (state) {
-    state.push_files_locally
-      .forEach(id => {
-        console.log('SAVE_FILES', id)
-        if (id !== '000000') {
-          let file = state.files_map[id]
-          LocalDAO.files.update({
-            id: id,
-            data: file
-          }).then(resp => {
-            console.log('UPDATE_resp', resp)
-            remove(state.push_files_locally, id)
-            console.log('UPDATE_resp-222', state)
-          })
-        }
-      })
+  // SAVE_FILES (state) {
+  //   console.log('SAVE_FILES-1111', state)
+  //   state.files_arr
+  //     .filter(item => item.need_push_locally)
+  //     .forEach(file => {
+  //       console.log('SAVE_FILES-2222', file.id)
+  //       if (file.id !== '000000') {
+  //         LocalDAO.files.update({
+  //           id: file.id,
+  //           data: file
+  //         }).then(resp => {
+  //           console.log('UPDATE_resp', resp)
+  //           // file.need_push_locally = false
+  //           state.files_map[file.id].need_push_locally = false
+  //           fileTree.finishPushLocally(file.id)
+  //           console.log('UPDATE_resp-222', state)
+  //         })
+  //       }
+  //     })
+  // },
+
+  FILES_SAVED (state) {
+    state.files_arr.forEach(item => {
+      item.need_push_locally = false
+    })
   },
 
   SET_CURRENT_FOLDER (state, id) {
@@ -279,7 +285,7 @@ const actions = {
     //   commit('SET_STICK_TOP_FILES', topFiles)
     // })
     await fetchLocalFiles()
-    commit('UPDATE_FILES')
+    commit('REFRESH_FILES')
     commit('UPDATE_FOLDERS')
     // dispatch('SET_FILES').then(() => {
       // dispatch('SET_DOC_BRIEF_FORM_LOCAL')
@@ -290,7 +296,7 @@ const actions = {
   //   // delete surplus docs
   //   commit('UPDATE_FILES')
   //   commit('UPDATE_FOLDERS')
-  //   // commit('SAVE_FILES')
+    // commit('SAVE_FILES')
   // },
 
   UPDATE_FILE_BRIEF ({ commit }, obj) {
@@ -315,23 +321,28 @@ const actions = {
     await LocalDAO.files.add(obj).then(resp => {
       resp.cache_id = obj.cache_id
       fileTree.addFile(resp)
-      commit('UPDATE_FILES')
+      commit('REFRESH_FILES')
       commit('UPDATE_FOLDERS')
     })
   },
 
-  DELETE_FILE ({ commit }, id) {
-    commit('DELETE_FILE', id)
-    commit('UPDATE_FILES_ARR')
+  async DELETE_FILE ({ commit }, id) {
+    commit('UPDATE_FILE', {
+      id: id,
+      discarded: true
+    })
+    commit('REFRESH_FILES')
     commit('UPDATE_FOLDERS')
-    commit('SAVE_FILES')
+    await dispatch('SAVE_FILES')
+    commit('FILES_SAVED')
   },
 
-  EDIT_FILE ({ commit }, opts) {
-    commit('EDIT_FILE', opts)
-    commit('UPDATE_FILES')
+  async EDIT_FILE ({ commit, dispatch }, opts) {
+    commit('UPDATE_FILE', opts)
+    commit('REFRESH_FILES')
     commit('UPDATE_FOLDERS')
-    commit('SAVE_FILES')
+    await dispatch('SAVE_FILES')
+    commit('FILES_SAVED')
   },
 
   APPEND_FILE ({ commit }, opts) {
@@ -341,7 +352,7 @@ const actions = {
     commit('UPDATE_FILES_MAP')
     commit('UPDATE_FILES_ARR')
     commit('UPDATE_FOLDERS')
-    commit('SAVE_FILES')
+    // commit('SAVE_FILES')
   },
 
   MOVE_FILE ({ commit }, opts) {
@@ -351,7 +362,7 @@ const actions = {
     commit('UPDATE_FILES_MAP')
     commit('UPDATE_FILES_ARR')
     commit('UPDATE_FOLDERS')
-    commit('SAVE_FILES')
+    // commit('SAVE_FILES')
   },
 
   SET_TAGS_FROM_LOCAL ({ commit }) {
@@ -372,7 +383,7 @@ const actions = {
             fileId: id,
             tagId: tagObj._id
           })
-          commit('SAVE_FILES')
+          // commit('SAVE_FILES')
         })
       } else {
         LocalDAO.tag.addFile({
@@ -383,7 +394,7 @@ const actions = {
             fileId: id,
             tagId: tagObj._id
           })
-          commit('SAVE_FILES')
+          // commit('SAVE_FILES')
         })
       }
     })
@@ -397,7 +408,7 @@ const actions = {
       fileId: fileId,
       tagId: tagId
     })
-    commit('SAVE_FILES')
+    // commit('SAVE_FILES')
     // }
     // })
     // commit('REMOVE_FILE_TAG', opts)
@@ -408,14 +419,14 @@ const actions = {
     commit('UPDATE_FILES_MAP')
     commit('UPDATE_FILES_ARR')
     commit('UPDATE_FOLDERS')
-    commit('SAVE_FILES')
+    // commit('SAVE_FILES')
   },
 
   RESUME_ALL_RECYCLE ({ commit }) {
     commit('RESUME_ALL_RECYCLE')
     commit('UPDATE_FILES_ARR')
     commit('UPDATE_FOLDERS')
-    commit('SAVE_FILES')
+    // commit('SAVE_FILES')
   },
 
   SET_CURRENT_FOLDER ({ commit }, id) {
@@ -442,11 +453,24 @@ const actions = {
     // await dispatch('UPDATE_FILE_BRIEF', content)
     await dispatch('UPDATE_FILE_UPDATE_AT', id)
     commit('UPDATE_FILES_ARR')
-    commit('SAVE_FILES')
+    // commit('SAVE_FILES')
     // dispatch('UPDATE_FILE_BRIEF', content).then(() => {
     //   dispatch('UPDATE_FILE_UPDATE_AT', id).then(() => {
     //   })
     // })
+  },
+
+  SAVE_FILES () { // 本地存储文件
+    fileTree.arr
+      .filter(file => file.need_push_locally)
+      .forEach(file => {
+        LocalDAO.files.update({
+          id: file.id,
+          data: file
+        }).then(() => {
+          file.push_files_locally = false
+        })
+      })
   },
 
   SAVE_FILE_TITLE ({ commit }, obj) {
@@ -454,7 +478,7 @@ const actions = {
     commit('UPDATE_FILE_UPDATE_AT', obj.id)
     commit('UPDATE_FILES_ARR')
     commit('UPDATE_FOLDERS')
-    commit('SAVE_FILES')
+    // commit('SAVE_FILES')
   },
 
   SET_SEARCH_KEYWORD ({ commit }, str) {
@@ -482,10 +506,11 @@ const getters = {
   },
 
   GET_LATEST_FILES (state) {
-    let result = state.files_arr.filter(file => !file.discarded)
-    let rootIdx = result.indexOf(state.files_map['000000'])
-    result.splice(rootIdx, 1)
-    return result
+    return state.files_arr.filter(file => !file.discarded)
+  },
+
+  GET_ROOT_FILES (state) {
+    return state.files_arr.filter(file => !file.parent_folder)
   },
 
   GET_FOLEDERS (state) {
@@ -497,8 +522,9 @@ const getters = {
   },
 
   GET_CURRENT_FOLDER (state) {
+    console.log('GET_CURRENT_FOLDER', state)
     if (!state.current_folder_id) {
-      return []
+      return null
     }
     const currentFolder = state.files_map[state.current_folder_id]
     return currentFolder

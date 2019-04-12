@@ -7,7 +7,8 @@ function fileModel (opts) {
     // file_size: opts.file_size || 0,
     file_path: opts.file_path ||  ['/'],
     parent_folder: opts.parent_folder,
-    discarded: opts.discarded || false
+    discarded: opts.discarded || false,
+    need_push: opts.need_push || true
     // ancestor_folders: opts.ancestor_folders || [],
     // child_folders: opts.child_folders || [],
     // child_docs: opts.child_docs || []

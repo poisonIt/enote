@@ -294,7 +294,8 @@ function update (opts) {
             file_size: data.file_size || fileDoc.file_size,
             file_path: data.file_path || fileDoc.file_path,
             parent_folder: data.parent_folder || fileDoc.parent_folder,
-            content: data.content || fileDoc.content
+            content: data.content || fileDoc.content,
+            need_push: true
           }},
           {
             returnUpdatedDocs: true

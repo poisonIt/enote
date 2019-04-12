@@ -27,7 +27,7 @@
         @handleSelect="selectFile"
         @titleClick="handleFileTitleClick">
         <FileCard
-          v-for="(item, index) in fileList"
+          v-for="(item, index) in list"
           :key="index"
           :mini="viewFileListType === 'list'"
           :file_id="item.id"
@@ -37,11 +37,11 @@
           :isTop="stickTopFiles.indexOf(item.id) > -1"
           :update_at="item.update_at | yyyymmdd"
           :file_size="Number(item.file_size || 0)"
-          :parent_folder="getParentFolder(item.ancestor_folders)"
+          :parent_folder="getParentFolderTitle(item)"
           @contextmenu="handleContextmenu">
         </FileCard>
       </FileCardGroup>
-      <div class="no-file" v-if="fileList.length === 0">
+      <div class="no-file" v-if="list.length === 0">
         <span v-if="viewFileType === 'recycle'">回收站为空</span>
         <span v-if="viewFileType !== 'recycle'">没有找到文件</span>
         <div v-if="viewFileType !== 'recycle'"
@@ -147,6 +147,8 @@ export default {
       viewName: 'GET_VIEW_NAME',
       viewFileType: 'GET_VIEW_FILE_TYPE',
       allFileMap: 'GET_FILES',
+      allFileArr: 'GET_FILES_ARRAY',
+      rootFiles: 'GET_ROOT_FILES',
       latestFiles: 'GET_LATEST_FILES',
       folders: 'GET_FOLEDERS',
       recycle: 'GET_RECYCLE_FILES',
@@ -158,89 +160,130 @@ export default {
       viewFileListType: 'GET_VIEW_FILE_LIST_TYPE',
       viewFileSortType: 'GET_VIEW_FILE_SORT_TYPE',
       viewFileSortOrder: 'GET_VIEW_FILE_SORT_ORDER',
-      selectedTags: 'GET_SELECTED_TAGS'
+      selectedTags: 'GET_SELECTED_TAGS',
+      currentNav: 'GET_CURRENT_NAV'
     })
   },
 
   watch: {
-    viewFileType (val) {
-      let currentFiles = this.getCurrentFiles(this.currentFolder)
-      let list = []
-      switch (val) {
-        case 'latest':
-          list = this.latestFiles
-          break
-        case 'folders':
-          list = currentFiles
-          break
-        case 'new folder':
-          list = currentFiles
-          break
-        case 'tags':
-          if (this.selectedTags.length === 0) {
-            list = this.latestFiles
-            break
-          }
-          list = this.latestFiles.filter(item => intersection(item.tags, this.selectedTags).length === this.selectedTags.length)
-          break
-        case 'recycle':
-          list = this.recycle
-          break
-        default:
-          list = this.latestFiles
-          break
+    allFileArr (val) {
+      this.fileList = val
+      if (this.currentNav.link === 'latest') {
+        this.list = val.filter(item => !item.discarded)
       }
-      this.fileList = this.fileListSortFunc(clone(list))
+    },
+
+    currentNav (val) {
+      if (val.link === 'latest') {
+        this.list = this.fileList.filter(item => !item.discarded)
+      }
+      if (val.link === 'folders') {
+        this.list = this.fileList.filter(item => !item.discarded
+          && !item.parent_folder)
+      }
+      if (val.link === 'new folder') {
+        this.list = this.fileList.filter(item => !item.discarded
+          && item.parent_folder === val.id)
+      }
+      if (val.link === 'tag') {
+        
+      }
+      if (val.link === 'recycle') {
+        this.list = this.fileList.filter(item => item.discarded)
+      }
+    },
+
+    viewFileType (val) {
+      // let currentFiles = this.getCurrentFiles(this.currentFolder)
+      // let list = []
+      // console.log('viewFileType', val, this.latestFiles, this.allFileArr, currentFiles)
+      // switch (val) {
+      //   case 'latest':
+      //     list = this.allFileArr
+      //     break
+      //   case 'folders':
+      //     list = currentFiles
+      //     break
+      //   case 'new folder':
+      //     list = currentFiles
+      //     break
+      //   case 'tags':
+      //     if (this.selectedTags.length === 0) {
+      //       list = this.latestFiles
+      //       break
+      //     }
+      //     list = this.latestFiles.filter(item => intersection(item.tags, this.selectedTags).length === this.selectedTags.length)
+      //     break
+      //   case 'recycle':
+      //     list = this.recycle
+      //     break
+      //   default:
+      //     list = this.latestFiles
+      //     break
+      // }
+      // this.fileList = this.fileListSortFunc(clone(list))
     },
 
     selectedTags (val) {
-      console.log('watch-selectedTags', val)
-      let list = []
-      if (this.viewFileType === 'tags') {
-        if (val.length === 0) {
-          list = this.latestFiles
-        } else {
-          list = this.latestFiles.filter(item => intersection(item.tags, val).length === val.length)
-        }
-      } else {
-        return
-      }
-      this.fileList = this.fileListSortFunc(clone(list))
+      // console.log('watch-selectedTags', val)
+      // return
+      // let list = []
+      // if (this.viewFileType === 'tags') {
+      //   if (val.length === 0) {
+      //     list = this.latestFiles
+      //   } else {
+      //     list = this.latestFiles.filter(item => intersection(item.tags, val).length === val.length)
+      //   }
+      // } else {
+      //   return
+      // }
+      // this.fileList = this.fileListSortFunc(clone(list))
     },
 
     fileList (val, oldVal) {
-      console.log('fileList', val)
-      if (oldVal.length === 0 && this.viewFileType === 'latest') {
-        this.selectFile(0)
-        this.$nextTick(() => {
-          this.$refs.body.scrollTo(0, 0)
-        })
-      }
-      // val.forEach((item, index) => {
-      //   this.$set(this.list, index, item)
-      // })
-      this.list = val
+      // console.log('fileList', val, oldVal)
+      // if (oldVal.length === 0 && this.viewFileType === 'latest') {
+      //   this.selectFile(0)
+      //   this.$nextTick(() => {
+      //     this.$refs.body.scrollTo(0, 0)
+      //   })
+      // }
+      // // val.forEach((item, index) => {
+      // //   this.$set(this.list, index, item)
+      // // })
+      // this.list = val
+    },
+
+    list (val) {
+      console.log('watch-list', val)
+      return
     },
 
     latestFiles (val) {
+      console.log('watch-latestFiles', val)
+      return
       if (this.viewFileType === 'latest') {
         this.fileList = this.fileListSortFunc(clone(val))
       }
     },
 
     files (val) {
+      console.log('watch-files', val)
+      return
       if (this.viewFileType === 'folders' || this.viewFileType === 'new folder') {
         this.fileList = this.fileListSortFunc(clone(val))
       }
     },
 
     recycle (val) {
+      return
       if (this.viewFileType === 'recycle') {
         this.fileList = this.fileListSortFunc(clone(val))
       }
     },
 
     viewFolder (val, oldVal) {
+      return
       if (this.fileList.length > 0) {
         this.selectFile(0)
       } else {
@@ -253,14 +296,17 @@ export default {
     },
 
     viewFileSortType (val) {
+      return
       this.list = this.fileListSortFunc(this.list)
     },
 
     viewFileSortOrder (val) {
+      return
       this.list = this.fileListSortFunc(this.list)
     },
 
     stickTopFiles (val) {
+      return
       this.fileList = this.fileListSortFunc(this.list)
     }
   },
@@ -285,10 +331,10 @@ export default {
       if (!this.isFirstSelect) {
         if (this.currentFile === file) return
         if (this.currentFile) {
-          this.SAVE_DOC({
-            id: this.currentFile.id,
-            html: this.contentCache
-          })
+          // this.SAVE_DOC({
+          //   id: this.currentFile.id,
+          //   html: this.contentCache
+          // })
         }
       } else {
         this.isFirstSelect = false
@@ -350,12 +396,15 @@ export default {
       return [...topList, ...downList]
     },
 
-    getParentFolder (folders) {
-      let parentFolderId = folders[folders.length - 1]
-      if (parentFolderId && this.folders[parentFolderId]) {
-        return this.folders[parentFolderId].title
-      }
-      return ''
+    getParentFolderTitle (file) {
+      let parentFolderId = file.parent_folder
+      console.log('getParentFolderTitle', parentFolderId)
+      return parentFolderId ? this.allFileMap[parentFolderId].title : '我的文件夹'
+      // let parentFolderId = folders[folders.length - 1]
+      // if (parentFolderId && this.folders[parentFolderId]) {
+      //   return this.folders[parentFolderId].title
+      // }
+      // return ''
     },
 
     newDoc () {
@@ -400,12 +449,17 @@ export default {
     },
 
     getCurrentFiles (currentFolder) {
-      const childFolders = currentFolder.child_folders || []
-      const childDocs = currentFolder.child_docs || []
+      if (!currentFolder) {
+        console.log('getCurrentFiles', this.latestFiles, this.rootFiles)
+        return this.rootFiles
+      } else {
+        const childFolders = currentFolder.children || []
+        const childDocs = currentFolder.child_docs || []
 
-      return [...childFolders, ...childDocs]
-        .map(id => this.allFileMap[id])
-        .filter(file => !file.discarded)
+        return [...childFolders, ...childDocs]
+          .filter(file => !file.discarded)
+      }
+
     }
   }
 }

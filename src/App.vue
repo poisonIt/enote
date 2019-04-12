@@ -86,6 +86,7 @@ export default {
     resetData () {
       LocalDAO.doc.removeAll()
       LocalDAO.tag.removeAll()
+      LocalDAO.files.removeAll()
       LocalDAO.structure.remove()
       LocalDAO.tops.remove()
     }

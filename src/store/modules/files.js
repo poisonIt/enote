@@ -1,15 +1,19 @@
-import { remove } from 'lodash'
+import { remove, cloneDeep } from 'lodash'
 import dayjs from 'dayjs'
 import LocalDAO from '../../../db/api'
 import docTemplate from '../../../db/docTemplate'
 import { GenNonDuplicateID } from '@/utils/utils'
+import File from '../../model/file'
+import FileTree from '../../model/fileTree'
 
 const docBriefTemplate = formatContent(docTemplate)
 let filesArrTemp = []
+let fileTree = new FileTree()
 
 const state = {
-  files_map: {},
+  files_map: fileTree.map,
   files_arr: [],
+  push_files_locally: [],
   doc_map: {},
   tags_arr: [],
   folders: {},
@@ -20,17 +24,6 @@ const state = {
 }
 
 const mutations = {
-  SET_FILES (state, obj) {
-    let map = {}
-    let arr = []
-    for (let i in obj) {
-      map[i] = obj[i]
-      arr.push(obj[i])
-    }
-    state.files_map = map
-    state.files_arr = arr
-  },
-
   UPDATE_FILE_BRIEF (state, obj) {
     let { id, brief } = obj
     let file = state.files_map[id]
@@ -45,44 +38,17 @@ const mutations = {
     file.update_at = String(dayjs(new Date()).valueOf())
   },
 
-  ADD_FILE (state, obj) {
-    if (state.files_map[obj.id]) {
-      return
-    }
-    let parentFolder = state.files_map[obj.parent_folder]
-    let timeStamp = String(dayjs(new Date()).valueOf())
-    obj.create_at = timeStamp
-    obj.update_at = timeStamp
-    obj.ancestor_folders = [...parentFolder.ancestor_folders, parentFolder.id]
-    obj.file_size = 0
-    if (obj.type === 'folder') {
-      obj.child_folders = []
-      obj.child_docs = []
-      parentFolder.child_folders.push(obj.id)
-      obj.seq = parentFolder.child_folders.length
-    } else if (obj.type === 'doc') {
-      obj.file_size = obj.isTemp ? docBriefTemplate.length : 0
-      obj.brief =  obj.isTemp ? docBriefTemplate : ''
-      obj.ancestor_folders.forEach(id => {
-        state.files_map[id].file_size = state.files_map[id].file_size + obj.file_size
-      })
-      if (!parentFolder.child_docs) {
-        parentFolder.child_docs = []
-      }
-      parentFolder.child_docs.push(obj.id)
-      obj.seq = parentFolder.child_docs.length
-    }
-    state.files_arr.push(obj)
-  },
-
   DELETE_FILE (state, id) {
     let file = state.files_map[id]
     file.discarded = true
+    markShouldUpdate(file, true)
   },
 
   EDIT_FILE (state, opts) {
-    let { id, attr, val } = opts
-    state.files_map[id][attr] = val
+    state.push_files_locally.indexOf(opts.id) === -1 &&
+      state.push_files_locally.push(opts.id)
+
+    fileTree.updateFile(opts)
   },
 
   APPEND_FILE (state, opts) {
@@ -113,6 +79,7 @@ const mutations = {
       targetFolder.child_docs.push(file.id)
       updateChildFiles(targetFolder, state)
     }
+    markShouldUpdate(file, true)
   },
 
   MOVE_FILE (state, opts) {
@@ -142,6 +109,7 @@ const mutations = {
     } else {
       return
     }
+    markShouldUpdate(file, true)
   },
 
   SET_TAGS (state, tags) {
@@ -207,6 +175,15 @@ const mutations = {
     })
   },
 
+  UPDATE_FILES (state) {
+    state.files_map = cloneDeep(fileTree.flat_map)
+    state.files_arr = []
+    for (let i in state.files_map) {
+      state.files_arr.push(state.files_map[i])
+    }
+    console.log('UPDATE_FILES', state)
+  },
+
   UPDATE_FILES_ARR (state) {
     state.files_arr = []
     for (let i in state.files_map) {
@@ -232,15 +209,31 @@ const mutations = {
   UPDATE_FOLDERS (state) {
     let newFolders = {}
     state.files_arr.forEach(file => {
+      console.log('UPDATE_FOLDERS', file, file.id)
       if (file.type === 'folder') {
         newFolders[file.id] = file
       }
     })
     state.folders = newFolders
+    console.log('UPDATE_FOLDERS', state.folders)
   },
 
   SAVE_FILES (state) {
-    LocalDAO.structure.save(JSON.stringify(state.files_map))
+    state.push_files_locally
+      .forEach(id => {
+        console.log('SAVE_FILES', id)
+        if (id !== '000000') {
+          let file = state.files_map[id]
+          LocalDAO.files.update({
+            id: id,
+            data: file
+          }).then(resp => {
+            console.log('UPDATE_resp', resp)
+            remove(state.push_files_locally, id)
+            console.log('UPDATE_resp-222', state)
+          })
+        }
+      })
   },
 
   SET_CURRENT_FOLDER (state, id) {
@@ -282,20 +275,23 @@ const mutations = {
 
 const actions = {
   async SET_FILES_FROM_LOCAL ({ dispatch, commit }) {
-    fetchLocalTops().then(topFiles => {
-      commit('SET_STICK_TOP_FILES', topFiles)
-    })
-    dispatch('SET_FILES', await fetchLocalFiles()).then(() => {
-      dispatch('SET_DOC_BRIEF_FORM_LOCAL')
-    })
+    // fetchLocalTops().then(topFiles => {
+    //   commit('SET_STICK_TOP_FILES', topFiles)
+    // })
+    await fetchLocalFiles()
+    commit('UPDATE_FILES')
+    commit('UPDATE_FOLDERS')
+    // dispatch('SET_FILES').then(() => {
+      // dispatch('SET_DOC_BRIEF_FORM_LOCAL')
+    // })
   },
 
-  SET_FILES ({ commit }, arr) {
-    // delete surplus docs
-    commit('SET_FILES', arr)
-    commit('UPDATE_FOLDERS')
-    commit('SAVE_FILES')
-  },
+  // SET_FILES ({ commit }) {
+  //   // delete surplus docs
+  //   commit('UPDATE_FILES')
+  //   commit('UPDATE_FOLDERS')
+  //   // commit('SAVE_FILES')
+  // },
 
   UPDATE_FILE_BRIEF ({ commit }, obj) {
     commit('UPDATE_FILE_BRIEF', obj)
@@ -316,21 +312,12 @@ const actions = {
   },
 
   async ADD_FILE ({ dispatch, commit }, obj) {
-    if (obj.type === 'doc') {
-      let id = await addDoc(obj.id, obj.isTemp)
-      let content = await fetchLocalDocContent(id)
-      content.brief = formatContent(content.data)
-      commit('ADD_FILE', obj)
-      commit('UPDATE_FILES_MAP')
-      dispatch('UPDATE_FILE_BRIEF', content)
+    await LocalDAO.files.add(obj).then(resp => {
+      resp.cache_id = obj.cache_id
+      fileTree.addFile(resp)
+      commit('UPDATE_FILES')
       commit('UPDATE_FOLDERS')
-      commit('SAVE_FILES')
-    } else {
-      commit('ADD_FILE', obj)
-      commit('UPDATE_FILES_MAP')
-      commit('UPDATE_FOLDERS')
-      commit('SAVE_FILES')
-    }
+    })
   },
 
   DELETE_FILE ({ commit }, id) {
@@ -342,8 +329,7 @@ const actions = {
 
   EDIT_FILE ({ commit }, opts) {
     commit('EDIT_FILE', opts)
-    commit('UPDATE_FILE_UPDATE_AT', opts.id)
-    commit('UPDATE_FILES_ARR')
+    commit('UPDATE_FILES')
     commit('UPDATE_FOLDERS')
     commit('SAVE_FILES')
   },
@@ -576,31 +562,36 @@ const getters = {
 
 function fetchLocalFiles () {
   return new Promise((resolve, reject) => {
-    LocalDAO.structure.get().then(resp => {
-      console.log('structure', JSON.parse(resp))
-      return JSON.parse(resp)
-    }).then(data => {
-      if (!data['000000']) {
-        let timeStamp = String(dayjs(new Date()).valueOf())
-        let id = '000000'
-        data[id] = {
-          id: id,
-          type: 'folder',
-          title: '我的文件夹',
-          content: '',
-          create_at: timeStamp,
-          update_at: timeStamp,
-          file_size: '0',
-          file_path: ['/'],
-          ancestor_folders: [],
-          child_folders: []
-        }
-      }
-      for (let i in data) {
-        filesArrTemp.push(data[i])
-      }
-      resolve(data)
+    LocalDAO.files.getAll().then(resp => {
+      console.log('fetchLocalFiles-files', resp)
+      fileTree.init(resp)
+      resolve(fileTree.flat_map)
     })
+    // LocalDAO.structure.get().then(resp => {
+    //   console.log('structure', JSON.parse(resp))
+    //   return JSON.parse(resp)
+    // }).then(data => {
+    //   if (!data['000000']) {
+    //     let timeStamp = String(dayjs(new Date()).valueOf())
+    //     let id = '000000'
+    //     data[id] = {
+    //       id: id,
+    //       type: 'folder',
+    //       title: '我的文件夹',
+    //       content: '',
+    //       create_at: timeStamp,
+    //       update_at: timeStamp,
+    //       file_size: '0',
+    //       file_path: ['/'],
+    //       ancestor_folders: [],
+    //       child_folders: []
+    //     }
+    //   }
+    //   for (let i in data) {
+    //     filesArrTemp.push(data[i])
+    //   }
+    //   resolve(data)
+    // })
   })
 }
 
@@ -672,6 +663,13 @@ function formatContent (str) {
     .replace('&amp;', '&')
     .replace('&lt;', '<')
     .replace('&gt;', '>')
+}
+
+function markShouldUpdate (file, val) {
+  if (typeof val !== 'boolean') return
+  file.needPushLocally = val
+  file.shouldUpdateRemote = val
+  console.log('markShouldUpdate', file)
 }
 
 export default {

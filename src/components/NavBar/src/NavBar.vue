@@ -258,6 +258,7 @@ export default {
     },
 
     handleNewDoc (isCurrent, isTemp) {
+      console.log('handleNewDoc')
       if (isCurrent) {
         this.popupedNode = this.currentNode
       }
@@ -266,11 +267,11 @@ export default {
         this.popupedNode.data.link === 'recycle') {
         this.popupedNode = this.getTreeNode('folders')
       }
-      let id = GenNonDuplicateID(6)
+      // let id = GenNonDuplicateID(6)
       this.ADD_FILE({
         title: '无标题笔记',
         type: 'doc',
-        id: id,
+        // id: id,
         parent_folder: this.popupedNode.data.id,
         isTemp: isTemp
       }).then(() => {
@@ -299,18 +300,22 @@ export default {
         this.popupedNode.data.link === 'recycle') {
         this.popupedNode = this.getTreeNode('folders')
       }
-      let id = GenNonDuplicateID(6)
+      let cache_id = GenNonDuplicateID(6)
+      console.log('handleNewFolder')
+      console.log(this.popupedNode)
       this.ADD_FILE({
         title: '新建文件夹',
         link: 'new folder',
         type: 'folder',
-        id: id,
+        cache_id: cache_id,
         parent_folder: this.popupedNode.data.id
       }).then(() => {
+        console.log(22222)
         this.$nextTick(() => {
           for (let i in this.popupedNode.store.nodeMap) {
             let node = this.popupedNode.store.nodeMap[i]
-            if (node.data.id === id) {
+            console.log(node.data.cache_id, cache_id)
+            if (node.data.cache_id === cache_id) {
               this.handleInsertChildNode(node)
               this.handleItemClick(node)
               return
@@ -341,8 +346,7 @@ export default {
     handleNodeInputBlur () {
       this.EDIT_FILE({
         id: this.typingNode.data.id,
-        attr: 'title',
-        val: this.nodeInput
+        title: this.nodeInput
       })
       // this.typingNode.data.title = this.nodeInput
       this.$nextTick(() => {

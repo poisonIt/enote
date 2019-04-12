@@ -19,24 +19,17 @@ function saveAll (files) {
   })
 }
 
-function removeAll (files) {
-  return new Promise((resolve, reject) => {
-    filesDB.remove({}, { multi: true }, (err, numRemoved) => {
-      if (err) reject(err)
-      resolve(numRemoved)
-    })
-  })
-}
-
 function getAll () {
   return new Promise((resolve, reject) => {
     console.log('getAll')
+    // filesDB.remove({}, { multi: true }, (err, numRemoved) => { console.log('numRemoved', numRemoved) })
+    // return
     filesDB.find({}, (err, docs) => {
       if (err) {
         reject(err)
       } else {
         console.log('all documents in collection files_db:', docs)
-        resolve(docs)
+        resolve(docs[0] ? docs[0].files : '{}')
       }
     })
   })
@@ -59,11 +52,48 @@ function getAll () {
 
 function add (opts) {
   return new Promise((resolve, reject) => {
-    filesDB.insert(fileModel(opts), (err, newDoc) => {
+    filesDB.findOne({ _id: opts.parent_folder }, (err, parentFolder) => {
       if (err) {
-        console.error(err)
-      } else {
-        resolve(newDoc)
+        reject(err)
+      }
+      opts.ancestor_folders = opts.parent_folder
+        ? [...parentFolder.ancestor_folders, parentFolder._id]
+        : []
+      if (opts.type === 'doc') {
+        const content = opts.content || docTemplate
+        doc.add(content).then(id => {
+          opts.doc_id = id
+          opts.file_size = content.length
+          filesDB.insert(docModel(opts), (err, newDoc) => {
+            if (err) {
+              console.error(err)
+            } else {
+              filesDB.update(
+                { _id: opts.parent_folder },
+                { $push: { child_docs: newDoc._id } },
+                {},
+                () => {
+                  resolve(newDoc)
+                }
+              )
+            }
+          })
+        })
+      } else if (opts.type === 'folder') {
+        filesDB.insert(fileModel(opts), (err, newFolder) => {
+          if (err) {
+            reject(err)
+          } else {
+            filesDB.update(
+              { _id: opts.parent_folder },
+              { $push: { child_folders: newFolder._id } },
+              {},
+              () => {
+                resolve(newFolder)
+              }
+            )
+          }
+        })
       }
     })
   })
@@ -276,41 +306,6 @@ function updateContent (opts) {
   })
 }
 
-function update (opts) {
-  const { id, data } = opts
-
-  return new Promise((resolve, reject) => {
-    filesDB.findOne({ _id: id }, (err, fileDoc) => {
-      if (err) {
-        reject(err)
-      } else {
-        console.log('update-fileDoc', fileDoc)
-
-        filesDB.update(
-          { _id: id },
-          { $set: {
-            title: data.title || fileDoc.title,
-            update_at: new Date(),
-            file_size: data.file_size || fileDoc.file_size,
-            file_path: data.file_path || fileDoc.file_path,
-            parent_folder: data.parent_folder || fileDoc.parent_folder,
-            content: data.content || fileDoc.content
-          }},
-          {
-            returnUpdatedDocs: true
-          },
-          (err, num, docs) => {
-            if (err) reject(err)
-            console.log('update-files', docs)
-            resolve(docs)
-          }
-        )
-      }
-    })
-  })
- 
-}
-
 export default {
   getAll,
   add,
@@ -318,7 +313,5 @@ export default {
   updateTitle,
   updateDiscarded,
   updateContent,
-  saveAll,
-  removeAll,
-  update
+  saveAll
 }

@@ -66,7 +66,13 @@ import mixins from '../mixins'
 import { mapGetters, mapState, mapActions } from 'vuex'
 import SearchBar from '@/components/SearchBar'
 import { FileCard, FileCardGroup } from '@/components/FileCard'
-import { docHandleMenu1, docHandleMenu2, folderHandleMenu, fileCloudMenu, fileInfoMenu } from '../Menu'
+import {
+  docHandleMenu1,
+  docHandleMenu2,
+  folderHandleMenu,
+  fileCloudMenu,
+  fileInfoMenu
+} from '../Menu'
 import LocalDAO from '@/../db/api'
 
 export default {
@@ -399,7 +405,7 @@ export default {
     getParentFolderTitle (file) {
       let parentFolderId = file.parent_folder
       console.log('getParentFolderTitle', parentFolderId)
-      return parentFolderId ? this.allFileMap[parentFolderId].title : '我的文件夹'
+      return parentFolderId !== '/' ? this.allFileMap[parentFolderId].title : '我的文件夹'
       // let parentFolderId = folders[folders.length - 1]
       // if (parentFolderId && this.folders[parentFolderId]) {
       //   return this.folders[parentFolderId].title

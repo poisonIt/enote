@@ -1,10 +1,11 @@
 <template>
   <div id="app">
     <!-- <AppHeader></AppHeader> -->
-    <Home></Home>
-    <div ref="youdaoEditor"></div>
+    <router-view></router-view>
+    <!-- <Home></Home> -->
+    <!-- <div ref="youdaoEditor"></div> -->
     <!-- <div class="click-mask"></div> -->
-    <button style="position: fixed;top: 30px;left: 20px;" @click="resetData">reset</button>
+    <!-- <button style="position: fixed;top: 30px;left: 20px;" @click="resetData">reset</button> -->
   </div>
 </template>
 
@@ -71,25 +72,18 @@ export default {
       e.stopPropagation()
     })
 
-    setTimeout(() => {
-      this.showMovePanel = true
-    }, 3000)
+    LocalDAO.user.get().then(resp => {
+      this.SET_USER_INFO(resp)
+    })
   },
 
   methods: {
     ...mapActions([
       'SET_FILES_FROM_LOCAL',
       'SET_FILES',
-      'SET_ALL_DOC_CONTENT'
-    ]),
-
-    resetData () {
-      LocalDAO.doc.removeAll()
-      LocalDAO.tag.removeAll()
-      LocalDAO.files.removeAll()
-      LocalDAO.structure.remove()
-      LocalDAO.tops.remove()
-    }
+      'SET_ALL_DOC_CONTENT',
+      'SET_USER_INFO'
+    ])
   }
 }
 </script>

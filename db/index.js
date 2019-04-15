@@ -5,11 +5,17 @@ const path = require('path')
 // const isDevelopment = process.env.NODE_ENV !== 'production'
 
 function loadDB (app) {
+  let userDB = null
   let structureDB = null
   let filesDB = null
   let docsDB = null
   let tagsDB = null
   let topsDB = null
+
+  userDB = new Datastore({
+    filename: path.resolve(app.getAppPath(), '../database/user.db'),
+    autoload: true
+  })
 
   structureDB = new Datastore({
     filename: path.resolve(app.getAppPath(), '../database/structure.db'),
@@ -37,6 +43,7 @@ function loadDB (app) {
   })
 
   return {
+    userDB,
     structureDB,
     filesDB,
     docsDB,

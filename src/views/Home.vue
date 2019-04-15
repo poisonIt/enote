@@ -1,5 +1,7 @@
 <template>
   <div class="home">
+    <button style="position: fixed;top: 30px;left: 20px;z-index: 9999999;" @click="resetData">reset</button>
+    <button style="position: fixed;top: 30px;left: 160px;z-index: 9999999;" @click="goLogin">goLogin</button>
     <PageLayout>
       <div slot="left">
         <div id="nav">
@@ -46,15 +48,15 @@
       <div class="user-info">
         <div class="item">
           <span>员工信息</span>
-          <span>哈啊哈</span>
+          <span>{{ userInfo.account_name_cn }}</span>
         </div>
         <div class="item">
           <span>所属部门</span>
-          <span>投资研究部</span>
+          <span>{{ userInfo.department_name }}</span>
         </div>
         <div class="item">
           <span>所属岗位</span>
-          <span>研究员</span>
+          <span>{{ userInfo.position_name }}</span>
         </div>
       </div>
     </modal>
@@ -185,6 +187,8 @@ import TagHandler from '@/components/TagHandler.vue'
 import EditorComp from '@/components/EditorComp.vue'
 import FolderComp from '@/components/FolderComp.vue'
 import ProgressBar from '@/components/ProgressBar'
+import LocalDAO from '../../db/api'
+import { ipcRenderer } from 'electron'
 
 export default {
   name: 'home',
@@ -248,7 +252,8 @@ export default {
       currentFile: 'GET_CURRENT_FILE',
       isMovePanelShowed: 'GET_SHOW_MOVE_PANEL',
       isUserPanelShowed: 'GET_SHOW_USER_PANEL',
-      isSharePanelShowed: 'GET_SHOW_SHARE_PANEL'
+      isSharePanelShowed: 'GET_SHOW_SHARE_PANEL',
+      userInfo: 'GET_USER_INFO'
     })
   },
 
@@ -322,6 +327,21 @@ export default {
 
     changeViewType () {
       this.SET_VIEW_TYPE(this.viewType === 'unexpanded' ? 'expanded' : 'unexpanded')
+    },
+
+    resetData () {
+      LocalDAO.doc.removeAll()
+      LocalDAO.tag.removeAll()
+      LocalDAO.files.removeAll()
+      LocalDAO.structure.remove()
+      LocalDAO.tops.remove()
+    },
+
+    goLogin () {
+      console.log('goLogin')
+      ipcRenderer.send('changeWindow', {
+        name: 'login'
+      })
     }
   }
 

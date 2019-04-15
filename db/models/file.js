@@ -2,11 +2,12 @@ function fileModel (opts) {
   return {
     type: opts.type || 'folder',
     title: opts.title || '新建文件夹',
+    seq: opts.seq || 0,
     create_at: opts.create_at || new Date().valueOf(),
     update_at: opts.update_at || new Date().valueOf(),
     // file_size: opts.file_size || 0,
     file_path: opts.file_path ||  ['/'],
-    parent_folder: opts.parent_folder,
+    parent_folder: opts.parent_folder || '/',
     discarded: opts.discarded || false,
     need_push: opts.need_push || true
     // ancestor_folders: opts.ancestor_folders || [],

@@ -279,22 +279,23 @@ function updateContent (opts) {
 function update (opts) {
   const { id, data } = opts
 
+  console.log('update-controller', opts, data.title, data.seq)
   return new Promise((resolve, reject) => {
     filesDB.findOne({ _id: id }, (err, fileDoc) => {
       if (err) {
         reject(err)
       } else {
-        console.log('update-fileDoc', fileDoc)
-
+        // console.log('update-fileDoc', fileDoc)
         filesDB.update(
           { _id: id },
           { $set: {
-            title: data.title || fileDoc.title,
+            title: data.title !== undefined ? data.title : fileDoc.title,
+            seq: data.seq !== undefined ? data.seq : fileDoc.seq,
             update_at: new Date(),
-            file_size: data.file_size || fileDoc.file_size,
-            file_path: data.file_path || fileDoc.file_path,
-            parent_folder: data.parent_folder || fileDoc.parent_folder,
-            content: data.content || fileDoc.content,
+            file_size: data.file_size !== undefined ? data.file_size : fileDoc.file_size,
+            file_path: data.file_path !== undefined ? data.file_path : fileDoc.file_path,
+            parent_folder: data.parent_folder !== undefined ? data.parent_folder : fileDoc.parent_folder,
+            content: data.content !== undefined ? data.content : fileDoc.content,
             need_push: true
           }},
           {
@@ -302,7 +303,6 @@ function update (opts) {
           },
           (err, num, docs) => {
             if (err) reject(err)
-            console.log('update-files', docs)
             resolve(docs)
           }
         )

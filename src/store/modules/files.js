@@ -45,68 +45,30 @@ const mutations = {
   },
 
   UPDATE_FILE (state, opts) {
-    fileTree.updateFile(opts)
+    fileTree.updateFile(opts).updateFlatMap()
   },
 
   APPEND_FILE (state, opts) {
     let { fileId, targetId } = opts
-    if (fileId === targetId) return
-    let file = state.files_map[fileId]
-    let targetFolder = state.files_map[targetId]
-    let oldParentFolder = state.files_map[file.parent_folder]
-    file.parent_folder = targetFolder.id
-    file.ancestor_folders = [...targetFolder.ancestor_folders, targetFolder.id]
+    console.log('APPEND_FILE', opts)
 
-    if (file.type === 'folder') {
-      remove(oldParentFolder.child_folders, item => item === file.id)
-      if (!targetFolder.child_folders) {
-        targetFolder.child_folders = []
-      }
-      updateChildFiles(oldParentFolder, state)
-
-      targetFolder.child_folders.push(file.id)
-      updateChildFiles(targetFolder, state)
-    } else if (file.type === 'doc') {
-      remove(oldParentFolder.child_docs, item => item === file.id)
-      if (!targetFolder.child_docs) {
-        targetFolder.child_docs = []
-      }
-      updateChildFiles(oldParentFolder, state)
-
-      targetFolder.child_docs.push(file.id)
-      updateChildFiles(targetFolder, state)
-    }
-    markShouldUpdate(file, true)
+    fileTree.appendFile({
+      id: fileId,
+      targetId: targetId
+    }).updateFlatMap()
   },
 
   MOVE_FILE (state, opts) {
     let { fileId, broId, type } = opts // type: 'before', 'after'
-    if (fileId === broId) return
-    let file = state.files_map[fileId]
-    let broFolder = state.files_map[broId]
-    let targetFolder = state.files_map[broFolder.parent_folder]
-    let oldParentFolder = state.files_map[file.parent_folder]
-    file.parent_folder = targetFolder.id
-    file.ancestor_folders = [...targetFolder.ancestor_folders, targetFolder.id]
+    console.log('MOVE_FILE', opts)
 
-    if (file.type === 'folder') {
-      remove(oldParentFolder.child_folders, item => item === file.id)
-      if (!targetFolder.child_folders) {
-        targetFolder.child_folders = []
-      }
-      updateChildFiles(oldParentFolder, state)
+    fileTree.moveFile({
+      id: fileId,
+      broId: broId,
+      type: type
+    }).updateFlatMap()
 
-      let broFolderIdx = targetFolder.child_folders.indexOf(broFolder.id)
-      if (type === 'before') {
-        targetFolder.child_folders.splice(broFolderIdx, 0, file.id)
-      } else {
-        targetFolder.child_folders.splice(broFolderIdx + 1, 0, file.id)
-      }
-      updateChildFiles(targetFolder, state)
-    } else {
-      return
-    }
-    markShouldUpdate(file, true)
+    console.log('MOVE_FILE-map', fileTree.map)
   },
 
   SET_TAGS (state, tags) {
@@ -206,13 +168,13 @@ const mutations = {
   UPDATE_FOLDERS (state) {
     let newFolders = {}
     state.files_arr.forEach(file => {
-      console.log('UPDATE_FOLDERS', file, file.id)
+      // console.log('UPDATE_FOLDERS', file, file.id)
       if (file.type === 'folder') {
         newFolders[file.id] = file
       }
     })
     state.folders = newFolders
-    console.log('UPDATE_FOLDERS', state.folders)
+    // console.log('UPDATE_FOLDERS', state.folders)
   },
 
   // SAVE_FILES (state) {
@@ -280,10 +242,11 @@ const mutations = {
 }
 
 const actions = {
-  async SET_FILES_FROM_LOCAL ({ dispatch, commit }) {
+  async SET_FILES_FROM_LOCAL ({ commit }) {
     // fetchLocalTops().then(topFiles => {
     //   commit('SET_STICK_TOP_FILES', topFiles)
     // })
+    console.log('SET_FILES_FROM_LOCAL')
     await fetchLocalFiles()
     commit('REFRESH_FILES')
     commit('UPDATE_FOLDERS')
@@ -320,7 +283,7 @@ const actions = {
   async ADD_FILE ({ dispatch, commit }, obj) {
     await LocalDAO.files.add(obj).then(resp => {
       resp.cache_id = obj.cache_id
-      fileTree.addFile(resp)
+      fileTree.addFile(resp).updateFlatMap()
       commit('REFRESH_FILES')
       commit('UPDATE_FOLDERS')
     })
@@ -345,24 +308,27 @@ const actions = {
     commit('FILES_SAVED')
   },
 
-  APPEND_FILE ({ commit }, opts) {
+  async APPEND_FILE ({ commit, dispatch }, opts) {
     commit('APPEND_FILE', opts)
-    // commit('UPDATE_FILE_UPDATE_AT', opts.fileId)
-    // commit('UPDATE_FILE_UPDATE_AT', opts.targetId)
-    commit('UPDATE_FILES_MAP')
-    commit('UPDATE_FILES_ARR')
+    commit('REFRESH_FILES')
     commit('UPDATE_FOLDERS')
-    // commit('SAVE_FILES')
+    await dispatch('SAVE_FILES')
+    commit('FILES_SAVED')
   },
 
-  MOVE_FILE ({ commit }, opts) {
+  async MOVE_FILE ({ commit, dispatch }, opts) {
     commit('MOVE_FILE', opts)
-    // commit('UPDATE_FILE_UPDATE_AT', opts.fileId)
-    // commit('UPDATE_FILE_UPDATE_AT', opts.targetId)
-    commit('UPDATE_FILES_MAP')
-    commit('UPDATE_FILES_ARR')
+    commit('REFRESH_FILES')
     commit('UPDATE_FOLDERS')
-    // commit('SAVE_FILES')
+    await dispatch('SAVE_FILES')
+    commit('FILES_SAVED')
+    // commit('MOVE_FILE', opts)
+    // // commit('UPDATE_FILE_UPDATE_AT', opts.fileId)
+    // // commit('UPDATE_FILE_UPDATE_AT', opts.targetId)
+    // commit('UPDATE_FILES_MAP')
+    // commit('UPDATE_FILES_ARR')
+    // commit('UPDATE_FOLDERS')
+    // // commit('SAVE_FILES')
   },
 
   SET_TAGS_FROM_LOCAL ({ commit }) {
@@ -464,6 +430,7 @@ const actions = {
     fileTree.arr
       .filter(file => file.need_push_locally)
       .forEach(file => {
+        console.log('8888888', file.title, file.seq)
         LocalDAO.files.update({
           id: file.id,
           data: file
@@ -590,7 +557,7 @@ function fetchLocalFiles () {
   return new Promise((resolve, reject) => {
     LocalDAO.files.getAll().then(resp => {
       console.log('fetchLocalFiles-files', resp)
-      fileTree.init(resp)
+      fileTree.init(resp).updateFlatMap()
       resolve(fileTree.flat_map)
     })
     // LocalDAO.structure.get().then(resp => {

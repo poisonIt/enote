@@ -4,10 +4,17 @@
     <p class="title">添富云笔记</p>
     <div class="form">
       <div class="input username">
-        <input class="round" type="text" v-model="username" placeholder="用户名">
+        <input class="round"
+          type="text"
+          v-model="username"
+          placeholder="用户名">
       </div>
       <div class="input password">
-        <input class="round" type="password" v-model="password" placeholder="密码">
+        <input class="round"
+          type="password"
+          v-model="password"
+          placeholder="密码"
+          @keyup.enter="postData">
       </div>
       <div class="button round"
         :class="{ disabled: isLoading }"
@@ -65,7 +72,8 @@ export default {
                 is_sync: userData.isSync,
                 oa_id: userData.oaId,
                 position_id: userData.positionId,
-                position_name: userData.positionName
+                position_name: userData.positionName,
+                id_token: id_token
               }
   
               LocalDAO.user.update(userDataTransed).then(res => {

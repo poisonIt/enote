@@ -10,7 +10,8 @@ function userModel (opts) {
     department_id: opts.department_id || '',
     department_name: opts.department_name || '',
     is_sync: opts.is_sync || false,
-    access_token: opts.access_token || ''
+    access_token: opts.access_token || '',
+    id_token: opts.id_token || ''
   }
 }
 

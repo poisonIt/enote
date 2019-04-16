@@ -371,7 +371,7 @@ export default {
         this.SET_CURRENT_FILE(file.id)
         if (file.type === 'doc') {
           // this.SET_EDITOR_CONTENT(file.content)
-          this.SET_EDITOR_CONTENT_CACHE(file.content)
+          // this.SET_EDITOR_CONTENT_CACHE(file.content)
           this.$hub.dispatchHub('initEditor', this)
           // LocalDAO.doc.get(file.id).then(res => {
           //   console.log('SET_EDITOR_CONTENT', res)

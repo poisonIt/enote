@@ -77,7 +77,7 @@ const mutations = {
       id: fileId,
       broId: broId,
       type: type
-    }).updateFlatMap()
+    }).updateFlatMap(true)
 
     console.log('MOVE_FILE-map', fileTree.map)
   },
@@ -180,7 +180,6 @@ const mutations = {
     let newFolders = {}
     state.files_arr.forEach(file => {
       // console.log('UPDATE_FOLDERS', file, file.id)
-      console.log('UPDATE_FOLDERS', file)
       if (file.type === 'folder') {
         newFolders[file.id] = file
       }
@@ -214,6 +213,10 @@ const mutations = {
     state.files_arr.forEach(item => {
       item.need_push_locally = false
     })
+  },
+
+  SET_FILE_PUSH_FINISHED (state, id) {
+    state.files_map[id].need_push_remotely = false
   },
 
   SET_CURRENT_FOLDER (state, id) {
@@ -445,18 +448,26 @@ const actions = {
   },
 
   SAVE_FILES () { // 本地存储文件
-    console.log('SAVE_FILES', fileTree.arr)
     fileTree.arr
       .filter(file => file.need_push_locally)
       .forEach(file => {
-        console.log('8888888', file.title, file.seq)
         LocalDAO.files.update({
-          id: file.id,
+          id: file.data._id,
           data: file
         }).then(() => {
-          file.push_files_locally = false
+          file.need_push_locally = false
         })
       })
+  },
+
+  SET_FILE_PUSH_FINISHED ({ commit }, id) {
+    commit('SET_FILE_PUSH_FINISHED', id)
+    LocalDAO.files.update({
+      id: id,
+      data: {
+        need_push: false
+      }
+    })
   },
 
   SAVE_FILE_TITLE ({ commit }, obj) {
@@ -549,6 +560,9 @@ const getters = {
     return state.files_map[state.current_file_id]
   },
 
+  GET_FILES_NEED_PUSH (state) {
+    return state.files_arr.filter(item => item.need_push_remotely)
+  },
 
   GET_ALL_TAGS (state) {
     return state.tags_arr

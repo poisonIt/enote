@@ -32,3 +32,23 @@ export function pullNote (token) {
     }
   })
 }
+
+export function pushNotebook (token, params) {
+  console.log('pushNotebook', token, params)
+  return axios.post(baseUrl + '/noteBook/pushNotebook', params, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer' + token
+    }
+  })
+}
+
+export function pushNote (token, params) {
+  console.log('pushNote', token, params)
+  return axios.post(baseUrl + '/note/pushNote', params, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer' + token
+    }
+  })
+}

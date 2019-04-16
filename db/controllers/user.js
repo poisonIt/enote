@@ -51,7 +51,8 @@ function update (opts) {
           department_id: opts.department_id !== undefined ? opts.department_id : userDB.department_id,
           department_name: opts.department_name !== undefined ? opts.department_name : userDoc.department_name,
           is_sync: opts.is_sync !== undefined ? opts.is_sync : userDoc.is_sync,
-          access_token: opts.access_token !== undefined ? opts.access_token : userDoc.access_token
+          access_token: opts.access_token !== undefined ? opts.access_token : userDoc.access_token,
+          id_token: opts.id_token !== undefined ? opts.id_token : userDoc.id_token
         }},
         {
           returnUpdatedDocs: true

@@ -124,7 +124,7 @@ export default {
 
     onEditorReady () {
       console.log('editorReady', this.content, this.contentCache, this.isInit)
-      // this.SET_EDITOR_CONTENT_CACHE(this.content)
+      this.SET_EDITOR_CONTENT_CACHE(this.currentFile.content)
       this.isInit = true
       this.editor.setData(this.currentFile.content || '')
       setTimeout(() => {
@@ -138,7 +138,7 @@ export default {
     },
 
     saveData () {
-      console.log('saveData', this.editor.getData(), this.contentCache, this.editor.getData() === this.contentCache)
+      console.log('saveData', this.editor.getData(), '1111', this.contentCache, '2222', this.editor.getData() === this.contentCache)
       if (this.editor.getData() !== this.contentCache) {
         // this.EDIT_FILE({
         //   id: this.currentFile.id,

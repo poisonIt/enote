@@ -188,6 +188,7 @@ import Editor from '@/components/Editor'
 import FolderComp from '@/components/FolderComp.vue'
 import ProgressBar from '@/components/ProgressBar'
 import LocalDAO from '../../db/api'
+import { pushNotebook, pushNote } from '../service'
 import { ipcRenderer } from 'electron'
 
 export default {
@@ -253,7 +254,8 @@ export default {
       isMovePanelShowed: 'GET_SHOW_MOVE_PANEL',
       isUserPanelShowed: 'GET_SHOW_USER_PANEL',
       isSharePanelShowed: 'GET_SHOW_SHARE_PANEL',
-      userInfo: 'GET_USER_INFO'
+      userInfo: 'GET_USER_INFO',
+      filesNeedPush: 'GET_FILES_NEED_PUSH'
     })
   },
 
@@ -261,6 +263,39 @@ export default {
     validity (val) {
       console.log('watch-validity', val)
     }
+  },
+
+  mounted () {
+    setInterval(() => {
+      this.filesNeedPush.forEach(file => {
+        if (file.type === 'folder') {
+          pushNotebook(this.userInfo.id_token, {
+            noteBookId: file.id,
+            parentId: file.parent_folder,
+            seq: file.seq,
+            title: file.title,
+            trash: file.trash
+          }).then(resp => {
+            if (resp.data.returnCode === 200) {
+              this.SET_FILE_PUSH_FINISHED(file.id)
+            }
+          })
+        } else if (file.type === 'doc') {
+          console.log(file.title, file.parent_folder)
+          pushNotebook(this.userInfo.id_token, {
+            noteBookId: file.parent_folder,
+            noteContent: file.content,
+            noteId: file.id,
+            title: file.title,
+            trash: file.trash
+          }).then(resp => {
+            if (resp.data.returnCode === 200) {
+              this.SET_FILE_PUSH_FINISHED(file.id)
+            }
+          })
+        }
+      })
+    }, 5000)
   },
 
   methods: {
@@ -344,7 +379,6 @@ export default {
       })
     }
   }
-
 }
 </script>
 

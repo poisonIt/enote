@@ -74,7 +74,7 @@ function update (opts) {
             // file_path: data.file_path !== undefined ? data.file_path : fileDoc.file_path,
             parent_folder: data.parent_folder !== undefined ? data.parent_folder : fileDoc.parent_folder,
             content: data.content !== undefined ? data.content : fileDoc.content,
-            need_push: true,
+            need_push: data.need_push !== undefined ? data.need_push : true,
             trash: data.trash !== undefined ? data.trash : fileDoc.trash
           }},
           {

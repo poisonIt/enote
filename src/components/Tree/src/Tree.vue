@@ -90,6 +90,7 @@ export default {
   watch: {
     data: {
       handler: function (newVal) {
+        console.log('watch-tree-data', newVal)
         this.store.setData(newVal)
         this.$emit('input', [])
       },

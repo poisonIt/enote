@@ -180,7 +180,10 @@ export default {
 
   mounted () {
     const curNode = this.$refs.tree.store.currentNode
-    this.handleItemClick(curNode)
+    console.log('curNode', curNode)
+    if (curNode) {
+      this.handleItemClick(curNode)
+    }
     LocalDAO.tag.getAll().then(res => {
       this.updateTags(res)
     })
@@ -270,13 +273,13 @@ export default {
         this.popupedNode.data.link === 'recycle') {
         this.popupedNode = this.getTreeNode('folders')
       }
-      // let id = GenNonDuplicateID(6)
+      let cache_id = GenNonDuplicateID(6)
       this.ADD_FILE({
         title: '无标题笔记',
         type: 'doc',
-        // id: id,
+        cache_id: cache_id,
         parent_folder: this.popupedNode.data.id,
-        isTemp: isTemp
+        is_temp: isTemp
       }).then(() => {
         this.$nextTick(() => {
           for (let i in this.popupedNode.store.nodeMap) {

@@ -38,6 +38,7 @@
           :update_at="item.update_at | yyyymmdd"
           :file_size="Number(item.file_size || 0)"
           :parent_folder="getParentFolderTitle(item)"
+          :need_push="item.need_push_remotely"
           @contextmenu="handleContextmenu">
         </FileCard>
       </FileCardGroup>
@@ -174,29 +175,34 @@ export default {
   watch: {
     allFileArr (val) {
       this.fileList = val
-      if (this.currentNav.link === 'latest') {
-        this.list = val.filter(item => !item.discarded)
+      console.log('watch-allFileArr', val, this.currentNav)
+      if (this.currentNav && this.currentNav.link === 'latest') {
+        this.list = val.filter(item => item.trash === 'NORMAL')
+        this.selectFile(0)
       }
     },
 
     currentNav (val) {
+      console.log('watch-currentNav', val)
       if (val.link === 'latest') {
-        this.list = this.fileList.filter(item => !item.discarded)
+        this.list = this.fileList.filter(item => 
+          item.trash === 'NORMAL')
       }
       if (val.link === 'folders') {
-        this.list = this.fileList.filter(item => !item.discarded
-          && !item.parent_folder)
+        this.list = this.fileList.filter(item => item.trash === 'NORMAL'
+          && item.parent_folder === '/')
       }
       if (val.link === 'new folder') {
-        this.list = this.fileList.filter(item => !item.discarded
+        this.list = this.fileList.filter(item => item.trash === 'NORMAL'
           && item.parent_folder === val.id)
       }
       if (val.link === 'tag') {
         
       }
       if (val.link === 'recycle') {
-        this.list = this.fileList.filter(item => item.discarded)
+        this.list = this.fileList.filter(item => !item.trash === 'NORMAL')
       }
+      this.selectFile(0)
     },
 
     viewFileType (val) {
@@ -321,7 +327,9 @@ export default {
     ...mapActions([
       'SAVE_DOC',
       'SET_EDITOR_CONTENT',
+      'SET_EDITOR_CONTENT_CACHE',
       'EDIT_FILE',
+      'EDIT_DOC',
       'STICK_TOP_FILE',
       'CANCEL_STICK_TOP_FILE',
       'SET_CURRENT_FILE',
@@ -332,14 +340,25 @@ export default {
     ]),
 
     selectFile (index) {
-      const file = this.fileList[index]
-      if (!file) return
+      const file = this.list[index]
+      console.log('selectFile', file)
+      if (!file) {
+        this.SET_CURRENT_FILE(null)
+        return
+      }
       if (!this.isFirstSelect) {
         if (this.currentFile === file) return
         if (this.currentFile) {
+          // console.log('save_doc-11111', this ==)
+          // this.$hub.dispatchHub('initEditor', this)
           // this.SAVE_DOC({
           //   id: this.currentFile.id,
           //   html: this.contentCache
+          // })
+
+          // this.EDIT_DOC({
+          //   id: this.currentFile.id,
+          //   content: this.contentCache
           // })
         }
       } else {
@@ -351,10 +370,13 @@ export default {
       if (this.currentFile !== file) {
         this.SET_CURRENT_FILE(file.id)
         if (file.type === 'doc') {
-          LocalDAO.doc.get(file.id).then(res => {
-            console.log('SET_EDITOR_CONTENT', res)
-            this.SET_EDITOR_CONTENT(res)
-          })
+          // this.SET_EDITOR_CONTENT(file.content)
+          this.SET_EDITOR_CONTENT_CACHE(file.content)
+          this.$hub.dispatchHub('initEditor', this)
+          // LocalDAO.doc.get(file.id).then(res => {
+          //   console.log('SET_EDITOR_CONTENT', res)
+          //   this.SET_EDITOR_CONTENT(res)
+          // })
           // readFile(`${appPath}/docs/${file.id}.xml`).then(data => {
           //   this.SET_EDITOR_CONTENT(data.data)
           // })
@@ -404,7 +426,7 @@ export default {
 
     getParentFolderTitle (file) {
       let parentFolderId = file.parent_folder
-      console.log('getParentFolderTitle', parentFolderId)
+      console.log('getParentFolderTitle', file, parentFolderId, this.allFileMap)
       return parentFolderId !== '/' ? this.allFileMap[parentFolderId].title : '我的文件夹'
       // let parentFolderId = folders[folders.length - 1]
       // if (parentFolderId && this.folders[parentFolderId]) {
@@ -463,7 +485,7 @@ export default {
         const childDocs = currentFolder.child_docs || []
 
         return [...childFolders, ...childDocs]
-          .filter(file => !file.discarded)
+          .filter(file => !file.trash)
       }
 
     }

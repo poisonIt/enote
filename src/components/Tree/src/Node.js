@@ -45,7 +45,7 @@ export default class Node {
     }
 
     for (let i = 0, len = children.length; i < len; i++) {
-      if (children[i].discarded) continue
+      if (children[i].trash && children[i].trash !== 'NORMAL') continue
       this.insertChild({
         data: children[i]
       })

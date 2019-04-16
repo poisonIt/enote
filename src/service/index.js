@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const baseUrl = 'http://115.159.127.156:9090/mock/58/api'
+const baseUrl = 'http://122.152.201.59:8000/api'
 
 export function authenticate (params) {
   return axios.post(baseUrl + '/authenticate', {
@@ -11,6 +11,24 @@ export function authenticate (params) {
 
 export function getUserInfo (token) {
   return axios.get(baseUrl + '/note/user/userInfo', {
-    Authorization: token
+    headers: {
+      'Authorization': 'Bearer' + token
+    }
+  })
+}
+
+export function pullNotebooks (token) {
+  return axios.get(baseUrl + '/noteBook/notebooks', {
+    headers: {
+      'Authorization': 'Bearer' + token
+    }
+  })
+}
+
+export function pullNote (token) {
+  return axios.get(baseUrl + '/note/pullNote', {
+    headers: {
+      'Authorization': 'Bearer' + token
+    }
   })
 }

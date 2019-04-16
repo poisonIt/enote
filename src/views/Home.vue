@@ -18,7 +18,7 @@
       <div slot="right">
         <FileHandler></FileHandler>
         <TagHandler></TagHandler>
-        <EditorComp style="height: 100%" v-show="currentFile && currentFile.type === 'doc'"></EditorComp>
+        <Editor style="height: 100%" v-show="currentFile && currentFile.type === 'doc'"></Editor>
         <FolderComp style="height: 100%" v-show="currentFile && currentFile.type === 'folder'"></FolderComp>
       </div>
     </PageLayout>
@@ -184,7 +184,7 @@ import PageLayout from '@/components/PageLayout.vue'
 import DocumentList from '@/components/DocumentList'
 import FileHandler from '@/components/FileHandler.vue'
 import TagHandler from '@/components/TagHandler.vue'
-import EditorComp from '@/components/EditorComp.vue'
+import Editor from '@/components/Editor'
 import FolderComp from '@/components/FolderComp.vue'
 import ProgressBar from '@/components/ProgressBar'
 import LocalDAO from '../../db/api'
@@ -202,7 +202,7 @@ export default {
     DocumentList,
     FileHandler,
     TagHandler,
-    EditorComp,
+    Editor,
     FolderComp,
     ProgressBar
   },

@@ -35,11 +35,13 @@ export default {
       rootChildFolders = rootChildFolders.sort((a, b) => {
         return a.seq - b.seq
       })
+      console.log('rootChildFolders', rootChildFolders)
       this.$set(
         this.nav[this.folderIndex],
         'children',
         rootChildFolders
       )
+      console.log('nav', this.nav, this.folderIndex)
     }
   }
 }

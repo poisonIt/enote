@@ -40,12 +40,23 @@ const mutations = {
 
   DELETE_FILE (state, id) {
     let file = state.files_map[id]
-    file.discarded = true
+    file.trash = 'TRASH'
     markShouldUpdate(file, true)
   },
 
   UPDATE_FILE (state, opts) {
     fileTree.updateFile(opts).updateFlatMap()
+  },
+
+  EDIT_DOC (state, opts) {
+    let { id, content } = opts
+    
+    let docFile = state.files_map[id]
+    if (docFile && docFile.type === 'doc') {
+      fileTree.updateFile(opts, true)
+      docFile.content = content
+      docFile.need_push_remotely = true
+    }
   },
 
   APPEND_FILE (state, opts) {
@@ -89,7 +100,7 @@ const mutations = {
   },
 
   CLEAR_ALL_RECYCLE (state) {
-    let recycledFiles = state.files_arr.filter(file => file.discarded)
+    let recycledFiles = state.files_arr.filter(file => file.trash === 'TRASH')
     recycledFiles.forEach(file => {
       // handle parentFolder
       let parentFolder = state.files_map[file.parent_folder]
@@ -130,7 +141,7 @@ const mutations = {
 
   RESUME_ALL_RECYCLE (state) {
     state.files_arr.forEach(file => {
-      file.discarded = false
+      file.trash = 'NORMAL'
     })
   },
 
@@ -169,6 +180,7 @@ const mutations = {
     let newFolders = {}
     state.files_arr.forEach(file => {
       // console.log('UPDATE_FOLDERS', file, file.id)
+      console.log('UPDATE_FOLDERS', file)
       if (file.type === 'folder') {
         newFolders[file.id] = file
       }
@@ -292,7 +304,7 @@ const actions = {
   async DELETE_FILE ({ commit }, id) {
     commit('UPDATE_FILE', {
       id: id,
-      discarded: true
+      trash: 'TRASH'
     })
     commit('REFRESH_FILES')
     commit('UPDATE_FOLDERS')
@@ -304,6 +316,12 @@ const actions = {
     commit('UPDATE_FILE', opts)
     commit('REFRESH_FILES')
     commit('UPDATE_FOLDERS')
+    await dispatch('SAVE_FILES')
+    commit('FILES_SAVED')
+  },
+
+  async EDIT_DOC ({ commit, dispatch }, opts) {
+    commit('EDIT_DOC', opts)
     await dispatch('SAVE_FILES')
     commit('FILES_SAVED')
   },
@@ -427,6 +445,7 @@ const actions = {
   },
 
   SAVE_FILES () { // 本地存储文件
+    console.log('SAVE_FILES', fileTree.arr)
     fileTree.arr
       .filter(file => file.need_push_locally)
       .forEach(file => {
@@ -473,7 +492,7 @@ const getters = {
   },
 
   GET_LATEST_FILES (state) {
-    return state.files_arr.filter(file => !file.discarded)
+    return state.files_arr.filter(file => file.trash === 'NORMAL')
   },
 
   GET_ROOT_FILES (state) {
@@ -485,7 +504,7 @@ const getters = {
   },
 
   GET_RECYCLE_FILES (state) {
-    return state.files_arr.filter(file => file.discarded)
+    return state.files_arr.filter(file => file.trash === 'TRASH')
   },
 
   GET_CURRENT_FOLDER (state) {
@@ -508,7 +527,7 @@ const getters = {
     return [...childFolders, ...childDocs]
       .map(id => state.files_map[id])
       .filter(file => {
-        if (file.discarded) {
+        if (file.trash !== 'NORMAL') {
           return false
         }
         if (state.search_keyword !== '') {

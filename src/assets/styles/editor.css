@@ -9,6 +9,9 @@
   padding-top: 6px !important;
   padding-bottom: 6px !important;
 }
+.cke_bottom {
+  display: none !important;
+}
 
 .w-e-toolbar {
   flex-wrap: wrap !important;

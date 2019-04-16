@@ -1,7 +1,8 @@
 <template>
   <div class="container">
     <div class="avatar" :class="{ expanded : viewType === 'expanded' }" @click="showUserPanel">
-      <img src="https://avatar.saraba1st.com/images/noavatar_middle.gif" alt="">
+      <img src="http://img5.duitang.com/uploads/item/201512/18/20151218165511_AQW4B.jpeg" alt="">
+      <img :src="userInfo.image_url" alt="">
     </div>
   </div>
 </template>
@@ -14,7 +15,8 @@ export default {
 
   computed: {
     ...mapGetters({
-      viewType: 'GET_VIEW_TYPE'
+      viewType: 'GET_VIEW_TYPE',
+      userInfo: 'GET_USER_INFO'
     })
   },
 

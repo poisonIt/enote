@@ -11,7 +11,7 @@
       </div>
       <div class="button round"
         :class="{ disabled: isLoading }"
-        @click="goHome">
+        @click="postData">
         登录
       </div>
     </div>
@@ -20,7 +20,12 @@
 
 <script>
 import { ipcRenderer } from 'electron'
-import { authenticate, getUserInfo } from '../service'
+import { 
+  authenticate,
+  getUserInfo,
+  pullNotebooks,
+  pullNote
+} from '../service'
 import LocalDAO from '../../db/api'
 
 export default {
@@ -35,7 +40,7 @@ export default {
   },
 
   methods: {
-    goHome () {
+    postData () {
       if (this.isLoading) return
       this.isLoading = true
       authenticate({
@@ -47,27 +52,42 @@ export default {
           const id_token = resp.data.body.id_token
           getUserInfo(id_token).then(userResp => {
             console.log('user-resp', userResp)
-            let userData = userResp.data.body
-            let userDataTransed = {
-              username: userData.userName,
-              password: this.password,
-              access_token: userData.accessToken,
-              account_name_cn: userData.accountNameCN,
-              department_id: userData.departmentId,
-              department_name: userData.departmentName,
-              image_url: userData.imageUrl,
-              is_sync: userData.isSync,
-              oa_id: userData.oaId,
-              position_id: userData.positionId,
-              position_name: userData.positionName
-            }
-
-            LocalDAO.user.update(userDataTransed).then(res => {
-              console.log('db-save-resp', res)
-              this.isLoading = true
-              ipcRenderer.send('changeWindow', {
-                name: 'home'
+            if (userResp.data.returnCode === 200) {
+              let userData = userResp.data.body
+              let userDataTransed = {
+                username: userData.userName,
+                password: this.password,
+                access_token: userData.accessToken,
+                account_name_cn: userData.accountNameCN,
+                department_id: userData.departmentId,
+                department_name: userData.departmentName,
+                image_url: userData.imageUrl,
+                is_sync: userData.isSync,
+                oa_id: userData.oaId,
+                position_id: userData.positionId,
+                position_name: userData.positionName
+              }
+  
+              LocalDAO.user.update(userDataTransed).then(res => {
+                this.isLoading = true
               })
+            } else {
+              alert(userResp.data.returnMsg)
+            }
+          })
+          Promise.all([pullNotebooks(id_token), pullNote(id_token)]).then(pullResp => {
+            LocalDAO.files.removeAll().then(() => {
+              let pullNoteBooksTask = pullResp[0].data.body
+                .map(item => LocalDAO.files.add(this.transNoteBookData(item)))
+
+              let pullNoteTask = pullResp[1].data.body
+                .map(item => LocalDAO.files.add(this.transNoteData(item)))
+
+              Promise.all([...pullNoteBooksTask, ...pullNoteTask])
+                .then(saveLocalRes => {
+                  console.log('saveLocalRes', saveLocalRes)
+                  this.goHome()
+                })
             })
           })
         } else {
@@ -75,6 +95,42 @@ export default {
           this.isLoading = false
         }
       })
+    },
+
+    goHome () {
+      ipcRenderer.send('changeWindow', {
+        name: 'home'
+      })
+    },
+
+    transNoteBookData (obj) {
+      console.log('transNoteBookData', obj.noteBookId)
+      return {
+        type: 'folder',
+        remote_id: obj.noteBookId,
+        title: obj.title || '',
+        seq: obj.seq || 0,
+        create_at: new Date(obj.createDt).valueOf(),
+        update_at: new Date(obj.modifyDt).valueOf(),
+        parent_folder: obj.parentId !== '0' ? obj.parentId : '/',
+        trash: obj.trash,
+        need_push: false
+      }
+    },
+
+    transNoteData (obj) {
+      console.log('transNoteData', obj)
+      return {
+        type: 'doc',
+        title: obj.title || '',
+        create_at: new Date(obj.createDt).valueOf(),
+        update_at: new Date(obj.modifyDt).valueOf(),
+        parent_folder: obj.noteBookId !== '0' ? obj.noteBookId : '/',
+        trash: obj.trash,
+        file_size: obj.size,
+        content: obj.noteContent,
+        need_push: false
+      }
     }
   }
 }

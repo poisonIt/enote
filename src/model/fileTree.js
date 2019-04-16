@@ -11,6 +11,7 @@ export default class FileTree {
     this.map = {}
     this.arr = []
     this.flat_map = {}
+    this.isInit = true
     this.root = new File({
       data: {
         title: '我的文件夹',
@@ -19,34 +20,37 @@ export default class FileTree {
       },
       store: this
     })
-    // this.root.getAncestorFolders()
   }
 
   init (data) {
     data.forEach(item => {
-      this.addFile(item)
+      this.addFile(item, true)
     })
     return this
   }
 
-  addFile (data) {
+  addFile (data, isExist) {
+    console.log('addFile', data)
     let newFile = new File({
-      id: data._id,
+      id: data.remote_id || data._id,
       data: data,
       seq: data.seq,
       need_push_remotely: data.need_push,
-      store: this
+      store: this,
+      isExist: isExist
     })
-    this.map[data._id] = newFile
+    this.map[data.remote_id || data._id] = newFile
     this.arr.push(newFile)
-    // this.updateFlatMap()
     return this
   }
 
-  updateFile (data) {
+  updateFile (data, lazy) {
+    console.log('updateFile', data)
     let file = this.map[data.id]
     file.update(data)
-    this.updateFlatMap()
+    if (!lazy) {
+      this.updateFlatMap()
+    }
     return this
   }
 
@@ -96,7 +100,12 @@ export default class FileTree {
     let broFile = this.map[broId]
     let targetFolder = broFile.parentFolder || this.root
     let oldParentFolder = file.parentFolder || this.root
- 
+
+    if (targetFolder === file || targetFolder.getAncestorFolders().indexOf(id) > -1) {
+      console.error('target should not be a child')
+      return
+    }
+     
     if (targetFolder !== oldParentFolder) {
       let oldTmp = oldParentFolder.child_folders
       let tmp = targetFolder.child_folders
@@ -129,8 +138,11 @@ export default class FileTree {
     this.flat_map = {}
     this.root.getAncestorFolders()
     for (let i in this.map) {
-      let flat_file = createFlatFile(this.map[i])
+      let flat_file = createFlatFile(this.map[i], this.isInit)
       this.flat_map[i] = flat_file
+    }
+    if (this.isInit) {
+      this.isInit = false
     }
   }
 
@@ -139,7 +151,7 @@ export default class FileTree {
   }
 }
 
-function createFlatFile (file) {
+function createFlatFile (file, isInit) {
   console.log('createFlatFile', file)
   file.getAncestorFolders()
   return {
@@ -150,7 +162,7 @@ function createFlatFile (file) {
     title: file.title,
     parent_folder: file.parent_folder,
     ancestor_folders: file.ancestor_folders,
-    discarded: file.discarded,
+    trash: file.trash,
     link: file.link,
     create_at: file.create_at,
     update_at: file.update_at,
@@ -158,6 +170,8 @@ function createFlatFile (file) {
     need_push_remotely: file.need_push_remotely,
     children: file.children,
     child_folders: file.child_folders,
-    child_docs: file.child_docs
+    child_docs: file.child_docs,
+    content: file.content,
+    file_size: file.file_size
   }
 }

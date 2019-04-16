@@ -23,6 +23,7 @@
         </span>
       </div>
       <div class="icon stick-top" v-if="isTop"></div>
+      <div class="need_push" v-if="need_push"></div>
     </div>
     <div class="body" v-if="content.length > 0 && !mini && type === 'doc'">
       <span class="content ellipsis">{{ content }}</span>
@@ -87,6 +88,10 @@ export default {
       type: String
     },
     isTop: {
+      type: Boolean,
+      default: false
+    },
+    need_push: {
       type: Boolean,
       default: false
     }
@@ -270,6 +275,12 @@ export default {
     background-image url(../../../assets/images/lanhu/folder@2x.png)
   &.stick-top
     background-image url(../../../assets/images/lanhu/stick_top@2x.png)
+
+.need_push
+  width 10px
+  height 10px
+  border-radius 50%
+  background-color red
 
 .body
   margin: 12px 0

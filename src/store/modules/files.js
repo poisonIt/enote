@@ -151,16 +151,20 @@ const mutations = {
     let folders = {}
     state.files_arr = []
     state.folders = {}
+    // function getChildren (file) {
+    //   console.log('getChidren', file)
+    //   return file.child_folders.map(item => getChildren(state.files_map[item]))
+    // }
     for (let i in state.files_map) {
       let file = state.files_map[i]
       arr.push(file)
-      if (file.type === 'folder') {
+      if (file.type === 'folder' && file.parent_folder === '/') {
         folders[file.id] = file
       }
     }
     state.files_arr = arr
     state.folders = folders
-    console.log('REFRESH_FILES', state)
+    console.log('REFRESH_FILES', state, folders)
   },
 
   UPDATE_FILES_ARR (state) {
@@ -375,32 +379,23 @@ const actions = {
   async APPEND_FILE ({ commit, dispatch }, opts) {
     commit('APPEND_FILE', opts)
     commit('REFRESH_FILES')
-    // commit('UPDATE_FOLDERS')
-    // let filesSaved = await saveLocalFiles()
-    // console.log('saveLocalFiles', filesSaved)
-    // commit('FILES_SAVED', filesSaved)
-    // if (filesSaved.length > 0) {
-    //   commit('UPDATE_FILES_ARR')
-    // }
-  },
-
-  async MOVE_FILE ({ commit, dispatch }, opts) {
-    commit('MOVE_FILE', opts)
-    commit('REFRESH_FILES')
-    // commit('UPDATE_FOLDERS')
     let filesSaved = await saveLocalFiles()
     console.log('saveLocalFiles', filesSaved)
     commit('FILES_SAVED', filesSaved)
     if (filesSaved.length > 0) {
       commit('UPDATE_FILES_ARR')
     }
-    // commit('MOVE_FILE', opts)
-    // // commit('UPDATE_FILE_UPDATE_AT', opts.fileId)
-    // // commit('UPDATE_FILE_UPDATE_AT', opts.targetId)
-    // commit('UPDATE_FILES_MAP')
-    // commit('UPDATE_FILES_ARR')
-    // commit('UPDATE_FOLDERS')
-    // // commit('SAVE_FILES')
+  },
+
+  async MOVE_FILE ({ commit, dispatch }, opts) {
+    commit('MOVE_FILE', opts)
+    commit('REFRESH_FILES')
+    let filesSaved = await saveLocalFiles()
+    // console.log('saveLocalFiles', filesSaved)
+    commit('FILES_SAVED', filesSaved)
+    if (filesSaved.length > 0) {
+      commit('UPDATE_FILES_ARR')
+    }
   },
 
   SET_TAGS_FROM_LOCAL ({ commit }) {

@@ -274,47 +274,48 @@ export default {
   },
 
   mounted () {
-    // setInterval(() => {
-    //   this.filesNeedPush.forEach(file => {
-    //     if (file.type === 'folder') {
-    //       let parentFolder = this.allFileMap[file.parent_folder]
-    //       console.log('pushNotebook-111111', file.title, file, parentFolder)
-    //       pushNotebook(this.userInfo.id_token, [{
-    //         noteBookId: file.remote_id || file.id,
-    //         parentId: parentFolder ? parentFolder.remote_id : '/',
-    //         seq: file.seq,
-    //         title: file.title,
-    //         trash: file.trash
-    //       }]).then(resp => {
-    //         if (resp.data.returnCode === 200) {
-    //           this.SET_FILE_PUSH_FINISHED({
-    //             id: file.id,
-    //             remote_id: resp.data.body[0].noteId
-    //           })
-    //         }
-    //       })
-    //     } else if (file.type === 'doc') {
-    //       // console.log(file.title, file.parent_folder)
-    //       let parentFolder = this.allFileMap[file.parent_folder]
-    //       console.log('pushNote-111111', file.title, file.remote_id, file, parentFolder)
-    //       pushNote(this.userInfo.id_token, [{
-    //         noteBookId: parentFolder ? parentFolder.remote_id : '/',
-    //         noteContent: file.content,
-    //         noteId: file.remote_id || file.id,
-    //         title: file.title,
-    //         trash: file.trash
-    //       }]).then(resp => {
-    //         if (resp.data.returnCode === 200) {
-    //           console.log('pushNote-resp', resp)
-    //           this.SET_FILE_PUSH_FINISHED({
-    //             id: file.id,
-    //             remote_id: resp.data.body[0].noteId
-    //           })
-    //         }
-    //       })
-    //     }
-    //   })
-    // }, 5000)
+    setInterval(() => {
+      this.filesNeedPush.forEach(file => {
+        if (file.type === 'folder') {
+          let parentFolder = this.allFileMap[file.parent_folder]
+          console.log('pushNotebook-111111', file.title, file, parentFolder)
+          pushNotebook(this.userInfo.id_token, [{
+            noteBookId: file.remote_id || file.id,
+            parentId: parentFolder ? parentFolder.remote_id : '/',
+            seq: file.seq,
+            title: file.title,
+            trash: file.trash
+          }]).then(resp => {
+            if (resp.data.returnCode === 200) {
+              this.SET_FILE_PUSH_FINISHED({
+                id: file.id,
+                remote_id: resp.data.body[0].noteBookId
+              })
+            }
+          })
+        } else if (file.type === 'doc') {
+          return
+          // console.log(file.title, file.parent_folder)
+          let parentFolder = this.allFileMap[file.parent_folder]
+          console.log('pushNote-111111', file.title, file.remote_id, file, parentFolder)
+          pushNote(this.userInfo.id_token, [{
+            noteBookId: parentFolder ? parentFolder.remote_id : '/',
+            noteContent: file.content,
+            noteId: file.remote_id || file.id,
+            title: file.title,
+            trash: file.trash
+          }]).then(resp => {
+            if (resp.data.returnCode === 200) {
+              console.log('pushNote-resp', resp)
+              this.SET_FILE_PUSH_FINISHED({
+                id: file.id,
+                remote_id: resp.data.body[0].noteId
+              })
+            }
+          })
+        }
+      })
+    }, 5000)
   },
 
   methods: {

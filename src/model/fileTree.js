@@ -9,6 +9,7 @@ export default class FileTree {
     }
 
     this.map = {}
+    this.remote_map = {}
     this.arr = []
     this.flat_map = {}
     // this.isInit = true
@@ -31,9 +32,13 @@ export default class FileTree {
       let file = this.map[i]
       console.log('init-file', file.title, file.parent_folder)
       if (file.parent_folder !== '/' && !this.map[file.parent_folder]) {
-        file.update({
-          parent_folder: '/'
-        }, true)
+        if (this.remote_map[file.parent_folder]) {
+          file.data.parent_folder = this.remote_map[file.parent_folder].id
+        } else {
+          file.update({
+            parent_folder: '/'
+          }, true)
+        }
       }
     }
     this.root.getAncestorFolders()
@@ -42,10 +47,10 @@ export default class FileTree {
   }
 
   addFile (data, isExist) {
-    console.log('addFile', data.title, data.seq, data.remote_id, data._id)
+    console.log('addFile', data.title, data.seq, data.parent_folder, data.remote_id, data._id)
     // return
     let newFile = new File({
-      id: data._id,
+      id: data.remote_id || data._id,
       data: data,
       seq: data.seq,
       need_push_remotely: data.need_push,
@@ -53,6 +58,9 @@ export default class FileTree {
       isExist: isExist
     })
     this.map[data._id] = newFile
+    if (data.remote_id) {
+      this.remote_map[data.remote_id] = newFile
+    }
     this.arr.push(newFile)
     return this
   }
@@ -78,55 +86,26 @@ export default class FileTree {
       return
     }
 
-    if (file === targetFolder || file.children.indexOf(targetFolder) > -1) {
+    if (file === targetFolder || file.child_folders.indexOf(targetFolder.id) > -1) {
       console.error('target should not be a child')
       return
     }
 
     let oldSeq = file.seq
 
-    oldParentFolder.children.splice(file.seq, 1)
-    targetFolder.children.push(file)
+    oldParentFolder._child_folders.splice(file.seq, 1)
+    targetFolder._child_folders.push(file.id)
 
-    for (let i = file.seq, len = oldParentFolder.children.length; i < len; i++) {
-      oldParentFolder.children[i].update({
+    for (let i = file.seq, len = oldParentFolder._child_folders.length; i < len; i++) {
+      this.map[oldParentFolder._child_folders[i]].update({
         seq: i
       })
     }
 
     file.update({
       parent_folder: targetFolder.data.depth === 0 ? '/' : targetId,
-      seq: targetFolder.children.length - 1
+      seq: targetFolder._child_folders.length - 1
     }, true)
-
-    // let oldParentFolder = file.parentFolder
-    // // let targetParentFolder = targetFolder.parent_folder
-    // // console.log('0000000', oldParentFolder, targetParentFolder)
-    // let oldTmp = oldParentFolder.child_folders
-    // let tmp = targetFolder.child_folders
-
-    // file.update({
-    //   parent_folder: targetFolder.data.depth === 0 ? '/' : targetId
-    // }, true)
-    // file.getAncestorFolders()
-
-    // let relation = 0
-
-    // if (oldTmp.indexOf(targetFolder) > -1) {
-    //   relation = 1
-    // } else if (tmp.indexOf(oldParentFolder) > -1) {
-    //   relation = 2
-    // }
-
-    // oldTmp.splice(file.seq, 1)
-    // tmp.push(file)
-    
-    // console.log('relation', relation, oldParentFolder, targetFolder, oldTmp, tmp, file.seq - 1, tmp.length - 1)
-    // oldParentFolder.childSeqChangedIdxCache = relation === 2 ? -1 : file.seq - 1
-    // targetFolder.childSeqChangedIdxCache = relation === 1 ? -1 : tmp.length - 1
-
-    // oldParentFolder.child_folders = oldTmp
-    // targetFolder.child_folders = tmp
   
     return this
   }
@@ -135,87 +114,66 @@ export default class FileTree {
     let { id, broId, type } = data
     let file = this.map[id]
     let broFile = this.map[broId]
-    let targetFolder = broFile.parentFolder || this.root
-    let oldParentFolder = file.parentFolder || this.root
-    // this.needUpdateFiles = [id]
+    let targetFolder = this.map[broFile.parent_folder] || this.root
+    let oldParentFolder = this.map[file.parent_folder] || this.root
 
-    if (targetFolder === file || file.children.indexOf(targetFolder) > -1) {
+    console.log('moveFile', targetFolder, oldParentFolder, file.seq)
+
+    if (targetFolder === file || file._child_folders.indexOf(targetFolder.id) > -1) {
       console.error('target should not be a child')
       return
     }
 
-    let pos = type === 'before' ? broFile.seq - 1 : broFile.seq
-    // if (targetFolder !== oldParentFolder) {
-    oldParentFolder.children.splice(file.seq, 1)
-    targetFolder.children.splice(pos, 0, file)
+    let pos = 0
+   
+    if (targetFolder.id !== oldParentFolder.id) {
+      pos = type === 'before'
+        ? broFile.seq
+        : broFile.seq + 1
 
-    if (targetFolder !== oldParentFolder) {
-      for (let i = file.seq, len = oldParentFolder.children.length; i < len; i++) {
-        oldParentFolder.children[i].update({
-          seq: i
-        })
-      }
+      oldParentFolder._child_folders.splice(file.seq, 1)
+      targetFolder._child_folders.splice(pos, 0, file.id)
+
+      oldParentFolder._child_folders.forEach(item => {
+        let child = this.map[item]
+        let newSeq = oldParentFolder._child_folders.indexOf(item)
+        if (child.seq !== newSeq) {
+          child.update({
+            seq: newSeq
+          })
+        }
+      })
+
+      targetFolder._child_folders.forEach(item => {
+        let child = this.map[item]
+        let newSeq = targetFolder._child_folders.indexOf(item)
+        if (child.id === id) {
+          child.update({
+            parent_folder: targetFolder.data.depth === 0 ? '/' : targetFolder.id,
+            seq: newSeq
+          })
+        } else if (child.seq !== newSeq) {
+          child.update({
+            seq: newSeq
+          })
+        }
+      })
     } else {
-      if (file.seq < broFile.seq) {
-        pos = file.seq
-      } else {
-        pos = type === 'before' ? broFile.seq : broFile.seq + 1
-      }
+      pos = type === 'before'
+        ? (broFile.seq === 0 ? 0 : broFile.seq - 1)
+        : broFile.seq + 1
+      move(targetFolder._child_folders, file.seq, pos)
+
+      targetFolder._child_folders.forEach(item => {
+        let child = this.map[item]
+        let newSeq = targetFolder._child_folders.indexOf(item)
+        if (child.seq !== newSeq) {
+          child.update({
+            seq: newSeq
+          })
+        }
+      })
     }
-
-    for (let i = pos, len = targetFolder.children.length; i < len; i++) {
-      if (targetFolder.children[i] === file) {
-        targetFolder.children[i].update({
-          parent_folder: targetFolder.id,
-          seq: i
-        })
-      } else {
-        targetFolder.children[i].update({
-          seq: i
-        })
-      }
-    }
-
-
-
-    
-    // }
-    
-
-    
-
-    // if (targetFolder !== oldParentFolder) {
-    //   let oldTmp = oldParentFolder.child_folders
-    //   let tmp = targetFolder.child_folders
-    //   oldTmp.splice(file.seq, 1)
-    //   oldParentFolder.childSeqChangedIdxCache = file.seq
-    //   // this.needUpdateFiles.concat(oldTmp)
-    //   if (type === 'before') {
-    //     tmp.splice(tmp.indexOf(broFile), 0, file)
-    //     targetFolder.childSeqChangedIdxCache = tmp.indexOf(broFile) - 1
-    //   } else {
-    //     tmp.splice(tmp.indexOf(broFile) + 1, 0, file)
-    //     targetFolder.childSeqChangedIdxCache = tmp.indexOf(broFile)
-    //   }
-    //   // this.needUpdateFiles.concat(tmp)
-    //   file.update({
-    //     parent_folder: targetFolder.data.depth === 0 ? '/' : targetFolder.id
-    //   }, true)
-    //   oldParentFolder.child_folders = oldTmp
-    //   targetFolder.child_folders = tmp
-    // } else {
-    //   let tmp = targetFolder.child_folders
-    //   tmp.splice(file.seq, 1)
-    //   if (type === 'before') {
-    //     tmp.splice(tmp.indexOf(broFile), 0, file)
-    //     targetFolder.childSeqChangedIdxCache = tmp.indexOf(broFile) - 1
-    //   } else {
-    //     tmp.splice(tmp.indexOf(broFile) + 1, 0, file)
-    //     targetFolder.childSeqChangedIdxCache = tmp.indexOf(broFile)
-    //   }
-    //   targetFolder.child_folders = tmp
-    //   // this.needUpdateFiles.concat(tmp)
-    // }
 
     return this
   }
@@ -254,7 +212,7 @@ export default class FileTree {
 }
 
 function createFlatFile (file) {
-  console.log('createFlatFile', file.title, file.id)
+  // console.log('createFlatFile', file.title, file.id)
   // file.getAncestorFolders()
   return {
     id: file.data._id,
@@ -271,10 +229,21 @@ function createFlatFile (file) {
     update_at: file.update_at,
     need_push_locally: file.need_push_locally,
     need_push_remotely: file.need_push_remotely,
-    children: file.children,
+    // children: file.children,
     child_folders: file.child_folders,
+    _child_folders: file._child_folders,
     child_docs: file.child_docs,
     content: file.content,
     file_size: file.file_size
   }
+}
+
+function move (arr, pos, toPos) {
+  [].splice.apply(
+    arr,
+    [].concat.apply(
+      [toPos, 0],
+      arr.splice(pos, 1)
+    )
+  )
 }

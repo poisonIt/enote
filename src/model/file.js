@@ -38,8 +38,20 @@ export default class File {
       this.child_folders = this.child_files
         .filter(item => item.type === 'folder')
         .sort((a, b) => a.seq - b.seq)
-      this.children = this.child_folders
-      this.child_files.forEach(child => child.getAncestorFolders())
+
+      this._child_folders = this.child_folders.map(item => item.id)
+      this.child_folders.forEach(child => {
+        let idx = this._child_folders.indexOf(child.id)
+        if (child.seq !== idx) {
+          child.update({
+            seq: idx
+          })
+        }
+        child.getAncestorFolders()
+      })
+        // .map(item => item.id)
+      // this.children = this.child_folders
+      // this.child_files.forEach(child => child.getAncestorFolders())
     }
     // console.log(this.child_files, this.ancestor_folders)
     // this._child_folders.forEach(child => {
@@ -68,7 +80,7 @@ export default class File {
   }
 
   update (data, forceUpdate) {
-    console.log('update-111111', data, this.title, this.isExist, forceUpdate)
+    console.log('update-111111', data, this.seq, this.title, this.isExist, forceUpdate)
     for (let name in data) {
       if (this.data.hasOwnProperty(name)) {
         this.data[name] = data[name]
@@ -171,38 +183,24 @@ export default class File {
   //   // this.child_docs = this.childDocs.map(item => item.id)
   // }
 
-  get child_folders () {
-    return this._child_folders
-  }
+  // get child_folders () {
+  //   return this._child_folders
+  // }
 
-  set child_folders (val) {
-    console.log('set: child_folders', val, val.title, this.childSeqChangedIdxCache)
-    this._child_folders = val
-    // if (this.childSeqChangedIdxCache === -1) {
-    //   this.childSeqChangedIdxCache = 0
-    //   // this.getAncestorFolders()
-    //   return  
-    // }
-    val.forEach(child => {
-      let idx = val.indexOf(child)
-      // if (idx >= this.childSeqChangedIdxCache) {
-      //   console.log('child',
-      //     this.title,
-      //     this.childSeqChangedIdxCache,
-      //     child.title,
-      //     child.seq,
-      //     val.indexOf(child)
-      //   )
-        if (child.seq !== idx) {
-          child.update({
-            seq: idx
-          })
-        }
-        child.getAncestorFolders()
-      // }
-    })
-    this.childSeqChangedIdxCache = 0
-  }
+  // set child_folders (val) {
+  //   this._child_folders = val.map(item => item.id)
+  //   val.forEach(child => {
+  //     let idx = val.indexOf(child)
+  //       if (child.seq !== idx) {
+  //         child.update({
+  //           seq: idx
+  //         })
+  //       }
+  //       child.getAncestorFolders()
+  //     // }
+  //   })
+  //   this.childSeqChangedIdxCache = 0
+  // }
 
   // get parentFolder () {
   //   return this.parent_folder !== '/'

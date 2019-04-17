@@ -11,6 +11,7 @@ export default {
 
   computed: {
     ...mapGetters({
+      allFileMap: 'GET_FILES',
       folders: 'GET_FOLEDERS'
     })
   },
@@ -26,11 +27,16 @@ export default {
 
   methods: {
     initNav (folders) {
+      let allFileMap = this.allFileMap
+      function getChildren (file) {
+        file.children = file._child_folders.map(item => {
+          return getChildren(allFileMap[item])
+        }).sort((a, b) => a.seq - b.seq)
+        return file
+      }
       let rootChildFolders = []
       for (let i in folders) {
-        if (folders[i].parent_folder === '/') {
-          rootChildFolders.push(cloneShallow(folders[i]))
-        }
+        rootChildFolders.push(cloneShallow(getChildren(folders[i])))
       }
       rootChildFolders = rootChildFolders.sort((a, b) => {
         return a.seq - b.seq

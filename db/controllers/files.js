@@ -57,17 +57,19 @@ function add (opts) {
 
 function update (opts) {
   const { id, data } = opts
+  console.log('update-local', id, opts.data)
 
   return new Promise((resolve, reject) => {
     filesDB.findOne({ _id: id }, (err, fileDoc) => {
       if (err) {
         reject(err)
       } else {
-        // console.log('update-fileDoc', fileDoc)
+        console.log('update-fileDoc', fileDoc, data)
         filesDB.update(
           { _id: id },
           { $set: {
             title: data.title !== undefined ? data.title : fileDoc.title,
+            remote_id: data.remote_id !== undefined ? data.remote_id : fileDoc.remote_id,
             seq: data.seq !== undefined ? data.seq : fileDoc.seq,
             update_at: new Date(),
             file_size: data.file_size !== undefined ? data.file_size : fileDoc.file_size,

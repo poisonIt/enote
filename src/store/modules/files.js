@@ -159,6 +159,7 @@ const mutations = {
     for (let i in state.files_map) {
       state.files_arr.push(state.files_map[i])
     }
+    console.log('UPDATE_FILES_ARR', state.files_arr)
   },
 
   UPDATE_FILES_MAP (state) {
@@ -209,14 +210,29 @@ const mutations = {
   //     })
   // },
 
-  FILES_SAVED (state) {
-    state.files_arr.forEach(item => {
-      item.need_push_locally = false
+  FILES_SAVED (state, arr) {
+    console.log('FILES_SAVED', arr)
+    arr.forEach(item => {
+      console.log('FILES_SAVED-1111', item.id, state.files_map[item.id])
+      state.files_map[item.id].need_push_locally = false
     })
   },
 
-  SET_FILE_PUSH_FINISHED (state, id) {
-    state.files_map[id].need_push_remotely = false
+  SET_FILE_PUSH_FINISHED (state, obj) {
+    let { id, remote_id } = obj
+    let stateFile = state.files_map[id]
+    console.log('SET_FILE_PUSH_FINISHED', obj, stateFile)
+    // let idx1 = state.files_arr.indexOf(stateFile)
+    // state.files_arr.splice(idx1, 1)
+    stateFile.remote_id = remote_id
+    stateFile.need_push_remotely = false
+    // state.files_arr.splice(idx1, 0, stateFile)
+    let sourceFile = fileTree.map[id]
+    // let idx2 = fileTree.arr.indexOf(sourceFile)
+    // fileTree.arr.splice(idx2, 1)
+    sourceFile.remote_id = remote_id
+    // console.log('SET_FILE_PUSH_FINISHED', sourceFile, fileTree.map, fileTree.arr)
+    // fileTree.arr.splice(idx2, 0, sourceFile)
   },
 
   SET_CURRENT_FOLDER (state, id) {
@@ -257,7 +273,7 @@ const mutations = {
 }
 
 const actions = {
-  async SET_FILES_FROM_LOCAL ({ commit }) {
+  async SET_FILES_FROM_LOCAL ({ commit, dispatch }) {
     // fetchLocalTops().then(topFiles => {
     //   commit('SET_STICK_TOP_FILES', topFiles)
     // })
@@ -265,6 +281,12 @@ const actions = {
     await fetchLocalFiles()
     commit('REFRESH_FILES')
     commit('UPDATE_FOLDERS')
+    let filesSaved = await saveLocalFiles()
+    console.log('saveLocalFiles', filesSaved)
+    commit('FILES_SAVED', filesSaved)
+    if (filesSaved.length > 0) {
+      commit('UPDATE_FILES_ARR')
+    }
     // dispatch('SET_FILES').then(() => {
       // dispatch('SET_DOC_BRIEF_FORM_LOCAL')
     // })
@@ -311,38 +333,58 @@ const actions = {
     })
     commit('REFRESH_FILES')
     commit('UPDATE_FOLDERS')
-    await dispatch('SAVE_FILES')
-    commit('FILES_SAVED')
+    let filesSaved = await saveLocalFiles()
+    console.log('saveLocalFiles', filesSaved)
+    commit('FILES_SAVED', filesSaved)
+    if (filesSaved.length > 0) {
+      commit('UPDATE_FILES_ARR')
+    }
   },
 
   async EDIT_FILE ({ commit, dispatch }, opts) {
     commit('UPDATE_FILE', opts)
     commit('REFRESH_FILES')
     commit('UPDATE_FOLDERS')
-    await dispatch('SAVE_FILES')
-    commit('FILES_SAVED')
+    let filesSaved = await saveLocalFiles()
+    console.log('saveLocalFiles', filesSaved)
+    commit('FILES_SAVED', filesSaved)
+    if (filesSaved.length > 0) {
+      commit('UPDATE_FILES_ARR')
+    }
   },
 
   async EDIT_DOC ({ commit, dispatch }, opts) {
     commit('EDIT_DOC', opts)
-    await dispatch('SAVE_FILES')
-    commit('FILES_SAVED')
+    let filesSaved = await saveLocalFiles()
+    console.log('saveLocalFiles', filesSaved)
+    commit('FILES_SAVED', filesSaved)
+    if (filesSaved.length > 0) {
+      commit('UPDATE_FILES_ARR')
+    }
   },
 
   async APPEND_FILE ({ commit, dispatch }, opts) {
     commit('APPEND_FILE', opts)
     commit('REFRESH_FILES')
     commit('UPDATE_FOLDERS')
-    await dispatch('SAVE_FILES')
-    commit('FILES_SAVED')
+    let filesSaved = await saveLocalFiles()
+    console.log('saveLocalFiles', filesSaved)
+    commit('FILES_SAVED', filesSaved)
+    if (filesSaved.length > 0) {
+      commit('UPDATE_FILES_ARR')
+    }
   },
 
   async MOVE_FILE ({ commit, dispatch }, opts) {
     commit('MOVE_FILE', opts)
     commit('REFRESH_FILES')
     commit('UPDATE_FOLDERS')
-    await dispatch('SAVE_FILES')
-    commit('FILES_SAVED')
+    let filesSaved = await saveLocalFiles()
+    console.log('saveLocalFiles', filesSaved)
+    commit('FILES_SAVED', filesSaved)
+    if (filesSaved.length > 0) {
+      commit('UPDATE_FILES_ARR')
+    }
     // commit('MOVE_FILE', opts)
     // // commit('UPDATE_FILE_UPDATE_AT', opts.fileId)
     // // commit('UPDATE_FILE_UPDATE_AT', opts.targetId)
@@ -448,23 +490,27 @@ const actions = {
   },
 
   SAVE_FILES () { // 本地存储文件
-    fileTree.arr
-      .filter(file => file.need_push_locally)
-      .forEach(file => {
+    console.log('SAVE_FILES')
+    for (let i in fileTree.flat_map) {
+      let file = fileTree.flat_map[i]
+      if (file.need_push_locally) {
+        console.log('SAVE_FILES-11111', file.title, file.content, file)
         LocalDAO.files.update({
           id: file.data._id,
           data: file
         }).then(() => {
           file.need_push_locally = false
         })
-      })
+      }
+    }
   },
 
-  SET_FILE_PUSH_FINISHED ({ commit }, id) {
-    commit('SET_FILE_PUSH_FINISHED', id)
+  SET_FILE_PUSH_FINISHED ({ commit }, obj) {
+    commit('SET_FILE_PUSH_FINISHED', obj)
     LocalDAO.files.update({
-      id: id,
+      id: obj.id,
       data: {
+        remote_id: obj.remote_id,
         need_push: false
       }
     })
@@ -593,32 +639,32 @@ function fetchLocalFiles () {
       fileTree.init(resp).updateFlatMap()
       resolve(fileTree.flat_map)
     })
-    // LocalDAO.structure.get().then(resp => {
-    //   console.log('structure', JSON.parse(resp))
-    //   return JSON.parse(resp)
-    // }).then(data => {
-    //   if (!data['000000']) {
-    //     let timeStamp = String(dayjs(new Date()).valueOf())
-    //     let id = '000000'
-    //     data[id] = {
-    //       id: id,
-    //       type: 'folder',
-    //       title: '我的文件夹',
-    //       content: '',
-    //       create_at: timeStamp,
-    //       update_at: timeStamp,
-    //       file_size: '0',
-    //       file_path: ['/'],
-    //       ancestor_folders: [],
-    //       child_folders: []
-    //     }
-    //   }
-    //   for (let i in data) {
-    //     filesArrTemp.push(data[i])
-    //   }
-    //   resolve(data)
-    // })
   })
+}
+
+function saveLocalFiles () {
+  let tasks = []
+  for (let i in fileTree.flat_map) {
+    let file = fileTree.flat_map[i]
+    if (file.need_push_locally) {
+      tasks.push(file)
+      console.log('saveLocalFiles-11111', file.title, file.need_push_locally, file)
+    }
+  }
+  return Promise.all(
+    tasks.map(item => {
+      return new Promise((resolve, reject) => {
+        LocalDAO.files.update({
+          id: item.id,
+          data: item
+        }).then(resp => {
+          console.log('saved-1111', resp)
+          item.need_push_locally = false
+          resolve(item)
+        })
+      })
+    })
+  )
 }
 
 function fetchLocalDocContent (id) {

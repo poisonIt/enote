@@ -112,7 +112,7 @@ export default {
     },
 
     transNoteBookData (obj) {
-      console.log('transNoteBookData', obj.noteBookId)
+      console.log('transNoteBookData', obj.noteBookId, obj.title, obj)
       return {
         type: 'folder',
         remote_id: obj.noteBookId,
@@ -127,9 +127,10 @@ export default {
     },
 
     transNoteData (obj) {
-      console.log('transNoteData', obj)
+      console.log('transNoteData', obj.noteId, obj.title, obj)
       return {
         type: 'doc',
+        remote_id: obj.noteId,
         title: obj.title || '',
         create_at: new Date(obj.createDt).valueOf(),
         update_at: new Date(obj.modifyDt).valueOf(),

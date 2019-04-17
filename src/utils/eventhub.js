@@ -12,7 +12,6 @@ export default new Vue({
     pool (val) {
       window.onresize = () => {
         for (let i in this.pool) {
-          console.log(this.pool)
           this.pool[i]()
         }
       }
@@ -40,7 +39,6 @@ export default new Vue({
 
     dispatchHub (eventName, from, params) {
       let { cbs } = this
-      console.log('cbs', cbs)
 
       if (cbs[eventName].hasOwnProperty(from.$options._componentTag)) {
         this.$emit(eventName, from.$options._componentTag, params)

@@ -29,7 +29,7 @@ export default {
   },
 
   created () {
-    this.SET_FILES_FROM_LOCAL()
+    // this.SET_FILES_FROM_LOCAL()
   },
 
   mounted () {
@@ -72,9 +72,9 @@ export default {
       e.stopPropagation()
     })
 
-    LocalDAO.user.get().then(resp => {
-      this.SET_USER_INFO(resp)
-    })
+    // LocalDAO.user.get().then(resp => {
+    //   this.SET_USER_INFO(resp)
+    // })
   },
 
   methods: {

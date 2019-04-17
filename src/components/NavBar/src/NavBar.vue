@@ -18,6 +18,7 @@
         @dragend="handleDragEnd"
         slot-scope="{ node, data }">
         <span v-if="node.data.need_push_remotely" class="push-mark"></span>
+        <span v-if="node.data.need_push_locally" class="push-mark local"></span>
         <div class="icon"
           :class="iconClassComputed(node)"
           v-if="node.data.link"></div>
@@ -702,4 +703,7 @@ export default {
   height 4px
   background-color red
   border-radius 50%
+  &.local
+    left 0px
+    background-color green
 </style>

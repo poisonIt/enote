@@ -39,6 +39,7 @@
           :file_size="Number(item.file_size || 0)"
           :parent_folder="getParentFolderTitle(item)"
           :need_push="item.need_push_remotely"
+          :need_push_local="item.need_push_locally"
           @contextmenu="handleContextmenu">
         </FileCard>
       </FileCardGroup>
@@ -174,12 +175,12 @@ export default {
 
   watch: {
     allFileArr (val) {
-      this.fileList = val
-      console.log('watch-allFileArr', val, this.currentNav)
-      if (this.currentNav && this.currentNav.link === 'latest') {
-        this.list = val.filter(item => item.trash === 'NORMAL')
-        this.selectFile(0)
-      }
+      // this.fileList = val
+      // console.log('watch-allFileArr', val, this.currentNav)
+      // if (this.currentNav && this.currentNav.link === 'latest') {
+      //   this.list = val.filter(item => item.trash === 'NORMAL')
+      //   this.selectFile(0)
+      // }
     },
 
     currentNav (val) {
@@ -193,8 +194,9 @@ export default {
           && item.parent_folder === '/')
       }
       if (val.link === 'new folder') {
+        console.log('this.fileList', this.fileList)
         this.list = this.fileList.filter(item => item.trash === 'NORMAL'
-          && item.parent_folder === val.id)
+          && (item.parent_folder === val.id || item.parent_folder === val.remote_id))
       }
       if (val.link === 'tag') {
         
@@ -267,12 +269,12 @@ export default {
     },
 
     list (val) {
-      console.log('watch-list', val)
+      // console.log('watch-list', val)
       return
     },
 
     latestFiles (val) {
-      console.log('watch-latestFiles', val)
+      // console.log('watch-latestFiles', val)
       return
       if (this.viewFileType === 'latest') {
         this.fileList = this.fileListSortFunc(clone(val))
@@ -280,7 +282,7 @@ export default {
     },
 
     files (val) {
-      console.log('watch-files', val)
+      // console.log('watch-files', val)
       return
       if (this.viewFileType === 'folders' || this.viewFileType === 'new folder') {
         this.fileList = this.fileListSortFunc(clone(val))
@@ -341,7 +343,7 @@ export default {
 
     selectFile (index) {
       const file = this.list[index]
-      console.log('selectFile', file)
+      console.log('selectFile', index, file, this.list)
       if (!file) {
         this.SET_CURRENT_FILE(null)
         return
@@ -426,7 +428,6 @@ export default {
 
     getParentFolderTitle (file) {
       let parentFolderId = file.parent_folder
-      console.log('getParentFolderTitle', file, parentFolderId, this.allFileMap)
       return parentFolderId !== '/' ? this.allFileMap[parentFolderId].title : '我的文件夹'
       // let parentFolderId = folders[folders.length - 1]
       // if (parentFolderId && this.folders[parentFolderId]) {

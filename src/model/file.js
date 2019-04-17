@@ -4,6 +4,7 @@ export default class File {
     this.need_push_locally = false
     this.need_push_remotely = opts.need_push_remotely === undefined
       ? opts.need_push_remotely : true
+    this.childSeqChangedIdxCache = 0
 
     for (let name in opts) {
       if (opts.hasOwnProperty(name)) {
@@ -14,7 +15,7 @@ export default class File {
 
   getAncestorFolders () {
     this.parentFolder = this.store.map[this.parent_folder]
-    console.log('getAncestorFolders', this.title, this.parent_folder, this.parentFolder)
+    // console.log('getAncestorFolders', this.title, this.parent_folder, this.parentFolder)
 
     if (!this.parentFolder) {
       if (this.parent_folder !== '/') {
@@ -23,7 +24,7 @@ export default class File {
           parent_folder: '/'
         }, true)
       }
-      console.log('getAncestorFolders-parent_folder', this.title, this)
+      // console.log('getAncestorFolders-parent_folder', this.title, this)
       this.parentFolder = this.store.root
     }
     let l = this.data.depth === 0 ? '/' : this.id
@@ -34,7 +35,9 @@ export default class File {
 
     if (this.type === 'folder') {
       this.child_files = this.store.arr.filter(item => item.parent_folder === l)
-      this.child_folders = this.child_files.filter(item => item.type === 'folder')
+      this.child_folders = this.child_files
+        .filter(item => item.type === 'folder')
+        .sort((a, b) => a.seq - b.seq)
       this.children = this.child_folders
       this.child_files.forEach(child => child.getAncestorFolders())
     }
@@ -74,17 +77,21 @@ export default class File {
         this[name] = data[name]
       }
     }
-    if (!this.isExist || forceUpdate) {
+    if (this.data.depth === 0) return
+    // if (!this.isExist || forceUpdate) {
       this.need_push_locally = true
       this.need_push_remotely = true
-    } else {
-      this.isExist = false
-    }
+    // } else {
+    //   this.isExist = false
+    // }
     console.log('update-222222', this.title, this.need_push_locally, this.need_push_remotely, this.isExist)
+    if (this.need_push_remotely) {
+      console.log('need_push_remotely', this.title)
+    }
   }
 
   get id () {
-    return this.data.remote_id || this.data._id
+    return this.data._id
   }
 
   set id (val) {
@@ -170,16 +177,23 @@ export default class File {
 
   set child_folders (val) {
     this._child_folders = val
+    if (this.childSeqChangedIdxCache === -1) {
+      this.childSeqChangedIdxCache = 0
+      return
+    }
     val.forEach(child => {
-      console.log('child', child.title, val.indexOf(child))
-      child.getAncestorFolders()
       let idx = val.indexOf(child)
-      if (child.seq !== idx) {
-        child.update({
-          seq: idx
-        })
+      if (idx >= this.childSeqChangedIdxCache) {
+        console.log('child', this.childSeqChangedIdxCache, child.title, child.seq, val.indexOf(child))
+        child.getAncestorFolders()
+        if (child.seq !== idx) {
+          child.update({
+            seq: idx
+          })
+        }
       }
     })
+    this.childSeqChangedIdxCache = 0
   }
 
   // get parentFolder () {

@@ -24,6 +24,7 @@
       </div>
       <div class="icon stick-top" v-if="isTop"></div>
       <div class="need_push" v-if="need_push"></div>
+      <div class="need_push local" v-if="need_push_local"></div>
     </div>
     <div class="body" v-if="content.length > 0 && !mini && type === 'doc'">
       <span class="content ellipsis">{{ content }}</span>
@@ -92,6 +93,10 @@ export default {
       default: false
     },
     need_push: {
+      type: Boolean,
+      default: false
+    },
+    need_push_local: {
       type: Boolean,
       default: false
     }
@@ -281,6 +286,8 @@ export default {
   height 10px
   border-radius 50%
   background-color red
+  &.local
+    background-color green
 
 .body
   margin: 12px 0

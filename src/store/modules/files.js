@@ -45,7 +45,7 @@ const mutations = {
   },
 
   UPDATE_FILE (state, opts) {
-    fileTree.updateFile(opts).updateFlatMap()
+    fileTree.updateFile(opts).updateFlatMap(true)
   },
 
   EDIT_DOC (state, opts) {
@@ -66,7 +66,7 @@ const mutations = {
     fileTree.appendFile({
       id: fileId,
       targetId: targetId
-    }).updateFlatMap()
+    }).updateFlatMap(true)
   },
 
   MOVE_FILE (state, opts) {
@@ -147,10 +147,19 @@ const mutations = {
 
   REFRESH_FILES (state) {
     state.files_map = cloneDeep(fileTree.flat_map)
+    let arr = []
+    let folders = {}
     state.files_arr = []
+    state.folders = {}
     for (let i in state.files_map) {
-      state.files_arr.push(state.files_map[i])
+      let file = state.files_map[i]
+      arr.push(file)
+      if (file.type === 'folder') {
+        folders[file.id] = file
+      }
     }
+    state.files_arr = arr
+    state.folders = folders
     console.log('REFRESH_FILES', state)
   },
 
@@ -280,7 +289,7 @@ const actions = {
     console.log('SET_FILES_FROM_LOCAL')
     await fetchLocalFiles()
     commit('REFRESH_FILES')
-    commit('UPDATE_FOLDERS')
+    // commit('UPDATE_FOLDERS')
     let filesSaved = await saveLocalFiles()
     console.log('saveLocalFiles', filesSaved)
     commit('FILES_SAVED', filesSaved)
@@ -320,9 +329,9 @@ const actions = {
   async ADD_FILE ({ dispatch, commit }, obj) {
     await LocalDAO.files.add(obj).then(resp => {
       resp.cache_id = obj.cache_id
-      fileTree.addFile(resp).updateFlatMap()
+      fileTree.addFile(resp).updateFlatMap(true)
       commit('REFRESH_FILES')
-      commit('UPDATE_FOLDERS')
+      // commit('UPDATE_FOLDERS')
     })
   },
 
@@ -332,7 +341,7 @@ const actions = {
       trash: 'TRASH'
     })
     commit('REFRESH_FILES')
-    commit('UPDATE_FOLDERS')
+    // commit('UPDATE_FOLDERS')
     let filesSaved = await saveLocalFiles()
     console.log('saveLocalFiles', filesSaved)
     commit('FILES_SAVED', filesSaved)
@@ -344,7 +353,7 @@ const actions = {
   async EDIT_FILE ({ commit, dispatch }, opts) {
     commit('UPDATE_FILE', opts)
     commit('REFRESH_FILES')
-    commit('UPDATE_FOLDERS')
+    // commit('UPDATE_FOLDERS')
     let filesSaved = await saveLocalFiles()
     console.log('saveLocalFiles', filesSaved)
     commit('FILES_SAVED', filesSaved)
@@ -366,19 +375,19 @@ const actions = {
   async APPEND_FILE ({ commit, dispatch }, opts) {
     commit('APPEND_FILE', opts)
     commit('REFRESH_FILES')
-    commit('UPDATE_FOLDERS')
-    let filesSaved = await saveLocalFiles()
-    console.log('saveLocalFiles', filesSaved)
-    commit('FILES_SAVED', filesSaved)
-    if (filesSaved.length > 0) {
-      commit('UPDATE_FILES_ARR')
-    }
+    // commit('UPDATE_FOLDERS')
+    // let filesSaved = await saveLocalFiles()
+    // console.log('saveLocalFiles', filesSaved)
+    // commit('FILES_SAVED', filesSaved)
+    // if (filesSaved.length > 0) {
+    //   commit('UPDATE_FILES_ARR')
+    // }
   },
 
   async MOVE_FILE ({ commit, dispatch }, opts) {
     commit('MOVE_FILE', opts)
     commit('REFRESH_FILES')
-    commit('UPDATE_FOLDERS')
+    // commit('UPDATE_FOLDERS')
     let filesSaved = await saveLocalFiles()
     console.log('saveLocalFiles', filesSaved)
     commit('FILES_SAVED', filesSaved)

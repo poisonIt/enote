@@ -15,7 +15,7 @@ export default class File {
 
   getAncestorFolders () {
     this.parentFolder = this.store.map[this.parent_folder]
-    // console.log('getAncestorFolders', this.title, this.parent_folder, this.parentFolder)
+    console.log('getAncestorFolders', this.title, this.parent_folder, this.parentFolder)
 
     if (!this.parentFolder) {
       if (this.parent_folder !== '/') {
@@ -176,22 +176,30 @@ export default class File {
   }
 
   set child_folders (val) {
+    console.log('set: child_folders', val, val.title, this.childSeqChangedIdxCache)
     this._child_folders = val
-    if (this.childSeqChangedIdxCache === -1) {
-      this.childSeqChangedIdxCache = 0
-      return
-    }
+    // if (this.childSeqChangedIdxCache === -1) {
+    //   this.childSeqChangedIdxCache = 0
+    //   // this.getAncestorFolders()
+    //   return  
+    // }
     val.forEach(child => {
       let idx = val.indexOf(child)
-      if (idx >= this.childSeqChangedIdxCache) {
-        console.log('child', this.childSeqChangedIdxCache, child.title, child.seq, val.indexOf(child))
-        child.getAncestorFolders()
+      // if (idx >= this.childSeqChangedIdxCache) {
+      //   console.log('child',
+      //     this.title,
+      //     this.childSeqChangedIdxCache,
+      //     child.title,
+      //     child.seq,
+      //     val.indexOf(child)
+      //   )
         if (child.seq !== idx) {
           child.update({
             seq: idx
           })
         }
-      }
+        child.getAncestorFolders()
+      // }
     })
     this.childSeqChangedIdxCache = 0
   }

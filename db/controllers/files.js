@@ -30,7 +30,6 @@ function removeAll (files) {
 
 function getAll () {
   return new Promise((resolve, reject) => {
-    console.log('getAll')
     filesDB.find({}, (err, docs) => {
       if (err) {
         reject(err)
@@ -57,14 +56,14 @@ function add (opts) {
 
 function update (opts) {
   const { id, data } = opts
-  console.log('update-local', id, opts.data)
+  // console.log('update-local', id, opts.data)
 
   return new Promise((resolve, reject) => {
     filesDB.findOne({ _id: id }, (err, fileDoc) => {
       if (err) {
         reject(err)
       } else {
-        console.log('update-fileDoc', fileDoc, data)
+        // console.log('update-fileDoc', fileDoc, data)
         filesDB.update(
           { _id: id },
           { $set: {

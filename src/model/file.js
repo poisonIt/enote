@@ -4,34 +4,36 @@ export default class File {
     this.need_push_locally = false
     this.need_push_remotely = opts.need_push_remotely === undefined
       ? opts.need_push_remotely : true
-    this.childSeqChangedIdxCache = 0
 
     for (let name in opts) {
       if (opts.hasOwnProperty(name)) {
         this[name] = opts[name]
       }
     }
+
+    if (opts.depth === undefined && this.type === 'folder') {
+      let parentFolder = this.store.map[this.parent_folder] || this.store.root
+      this.depth = parentFolder.depth + 1
+    }
   }
 
   getAncestorFolders () {
-    this.parentFolder = this.store.map[this.parent_folder]
-    console.log('getAncestorFolders', this.title, this.parent_folder, this.parentFolder)
-
-    if (!this.parentFolder) {
-      if (this.parent_folder !== '/') {
-        console.log('77777777', this.title)
+    if (this.depth !== 0) {
+      let parentFolder = this.store.map[this.parent_folder]
+      if (!parentFolder && this.parent_folder !== '/') {
         this.update({
           parent_folder: '/'
         }, true)
+        parentFolder = this.store.root
       }
-      // console.log('getAncestorFolders-parent_folder', this.title, this)
-      this.parentFolder = this.store.root
+  
+      parentFolder = !parentFolder ? this.store.root : parentFolder
+      if (this.type === 'folder') {
+        this.depth = parentFolder.depth + 1
+      }
     }
-    let l = this.data.depth === 0 ? '/' : this.id
-    // console.log(parentFolder, l)
 
-    this.ancestorFolders = this.data.depth === 0 || this.parent_folder === '/'
-      ? [] : [...this.parentFolder.ancestor_folders, this.parent_folder]
+    let l = this.depth === 0 ? '/' : this.id
 
     if (this.type === 'folder') {
       this.child_files = this.store.arr.filter(item => item.parent_folder === l)
@@ -49,38 +51,18 @@ export default class File {
         }
         child.getAncestorFolders()
       })
-        // .map(item => item.id)
-      // this.children = this.child_folders
-      // this.child_files.forEach(child => child.getAncestorFolders())
     }
-    // console.log(this.child_files, this.ancestor_folders)
-    // this._child_folders.forEach(child => {
-    //   // console.log('child', child)
-    //   child.getAncestorFolders()
-    // })
-    // let result = []
-    // if (this.data.depth === 0) {
-    //   this.ancestorFolders = []
-    //   return []
-    // }
-    // function getAncestor (file) {
-    //   let parentFolder = file.store.map[file.parent_folder]
-    //   console.log('getAncestorFolders', parentFolder)
-    //   if (parentFolder) {
-    //     result.unshift(parentFolder.id)
-    //     getAncestor(parentFolder)
-    //   } else {
-    //     file.update({
-    //       parent_folder: '/'
-    //     })
-    //   }
-    // }
-    // this.ancestorFolders = result
-    // console.log('getAncestorFolders', this.type, this.title, result, this.ancestor_folders)
   }
 
   update (data, forceUpdate) {
-    console.log('update-111111', data, this.seq, this.title, this.isExist, forceUpdate)
+    if (data.parent_folder && this.parent_folder !== data.parent_folder) {
+      let newParentFolder = this.store.map[data.parent_folder] || this.store.root
+      if (this.depth !== newParentFolder.depth + 1) {
+        this.depth = newParentFolder.depth + 1
+        updateChildDepth(this, newParentFolder.depth + 1 - this.depth)
+      }
+    }
+
     for (let name in data) {
       if (this.data.hasOwnProperty(name)) {
         this.data[name] = data[name]
@@ -89,17 +71,14 @@ export default class File {
         this[name] = data[name]
       }
     }
-    if (this.data.depth === 0) return
-    // if (!this.isExist || forceUpdate) {
-      this.need_push_locally = true
-      this.need_push_remotely = true
-    // } else {
-    //   this.isExist = false
+
+    if (this.depth === 0) return
+    this.need_push_locally = true
+    this.need_push_remotely = true
+    // console.log('update-222222', this.title, this.need_push_locally, this.need_push_remotely, this.isExist)
+    // if (this.need_push_remotely) {
+    //   console.log('need_push_remotely', this.title)
     // }
-    console.log('update-222222', this.title, this.need_push_locally, this.need_push_remotely, this.isExist)
-    if (this.need_push_remotely) {
-      console.log('need_push_remotely', this.title)
-    }
   }
 
   get id () {
@@ -152,84 +131,19 @@ export default class File {
     return this.data.content
   }
 
-  set ancestorFolders (val) {
-    this.ancestor_folders = val
-    // if (val) {
-    //   this.child_files = this.store.arr
-    //     .filter(item => item.parent_folder === this.id)
-    // } else {
-    //   this.child_files = this.store.arr
-    //     .filter(item => item.parent_folder === '/')
-    // }
-  }
-
-  // get child_files () {
-  //   return this._child_files
-  // }
-
-  // set child_files (val) {
-  //   this._child_files = val
-  //   this.children = val
-  //     .filter(item => item.type === 'folder')
-  //     .sort((a, b) => {
-  //       return a.seq - b.seq
-  //     })
-  
-  //   this.child_folders = this.children.map(item => item.id)
-
-  //   // this.childDocs = val
-  //   //   .filter(item => item.type === 'doc')
-
-  //   // this.child_docs = this.childDocs.map(item => item.id)
-  // }
-
-  // get child_folders () {
-  //   return this._child_folders
-  // }
-
-  // set child_folders (val) {
-  //   this._child_folders = val.map(item => item.id)
-  //   val.forEach(child => {
-  //     let idx = val.indexOf(child)
-  //       if (child.seq !== idx) {
-  //         child.update({
-  //           seq: idx
-  //         })
-  //       }
-  //       child.getAncestorFolders()
-  //     // }
-  //   })
-  //   this.childSeqChangedIdxCache = 0
-  // }
-
-  // get parentFolder () {
-  //   return this.parent_folder !== '/'
-  //     ? this.store.map[this.parent_folder]
-  //     : null
-  // }
-
   get file_size () {
     if (this.type === 'doc') {
       return this.content.length
     } else {
       return 0
-      // let deepChildDocs = this.store.arr
-      //   .filter(item => {
-      //     // console.log('deep-ancestor_folders', item.ancestor_folders, this.id)
-      //     return item.type === 'doc'
-      //   })
-
-      // console.log('deepChildDocs', deepChildDocs, this.ancestor_folders, this)
-
-      // if (deepChildDocs.length === 0) {
-      //   return 0
-      // } else if (deepChildDocs.length === 1) {
-      //   return deepChildDocs[0].file_size
-      // } else {
-      //   return deepChildDocs.reduce((a, b) => {
-      //     return a.file_size + b.file_size
-      //   })
-      // }
     }
   }
+}
+
+function updateChildDepth (file, change) {
+  file.child_folders.forEach(item => {
+    let child = file.store.map[item]
+    child.depth += change
+    updateChildDepth(child, change)
+  })
 }

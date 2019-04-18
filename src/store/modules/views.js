@@ -14,7 +14,8 @@ const state = {
   show_tag_handler: false,
   editor_content: '',
   editor_content_cache: '',
-  current_nav: null
+  current_nav: null,
+  is_syncing: false
 }
 
 const mutations = {
@@ -77,6 +78,10 @@ const mutations = {
 
   SET_CURRENT_NAV (state, val) {
     state.current_nav = val
+  },
+
+  SET_IS_SYNCING (state, val) {
+    state.is_syncing = val
   }
 }
 
@@ -139,6 +144,10 @@ const actions = {
 
   SET_CURRENT_NAV ({ commit }, val) {
     commit('SET_CURRENT_NAV', val)
+  },
+
+  SET_IS_SYNCING ({ commit }, val) {
+    commit('SET_IS_SYNCING', val)
   }
 }
 
@@ -205,6 +214,10 @@ const getters = {
 
   GET_CURRENT_NAV (state) {
     return state.current_nav
+  },
+
+  GET_IS_SYNCING (state) {
+    return state.is_syncing
   }
 }
 

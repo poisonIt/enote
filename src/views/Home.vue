@@ -188,7 +188,6 @@ import Editor from '@/components/Editor'
 import FolderComp from '@/components/FolderComp.vue'
 import ProgressBar from '@/components/ProgressBar'
 import LocalDAO from '../../db/api'
-import { pushNotebook, pushNote } from '../service'
 import { ipcRenderer } from 'electron'
 
 export default {
@@ -250,13 +249,11 @@ export default {
     ...mapGetters({
       viewFileType: 'GET_VIEW_FILE_TYPE',
       viewType: 'GET_VIEW_TYPE',
-      allFileMap: 'GET_FILES',
       currentFile: 'GET_CURRENT_FILE',
       isMovePanelShowed: 'GET_SHOW_MOVE_PANEL',
       isUserPanelShowed: 'GET_SHOW_USER_PANEL',
       isSharePanelShowed: 'GET_SHOW_SHARE_PANEL',
-      userInfo: 'GET_USER_INFO',
-      filesNeedPush: 'GET_FILES_NEED_PUSH'
+      userInfo: 'GET_USER_INFO'
     })
   },
 
@@ -271,51 +268,6 @@ export default {
     LocalDAO.user.get().then(resp => {
       this.SET_USER_INFO(resp)
     })
-  },
-
-  mounted () {
-    setInterval(() => {
-      this.filesNeedPush.forEach(file => {
-        if (file.type === 'folder') {
-          let parentFolder = this.allFileMap[file.parent_folder]
-          console.log('pushNotebook-111111', file.title, file, parentFolder)
-          pushNotebook(this.userInfo.id_token, [{
-            noteBookId: file.remote_id || file.id,
-            parentId: parentFolder ? parentFolder.remote_id : '/',
-            seq: file.seq,
-            title: file.title,
-            trash: file.trash
-          }]).then(resp => {
-            if (resp.data.returnCode === 200) {
-              this.SET_FILE_PUSH_FINISHED({
-                id: file.id,
-                remote_id: resp.data.body[0].noteBookId
-              })
-            }
-          })
-        } else if (file.type === 'doc') {
-          return
-          // console.log(file.title, file.parent_folder)
-          let parentFolder = this.allFileMap[file.parent_folder]
-          console.log('pushNote-111111', file.title, file.remote_id, file, parentFolder)
-          pushNote(this.userInfo.id_token, [{
-            noteBookId: parentFolder ? parentFolder.remote_id : '/',
-            noteContent: file.content,
-            noteId: file.remote_id || file.id,
-            title: file.title,
-            trash: file.trash
-          }]).then(resp => {
-            if (resp.data.returnCode === 200) {
-              console.log('pushNote-resp', resp)
-              this.SET_FILE_PUSH_FINISHED({
-                id: file.id,
-                remote_id: resp.data.body[0].noteId
-              })
-            }
-          })
-        }
-      })
-    }, 5000)
   },
 
   methods: {
@@ -396,7 +348,6 @@ export default {
     },
 
     goLogin () {
-      console.log('goLogin')
       ipcRenderer.send('changeWindow', {
         name: 'login'
       })

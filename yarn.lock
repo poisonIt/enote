@@ -6081,6 +6081,10 @@ p-map@^1.1.1:
   version "1.2.0"
   resolved "http://registry.npm.taobao.org/p-map/download/p-map-1.2.0.tgz#e4e94f311eabbc8633a1e79908165fca26241b6b"
 
+p-reduce@^2.1.0:
+  version "2.1.0"
+  resolved "http://registry.npm.taobao.org/p-reduce/download/p-reduce-2.1.0.tgz#09408da49507c6c274faa31f28df334bc712b64a"
+
 p-try@^1.0.0:
   version "1.0.0"
   resolved "http://registry.npm.taobao.org/p-try/download/p-try-1.0.0.tgz#cbc79cdbaf8fd4228e13f621f2b1a237c1b207b3"

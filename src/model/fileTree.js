@@ -16,9 +16,9 @@ export default class FileTree {
     this.root = new File({
       data: {
         title: '我的文件夹',
-        type: 'folder',
-        depth: 0
+        type: 'folder'
       },
+      depth: 0,
       store: this
     })
   }
@@ -30,7 +30,7 @@ export default class FileTree {
 
     for (let i in this.map) {
       let file = this.map[i]
-      console.log('init-file', file.title, file.parent_folder)
+      // console.log('init-file', file.title, file.parent_folder)
       if (file.parent_folder !== '/' && !this.map[file.parent_folder]) {
         if (this.remote_map[file.parent_folder]) {
           file.data.parent_folder = this.remote_map[file.parent_folder].id
@@ -42,12 +42,12 @@ export default class FileTree {
       }
     }
     this.root.getAncestorFolders()
-    console.log('init-0', this.root)
+    // console.log('init-0', this.root)
     return this
   }
 
   addFile (data, isExist) {
-    console.log('addFile', data.title, data.seq, data.parent_folder, data.remote_id, data._id)
+    // console.log('addFile-1111', data.title, data.seq, data.parent_folder, data.remote_id, data._id)
     // return
     let newFile = new File({
       id: data.remote_id || data._id,
@@ -62,6 +62,7 @@ export default class FileTree {
       this.remote_map[data.remote_id] = newFile
     }
     this.arr.push(newFile)
+    // console.log('addFile-22222', this.map)
     return this
   }
 
@@ -103,7 +104,7 @@ export default class FileTree {
     }
 
     file.update({
-      parent_folder: targetFolder.data.depth === 0 ? '/' : targetId,
+      parent_folder: targetFolder.depth === 0 ? '/' : targetId,
       seq: targetFolder._child_folders.length - 1
     }, true)
   
@@ -117,7 +118,7 @@ export default class FileTree {
     let targetFolder = this.map[broFile.parent_folder] || this.root
     let oldParentFolder = this.map[file.parent_folder] || this.root
 
-    console.log('moveFile', targetFolder, oldParentFolder, file.seq)
+    // console.log('moveFile', targetFolder, oldParentFolder, file.seq)
 
     if (targetFolder === file || file._child_folders.indexOf(targetFolder.id) > -1) {
       console.error('target should not be a child')
@@ -149,7 +150,7 @@ export default class FileTree {
         let newSeq = targetFolder._child_folders.indexOf(item)
         if (child.id === id) {
           child.update({
-            parent_folder: targetFolder.data.depth === 0 ? '/' : targetFolder.id,
+            parent_folder: targetFolder.depth === 0 ? '/' : targetFolder.id,
             seq: newSeq
           })
         } else if (child.seq !== newSeq) {
@@ -180,7 +181,7 @@ export default class FileTree {
 
   updateFlatMap (isLazy) {
     // this.flat_map = {}
-    console.log('updateFlatMap', isLazy)
+    // console.log('updateFlatMap', isLazy)
     // this.root.getAncestorFolders()
     // let map = this.map
     let arr = isLazy ? this.arr.filter(item => item.need_push_locally) : this.arr
@@ -220,6 +221,7 @@ function createFlatFile (file) {
     cache_id: file.cache_id,
     type: file.type,
     seq: file.seq,
+    depth: file.depth || 0,
     title: file.title,
     parent_folder: file.parent_folder,
     ancestor_folders: file.ancestor_folders,

@@ -24,7 +24,7 @@
           v-if="node.data.link"></div>
         <div class="title ellipsis"
           v-show="typingNode !== node">
-          {{ data.title }}
+          {{ data.depth + ' ' + data.title }}
         </div>
         <div class="click-mask"
           v-show="typingNode !== node"

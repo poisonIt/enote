@@ -2,9 +2,11 @@
   <div class="container" :class="{ 'is-expanded' : viewType === 'expanded' }">
     <div class="expanded" v-if="viewType === 'expanded'">
       <div class="item new" @click="toggleMenu">
+        <div class="icon-new"></div>
         <span>新建</span>
       </div>
-      <div class="item sync">
+      <div class="item sync" @click="syncData">
+        <div class="icon-sync infinite rotate" :class="{ animated: isSyncing }"></div>
         <span>同步</span>
       </div>
     </div>
@@ -20,7 +22,10 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapGetters, mapActions } from 'vuex'
+import pReduce from 'p-reduce'
+import { pushNotebook, pushNote } from '@/service'
+
 
 export default {
   name: 'FileTool',
@@ -43,11 +48,20 @@ export default {
 
   computed: {
     ...mapGetters({
-      viewType: 'GET_VIEW_TYPE'
+      viewType: 'GET_VIEW_TYPE',
+      allFileMap: 'GET_FILES',
+      isSyncing: 'GET_IS_SYNCING',
+      userInfo: 'GET_USER_INFO',
+      filesNeedPush: 'GET_FILES_NEED_PUSH'
     })
   },
 
   methods: {
+    ...mapActions([
+      'SET_IS_SYNCING',
+      'SET_FILE_PUSH_FINISHED'
+    ]),
+
     toggleMenu () {
       this.isMenuVisible = !this.isMenuVisible
     },
@@ -71,6 +85,102 @@ export default {
       } else if (value === 'new_folder') {
         this.newFolder()
       }
+    },
+
+    tranData (file) {
+      let parentFolder = this.allFileMap[file.parent_folder]
+
+      if (file.type === 'folder') {
+        return {
+          noteBookId: file.remote_id || file.id,
+          parentId: parentFolder ? parentFolder.remote_id : '/',
+          seq: file.seq,
+          title: file.title,
+          trash: file.trash
+        }
+      } else if (file.type === 'doc') {
+        return {
+          noteBookId: parentFolder ? parentFolder.remote_id : '/',
+          noteContent: file.content,
+          noteId: file.remote_id || file.id,
+          title: file.title,
+          trash: file.trash
+        }
+      }
+    },
+
+    createPromise (data) {
+      return pushNotebook(this.userInfo.id_token, data)
+    },
+
+    async pushData (foldersNeedPushByDepth, foldersNeedPush) {
+      let promises = foldersNeedPushByDepth.map(files => {
+        let data = files.map(file => {
+          return this.tranData(file)
+        })
+        return this.createPromise(data)
+      })
+
+      let pRes = await pReduce(promises, async (total, res) => {
+        if (total === 0) {
+          total = []
+        }
+        return [...total, ...res.data.body]
+      }, 0)
+      console.log('pRes', pRes)
+      this.SET_IS_SYNCING(false)
+      foldersNeedPush.forEach((item, index) => {
+        this.SET_FILE_PUSH_FINISHED({
+          id: item.id,
+          remote_id: pRes[index].noteBookId
+        })
+      })
+    },
+
+    syncData () {
+      let foldersNeedPush = this.filesNeedPush
+        .filter(item => item.type === 'folder')
+        .sort((a, b) => a.depth - b.depth)
+
+      if (foldersNeedPush.length === 0) return
+      this.SET_IS_SYNCING(true)
+
+      let foldersNeedPushByDepth = []
+      let minDepth = foldersNeedPush[0].depth
+      let maxDepth = foldersNeedPush[foldersNeedPush.length - 1].depth
+
+      for (let i = minDepth; i <= maxDepth; i++) {
+        let arr = foldersNeedPush.filter(item => item.depth === i)
+        if (arr.length > 0) {
+          foldersNeedPushByDepth.push(arr)
+        }
+      }
+
+      this.pushData(foldersNeedPushByDepth, foldersNeedPush)
+
+      // (async () => {
+      //   let promises = foldersNeedPushByDepth.map(files => {
+      //     let data = files.map(file => {
+      //       return this.tranData(file)
+      //     })
+      //     return createPromise(data)
+      //   })
+
+      //   let pRes = await pReduce(promises, async (total, res) => {
+      //     if (total === 0) {
+      //       total = []
+      //     }
+      //     return [...total, ...res.data.body]
+      //   }, 0)
+      //   console.log('pRes', pRes)
+      //   this.SET_IS_SYNCING(false)
+      //   foldersNeedPush.forEach((item, index) => {
+      //     this.SET_FILE_PUSH_FINISHED({
+      //       id: item.id,
+      //       remote_id: pRes[index].noteBookId
+      //     })
+      //   })
+      // })()
     }
   }
 }
@@ -119,21 +229,8 @@ export default {
   border-radius 3px
   font-size 14px
   color #C2C2C2
-  &::before
-    content ''
-    width 19px
-    height 19px
-    display block
-    font-size 20px
-    font-weight 600
-    margin-right 10px
-    background-repeat no-repeat
-    background-size contain
-    background-position center
 
 .new
-  &::before
-    background-image url(../assets/images/lanhu/new@2x.png)
   &::after
     content ''
     width 0
@@ -144,9 +241,21 @@ export default {
     border-bottom 3px solid transparent
     transform rotate(90deg)
 
-.sync
-  &::before
-    background-image url(../assets/images/lanhu/sync@2x.png)
+.icon-new, .icon-sync
+  width 19px
+  height 19px
+  display block
+  font-size 20px
+  font-weight 600
+  margin-right 10px
+  background-repeat no-repeat
+  background-size contain
+  background-position center
+
+.icon-new
+  background-image url(../assets/images/lanhu/new@2x.png)
+.icon-sync
+  background-image url(../assets/images/lanhu/sync@2x.png)
 
 .expand
   position relative

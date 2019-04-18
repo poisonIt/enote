@@ -1,4 +1,4 @@
-import { remove, cloneDeep } from 'lodash'
+import { remove, clone, cloneDeep } from 'lodash'
 import dayjs from 'dayjs'
 import LocalDAO from '../../../db/api'
 import docTemplate from '../../../db/docTemplate'
@@ -9,6 +9,8 @@ import FileTree from '../../model/fileTree'
 const docBriefTemplate = formatContent(docTemplate)
 let filesArrTemp = []
 let fileTree = new FileTree()
+let folderKeys = ['id', 'remote_id', 'cache_id', 'type', 'seq', 'depth', 'title', 'trash', 'link', '_child_folders', 'content']
+
 
 const state = {
   files_map: fileTree.map,
@@ -38,22 +40,27 @@ const mutations = {
     file.update_at = String(dayjs(new Date()).valueOf())
   },
 
-  DELETE_FILE (state, id) {
-    let file = state.files_map[id]
-    file.trash = 'TRASH'
-    markShouldUpdate(file, true)
+  UPDATE_FILE (state, opts) {
+    fileTree.updateFile(opts)
   },
 
-  UPDATE_FILE (state, opts) {
-    fileTree.updateFile(opts).updateFlatMap(true)
-  },
+  // DELETE_FILE (state, id) {
+  //   let file = state.files_map[id]
+  //   file.trash = 'TRASH'
+  //   file._child_folders.forEach(item => {
+  //     fileTree.updateFile({
+  //       id: item.id,
+  //       trash: 'TRASH'
+  //     })
+  //   })
+  // },
 
   EDIT_DOC (state, opts) {
     let { id, content } = opts
-    
+
     let docFile = state.files_map[id]
     if (docFile && docFile.type === 'doc') {
-      fileTree.updateFile(opts, true)
+      fileTree.updateFile(opts)
       docFile.content = content
       docFile.need_push_remotely = true
     }
@@ -100,49 +107,25 @@ const mutations = {
   },
 
   CLEAR_ALL_RECYCLE (state) {
-    let recycledFiles = state.files_arr.filter(file => file.trash === 'TRASH')
-    recycledFiles.forEach(file => {
-      // handle parentFolder
-      let parentFolder = state.files_map[file.parent_folder]
-      if (parentFolder) {
-        if (file.type === 'doc') {
-          remove(parentFolder.child_docs, item => item === file.id)
-        } else if (file.type === 'folder') {
-          remove(parentFolder.child_folders, item => item === file.id)
-        }
-      }
-
-      // handle childFile
-      if (file.type === 'folder') {
-        let allChildFile = state.files_arr.filter(fileTemp => {
-          return fileTemp.ancestor_folders.indexOf(file.id) > -1
-        })
-
-        allChildFile.forEach(childFile => {
-          remove(state.files_arr, item => item.id === childFile.id)
-          if (childFile.type === 'doc') {
-            LocalDAO.doc.remove({
-              fileId: childFile.id
-            })
-          }
-        })
-      }
-
-      // handle file
-      if (file.type === 'doc') {
-        LocalDAO.doc.remove({
-          fileId: file.id
-        })
-      }
-
-      remove(state.files_arr, item => item.id === file.id)
-    })
+    state.files_arr
+      .filter(item => item.trash === 'TRASH')
+      .forEach(item => {
+        deleteFile(item.id)
+      })
   },
 
   RESUME_ALL_RECYCLE (state) {
-    state.files_arr.forEach(file => {
-      file.trash = 'NORMAL'
-    })
+    state.files_arr
+      .filter(item => item.trash === 'TRASH')
+      .forEach(item => {
+        // item.trash = 'NORMAL'
+        // item.need_push_locally = true
+        // item.need_push_remotely = true
+        fileTree.updateFile({
+          id: item.id,
+          trash: 'NORMAL'
+        })
+      })
   },
 
   REFRESH_FILES (state) {
@@ -151,20 +134,26 @@ const mutations = {
     let folders = {}
     state.files_arr = []
     state.folders = {}
-    // function getChildren (file) {
-    //   console.log('getChidren', file)
-    //   return file.child_folders.map(item => getChildren(state.files_map[item]))
-    // }
+
     for (let i in state.files_map) {
       let file = state.files_map[i]
       arr.push(file)
       if (file.type === 'folder' && file.parent_folder === '/') {
-        folders[file.id] = file
+        let folderTmp = folders[file.id]
+        if (folderTmp) {
+          folderKeys.forEach(name => {
+            if (folderTmp[name] !== file[name]) {
+              console.log('rerere', name, folderTmp[name], file[name])
+              folderTmp[name] = file[name]
+            }
+          })
+        } else {
+          folders[file.id] = createFolderData(file)
+        }
       }
     }
     state.files_arr = arr
     state.folders = folders
-    console.log('REFRESH_FILES', state, folders)
   },
 
   UPDATE_FILES_ARR (state) {
@@ -172,7 +161,6 @@ const mutations = {
     for (let i in state.files_map) {
       state.files_arr.push(state.files_map[i])
     }
-    console.log('UPDATE_FILES_ARR', state.files_arr)
   },
 
   UPDATE_FILES_MAP (state) {
@@ -188,18 +176,6 @@ const mutations = {
     arr.forEach(item => {
       state.doc_map[item.id] = item
     })
-  },
-
-  UPDATE_FOLDERS (state) {
-    let newFolders = {}
-    state.files_arr.forEach(file => {
-      // console.log('UPDATE_FOLDERS', file, file.id)
-      if (file.type === 'folder') {
-        newFolders[file.id] = file
-      }
-    })
-    state.folders = newFolders
-    // console.log('UPDATE_FOLDERS', state.folders)
   },
 
   // SAVE_FILES (state) {
@@ -224,9 +200,7 @@ const mutations = {
   // },
 
   FILES_SAVED (state, arr) {
-    console.log('FILES_SAVED', arr)
     arr.forEach(item => {
-      console.log('FILES_SAVED-1111', item.id, state.files_map[item.id])
       state.files_map[item.id].need_push_locally = false
     })
   },
@@ -234,18 +208,10 @@ const mutations = {
   SET_FILE_PUSH_FINISHED (state, obj) {
     let { id, remote_id } = obj
     let stateFile = state.files_map[id]
-    console.log('SET_FILE_PUSH_FINISHED', obj, stateFile)
-    // let idx1 = state.files_arr.indexOf(stateFile)
-    // state.files_arr.splice(idx1, 1)
     stateFile.remote_id = remote_id
     stateFile.need_push_remotely = false
-    // state.files_arr.splice(idx1, 0, stateFile)
     let sourceFile = fileTree.map[id]
-    // let idx2 = fileTree.arr.indexOf(sourceFile)
-    // fileTree.arr.splice(idx2, 1)
     sourceFile.remote_id = remote_id
-    // console.log('SET_FILE_PUSH_FINISHED', sourceFile, fileTree.map, fileTree.arr)
-    // fileTree.arr.splice(idx2, 0, sourceFile)
   },
 
   SET_CURRENT_FOLDER (state, id) {
@@ -295,7 +261,6 @@ const actions = {
     commit('REFRESH_FILES')
     // commit('UPDATE_FOLDERS')
     let filesSaved = await saveLocalFiles()
-    console.log('saveLocalFiles', filesSaved)
     commit('FILES_SAVED', filesSaved)
     if (filesSaved.length > 0) {
       commit('UPDATE_FILES_ARR')
@@ -333,10 +298,9 @@ const actions = {
   async ADD_FILE ({ dispatch, commit }, obj) {
     await LocalDAO.files.add(obj).then(resp => {
       resp.cache_id = obj.cache_id
-      fileTree.addFile(resp).updateFlatMap(true)
-      commit('REFRESH_FILES')
-      // commit('UPDATE_FOLDERS')
+      fileTree.addFile(resp)
     })
+    commit('REFRESH_FILES')
   },
 
   async DELETE_FILE ({ commit }, id) {
@@ -345,9 +309,7 @@ const actions = {
       trash: 'TRASH'
     })
     commit('REFRESH_FILES')
-    // commit('UPDATE_FOLDERS')
     let filesSaved = await saveLocalFiles()
-    console.log('saveLocalFiles', filesSaved)
     commit('FILES_SAVED', filesSaved)
     if (filesSaved.length > 0) {
       commit('UPDATE_FILES_ARR')
@@ -357,9 +319,7 @@ const actions = {
   async EDIT_FILE ({ commit, dispatch }, opts) {
     commit('UPDATE_FILE', opts)
     commit('REFRESH_FILES')
-    // commit('UPDATE_FOLDERS')
     let filesSaved = await saveLocalFiles()
-    console.log('saveLocalFiles', filesSaved)
     commit('FILES_SAVED', filesSaved)
     if (filesSaved.length > 0) {
       commit('UPDATE_FILES_ARR')
@@ -369,18 +329,16 @@ const actions = {
   async EDIT_DOC ({ commit, dispatch }, opts) {
     commit('EDIT_DOC', opts)
     let filesSaved = await saveLocalFiles()
-    console.log('saveLocalFiles', filesSaved)
     commit('FILES_SAVED', filesSaved)
-    if (filesSaved.length > 0) {
-      commit('UPDATE_FILES_ARR')
-    }
+    // if (filesSaved.length > 0) {
+    //   commit('UPDATE_FILES_ARR')
+    // }
   },
 
   async APPEND_FILE ({ commit, dispatch }, opts) {
     commit('APPEND_FILE', opts)
     commit('REFRESH_FILES')
     let filesSaved = await saveLocalFiles()
-    console.log('saveLocalFiles', filesSaved)
     commit('FILES_SAVED', filesSaved)
     if (filesSaved.length > 0) {
       commit('UPDATE_FILES_ARR')
@@ -391,7 +349,6 @@ const actions = {
     commit('MOVE_FILE', opts)
     commit('REFRESH_FILES')
     let filesSaved = await saveLocalFiles()
-    // console.log('saveLocalFiles', filesSaved)
     commit('FILES_SAVED', filesSaved)
     if (filesSaved.length > 0) {
       commit('UPDATE_FILES_ARR')
@@ -447,18 +404,24 @@ const actions = {
     // commit('REMOVE_FILE_TAG', opts)
   },
 
-  CLEAR_ALL_RECYCLE ({ commit }) {
+  async CLEAR_ALL_RECYCLE ({ commit }) {
     commit('CLEAR_ALL_RECYCLE')
-    commit('UPDATE_FILES_MAP')
-    commit('UPDATE_FILES_ARR')
-    commit('UPDATE_FOLDERS')
+    commit('REFRESH_FILES')
+    let filesSaved = await saveLocalFiles()
+    commit('FILES_SAVED', filesSaved)
+    if (filesSaved.length > 0) {
+      commit('UPDATE_FILES_ARR')
+    }
+    // commit('UPDATE_FOLDERS')
     // commit('SAVE_FILES')
   },
 
   RESUME_ALL_RECYCLE ({ commit }) {
     commit('RESUME_ALL_RECYCLE')
-    commit('UPDATE_FILES_ARR')
-    commit('UPDATE_FOLDERS')
+    // fileTree.resumeAllRecycle().updateFlatMap()
+    commit('REFRESH_FILES')
+    // commit('UPDATE_FILES_ARR')
+    // commit('UPDATE_FOLDERS')
     // commit('SAVE_FILES')
   },
 
@@ -671,6 +634,19 @@ function saveLocalFiles () {
   )
 }
 
+function deleteFile (id) {
+  let file = fileTree.map[id]
+  fileTree.updateFile({
+    id: file.id,
+    trash: 'DELETED'
+  })
+  if (file._child_folders) {
+    file._child_folders.forEach(item => {
+      deleteFile(item)
+    })
+  }
+}
+
 function fetchLocalDocContent (id) {
   return new Promise((resolve, reject) => {
     LocalDAO.doc.get(id).then(res => {
@@ -746,6 +722,14 @@ function markShouldUpdate (file, val) {
   file.needPushLocally = val
   file.shouldUpdateRemote = val
   console.log('markShouldUpdate', file)
+}
+
+function createFolderData (file) {
+  let result = {}
+  folderKeys.forEach(name => {
+    result[name] = file[name]
+  })
+  return result
 }
 
 export default {

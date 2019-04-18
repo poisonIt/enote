@@ -175,19 +175,20 @@ export default {
 
   watch: {
     allFileArr (val) {
-      // this.fileList = val
-      // console.log('watch-allFileArr', val, this.currentNav)
-      // if (this.currentNav && this.currentNav.link === 'latest') {
-      //   this.list = val.filter(item => item.trash === 'NORMAL')
-      //   this.selectFile(0)
-      // }
+      this.fileList = val
+      console.log('watch-allFileArr', val, this.currentNav)
+      if (this.currentNav && this.currentNav.link === 'latest') {
+        this.list = val.filter(item => item.trash === 'NORMAL')
+        this.selectFile(0)
+      }
     },
 
     currentNav (val) {
-      console.log('watch-currentNav', val)
+      console.log('watch-currentNav', val, this.fileList)
       if (val.link === 'latest') {
         this.list = this.fileList.filter(item => 
           item.trash === 'NORMAL')
+          .sort((a, b) => a.update_at - b.update_at)
       }
       if (val.link === 'folders') {
         this.list = this.fileList.filter(item => item.trash === 'NORMAL'
@@ -202,7 +203,7 @@ export default {
         
       }
       if (val.link === 'recycle') {
-        this.list = this.fileList.filter(item => !item.trash === 'NORMAL')
+        this.list = this.fileList.filter(item => item.trash === 'TRASH')
       }
       this.selectFile(0)
     },

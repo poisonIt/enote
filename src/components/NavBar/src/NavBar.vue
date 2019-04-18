@@ -24,7 +24,7 @@
           v-if="node.data.link"></div>
         <div class="title ellipsis"
           v-show="typingNode !== node">
-          {{ data.depth + ' ' + data.title }}
+          {{ data.title }}
         </div>
         <div class="click-mask"
           v-show="typingNode !== node"
@@ -230,6 +230,7 @@ export default {
     },
 
     handleItemClick (node) {
+      console.log('handleItemClick', node.data.title, node.data.id)
       node.instance.handleClick()
       this.currentNode = node
       this.SET_VIEW_FOLDER(node.uid)
@@ -308,27 +309,13 @@ export default {
         this.popupedNode = this.getTreeNode('folders')
       }
       let cache_id = GenNonDuplicateID(6)
-      console.log('handleNewFolder')
-      console.log(this.popupedNode)
+      this.$refs.tree.setCurrentNodeData(cache_id)
       this.ADD_FILE({
         title: '新建文件夹',
         link: 'new folder',
         type: 'folder',
         cache_id: cache_id,
         parent_folder: this.popupedNode.data.id
-      }).then(() => {
-        console.log(22222)
-        this.$nextTick(() => {
-          for (let i in this.popupedNode.store.nodeMap) {
-            let node = this.popupedNode.store.nodeMap[i]
-            console.log(node.data.cache_id, cache_id)
-            if (node.data.cache_id === cache_id) {
-              this.handleInsertChildNode(node)
-              this.handleItemClick(node)
-              return
-            }
-          }
-        })
       })
     },
 
@@ -347,25 +334,29 @@ export default {
         const inputEl = document.querySelectorAll('input.node-input.show')
         console.log('inputEl', inputEl[0])
         inputEl[0].select()
+        this.$refs.tree.setCurrentNodeData(this.typingNode.data.id)
       })
     },
 
     handleNodeInputBlur () {
+      console.log('handleNodeInputBlur-00000', this.typingNode.data)
       this.EDIT_FILE({
         id: this.typingNode.data.id,
         title: this.nodeInput
       })
+      // this.$refs.tree.setCurrentNodeData(this.typingNode.data.id)
       // this.typingNode.data.title = this.nodeInput
-      this.$nextTick(() => {
-        for (let i in this.typingNode.store.nodeMap) {
-          let nodeTemp = this.typingNode.store.nodeMap[i]
-          if (nodeTemp.data.id === this.typingNode.data.id) {
-            this.handleItemClick(nodeTemp)
-            this.typingNode = null
-            return
-          }
-        }
-      })
+      // this.$nextTick(() => {
+      //   for (let i in this.typingNode.store.nodeMap) {
+      //     let nodeTemp = this.typingNode.store.nodeMap[i]
+      //     if (nodeTemp.data.id === this.typingNode.data.id) {
+      //       console.log('handleNodeInputBlur-11111', nodeTemp)
+      //       // this.handleItemClick(nodeTemp)
+      //       // this.typingNode = null
+      //       return
+      //     }
+      //   }
+      // })
     },
 
     handleMove () {
@@ -498,7 +489,6 @@ export default {
       this.dragOverNode.instance.toggleHightlightBottom(false)
       this.dragNode = null
       this.dragOverNode = null
-
     },
 
     handleDragOver (node, e) {
@@ -526,6 +516,21 @@ export default {
       } else {
         node.instance.toggleHightlight(true)
       }
+    },
+
+    handleRefreshed () {
+      // console.log('handleRefreshed')
+      // if (this.typingNode) {
+      //   for (let i in this.$refs.tree.store.nodeMap) {
+      //     let nodeTemp = this.$refs.tree.store.nodeMap[i]
+      //     if (nodeTemp.data.id === this.typingNode.data.id) {
+      //       console.log('handleNodeInputBlur-11111', nodeTemp)
+      //       this.handleItemClick(nodeTemp)
+      //       this.typingNode = null
+      //       return
+      //     }
+      //   }
+      // }
     }
   }
 }

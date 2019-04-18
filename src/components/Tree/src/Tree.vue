@@ -22,7 +22,8 @@ export default {
 
   data () {
     return {
-      root: null
+      root: null,
+      currentNodeData: null
     }
   },
 
@@ -92,7 +93,8 @@ export default {
       handler: function (newVal) {
         console.log('watch-tree-data', newVal)
         this.store.setData(newVal)
-        this.$emit('input', [])
+        this.$emit('refresh')
+        // this.$emit('input', [])
       },
       deep: true
     }
@@ -122,6 +124,11 @@ export default {
   methods: {
     setNodeData (uid, data) {
       this.store.nodeMap[uid].setData(data)
+    },
+
+    setCurrentNodeData (data) {
+      console.log('setCurrentNodeData', data)
+      this.currentNodeData = data
     }
   }
 }

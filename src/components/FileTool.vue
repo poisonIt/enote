@@ -109,32 +109,67 @@ export default {
       }
     },
 
-    createPromise (data) {
-      return pushNotebook(this.userInfo.id_token, data)
+    createPromise (data, type) {
+      if (type === 'folder') {
+        return new Promise ((resolve, reject) => {
+          pushNotebook(this.userInfo.id_token, data).then(resp => {
+            if (resp.data.returnCode === 200) {
+              resolve(resp.data.body)
+            } else {
+              reject(resp.data.returnMsg)
+            }
+          })
+        })
+      } else if (type === 'doc') {
+        return new Promise ((resolve, reject) => {
+          pushNote(this.userInfo.id_token, data).then(resp => {
+            if (resp.data.returnCode === 200) {
+              resolve(resp.data.body)
+            } else {
+              reject(resp.data.returnMsg)
+            }
+          })
+        })
+      }
     },
 
-    async pushData (foldersNeedPushByDepth, foldersNeedPush) {
-      let promises = foldersNeedPushByDepth.map(files => {
+    async pushData (foldersNeedPushByDepth, foldersNeedPush, docsNeedPush) {
+      let folderPromises = foldersNeedPushByDepth.map(files => {
         let data = files.map(file => {
           return this.tranData(file)
         })
-        return this.createPromise(data)
+        return this.createPromise(data, 'folder')
       })
 
-      let pRes = await pReduce(promises, async (total, res) => {
+      let docPromises = this.createPromise(
+        docsNeedPush.map(file => {
+          return this.tranData(file, 'doc')
+        })
+      , 'doc')
+
+      let noteBookRes = await pReduce(folderPromises, async (total, res) => {
         if (total === 0) {
           total = []
         }
-        return [...total, ...res.data.body]
+        console.log('folderPromises-res', res)
+        return [...total, ...res]
       }, 0)
-      console.log('pRes', pRes)
-      this.SET_IS_SYNCING(false)
+
+      let noteRes = await docPromises
+      console.log('noteBookRes', noteBookRes, noteRes)
       foldersNeedPush.forEach((item, index) => {
         this.SET_FILE_PUSH_FINISHED({
           id: item.id,
-          remote_id: pRes[index].noteBookId
+          remote_id: noteBookRes[index].noteBookId
         })
       })
+      docsNeedPush.forEach((item, index) => {
+        this.SET_FILE_PUSH_FINISHED({
+          id: item.id,
+          remote_id: noteRes[index].noteBookId
+        })
+      })
+      this.SET_IS_SYNCING(false)
     },
 
     syncData () {
@@ -142,45 +177,28 @@ export default {
         .filter(item => item.type === 'folder')
         .sort((a, b) => a.depth - b.depth)
 
-      if (foldersNeedPush.length === 0) return
-      this.SET_IS_SYNCING(true)
-
       let foldersNeedPushByDepth = []
-      let minDepth = foldersNeedPush[0].depth
-      let maxDepth = foldersNeedPush[foldersNeedPush.length - 1].depth
 
-      for (let i = minDepth; i <= maxDepth; i++) {
-        let arr = foldersNeedPush.filter(item => item.depth === i)
-        if (arr.length > 0) {
-          foldersNeedPushByDepth.push(arr)
+      let docsNeedPush = this.filesNeedPush
+        .filter(item => item.type === 'doc')
+
+      if (foldersNeedPush.length + docsNeedPush.length === 0) return
+      console.log('syncData', foldersNeedPush, docsNeedPush)
+      this.SET_IS_SYNCING(true)
+      if (foldersNeedPush.length > 0) {
+        let minDepth = foldersNeedPush[0].depth
+        let maxDepth = foldersNeedPush[foldersNeedPush.length - 1].depth
+  
+        for (let i = minDepth; i <= maxDepth; i++) {
+          let arr = foldersNeedPush.filter(item => item.depth === i)
+          if (arr.length > 0) {
+            foldersNeedPushByDepth.push(arr)
+          }
         }
       }
 
-      this.pushData(foldersNeedPushByDepth, foldersNeedPush)
 
-      // (async () => {
-      //   let promises = foldersNeedPushByDepth.map(files => {
-      //     let data = files.map(file => {
-      //       return this.tranData(file)
-      //     })
-      //     return createPromise(data)
-      //   })
-
-      //   let pRes = await pReduce(promises, async (total, res) => {
-      //     if (total === 0) {
-      //       total = []
-      //     }
-      //     return [...total, ...res.data.body]
-      //   }, 0)
-      //   console.log('pRes', pRes)
-      //   this.SET_IS_SYNCING(false)
-      //   foldersNeedPush.forEach((item, index) => {
-      //     this.SET_FILE_PUSH_FINISHED({
-      //       id: item.id,
-      //       remote_id: pRes[index].noteBookId
-      //     })
-      //   })
-      // })()
+      this.pushData(foldersNeedPushByDepth, foldersNeedPush, docsNeedPush)
     }
   }
 }

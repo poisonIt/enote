@@ -46,23 +46,28 @@ export default class FileTree {
     return this
   }
 
-  addFile (data, isExist) {
-    // console.log('addFile-1111', data.title, data.seq, data.parent_folder, data.remote_id, data._id)
+  addFile (data) {
+    // console.log('addFile-1111', data)
     // return
     let newFile = new File({
       id: data.remote_id || data._id,
       data: data,
       seq: data.seq,
       need_push_remotely: data.need_push,
-      store: this,
-      isExist: isExist
+      store: this
     })
     this.map[data._id] = newFile
     if (data.remote_id) {
       this.remote_map[data.remote_id] = newFile
     }
     this.arr.push(newFile)
-    // console.log('addFile-22222', this.map)
+    if (data.cache_id) {
+      let parentFolder = this.map[newFile.parent_folder] || this.root
+      parentFolder.getAncestorFolders()
+      this.arr[this.arr.indexOf(parentFolder)] = parentFolder
+      this.flat_map[newFile.id] = createFlatFile(newFile)
+      this.flat_map[parentFolder.id] = createFlatFile(parentFolder)
+    }
     return this
   }
 
@@ -70,9 +75,10 @@ export default class FileTree {
     // console.log('updateFile', data)
     let file = this.map[data.id]
     file.update(data)
-    if (!lazy) {
-      this.updateFlatMap()
-    }
+    this.flat_map[data.id] = createFlatFile(file)
+    // if (!lazy) {
+    //   this.updateFlatMap()
+    // }
     return this
   }
 
@@ -180,40 +186,16 @@ export default class FileTree {
   }
 
   updateFlatMap (isLazy) {
-    // this.flat_map = {}
-    // console.log('updateFlatMap', isLazy)
-    // this.root.getAncestorFolders()
-    // let map = this.map
     let arr = isLazy ? this.arr.filter(item => item.need_push_locally) : this.arr
-    // console.log('updateFlatMap-00000', arr)
-    // for (let i in this.arr) {
-    //   let item = this.arr[i]
-    //   if (item.need_push_locally) {
-    //     this.flat_map[item.id] = createFlatFile(item)
-    //   }
-    // }
+ 
     arr.forEach(item => {
-      // console.log('2222222', item)
       this.flat_map[item.id] = createFlatFile(item)
     })
-    // let map = !isLazy ? this.map : this.needUpdateFiles.map(item => this.map[item])
-    // console.log('updateFlatMap', map)
-    // for (let i in map) {
-    //   let flat_file = createFlatFile(map[i])
-    //   this.flat_map[i] = flat_file
-    // }
-    // if (this.isInit) {
-    //   this.isInit = false
-    // }
-  }
-
-  finishPushLocally (id) {
-    this.map[id].need_push_locally = false
   }
 }
 
 function createFlatFile (file) {
-  // console.log('createFlatFile', file.title, file.id)
+  // console.log('createFlatFile', file.title, file.cache_id)
   // file.getAncestorFolders()
   return {
     id: file.data._id,

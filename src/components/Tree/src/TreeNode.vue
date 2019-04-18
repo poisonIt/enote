@@ -153,6 +153,26 @@ export default {
     }
   },
 
+  mounted () {
+    if (this.tree.currentNodeData) {
+      console.log('mounted-node', this.tree.currentNodeData)
+      if (this.node.data.cache_id) {
+        if (this.node.data.cache_id === this.tree.currentNodeData) {
+          console.log('mounted-node-0000', this.node.data.cache_id)
+          this.handleClick()
+          this.node.store.instance.$emit('insertChildNode', this.node)
+          // this.tree.setCurrentNodeData(null)
+          return
+        }
+      }
+      if (this.node.data.id === this.tree.currentNodeData) {
+        console.log('mounted-node-1111', this.node.data.id)
+        this.handleClick()
+        // this.tree.setCurrentNodeData(null)
+      }
+    }
+  },
+
   methods: {
     handleClick () {
       const store = this.tree.store

@@ -14,7 +14,11 @@ export default class File {
     if (opts.depth === undefined && this.type === 'folder') {
       let parentFolder = this.store.map[this.parent_folder] || this.store.root
       this.depth = parentFolder.depth + 1
+      if (opts.data.cache_id) {
+        this.seq = parentFolder.child_folders.length
+      }
     }
+
   }
 
   getAncestorFolders () {

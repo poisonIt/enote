@@ -36,6 +36,7 @@ import {
   pullTags
 } from '../service'
 import LocalDAO from '../../db/api'
+import { mapActions } from 'vuex';
 
 export default {
   name: 'Login',
@@ -49,6 +50,10 @@ export default {
   },
 
   methods: {
+    ...mapActions([
+      'SET_TOKEN'
+    ]),
+
     postData () {
       if (this.isLoading) return
       this.isLoading = true
@@ -60,35 +65,36 @@ export default {
       }).then(resp => {
         if (resp.data.returnCode === 200) {
           const id_token = resp.data.body.id_token
+          this.SET_TOKEN(id_token)
 
           Promise.all([
             this.pullUserInfo(id_token, username, password),
-            pullNotebooks(id_token),
-            pullNote(id_token),
-            pullTags(id_token)
+            pullNotebooks(),
+            pullNote(),
+            pullTags()
           ]).then(pullResp => {
             console.log('pullResp', pullResp)
             LocalDAO.files.removeAll().then(() => {
               if (pullResp[0].returnMsg !== 'success') {
-                alert(`获取用户信息：${pullResp[0].returnMsg}`)
+                // alert(`获取用户信息：${pullResp[0].returnMsg}`)
                 this.isLoading = false
                 return
               }
 
               if (pullResp[1].data.returnMsg !== 'success') {
-                alert(`获取笔记本：${pullResp[1].data.returnMsg}`)
+                // alert(`获取笔记本：${pullResp[1].data.returnMsg}`)
                 this.isLoading = false
                 return
               }
 
               if (pullResp[2].data.returnMsg !== 'success') {
-                alert(`获取笔记：${pullResp[2].data.returnMsg}`)
+                // alert(`获取笔记：${pullResp[2].data.returnMsg}`)
                 this.isLoading = false
                 return
               }
 
               if (pullResp[3].data.returnMsg !== 'success') {
-                alert(`获取标签：${pullResp[3].data.returnMsg}`)
+                // alert(`获取标签：${pullResp[3].data.returnMsg}`)
                 this.isLoading = false
                 return
               }
@@ -101,7 +107,7 @@ export default {
               const saveNoteTask = pullResp[2].data.body
                 .map(item => LocalDAO.files.add(this.transNoteData(item)))
 
-              const saveTagTask = pullResp[3].data.body
+              const saveTagTask = (pullResp[3].data.body || [])
                 .map(item => LocalDAO.tag.add(this.transTagData(item)))
 
               Promise.all([saveUserInfoTask, ...saveNoteBooksTask, ...saveNoteTask, ...saveTagTask])
@@ -115,7 +121,6 @@ export default {
             })
           })
         } else {
-          alert(resp.data.returnMsg)
           this.isLoading = false
         }
       })

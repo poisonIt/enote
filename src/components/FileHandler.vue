@@ -57,9 +57,6 @@
 <script>
 import dayjs from 'dayjs'
 import { mapGetters, mapActions } from 'vuex'
-import {
-  publishShare
-} from '../service'
 
 export default {
   name: 'FileHandler',
@@ -80,8 +77,7 @@ export default {
       currentFile: 'GET_CURRENT_FILE',
       viewType: 'GET_VIEW_TYPE',
       viewFileType: 'GET_VIEW_FILE_TYPE',
-      isTagShowed: 'GET_SHOW_TAG_HANDLER',
-      userInfo: 'GET_USER_INFO'
+      isTagShowed: 'GET_SHOW_TAG_HANDLER'
     })
   },
 
@@ -207,18 +203,7 @@ export default {
     },
 
     share () {
-      publishShare(this.userInfo.id_token, {
-        noteId: this.currentFile.remote_id
-      }).then(resp => {
-        console.log('publishShare-resp', resp)
-        if (resp.data.returnCode === 200) {
-          this.SET_SHARE_INFO(resp.data.body)
-          console.log('publishShare-resp-1111')
-          this.TOGGLE_SHOW_SHARE_PANEL(true)
-        } else {
-          alert(resp.data.returnMsg)
-        }
-      })
+      this.TOGGLE_SHOW_SHARE_PANEL(true)
     },
 
     showTag () {

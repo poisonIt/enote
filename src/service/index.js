@@ -1,82 +1,55 @@
 import axios from 'axios'
 
-const baseUrl = 'http://122.152.201.59:8000/api'
-
 export function authenticate (params) {
-  return axios.post(baseUrl + '/authenticate', {
+  return axios.post('/authenticate', {
     username: params.username,
     password: params.password
   })
 }
 
-export function getUserInfo (token) {
-  return axios.get(baseUrl + '/note/user/userInfo', {
-    headers: {
-      'Authorization': 'Bearer' + token
-    }
-  })
+export function getUserInfo () {
+  return axios.get('/note/user/userInfo')
 }
 
-export function getFriendList (token) {
-  return axios.get(baseUrl + '/user/all', {
-    headers: {
-      'Authorization': 'Bearer' + token
-    }
-  })
+export function getFriendList () {
+  return axios.get('/user/all')
 }
 
-export function pullNotebooks (token) {
-  return axios.get(baseUrl + '/noteBook/notebooks', {
-    headers: {
-      'Authorization': 'Bearer' + token
-    }
-  })
+export function pullNotebooks () {
+  return axios.get('/noteBook/notebooks')
 }
 
-export function pullNote (token) {
-  return axios.get(baseUrl + '/note/pullNote', {
-    headers: {
-      'Authorization': 'Bearer' + token
-    }
-  })
+export function pullNote () {
+  return axios.get('/note/pullNote')
 }
 
-export function pullTags (token) {
-  console.log('pullTags', token)
-  return axios.get(baseUrl + '/note/tag/tags', {
-    headers: {
-      'Authorization': 'Bearer' + token
-    }
-  })
+export function pullTags () {
+  return axios.get('/note/tag/tags')
 }
 
-export function pushNotebook (token, params) {
+export function pushNotebook (params) {
   console.log('pushNotebook', params)
-  return axios.post(baseUrl + '/noteBook/pushNotebook', params, {
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer' + token
-    }
-  })
+  return axios.post('/noteBook/pushNotebook', params)
 }
 
-export function pushNote (token, params) {
+export function pushNote (params) {
   console.log('pushNote', params)
-  return axios.post(baseUrl + '/note/pushNote', params, {
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer' + token
-    }
-  })
+  return axios.post('/note/pushNote', params)
 }
 
-export function publishShare (token, params) {
+export function publishShare (params) {
   console.log('publishShare', params)
-  return axios.post(baseUrl + '/share/publish', params, {
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer' + token
-    }
+  return axios.post('/share/publish', params)
+}
+
+export function unPublishShare (params) {
+  console.log('unPublishShare', params)
+  // let formData = new FormData()
+  // Object.keys(params).forEach(key => {
+  //   formData.append(key, params[key])
+  // })
+  return axios.delete('/share/unPublish', {
+    data: params
   })
 }
 

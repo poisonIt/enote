@@ -187,7 +187,7 @@ function createHomeWindow () {
   } else {
     createProtocol('app')
     // Load the index.html when not in development
-    win.loadURL('app://./index.html/#/home')
+    win.loadURL('app://./index.html#/home')
   }
 
   win.on('closed', () => {

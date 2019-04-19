@@ -60,8 +60,7 @@ export default {
   },
 
   created () {
-    this.$on('select', value => {
-      console.log('select', value)
+    this.$on('select', (value) => {
       this.selected = (this.value === value)
     })
   },

@@ -88,7 +88,7 @@ export default {
   left 0
   right 0
   bottom 0
-  background-color rgba(0, 0, 0, 0)
+  background-color rgba(0, 0, 0, 0.3)
   z-index 10001
 .modal
   position relative
@@ -105,6 +105,7 @@ export default {
   align-items center
   border-bottom 1px solid #E9E9E9
   background-color #fff
+  border-radius 4px
 .modal__title
   flex 1
   font-size 14px

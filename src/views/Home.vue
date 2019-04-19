@@ -185,6 +185,7 @@ export default {
       console.log('userInfo', resp)
       this.fdList = resp.friend_list
       this.SET_USER_INFO(resp)
+      this.SET_TOKEN(resp.id_token)
     })
   },
 
@@ -198,6 +199,7 @@ export default {
     ...mapActions([
       'SET_FILES_FROM_LOCAL',
       'SET_USER_INFO',
+      'SET_TOKEN',
       'TOGGLE_SHOW_MOVE_PANEL',
       'TOGGLE_SHOW_USER_PANEL',
       'TOGGLE_SHOW_SHARE_PANEL',

@@ -51,7 +51,6 @@ export default {
       viewType: 'GET_VIEW_TYPE',
       allFileMap: 'GET_FILES',
       isSyncing: 'GET_IS_SYNCING',
-      userInfo: 'GET_USER_INFO',
       filesNeedPush: 'GET_FILES_NEED_PUSH'
     })
   },
@@ -112,24 +111,22 @@ export default {
     createPromise (data, type) {
       if (type === 'folder') {
         return new Promise ((resolve, reject) => {
-          pushNotebook(this.userInfo.id_token, data).then(resp => {
+          pushNotebook(data).then(resp => {
             if (resp.data.returnCode === 200) {
               resolve(resp.data.body)
             } else {
               this.SET_IS_SYNCING(false)
-              alert(resp.data.returnMsg)
               reject(resp.data.returnMsg)
             }
           })
         })
       } else if (type === 'doc') {
         return new Promise ((resolve, reject) => {
-          pushNote(this.userInfo.id_token, data).then(resp => {
+          pushNote(data).then(resp => {
             if (resp.data.returnCode === 200) {
               resolve(resp.data.body)
             } else {
               this.SET_IS_SYNCING(false)
-              alert(resp.data.returnMsg)
               reject(resp.data.returnMsg)
             }
           })

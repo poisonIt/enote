@@ -69,9 +69,11 @@ export default {
       console.log('select-val', val)
     }
   },
+
   created () {
     this.$on('option-click', this.handleOptionSelect)
   },
+
   // beforeDestroy () {
   //   this.$BUIEventHub.$off('handleOptionClick', this.handleOptionSelect)
   // },

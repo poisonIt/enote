@@ -9,62 +9,66 @@
       @close="closeSharePanel"
       :visible.sync="isSharePanelShowed">
       <div class="share-panel">
-        <p style="font-size: 12px;margin-top: -10px;">链接生成成功，复制链接分享给好友吧</p>
-        <div class="link" style="width: 100%; display: flex;">
-          <input type="text"
-            v-model="shareUrl"
-            disabled="disabled"
-            @click="handleLinkFocus"
-            ref="linkInput">
-          <div class="button primary">复制链接</div>
-        </div>
-        <div class="password">
-          <form>
-            <input type="checkbox" id="password-check">
-            <label for="password-check">设置密码</label>
-            <span>{{ sharePwd }}</span>
-          </form>
-        </div>
-        <div class="validity">
-          <span class="label">有效期</span>
-          <BSelect :width="'100px'"
-            v-model="validity">
-            <b-option
-              v-for="(item, index) in validities"
-              :key="index"
-              :label="item.name"
-              :value="item.id"
-              :labelProxy="'name'"
-              :valueProxy="'id'"
-              :children="item.children">
-            </b-option>
-          </BSelect>
-        </div>
-        <div class="authority">
-          <span class="label">设置访问权限</span>
-          <BSelect :width="'150px'">
-            <b-option
-              v-for="(item, index) in authorities"
-              :key="index"
-              :label="item.name"
-              :value="item.id"
-              :labelProxy="'name'"
-              :valueProxy="'id'"
-              :children="item.children">
-            </b-option>
-          </BSelect>
-          <div class="add-mem-button" @click="showFrdPanel">
-            <div class="icon-mem"></div>
-            添加可查看成员
+        <div :class="{ lucency: isLoading }">
+          <p style="font-size: 12px;margin-top: -10px;">链接生成成功，复制链接分享给好友吧</p>
+          <div class="link" style="width: 100%; display: flex;">
+            <input type="text"
+              v-model="shareUrl"
+              disabled="disabled"
+              @click="handleLinkFocus"
+              ref="linkInput">
+            <div class="button primary">复制链接</div>
+          </div>
+          <div class="password">
+            <form>
+              <input type="checkbox" id="password-check">
+              <label for="password-check">设置密码</label>
+              <span style="margin-left: 10px;color: #333;user-select: all;">{{ sharePwd }}</span>
+            </form>
+          </div>
+          <div class="validity">
+            <span class="label">有效期</span>
+            <BSelect :width="'100px'"
+              v-model="validity"
+              ref="validitySelect">
+              <b-option
+                v-for="(item, index) in validities"
+                :key="index"
+                :label="item.name"
+                :value="item.id"
+                :labelProxy="'name'"
+                :valueProxy="'id'"
+                :children="item.children">
+              </b-option>
+            </BSelect>
+          </div>
+          <div class="authority">
+            <span class="label">设置访问权限</span>
+            <BSelect :width="'150px'"
+              v-model="entitledType"
+              ref="entitledTypeSelect">
+              <b-option
+                v-for="(item, index) in authorities"
+                :key="index"
+                :label="item.name"
+                :value="item.id"
+                :labelProxy="'name'"
+                :valueProxy="'id'"
+                :children="item.children">
+              </b-option>
+            </BSelect>
+            <div class="add-mem-button" @click="showFrdPanel">
+              <div class="icon-mem"></div>
+              添加可查看成员
+            </div>
+          </div>
+          <div class="footer">
+            <span class="cancel-button"
+              v-show="!isLoading"
+              @click="cancelShare">取消分享</span>
           </div>
         </div>
-        <div class="footer">
-          <!-- <span>分享至</span>
-          <span class="icon-weixin">
-            <i class="fa fa-weixin" aria-hidden="true"></i>
-          </span> -->
-          <span class="cancel-button" @click="closeSharePanel">取消分享</span>
-        </div>
+        <Loading class="loading" :type="8" fill="#DDAF59" v-if="isLoading"></Loading>
       </div>
     </modal>
     <modal
@@ -117,12 +121,22 @@
 <script>
 import { mapActions, mapGetters } from 'vuex'
 import LocalDAO from '../../../db/api'
+import {
+  publishShare,
+  unPublishShare
+} from '../../service'
+import Loading from '@/components/Loading'
 
 export default {
   name: 'SharePanel',
 
+  components: {
+    Loading
+  },
+
   data () {
     return {
+      isLoading: true,
       isSyncPanelShowed: false,
       isFrdPanelShowed: false,
       syncProgress: 0,
@@ -133,32 +147,33 @@ export default {
       validity: '000',
       shareUrl: '',
       sharePwd: '',
+      entitledType: 'PUBLIC',
       validities: [
         {
           name: '永久有效',
-          id: '000',
+          id: '0',
           children: []
         },
         {
           name: '1天',
-          id: '001',
+          id: '1',
           children: []
         },
         {
           name: '7天',
-          id: '002',
+          id: '7',
           children: []
         }
       ],
       authorities: [
         {
           name: '公开-所有人可查看',
-          id: '000',
+          id: 'PUBLIC',
           children: []
         },
         {
           name: '私密-指定成员可查看',
-          id: '001',
+          id: 'PRIVATE',
           children: []
         }
       ]
@@ -169,11 +184,21 @@ export default {
     ...mapGetters({
       isSharePanelShowed: 'GET_SHOW_SHARE_PANEL',
       userInfo: 'GET_USER_INFO',
-      shareInfo: 'GET_SHARE_INFO'
+      currentFile: 'GET_CURRENT_FILE'
     })
   },
 
   watch: {
+    isSharePanelShowed (val) {
+      if (val) {
+        this.createShare()
+      }
+    },
+
+    userInfo (val) {
+      this.fdList = val.friend_list
+    },
+
     validity (val) {
       console.log('watch-validity', val)
     },
@@ -187,17 +212,12 @@ export default {
         .filter(item => item.username.indexOf(val) > -1)
     },
 
-    shareInfo (val) {
-      if (val) {
-        this.shareUrl = val.url
-        this.sharePwd = val.sharePwd
-      }
+    entitledType (val) {
+      console.log('entitledType', val)
     }
   },
 
   mounted () {
-    this.fdList = this.userInfo.friend_list
-
     // if (this.userInfo.friend_list.length > 0) {
     //   this.selectedFd = this.userInfo.friend_list[0]
     // }
@@ -210,6 +230,50 @@ export default {
 
     closeSharePanel () {
       this.TOGGLE_SHOW_SHARE_PANEL(false)
+    },
+
+    async createShare () {
+      this.isLoading = true
+
+      let shareResp = await publishShare({
+        noteId: this.currentFile.remote_id,
+        pwd: true
+      })
+
+      console.log('publishShare-resp', shareResp)
+
+      this.isLoading = false
+      if (shareResp.data.returnCode === 200) {
+        this.shareInfo = shareResp.data.body
+        this.shareUrl = this.shareInfo.url
+        this.sharePwd = this.shareInfo.sharePwd
+        this.entitledType = this.shareInfo.entitledType
+        this.validity = String(this.shareInfo.validityType)
+
+        this.$refs.validitySelect.broadcast('b-option', 'select', this.validity)
+        this.$refs.validitySelect.selectedLabel = (this.validity === '0'
+          ? '永久有效' : this.validity + '天')
+
+        this.$refs.entitledTypeSelect.broadcast('b-option', 'select', this.entitledType)
+        this.$refs.entitledTypeSelect.selectedLabel = (this.entitledType === 'PUBLIC'
+          ? '公开-所有人可查看' : '私密-指定成员可查看')
+      } else {
+        this.TOGGLE_SHOW_SHARE_PANEL(false)
+      }
+    },
+
+    async cancelShare () {
+      this.isLoading = true
+
+      let cancelResp = await unPublishShare({
+        noteId: this.currentFile.remote_id
+      })
+
+      this.isLoading = false
+
+      if (cancelResp.data.returnCode === 200) {
+        this.TOGGLE_SHOW_SHARE_PANEL(false)
+      }
     },
 
     handleLinkFocus () {
@@ -243,7 +307,11 @@ export default {
 </script>
 
 <style lang="stylus" scoped>
+.lucency
+  opacity 0
+
 .share-panel
+  position relative
   font-size 13px
   line-height 40px
   color #999
@@ -251,6 +319,7 @@ export default {
   .link
     input
       width 320px
+      height 28px
       border 1px solid #E9E9E9
       border-radius 4px
       padding-left 10px
@@ -279,6 +348,17 @@ export default {
     color #666666
     border 1px solid #E9E9E9
     border-radius 4px
+
+.loading
+  display flex
+  width 100%
+  height 100%
+  left 0
+  top 40px
+  position absolute
+  /* justify-items center */
+  justify-content center
+  align-items center
 
 .add-mem-button
   margin-left 14px

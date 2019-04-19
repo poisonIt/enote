@@ -71,106 +71,7 @@
       <p style="font-size: 12px;margin: 50px 20px 20px">数据同步中...</p>
       <ProgressBar :value="syncProgress"></ProgressBar>
     </modal>
-    <modal
-      width="465px"
-      height="317px"
-      top="20vh"
-      transition-name="fade-in-down"
-      title="分享链接"
-      @close="closeSharePanel"
-      :visible.sync="isSharePanelShowed">
-      <div class="share-panel">
-        <p style="font-size: 12px;margin-top: -10px;">链接生成成功，复制链接分享给好友吧</p>
-        <div class="link" style="width: 100%; display: flex;">
-          <input type="text">
-          <div class="button primary">复制链接</div>
-        </div>
-        <div class="password">
-          <form>
-            <input type="checkbox" id="password-check">
-            <label for="password-check">设置密码</label>
-          </form>
-        </div>
-        <div class="validity">
-          <span class="label">有效期</span>
-          <BSelect :width="'100px'"
-            v-model="validity">
-            <b-option
-              v-for="(item, index) in validities"
-              :key="index"
-              :label="item.name"
-              :value="item.id"
-              :labelProxy="'name'"
-              :valueProxy="'id'"
-              :children="item.children">
-            </b-option>
-          </BSelect>
-        </div>
-        <div class="authority">
-          <span class="label">设置访问权限</span>
-          <BSelect :width="'150px'">
-            <b-option
-              v-for="(item, index) in authorities"
-              :key="index"
-              :label="item.name"
-              :value="item.id"
-              :labelProxy="'name'"
-              :valueProxy="'id'"
-              :children="item.children">
-            </b-option>
-          </BSelect>
-          <div class="add-mem-button" @click="showFrdPanel">
-            <div class="icon-mem"></div>
-            添加可查看成员
-          </div>
-        </div>
-        <div class="footer">
-          <!-- <span>分享至</span>
-          <span class="icon-weixin">
-            <i class="fa fa-weixin" aria-hidden="true"></i>
-          </span> -->
-          <span class="cancel-button" @click="closeSharePanel">取消分享</span>
-        </div>
-      </div>
-    </modal>
-    <modal
-      class="frd-panel"
-      width="408px"
-      height="506px"
-      top="10vh"
-      transition-name="fade-in-down"
-      title="选择微信好友"
-      @close="closeFrdPanel"
-      :visible.sync="isFrdPanelShowed">
-      <div class="content">
-        <div class="mem-list">
-          <div class="search-input">
-            <input type="text">
-          </div>
-          <ul>
-            <li class="mem-item" v-for="item in 10" :key="item">
-              <img class="avatar" src="https://avatar.saraba1st.com/images/noavatar_middle.gif" alt="">
-              <label class="name">张小仙</label>
-              <input type="checkbox">
-            </li>
-          </ul>
-        </div>
-        <div class="mem-selected">
-          <div class="title">已选择({{4}})</div>
-          <ul>
-            <li class="mem-item" v-for="item in 10" :key="item">
-              <img class="avatar" src="https://avatar.saraba1st.com/images/noavatar_middle.gif" alt="">
-              <label class="name">张小仙</label>
-              <input type="checkbox">
-            </li>
-          </ul>
-        </div>
-      </div>
-      <div class="button-group" slot="footer">
-        <div class="button primary">完成</div>
-        <div class="button" @click="isFrdPanelShowed = false">取消</div>
-      </div>
-    </modal>
+    <SharePanel></SharePanel>
   </div>
 </template>
 
@@ -187,6 +88,7 @@ import TagHandler from '@/components/TagHandler.vue'
 import Editor from '@/components/Editor'
 import FolderComp from '@/components/FolderComp.vue'
 import ProgressBar from '@/components/ProgressBar'
+import SharePanel from '@/components/Panels/SharePanel'
 import LocalDAO from '../../db/api'
 import { ipcRenderer } from 'electron'
 
@@ -204,7 +106,8 @@ export default {
     TagHandler,
     Editor,
     FolderComp,
-    ProgressBar
+    ProgressBar,
+    SharePanel
   },
 
   data () {
@@ -212,6 +115,10 @@ export default {
       isSyncPanelShowed: false,
       isFrdPanelShowed: false,
       syncProgress: 0,
+      fdSearchKey: '',
+      selectedFd: null,
+      fdList: [],
+      friendChecked: [],
       validity: '000',
       validities: [
         {
@@ -260,14 +167,31 @@ export default {
   watch: {
     validity (val) {
       console.log('watch-validity', val)
+    },
+
+    fdSearchKey (val) {
+      if (val === '') {
+        this.fdList = this.userInfo.friend_list
+      }
+
+      this.fdList = this.userInfo.friend_list
+        .filter(item => item.username.indexOf(val) > -1)
     }
   },
 
   created () {
     this.SET_FILES_FROM_LOCAL()
     LocalDAO.user.get().then(resp => {
+      console.log('userInfo', resp)
+      this.fdList = resp.friend_list
       this.SET_USER_INFO(resp)
     })
+  },
+
+  mounted () {
+    if (this.userInfo.friend_list.length > 0) {
+      this.selectedFd = this.userInfo.friend_list[0]
+    }
   },
 
   methods: {
@@ -339,6 +263,19 @@ export default {
       this.SET_VIEW_TYPE(this.viewType === 'unexpanded' ? 'expanded' : 'unexpanded')
     },
 
+    selectFdItem (item) {
+      this.selectedFd = item
+    },
+
+    handleFriendStateChange () {
+      this.friendChecked = this.userInfo.friend_list.filter(item => item.state)
+    },
+
+    handleFriendUnChecked (fd) {
+      fd.state = false
+      this.handleFriendStateChange()
+    },
+
     resetData () {
       LocalDAO.doc.removeAll()
       LocalDAO.tag.removeAll()
@@ -389,79 +326,79 @@ export default {
       text-align right
       margin-right 20px
 
-.share-panel
-  font-size 13px
-  line-height 40px
-  color #999
-  padding 20px 30px 0
-  .link
-    input
-      width 320px
-      border 1px solid #E9E9E9
-      border-radius 4px
-      padding-left 10px
-      margin-right 10px
-      outline none
-  .password
-    input[type="checkbox"]
-      margin-right 10px
-  .label
-    width 100px
-  .validity, .authority
-    display flex
-    align-items center
-  .footer
-    // display flex
-    // flex 1
-    // justify-content space-between
-    margin-top 30px
-  .cancel-button
-    width 70px
-    height 28px
-    line-height 28px
-    font-size 13px
-    text-align center
-    float right
-    color #666666
-    border 1px solid #E9E9E9
-    border-radius 4px
+// .share-panel
+//   font-size 13px
+//   line-height 40px
+//   color #999
+//   padding 20px 30px 0
+//   .link
+//     input
+//       width 320px
+//       border 1px solid #E9E9E9
+//       border-radius 4px
+//       padding-left 10px
+//       margin-right 10px
+//       outline none
+//   .password
+//     input[type="checkbox"]
+//       margin-right 10px
+//   .label
+//     width 100px
+//   .validity, .authority
+//     display flex
+//     align-items center
+//   .footer
+//     // display flex
+//     // flex 1
+//     // justify-content space-between
+//     margin-top 30px
+//   .cancel-button
+//     width 70px
+//     height 28px
+//     line-height 28px
+//     font-size 13px
+//     text-align center
+//     float right
+//     color #666666
+//     border 1px solid #E9E9E9
+//     border-radius 4px
 
-.add-mem-button
-  margin-left 14px
-  padding 0 8px
-  height 28px
-  line-height 28px
-  color #DDAF59
-  border 1px solid #DDAF59
-  border-radius 4px
-  text-align center
-  display flex
-  align-items center
+// .add-mem-button
+//   margin-left 14px
+//   padding 0 8px
+//   height 28px
+//   line-height 28px
+//   color #DDAF59
+//   border 1px solid #DDAF59
+//   border-radius 4px
+//   text-align center
+//   display flex
+//   align-items center
 
-.icon-mem
-  width 12px
-  height 12px
-  margin-right 4px
-  background-image url('../assets/images/lanhu/mem@2x.png')
-  background-size contain
-  background-position center
-  background-repeat no-repeat
+// .icon-mem
+//   width 12px
+//   height 12px
+//   margin-right 4px
+//   background-image url('../assets/images/lanhu/mem@2x.png')
+//   background-size contain
+//   background-position center
+//   background-repeat no-repeat
 
-.icon-weixin
-  width 30px
-  height 30px
-  display flex
-  align-items center
-  justify-content center
-  position absolute
-  bottom 34px
-  left 90px
-  border-radius 50%
-  font-size 16px
-  line-height 16px
-  text-align center
-  background-color #3EB135
-  color #fff
+// .icon-weixin
+//   width 30px
+//   height 30px
+//   display flex
+//   align-items center
+//   justify-content center
+//   position absolute
+//   bottom 34px
+//   left 90px
+//   border-radius 50%
+//   font-size 16px
+//   line-height 16px
+//   text-align center
+//   background-color #3EB135
+//   color #fff
 
 .expand-button
   width 70px
@@ -498,84 +435,4 @@ export default {
   &.unexpanded
     &::after
       transform translate(-50%, -50%) rotate(0)
-
-.frd-panel
-  // margin-top -20px
-  .modal__body
-    padding 0 !important
-  .content
-    position relative
-    display flex
-    flex-direction row
-    &::after
-      content ''
-      display block
-      background-color #E9E9E9
-      height 1px
-      width 408px
-      position absolute
-      bottom 0
-      left 0
-    .mem-list
-      flex .5
-      border-right 1px solid #E9E9E9
-      .search-input
-        margin 10px 0
-        position relative
-        input
-          width 151px
-          height 24px
-          line-height 24px
-          outline none
-          padding-left 30px
-          margin-left 26px
-          border 1px solid #E9E9E9
-          border-radius 16px
-        &::before
-          position absolute
-          left 36px
-          top 50%
-          transform translateY(-50%)
-          content ''
-          display block
-          width 12px
-          height 12px
-          background-image url('../assets/images/lanhu/search_normal@2x.png')
-          background-size contain
-          background-position center
-          background-repeat no-repeat
-      ul
-        height 360px
-        overflow-y scroll
-    .mem-item
-      display flex
-      height 50px
-      flex-direction row
-      justify-content space-between
-      align-items center
-      padding 0 20px
-      .avatar
-        width 34px
-        height 34px
-        border-radius 50%
-      .name
-        flex .8
-        margin 0 10px
-        font-size 12px
-        color #333333
-    .mem-selected
-      flex .5
-      ul
-        height 360px
-        overflow-y scroll
-      .title
-        font-size 12px
-        color #999
-        margin 14px 20px 13px
-  .button-group
-    position relative
-    margin 0 auto
-    top 16px
-    left 0
-    transform none
 </style>

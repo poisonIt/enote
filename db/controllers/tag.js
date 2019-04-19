@@ -1,6 +1,6 @@
 const { remote } = require('electron')
 const { tagsDB } = remote.app.database
-import files from './files'
+import tagModel from '../models/tag'
 
 function getAll () {
   // tagsDB.remove({}, { multi: true }, (err, num) => { console.log('num', num) })
@@ -86,18 +86,37 @@ function getByFileId (fileId) {
 //   })
 // }
 
-function add (req) {
-  const { fileId, name } = req
+function add (opts) {
+  let { name, remote_id } = opts
   return new Promise((resolve, reject) => {
-    tagsDB.insert({
-      file_ids: [ fileId ],
-      name: name,
-      create_at: new Date()
-    }, (err, newDoc) => {
-      if (err) {
-        console.error(err)
+    tagsDB.findOne({ name: name }, (err, tagDoc) => {
+      console.log('tagDoc-exist', tagDoc, remote_id)
+      if (tagDoc) {
+        if (remote_id && tagDoc.remote_id !== remote_id) {
+          tagsDB.update(
+            { _id: tagDoc._id },
+            { $set: {
+              remote_id: remote_id
+            }},
+            {
+              returnUpdatedDocs: true
+            },
+            (err, num, tags) => {
+              if (err) reject(err)
+              resolve(tags[0])
+            }
+          )
+        } else {
+          resolve(tagDoc)
+        }
       } else {
-        resolve(newDoc._id)
+        tagsDB.insert(tagModel(opts), (err, newTag) => {
+          if (err) {
+            console.error(err)
+          } else {
+            resolve(newTag)
+          }
+        })
       }
     })
   })

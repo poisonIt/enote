@@ -17,11 +17,13 @@ const state = {
   files_arr: [],
   push_files_locally: [],
   doc_map: {},
+  tags_map: {},
   tags_arr: [],
   folders: {},
   stick_top_files: [],
   current_folder_id: null,
   current_file_id: null,
+  share_info: null,
   search_keyword: ''
 }
 
@@ -90,7 +92,30 @@ const mutations = {
   },
 
   SET_TAGS (state, tags) {
-    state.tags_arr = tags
+    let map = {}
+    state.tags_map = {}
+    state.tags_arr = []
+    tags.forEach(item => {
+      if (!item.note_ids) {
+        item.note_ids = []
+      }
+      if (item._id === '1ZM2YfYYigN7h740') {
+        item.note_ids = ['0beCoLNsVzcO3a6P']
+      }
+      console.log('item', item)
+      map[item._id] = item
+    })
+    for (let i in state.files_map) {
+      let file = state.files_map[i]
+      file.tags.forEach(tagId => {
+        let tag = map[tagId]
+        tags.note_ids.push(tagId)
+      })
+    }
+    state.tags_map = map
+    console.log('tags_map', state.tags_map)
+    state.tags_arr = Object.keys(state.tags_map)
+      .map(key => state.tags_map[key])
   },
 
   ADD_FILE_TAG (state, opts) {
@@ -248,6 +273,10 @@ const mutations = {
 
   SAVE_STICK_TOP_FILES (state) {
     LocalDAO.tops.save(state.stick_top_files)
+  },
+
+  SET_SHARE_INFO (state, obj) {
+    state.share_info = obj
   }
 }
 
@@ -357,6 +386,7 @@ const actions = {
 
   SET_TAGS_FROM_LOCAL ({ commit }) {
     LocalDAO.tag.getAll().then(res => {
+      console.log('SET_TAGS_FROM_LOCAL', res)
       commit('SET_TAGS', res)
     })
   },
@@ -503,6 +533,10 @@ const actions = {
   CANCEL_STICK_TOP_FILE ({ commit }, id) {
     commit('CANCEL_STICK_TOP_FILE', id)
     commit('SAVE_STICK_TOP_FILES')
+  },
+
+  SET_SHARE_INFO ({ commit }, obj) {
+    commit('SET_SHARE_INFO', obj)
   }
 }
 
@@ -581,6 +615,10 @@ const getters = {
     return state.tags_arr
   },
 
+  GET_TAGS_MAP (state) {
+    return state.tags_map
+  },
+
   // GET_ALL_TAGS_MAP (state) {
   //   return state.tags_map
   // },
@@ -596,6 +634,10 @@ const getters = {
 
   GET_STICK_TOP_FILES (state) {
     return state.stick_top_files
+  },
+
+  GET_SHARE_INFO (state) {
+    return state.share_info
   }
 }
 

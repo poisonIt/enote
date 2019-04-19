@@ -185,9 +185,10 @@ export default {
     if (curNode) {
       this.handleItemClick(curNode)
     }
-    LocalDAO.tag.getAll().then(res => {
-      this.updateTags(res)
-    })
+    this.SET_TAGS_FROM_LOCAL()
+    // LocalDAO.tag.getAll().then(res => {
+    //   this.updateTags(res)
+    // })
   },
 
   methods: {
@@ -204,6 +205,7 @@ export default {
       'SET_VIEW_FILE_TYPE',
       'SET_CURRENT_FOLDER',
       'TOGGLE_SHOW_MOVE_PANEL',
+      'SET_TAGS_FROM_LOCAL',
       'SET_SELECTED_TAGS',
       'SET_CURRENT_NAV'
     ]),
@@ -426,12 +428,11 @@ export default {
     },
 
     updateTags (allTags) {
+      console.log('allTags', allTags)
       this.$set(
         this.nav[2],
         'children',
-        allTags.filter(item => item.file_ids.length > 0).sort((a, b) => {
-          return a.create_at.getTime() - b.create_at.getTime()
-        }).map(item => {
+        allTags.map(item => {
           return {
             id: item._id,
             title: item.name,

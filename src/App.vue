@@ -103,6 +103,8 @@ html, body
 ul, li
   list-style-type none
 
+input[type="checkbox"]
+  outline none
 input[type="checkbox"]:checked
   position relative
 input[type="checkbox"]:checked::before

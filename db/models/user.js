@@ -9,6 +9,7 @@ function userModel (opts) {
     position_name: opts.position_name || '',
     department_id: opts.department_id || '',
     department_name: opts.department_name || '',
+    friend_list: opts.friend_list || [],
     is_sync: opts.is_sync || false,
     access_token: opts.access_token || '',
     id_token: opts.id_token || ''

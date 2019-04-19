@@ -76,7 +76,8 @@ function update (opts) {
             parent_folder: data.parent_folder !== undefined ? data.parent_folder : fileDoc.parent_folder,
             content: data.content !== undefined ? data.content : fileDoc.content,
             need_push: data.need_push !== undefined ? data.need_push : true,
-            trash: data.trash !== undefined ? data.trash : fileDoc.trash
+            trash: data.trash !== undefined ? data.trash : fileDoc.trash,
+            tags: data.tags !== undefined ? data.tags : fileDoc.tags
           }},
           {
             returnUpdatedDocs: true

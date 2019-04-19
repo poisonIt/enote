@@ -116,6 +116,8 @@ export default {
             if (resp.data.returnCode === 200) {
               resolve(resp.data.body)
             } else {
+              this.SET_IS_SYNCING(false)
+              alert(resp.data.returnMsg)
               reject(resp.data.returnMsg)
             }
           })
@@ -126,6 +128,8 @@ export default {
             if (resp.data.returnCode === 200) {
               resolve(resp.data.body)
             } else {
+              this.SET_IS_SYNCING(false)
+              alert(resp.data.returnMsg)
               reject(resp.data.returnMsg)
             }
           })

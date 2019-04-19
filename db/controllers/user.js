@@ -50,6 +50,7 @@ function update (opts) {
           position_name: opts.position_name !== undefined ? opts.position_name : userDoc.position_name,
           department_id: opts.department_id !== undefined ? opts.department_id : userDB.department_id,
           department_name: opts.department_name !== undefined ? opts.department_name : userDoc.department_name,
+          friend_list: opts.friend_list !== undefined ? opts.friend_list : userDoc.friend_list,
           is_sync: opts.is_sync !== undefined ? opts.is_sync : userDoc.is_sync,
           access_token: opts.access_token !== undefined ? opts.access_token : userDoc.access_token,
           id_token: opts.id_token !== undefined ? opts.id_token : userDoc.id_token

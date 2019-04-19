@@ -30,8 +30,10 @@ import { ipcRenderer } from 'electron'
 import { 
   authenticate,
   getUserInfo,
+  getFriendList,
   pullNotebooks,
-  pullNote
+  pullNote,
+  pullTags
 } from '../service'
 import LocalDAO from '../../db/api'
 
@@ -50,65 +52,120 @@ export default {
     postData () {
       if (this.isLoading) return
       this.isLoading = true
+      const { username, password } = this
+
       authenticate({
-        username: this.username,
-        password: this.password
+        username: username,
+        password: password
       }).then(resp => {
-        console.log('authenticate', resp)
         if (resp.data.returnCode === 200) {
           const id_token = resp.data.body.id_token
-          getUserInfo(id_token).then(userResp => {
-            console.log('user-resp', userResp)
-            if (userResp.data.returnCode === 200) {
-              let userData = userResp.data.body
-              let userDataTransed = {
-                username: userData.userName,
-                password: this.password,
-                access_token: userData.accessToken,
-                account_name_cn: userData.accountNameCN,
-                department_id: userData.departmentId,
-                department_name: userData.departmentName,
-                image_url: userData.imageUrl,
-                is_sync: userData.isSync,
-                oa_id: userData.oaId,
-                position_id: userData.positionId,
-                position_name: userData.positionName,
-                id_token: id_token
-              }
-  
-              LocalDAO.user.update(userDataTransed).then(res => {
-                this.isLoading = true
-              })
-            } else {
-              alert(userResp.data.returnMsg)
-            }
-          })
-          Promise.all([pullNotebooks(id_token), pullNote(id_token)]).then(pullResp => {
+
+          Promise.all([
+            this.pullUserInfo(id_token, username, password),
+            pullNotebooks(id_token),
+            pullNote(id_token),
+            pullTags(id_token)
+          ]).then(pullResp => {
+            console.log('pullResp', pullResp)
             LocalDAO.files.removeAll().then(() => {
-              let pullNoteBooksTask = pullResp[0].data.body
+              if (pullResp[0].returnMsg !== 'success') {
+                alert(`获取用户信息：${pullResp[0].returnMsg}`)
+                this.isLoading = false
+                return
+              }
+
+              if (pullResp[1].data.returnMsg !== 'success') {
+                alert(`获取笔记本：${pullResp[1].data.returnMsg}`)
+                this.isLoading = false
+                return
+              }
+
+              if (pullResp[2].data.returnMsg !== 'success') {
+                alert(`获取笔记：${pullResp[2].data.returnMsg}`)
+                this.isLoading = false
+                return
+              }
+
+              if (pullResp[3].data.returnMsg !== 'success') {
+                alert(`获取标签：${pullResp[3].data.returnMsg}`)
+                this.isLoading = false
+                return
+              }
+
+              const saveUserInfoTask = LocalDAO.user.update(pullResp[0].userData)
+
+              const saveNoteBooksTask = pullResp[1].data.body
                 .map(item => LocalDAO.files.add(this.transNoteBookData(item)))
 
-              let pullNoteTask = pullResp[1].data.body
+              const saveNoteTask = pullResp[2].data.body
                 .map(item => LocalDAO.files.add(this.transNoteData(item)))
 
-              Promise.all([...pullNoteBooksTask, ...pullNoteTask])
+              const saveTagTask = pullResp[3].data.body
+                .map(item => LocalDAO.tag.add(this.transTagData(item)))
+
+              Promise.all([saveUserInfoTask, ...saveNoteBooksTask, ...saveNoteTask, ...saveTagTask])
                 .then(saveLocalRes => {
                   console.log('saveLocalRes', saveLocalRes)
-                  this.goHome()
+                  this.isLoading = false
+                  // setTimeout(() => {
+                    this.goHome()
+                  // }, 10000)
                 })
             })
           })
         } else {
-          alert('wrong!')
+          alert(resp.data.returnMsg)
           this.isLoading = false
         }
       })
+    },
+
+    async pullUserInfo (id_token, username, password) {
+      const userInfoResp = await getUserInfo(id_token)
+      if (userInfoResp.data.returnCode !== 200) {
+        return {
+          returnMsg: userInfoResp.data.returnMsg
+        }
+      }
+
+      const friendResp = await getFriendList(id_token)
+      if (friendResp.data.returnCode !== 200) {
+        return {
+          returnMsg: friendResp.data.returnMsg
+        }
+      }
+
+      const userDataTransed = this.transUserData(userInfoResp.data.body)
+      userDataTransed.password = password
+      userDataTransed.id_token = id_token
+      userDataTransed.friend_list = friendResp.data.body
+      console.log('userDataTransed', userDataTransed)
+      return {
+        userData: userDataTransed,
+        returnMsg: friendResp.data.returnMsg
+      }
     },
 
     goHome () {
       ipcRenderer.send('changeWindow', {
         name: 'home'
       })
+    },
+
+    transUserData (obj) {
+      return {
+        username: obj.userName,
+        access_token: obj.accessToken,
+        account_name_cn: obj.accountNameCN,
+        department_id: obj.departmentId,
+        department_name: obj.departmentName,
+        image_url: obj.imageUrl,
+        is_sync: obj.isSync,
+        oa_id: obj.oaId,
+        position_id: obj.positionId,
+        position_name: obj.positionName
+      }
     },
 
     transNoteBookData (obj) {
@@ -139,6 +196,13 @@ export default {
         file_size: obj.size,
         content: obj.noteContent,
         need_push: false
+      }
+    },
+
+    transTagData (obj) {
+      return {
+        name: obj.tagName,
+        remote_id: obj.tagId
       }
     }
   }

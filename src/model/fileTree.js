@@ -64,7 +64,7 @@ export default class FileTree {
     if (data.cache_id) {
       let parentFolder = this.map[newFile.parent_folder] || this.root
       parentFolder.getAncestorFolders()
-      this.arr[this.arr.indexOf(parentFolder)] = parentFolder
+      // this.arr[this.arr.indexOf(parentFolder)] = parentFolder
       this.flat_map[newFile.id] = createFlatFile(newFile)
       this.flat_map[parentFolder.id] = createFlatFile(parentFolder)
     }
@@ -218,7 +218,8 @@ function createFlatFile (file) {
     _child_folders: file._child_folders,
     child_docs: file.child_docs,
     content: file.content,
-    file_size: file.file_size
+    file_size: file.file_size,
+    tags: file.tags || []
   }
 }
 

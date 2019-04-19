@@ -36,7 +36,7 @@
           :content="item.brief"
           :isTop="stickTopFiles.indexOf(item.id) > -1"
           :update_at="item.update_at | yyyymmdd"
-          :file_size="Number(item.file_size || 0)"
+          :file_size="Number(item.content.length)"
           :parent_folder="getParentFolderTitle(item)"
           :need_push="item.need_push_remotely"
           :need_push_local="item.need_push_locally"
@@ -168,6 +168,7 @@ export default {
       viewFileListType: 'GET_VIEW_FILE_LIST_TYPE',
       viewFileSortType: 'GET_VIEW_FILE_SORT_TYPE',
       viewFileSortOrder: 'GET_VIEW_FILE_SORT_ORDER',
+      tagsMap: 'GET_TAGS_MAP',
       selectedTags: 'GET_SELECTED_TAGS',
       currentNav: 'GET_CURRENT_NAV'
     })
@@ -198,9 +199,6 @@ export default {
         console.log('this.fileList', this.fileList)
         this.list = this.fileList.filter(item => item.trash === 'NORMAL'
           && (item.parent_folder === val.id || item.parent_folder === val.remote_id))
-      }
-      if (val.link === 'tag') {
-        
       }
       if (val.link === 'recycle') {
         this.list = this.fileList.filter(item => item.trash === 'TRASH')
@@ -240,19 +238,17 @@ export default {
     },
 
     selectedTags (val) {
-      // console.log('watch-selectedTags', val)
-      // return
-      // let list = []
-      // if (this.viewFileType === 'tags') {
-      //   if (val.length === 0) {
-      //     list = this.latestFiles
-      //   } else {
-      //     list = this.latestFiles.filter(item => intersection(item.tags, val).length === val.length)
-      //   }
-      // } else {
-      //   return
-      // }
-      // this.fileList = this.fileListSortFunc(clone(list))
+      console.log('watch-selectedTags', val)
+      let tagNotes = val.map(tagId => this.tagsMap[tagId].note_ids)
+      if (tagNotes.length === 0) {
+        this.list = this.fileList
+      } else {
+        let fileIds = tagNotes[0]
+        tagNotes.forEach(item => {
+          fileIds = intersection(fileIds, item)
+        })
+        this.list = fileIds.map(item => this.allFileMap[item])
+      }
     },
 
     fileList (val, oldVal) {

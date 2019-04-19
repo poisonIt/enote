@@ -57,6 +57,9 @@
 <script>
 import dayjs from 'dayjs'
 import { mapGetters, mapActions } from 'vuex'
+import {
+  publishShare
+} from '../service'
 
 export default {
   name: 'FileHandler',
@@ -77,7 +80,8 @@ export default {
       currentFile: 'GET_CURRENT_FILE',
       viewType: 'GET_VIEW_TYPE',
       viewFileType: 'GET_VIEW_FILE_TYPE',
-      isTagShowed: 'GET_SHOW_TAG_HANDLER'
+      isTagShowed: 'GET_SHOW_TAG_HANDLER',
+      userInfo: 'GET_USER_INFO'
     })
   },
 
@@ -128,16 +132,17 @@ export default {
 
   methods: {
     ...mapActions([
-      'SAVE_FILE_TITLE',
+      'EDIT_FILE',
       'TOGGLE_SHOW_TAG_HANDLER',
-      'TOGGLE_SHOW_SHARE_PANEL'
+      'TOGGLE_SHOW_SHARE_PANEL',
+      'SET_SHARE_INFO'
     ]),
 
     handleInputBlur () {
       this.isInputFocused = false
-      this.SAVE_FILE_TITLE({
+      this.EDIT_FILE({
         id: this.currentFile.id,
-        title: this.titleValue
+        title: this.titleValue !== '' ? this.titleValue : '无标题笔记'
       })
     },
 
@@ -202,7 +207,18 @@ export default {
     },
 
     share () {
-      this.TOGGLE_SHOW_SHARE_PANEL(true)
+      publishShare(this.userInfo.id_token, {
+        noteId: this.currentFile.remote_id
+      }).then(resp => {
+        console.log('publishShare-resp', resp)
+        if (resp.data.returnCode === 200) {
+          this.SET_SHARE_INFO(resp.data.body)
+          console.log('publishShare-resp-1111')
+          this.TOGGLE_SHOW_SHARE_PANEL(true)
+        } else {
+          alert(resp.data.returnMsg)
+        }
+      })
     },
 
     showTag () {

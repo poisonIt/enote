@@ -17,6 +17,14 @@ export function getUserInfo (token) {
   })
 }
 
+export function getFriendList (token) {
+  return axios.get(baseUrl + '/user/all', {
+    headers: {
+      'Authorization': 'Bearer' + token
+    }
+  })
+}
+
 export function pullNotebooks (token) {
   return axios.get(baseUrl + '/noteBook/notebooks', {
     headers: {
@@ -33,8 +41,17 @@ export function pullNote (token) {
   })
 }
 
+export function pullTags (token) {
+  console.log('pullTags', token)
+  return axios.get(baseUrl + '/note/tag/tags', {
+    headers: {
+      'Authorization': 'Bearer' + token
+    }
+  })
+}
+
 export function pushNotebook (token, params) {
-  console.log('pushNotebook', token, params)
+  console.log('pushNotebook', params)
   return axios.post(baseUrl + '/noteBook/pushNotebook', params, {
     headers: {
       'Content-Type': 'application/json',
@@ -44,7 +61,7 @@ export function pushNotebook (token, params) {
 }
 
 export function pushNote (token, params) {
-  console.log('pushNote', token, params)
+  console.log('pushNote', params)
   return axios.post(baseUrl + '/note/pushNote', params, {
     headers: {
       'Content-Type': 'application/json',
@@ -52,3 +69,14 @@ export function pushNote (token, params) {
     }
   })
 }
+
+export function publishShare (token, params) {
+  console.log('publishShare', params)
+  return axios.post(baseUrl + '/share/publish', params, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer' + token
+    }
+  })
+}
+

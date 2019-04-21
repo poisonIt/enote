@@ -12,6 +12,7 @@ const isDevelopment = process.env.NODE_ENV !== 'production'
 // be closed automatically when the JavaScript object is garbage collected.
 let win
 let loginWin
+let youdaoWin
 
 let template = [{
   label: '编辑',
@@ -195,6 +196,38 @@ function createHomeWindow () {
   })
 }
 
+function createYoudaoAsyncWindow () {
+  const youdaoAsyncUrl = 'https://note.youdao.com/oauth/authorize2?client_id=838948a8e2be4d35f253cb82f2687d15&response_type=code&redirect_uri=https://iapp.htffund.com/&state=123'
+  // Create the browser window.
+  youdaoWin = new BrowserWindow({
+    width: 960,
+    height: 640,
+    title: '绑定有道云账号',
+    // frame: false,
+    // titleBarStyle: 'hidden',
+    webPreferences: {
+      nodeIntegration: false,
+      webSecurity: false
+    }
+  })
+  youdaoWin.setMinimumSize(960, 640)
+
+  if (process.env.WEBPACK_DEV_SERVER_URL) {
+    // Load the url of the dev server if in development mode
+    youdaoWin.loadURL(youdaoAsyncUrl)
+    // if (!process.env.IS_TEST) youdaoWin.webContents.openDevTools()
+  } else {
+    createProtocol('app')
+    // Load the index.html when not in development
+    youdaoWin.loadURL(youdaoAsyncUrl)
+  }
+
+  youdaoWin.on('closed', () => {
+    youdaoWin.loadURL(youdaoAsyncUrl)
+    youdaoWin = null
+  })
+}
+
 ipcMain.on('changeWindow', (event, arg) => {
   if (arg.name === 'home') {
     loginWin && loginWin.close()
@@ -203,6 +236,12 @@ ipcMain.on('changeWindow', (event, arg) => {
   if (arg.name === 'login') {
     win && win.close()
     createLoginWindow()
+  }
+})
+
+ipcMain.on('createWindow', (event, arg) => {
+  if (arg.name === 'youdao') {
+    createYoudaoAsyncWindow(arg.userCode)
   }
 })
 

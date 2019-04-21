@@ -1,28 +1,53 @@
 <template>
-  <div id="editor" ref="container">
-    <div id="editor-container"></div>
+  <div id="editor-container">
+    <textarea name="content" ref="editor" id="editor" @blur="() => {console.log('blur')}"></textarea>
     <div class="mask" v-show="showMask"></div>
+    <!-- <ckeditor
+      :editor="editor"
+      v-model="editorHtml"
+      @ready="onEditorReady"
+      @input="handleEditorInput"
+      @blur="saveData"
+      :config="editorConfig">
+    </ckeditor> -->
   </div>
 </template>
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
-import '@/assets/styles/editor.css'
-import mixins from '../mixins'
-import LocalDAO from '../../../../db/api';
+import ClassicEditor from '@ckeditor/ckeditor5-build-classic'
+import uploadAdapter from './upload'
+// import Autosave from '@ckeditor/ckeditor5-autosave/src/autosave'
+import '@ckeditor/ckeditor5-build-classic/build/translations/zh-cn'
+import '../../../assets/styles/editor.css'
 
 export default {
   name: 'EditorComp',
 
-  mixins: mixins,
-
   data () {
     return {
+      showMask: true,
       editor: null,
-      writer: null,
-      fileId: null,
-      isInit: false,
-      showMask: true
+      editorInstance: null,
+      editor: ClassicEditor,
+      editorHtml: '<p></p>',
+      editorConfig: {
+        // toolbar: [ 'undo', 'redo', 'heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', 'highlight:yellowMarker' ],
+        language: 'zh-cn'
+        // plugins: [
+        //   Autosave
+        // ],
+        // autosave: {
+        //   save (editor) {
+        //     console.log(Array.from( editor.ui.componentFactory.names()))
+        //     console.log('autosave', editor.getData())
+        //     // return editor.getData()
+        //     // The saveData() function must return a promise
+        //     // which should be resolved when the data is successfully saved.
+        //     return saveData(editor.getData())
+        //   }
+        // },
+      }
     }
   },
 
@@ -36,23 +61,36 @@ export default {
   },
 
   watch: {
-    currentFile (val) {
-      console.log('currentFile-watch', val)
-      // this.SET_EDITOR_CONTENT_CACHE(val.content)
-      // this.editor.setData(val)
+    currentFile (val, oldVal) {
+      console.log('watch-currentFile', val)
+      if (oldVal && oldVal.type === 'doc' && this.editor.getData) {
+        let editorData = this.editor.getData()
+        if (this.editor.getData() !== this.contentCache) {
+          this.EDIT_DOC({
+          id: oldVal.id,
+          content: this.editor.getData()
+        })
+        }
+      }
+      if (val && val.type === 'doc') {
+        this.showMask = true
+        setTimeout(() => {
+          this.initEditor()
+        }, 300)
+      }
+    },
+
+    content (val) {
+      this.editorHtml = val
     },
 
     viewType (val) {
-      console.log('watch-viewType', val)
       this.handleResize()
     }
   },
 
   mounted () {
-    this.initEditor()
-    this.$hub.pool.push(() => {
-      this.handleResize()
-    })
+    // this.initEditor()
   },
 
   methods: {
@@ -64,111 +102,66 @@ export default {
     ]),
 
     initEditor () {
-      // console.log(CKEDITOR)
-      console.log('initEditor', this.editor)
-      this.editor = CKEDITOR.replace('editor-container', {
-        uiColor: '#FFFFFF',
-        toolbarGroups: [
-          { name: 'undo', groups: [ 'undo', 'basicstyles', 'colors', 'cleanup', 'list', 'indent', 'blocks', 'links', 'insert', 'tools' ] },
-          '/',
-          { name:  'styles', groups: [ 'styles' ] }
-        ],
-        removeButtons: 'Source,NewPage,Preview,Print,Templates,Save,Cut,Copy,Paste,PasteText,PasteFromWord,SelectAll,Scayt,Replace,Form,Checkbox,Radio,TextField,Textarea,Select,Button,ImageButton,HiddenField,Anchor,Unlink,Flash,HorizontalRule,Smiley,SpecialChar,PageBreak,Iframe,CopyFormatting'
-      })
-      this.editor.on('instanceReady', (ev) => {
-        // ev.editor.fire('contentDom');
-        this.onEditorReady()
-      })
-      this.editor.on('change', () => {
-        console.log('change', this.editor.getData())
-        // this.content = this.editor.getData()
-        // this.SET_EDITOR_CONTENT_CACHE(this.editor.getData())
-      })
-      this.editor.on('dataReady', () => {
-        console.log('dataReady', this.editor.getData())
-        // this.editor.resetUndo()
-      })
-      this.editor.on('blur', () => {
-        // this.saveData()
-        // this.editor.resetUndo()
-      })
-      // this.editor.on('beforeDestroy', () => {
-      //   console.log('beforeDestroy')
-      //   // this.saveData()
-      //   // this.editor.resetUndo()
-      // })
-      this.editor.on('destroy', () => {
-        console.log('destroy')
-        this.showMask = true
-        // this.editor.resetUndo()
-      })
-      // this.editor.on('afterSetData', () => {
-      //   console.log('afterSetData', this.isInit)
-      //   if (this.isInit) {
-      //     this.editor.resetUndo()
-      //     this.isInit = false
-      //   }
-      //   // this.editor.resetUndo()
-      // })
-      console.log('ready', this.$remote.globalShortcut)
-      // this.$remote.globalShortcut.register('CommandOrControl+A', () => {
-      //   this.editor.setData('<p>aaa</p>')
-      // })
-      // const editorParser = new CKEDITOR.htmlParser()
-      // console.log('editorParser-1111', editorParser.parse('<!-- Example --><b>Hello</b>'))
-      // this.editor.on('blur', () => {
-      //   console.log('blur')
-      //   this.saveData()
-      // })
+      if (this.editor.destroy) {
+        this.editor.destroy()
+        this.editor = null
+      }
+      ClassicEditor
+        .create(this.$refs.editor, {
+          language: 'zh-cn',
+          // toolbar: [ 'undo', 'redo', 'heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', 'highlight:yellowMarker', 'Image' ],
+          extraPlugins: [ uploadAdapter ]
+        })
+        .then(editor => {
+          this.editor = editor
+          console.log('instances', this.editor.destroy)
+          console.log('editor', this.editor, this.currentFile)
+          this.editor.setData(this.currentFile.content || '')
+          this.editor.model.document.on('change:data', () => {
+            console.log('change')
+          })
+          this.editor.on('blur', () => {
+            console.log('blur')
+          })
+          this.SET_EDITOR_CONTENT_CACHE(this.currentFile.content)
+          this.showMask = false
+        })
+        .catch(error => {
+          console.error(error)
+        })
     },
 
-    onEditorReady () {
-      console.log('editorReady', this.content, this.contentCache, this.isInit)
-      this.SET_EDITOR_CONTENT_CACHE(this.currentFile.content)
-      this.isInit = true
-      this.editor.setData(this.currentFile.content || '')
-      setTimeout(() => {
-        this.editor.resetUndo()
-      }, 30)
-      setTimeout(() => {
-        this.showMask = false
-      }, 300)
-      this.fileId = this.currentFile.id
+    onEditorReady (editor) {
+      this.editorInstance = editor
       this.handleResize()
+      this.$hub.pool.push(() => {
+        this.handleResize()
+      })
+    },
+
+    handleEditorInput () {
+      // console.log('handleEditorInput', this.editorInstance.getData())
     },
 
     saveData () {
-      console.log('saveData', this.editor.getData(), '1111', this.contentCache, '2222', this.editor.getData() === this.contentCache)
-      if (this.editor.getData() !== this.contentCache) {
-        // this.EDIT_FILE({
-        //   id: this.currentFile.id,
-        //   content: this.content
-        // })
-        this.EDIT_DOC({
-          id: this.fileId,
-          content: this.editor.getData()
-        })
-      }
-      // this.SAVE_DOC({
-      //   id: this.currentFile.id,
-      //   html: this.editor.getData()
-      // })
+      console.log('saveData')
+      this.SAVE_DOC({
+        id: this.currentFile.id,
+        html: this.editorHtml
+      })
     },
 
     handleResize () {
-      let space = this.viewType === 'expanded' ? 540 : 390
-      let w = document.body.clientWidth - space
-      this.$refs.container.style.width = w + 'px'
-
-      let h = document.body.clientHeight - document.getElementsByClassName('cke_top cke_reset_all')[0].getBoundingClientRect().height - 80
-      this.editor.resize(w, h, true)
+      console.log('handleResize')
+      let space = this.viewType === 'expanded' ? 500 : 360
+      document.getElementsByClassName('ck-content')[0].style.width = document.body.clientWidth - space + 'px'
     }
   }
 }
 </script>
 
 <style lang="stylus" scoped>
-#editor
+#editor-container
   position relative
 .mask
   position absolute
@@ -177,4 +170,5 @@ export default {
   top 0
   left 0
   background-color #fff
+  z-index 99999
 </style>

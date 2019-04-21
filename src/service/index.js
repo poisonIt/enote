@@ -53,3 +53,9 @@ export function unPublishShare (params) {
   })
 }
 
+export function uploadFile (file) {
+  console.log('uploadFile', file)
+  const data = new FormData()
+  data.append('upload', file)
+  return axios.post('/file/upload', data)
+}

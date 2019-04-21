@@ -89,6 +89,8 @@ export default {
 </script>
 
 <style lang="stylus">
+$themeColor = #DDAF59
+
 *
   padding 0
   margin 0

@@ -1,7 +1,7 @@
 import Vue from 'vue'
 
 export default new Vue({
-  data () {
+  data() {
     return {
       pool: [],
       cbs: {}
@@ -9,7 +9,7 @@ export default new Vue({
   },
 
   watch: {
-    pool (val) {
+    pool(val) {
       window.onresize = () => {
         for (let i in this.pool) {
           this.pool[i]()
@@ -19,8 +19,10 @@ export default new Vue({
   },
 
   methods: {
-    hookHub (eventName, from, cb) {
-      let { cbs } = this
+    hookHub(eventName, from, cb) {
+      let {
+        cbs
+      } = this
 
       if (!cbs[eventName]) {
         cbs[eventName] = {}
@@ -37,8 +39,12 @@ export default new Vue({
       }
     },
 
-    dispatchHub (eventName, from, params) {
-      let { cbs } = this
+    dispatchHub(eventName, from, params) {
+      let {
+        cbs
+      } = this
+
+      console.log('dispatchHub', cbs, eventName)
 
       if (cbs[eventName].hasOwnProperty(from.$options._componentTag)) {
         this.$emit(eventName, from.$options._componentTag, params)

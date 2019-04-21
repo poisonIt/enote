@@ -14,6 +14,7 @@ import { Message } from 'iview'
 import '@/assets/css/font-awesome.min.css'
 import 'iview/dist/styles/iview.css'
 import '@/assets/styles/iview.styl'
+import '@/assets/styles/common.styl'
 
 const { remote, shell, webFrame } = require('electron')
 console.log(remote.app.getAppPath())

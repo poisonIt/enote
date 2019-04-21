@@ -37,7 +37,7 @@
         <div class="button" @click="closeMovePanel">取消</div>
       </div>
     </modal>
-    <modal
+    <!-- <modal
       width="380px"
       height="240px"
       top="30vh"
@@ -59,8 +59,8 @@
           <span>{{ userInfo.position_name }}</span>
         </div>
       </div>
-    </modal>
-    <modal
+    </modal> -->
+    <!-- <modal
       width="500px"
       height="280px"
       top="32vh"
@@ -70,7 +70,8 @@
       :visible.sync="isSyncPanelShowed">
       <p style="font-size: 12px;margin: 50px 20px 20px">数据同步中...</p>
       <ProgressBar :value="syncProgress"></ProgressBar>
-    </modal>
+    </modal> -->
+    <UserPanel></UserPanel>
     <SharePanel></SharePanel>
   </div>
 </template>
@@ -87,7 +88,8 @@ import FileHandler from '@/components/FileHandler.vue'
 import TagHandler from '@/components/TagHandler.vue'
 import Editor from '@/components/Editor'
 import FolderComp from '@/components/FolderComp.vue'
-import ProgressBar from '@/components/ProgressBar'
+// import ProgressBar from '@/components/ProgressBar'
+import UserPanel from '@/components/Panels/UserPanel'
 import SharePanel from '@/components/Panels/SharePanel'
 import LocalDAO from '../../db/api'
 import { ipcRenderer } from 'electron'
@@ -106,7 +108,8 @@ export default {
     TagHandler,
     Editor,
     FolderComp,
-    ProgressBar,
+    // ProgressBar,
+    UserPanel,
     SharePanel
   },
 
@@ -327,80 +330,6 @@ export default {
       color #999999
       text-align right
       margin-right 20px
-
-// .share-panel
-//   font-size 13px
-//   line-height 40px
-//   color #999
-//   padding 20px 30px 0
-//   .link
-//     input
-//       width 320px
-//       border 1px solid #E9E9E9
-//       border-radius 4px
-//       padding-left 10px
-//       margin-right 10px
-//       outline none
-//   .password
-//     input[type="checkbox"]
-//       margin-right 10px
-//   .label
-//     width 100px
-//   .validity, .authority
-//     display flex
-//     align-items center
-//   .footer
-//     // display flex
-//     // flex 1
-//     // justify-content space-between
-//     margin-top 30px
-//   .cancel-button
-//     width 70px
-//     height 28px
-//     line-height 28px
-//     font-size 13px
-//     text-align center
-//     float right
-//     color #666666
-//     border 1px solid #E9E9E9
-//     border-radius 4px
-
-// .add-mem-button
-//   margin-left 14px
-//   padding 0 8px
-//   height 28px
-//   line-height 28px
-//   color #DDAF59
-//   border 1px solid #DDAF59
-//   border-radius 4px
-//   text-align center
-//   display flex
-//   align-items center
-
-// .icon-mem
-//   width 12px
-//   height 12px
-//   margin-right 4px
-//   background-image url('../assets/images/lanhu/mem@2x.png')
-//   background-size contain
-//   background-position center
-//   background-repeat no-repeat
-
-// .icon-weixin
-//   width 30px
-//   height 30px
-//   display flex
-//   align-items center
-//   justify-content center
-//   position absolute
-//   bottom 34px
-//   left 90px
-//   border-radius 50%
-//   font-size 16px
-//   line-height 16px
-//   text-align center
-//   background-color #3EB135
-//   color #fff
 
 .expand-button
   width 70px

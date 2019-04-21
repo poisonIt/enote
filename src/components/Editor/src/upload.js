@@ -10,13 +10,13 @@ class MyUploadAdapter {
   upload () {
     console.log('upload', this.loader)
 
-    // return uploadFile(this.loader.file)
+    return uploadFile(this.loader.file)
 
-    return new Promise ((resolve, reject) => {
-      resolve({
-        default: 'file:///' + this.loader.file.path
-      })
-    })
+    // return new Promise ((resolve, reject) => {
+    //   resolve({
+    //     default: 'file:///' + this.loader.file.path
+    //   })
+    // })
   }
 
   // Aborts the upload process.

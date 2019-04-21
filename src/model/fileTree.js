@@ -15,6 +15,7 @@ export default class FileTree {
     // this.isInit = true
     this.root = new File({
       data: {
+        _id: '/',
         title: '我的文件夹',
         type: 'folder'
       },
@@ -206,6 +207,7 @@ function createFlatFile (file) {
     depth: file.depth || 0,
     title: file.title,
     parent_folder: file.parent_folder,
+    parentFolder: file.parentFolder,
     ancestor_folders: file.ancestor_folders,
     trash: file.trash,
     link: file.link,

@@ -5,6 +5,9 @@ export default class File {
     this.need_push_remotely = opts.need_push_remotely === undefined
       ? opts.need_push_remotely : true
 
+    this.ancestor_folders = []
+    this.parentFolder = null
+
     for (let name in opts) {
       if (opts.hasOwnProperty(name)) {
         this[name] = opts[name]
@@ -22,7 +25,7 @@ export default class File {
   }
 
   getAncestorFolders () {
-    if (this.depth !== 0) {
+    if (this.depth !== 0) { 
       let parentFolder = this.store.map[this.parent_folder]
       if (!parentFolder && this.parent_folder !== '/') {
         this.update({
@@ -35,6 +38,8 @@ export default class File {
       if (this.type === 'folder') {
         this.depth = parentFolder.depth + 1
       }
+      this.parentFolder = parentFolder
+      this.ancestor_folders = [...parentFolder.ancestor_folders, parentFolder]
     }
 
     let l = this.depth === 0 ? '/' : this.id
@@ -46,12 +51,14 @@ export default class File {
         .sort((a, b) => a.seq - b.seq)
 
       this._child_folders = this.child_folders.map(item => item.id)
-      this.child_folders.forEach(child => {
-        let idx = this._child_folders.indexOf(child.id)
-        if (child.seq !== idx) {
-          child.update({
-            seq: idx
-          })
+      this.child_files.forEach(child => {
+        if (child.type === 'folder') {
+          let idx = this._child_folders.indexOf(child.id)
+          if (child.seq !== idx) {
+            child.update({
+              seq: idx
+            })
+          }
         }
         child.getAncestorFolders()
       })
@@ -148,6 +155,8 @@ function updateChildDepth (file, change) {
   file.child_folders.forEach(item => {
     let child = file.store.map[item]
     child.depth += change
+    child.parentFolder = file
+    child.ancestor_folders = [...file.ancestor_folders, file]
     updateChildDepth(child, change)
   })
 }

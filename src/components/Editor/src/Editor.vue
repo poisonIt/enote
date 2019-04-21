@@ -1,15 +1,7 @@
 <template>
   <div id="editor-container">
-    <textarea name="content" ref="editor" id="editor" @blur="() => {console.log('blur')}"></textarea>
+    <textarea name="content" ref="editor" id="editor"></textarea>
     <div class="mask" v-show="showMask"></div>
-    <!-- <ckeditor
-      :editor="editor"
-      v-model="editorHtml"
-      @ready="onEditorReady"
-      @input="handleEditorInput"
-      @blur="saveData"
-      :config="editorConfig">
-    </ckeditor> -->
   </div>
 </template>
 
@@ -17,7 +9,7 @@
 import { mapGetters, mapActions } from 'vuex'
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic'
 import uploadAdapter from './upload'
-// import Autosave from '@ckeditor/ckeditor5-autosave/src/autosave'
+import Autosave from '@ckeditor/ckeditor5-autosave/src/autosave'
 import '@ckeditor/ckeditor5-build-classic/build/translations/zh-cn'
 import '../../../assets/styles/editor.css'
 
@@ -26,28 +18,12 @@ export default {
 
   data () {
     return {
+      cachedDoc: {
+        id: '',
+        content: ''
+      },
       showMask: true,
-      editor: null,
-      editorInstance: null,
-      editor: ClassicEditor,
-      editorHtml: '<p></p>',
-      editorConfig: {
-        // toolbar: [ 'undo', 'redo', 'heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', 'highlight:yellowMarker' ],
-        language: 'zh-cn'
-        // plugins: [
-        //   Autosave
-        // ],
-        // autosave: {
-        //   save (editor) {
-        //     console.log(Array.from( editor.ui.componentFactory.names()))
-        //     console.log('autosave', editor.getData())
-        //     // return editor.getData()
-        //     // The saveData() function must return a promise
-        //     // which should be resolved when the data is successfully saved.
-        //     return saveData(editor.getData())
-        //   }
-        // },
-      }
+      editor: {},
     }
   },
 
@@ -62,16 +38,6 @@ export default {
 
   watch: {
     currentFile (val, oldVal) {
-      console.log('watch-currentFile', val)
-      if (oldVal && oldVal.type === 'doc' && this.editor.getData) {
-        let editorData = this.editor.getData()
-        if (this.editor.getData() !== this.contentCache) {
-          this.EDIT_DOC({
-          id: oldVal.id,
-          content: this.editor.getData()
-        })
-        }
-      }
       if (val && val.type === 'doc') {
         this.showMask = true
         setTimeout(() => {
@@ -89,19 +55,17 @@ export default {
     }
   },
 
-  mounted () {
-    // this.initEditor()
-  },
-
   methods: {
     ...mapActions([
       'SAVE_DOC',
       'EDIT_DOC',
       'SET_EDITOR_CONTENT_CACHE',
+      'SET_CACHED_DOC',
       'EDIT_FILE'
     ]),
 
     initEditor () {
+      const _self = this
       if (this.editor.destroy) {
         this.editor.destroy()
         this.editor = null
@@ -110,20 +74,35 @@ export default {
         .create(this.$refs.editor, {
           language: 'zh-cn',
           // toolbar: [ 'undo', 'redo', 'heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', 'highlight:yellowMarker', 'Image' ],
-          extraPlugins: [ uploadAdapter ]
+          extraPlugins: [ uploadAdapter, Autosave ],
+          autosave: {
+            save (editor) {
+              let editorData = editor.getData()
+              if (editorData !== _self.cachedDoc.content) {
+                if (_self.currentFile === _self.cachedDoc.id) {
+                  _self.EDIT_DOC({
+                    id: _self.cachedDoc.id,
+                    content: editorData
+                  })
+                  _self.cachedDoc.content = editorData
+                } else {
+                  _self.EDIT_DOC({
+                    id: _self.cachedDoc.id,
+                    content: editorData
+                  })
+                  _self.cachedDoc.content = editorData
+                }
+              }
+            }
+          },
         })
         .then(editor => {
           this.editor = editor
-          console.log('instances', this.editor.destroy)
-          console.log('editor', this.editor, this.currentFile)
           this.editor.setData(this.currentFile.content || '')
-          this.editor.model.document.on('change:data', () => {
-            console.log('change')
-          })
-          this.editor.on('blur', () => {
-            console.log('blur')
-          })
-          this.SET_EDITOR_CONTENT_CACHE(this.currentFile.content)
+          this.cachedDoc = {
+            id: this.currentFile.id,
+            content: this.currentFile.content
+          }
           this.showMask = false
         })
         .catch(error => {
@@ -139,20 +118,7 @@ export default {
       })
     },
 
-    handleEditorInput () {
-      // console.log('handleEditorInput', this.editorInstance.getData())
-    },
-
-    saveData () {
-      console.log('saveData')
-      this.SAVE_DOC({
-        id: this.currentFile.id,
-        html: this.editorHtml
-      })
-    },
-
     handleResize () {
-      console.log('handleResize')
       let space = this.viewType === 'expanded' ? 500 : 360
       document.getElementsByClassName('ck-content')[0].style.width = document.body.clientWidth - space + 'px'
     }

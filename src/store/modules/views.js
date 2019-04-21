@@ -14,6 +14,7 @@ const state = {
   show_tag_handler: false,
   editor_content: '',
   editor_content_cache: '',
+  cached_doc: '',
   current_nav: null,
   is_syncing: false
 }
@@ -45,6 +46,10 @@ const mutations = {
 
   SET_EDITOR_CONTENT_CACHE (state, content) {
     state.editor_content_cache = content
+  },
+
+  SET_CACHED_DOC (state, doc) {
+    state.cached_doc = doc
   },
 
   SET_VIEW_FILE_LIST_TYPE (state, type) {
@@ -112,6 +117,10 @@ const actions = {
 
   SET_EDITOR_CONTENT_CACHE ({ commit }, content) {
     commit('SET_EDITOR_CONTENT_CACHE', content)
+  },
+
+  SET_CACHED_DOC ({ commit }, doc) {
+    commit('SET_CACHED_DOC', doc)
   },
 
   SET_VIEW_FILE_LIST_TYPE ({ commit }, type) {
@@ -182,6 +191,10 @@ const getters = {
 
   GET_EDITOR_CONTENT_CACHE (state) {
     return state.editor_content_cache
+  },
+
+  GET_CACHED_DOC (state) {
+    return state.cached_doc
   },
 
   GET_VIEW_FILE_LIST_TYPE (state) {

@@ -307,16 +307,19 @@ export default {
     },
 
     viewFileSortType (val) {
+      console.log('viewFileSortType', val)
       return
       this.list = this.fileListSortFunc(this.list)
     },
 
     viewFileSortOrder (val) {
+      console.log('viewFileSortOrder', val)
       return
       this.list = this.fileListSortFunc(this.list)
     },
 
     stickTopFiles (val) {
+      console.log('stickTopFiles', val)
       return
       this.fileList = this.fileListSortFunc(this.list)
     }
@@ -345,41 +348,9 @@ export default {
         this.SET_CURRENT_FILE(null)
         return
       }
-      if (!this.isFirstSelect) {
-        if (this.currentFile === file) return
-        if (this.currentFile) {
-          // console.log('save_doc-11111', this ==)
-          // this.$hub.dispatchHub('initEditor', this)
-          // this.SAVE_DOC({
-          //   id: this.currentFile.id,
-          //   html: this.contentCache
-          // })
-
-          // this.EDIT_DOC({
-          //   id: this.currentFile.id,
-          //   content: this.contentCache
-          // })
-        }
-      } else {
-        this.isFirstSelect = false
-      }
       this.$refs.fileCardGroup.select(index) // visually select file
-      // const appPath = '/Users/bowiego/Documents/workspace/enote/public'
-
       if (this.currentFile !== file) {
         this.SET_CURRENT_FILE(file.id)
-        if (file.type === 'doc') {
-          // this.SET_EDITOR_CONTENT(file.content)
-          // this.SET_EDITOR_CONTENT_CACHE(file.content)
-          // this.$hub.dispatchHub('initEditor', this)
-          // LocalDAO.doc.get(file.id).then(res => {
-          //   console.log('SET_EDITOR_CONTENT', res)
-          //   this.SET_EDITOR_CONTENT(res)
-          // })
-          // readFile(`${appPath}/docs/${file.id}.xml`).then(data => {
-          //   this.SET_EDITOR_CONTENT(data.data)
-          // })
-        }
       }
     },
 

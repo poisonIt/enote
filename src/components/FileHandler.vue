@@ -33,20 +33,28 @@
       <transition name="fade-in-down">
         <div class="info" v-show="isInfoShowed">
           <div class="item">
-            <span>创建于：</span>
-            <span>{{ currentFile.create_at | date }}</span>
-          </div>
-          <div class="item">
-            <span>更新于：</span>
-            <span>{{ currentFile.update_at | date }}</span>
+            <span>名称：</span>
+            <span>{{ currentFile.title }}</span>
           </div>
           <div class="item">
             <span>作者：</span>
-            <span>张三</span>
+            <span>{{ userInfo.account_name_cn || userInfo.username }}</span>
           </div>
           <div class="item">
-            <span>文件大小：</span>
-            <span>{{ currentFile.file_size | size }}</span>
+            <span>字数：</span>
+            <span>{{ currentFile.content.length }}</span>
+          </div>
+          <div class="item">
+            <span>创建时间：</span>
+            <span>{{ currentFile.create_at | date }}</span>
+          </div>
+          <div class="item">
+            <span>修改时间：</span>
+            <span>{{ currentFile.update_at | date }}</span>
+          </div>
+          <div class="item">
+            <span>位置：</span>
+            <span>{{ currentFile | path }}</span>
           </div>
         </div>
       </transition>
@@ -74,6 +82,8 @@ export default {
 
   computed: {
     ...mapGetters({
+      userInfo: 'GET_USER_INFO',
+      allFileMap: 'GET_FILES',
       currentFile: 'GET_CURRENT_FILE',
       viewType: 'GET_VIEW_TYPE',
       viewFileType: 'GET_VIEW_FILE_TYPE',
@@ -96,7 +106,7 @@ export default {
 
   filters: {
     date (timeStamp) {
-      return dayjs(Number(timeStamp)).format('YYYY年MM月DD日 hh:mm:ss')
+      return dayjs(Number(timeStamp)).format('YYYY.MM.DD. hh:mm')
     },
 
     size (val) {
@@ -109,6 +119,19 @@ export default {
         return (parseInt(val) / 1000000).toFixed(2) + ' MB'
       } else if (val.length <= 12) {
         return (parseInt(val) / 1000000000).toFixed(2) + ' GB'
+      }
+    },
+
+    path (val) {
+      console.log('path', val)
+      let ancestorFolders = val.ancestor_folders
+      if (val.parentFolder === null) {
+        return '/'
+      }
+      if (val.type === 'folder') {
+        return ancestorFolders.length === 0 ? '/我的文件夹' : '/' + ancestorFolders.map(file => file.title).join('/')
+      } else if (val.type === 'doc') {
+        return '/' + ancestorFolders.map(file => file.title).join('/')
       }
     }
   },
@@ -332,11 +355,17 @@ export default {
 
 .info
   // height 100px
+  padding 20px 20px 10px 20px
   right 10%
   white-space nowrap
   .item
+    font-size 12px
+    line-height 12px
+    margin-bottom 16px
     span:nth-of-type(1)
       display inline-block
-      width 50px
+      width 60px
       text-align right
+      margin-right 4px
+      color #999999
 </style>

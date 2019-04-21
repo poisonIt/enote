@@ -97,6 +97,7 @@ export default {
           },
         })
         .then(editor => {
+          console.log('editor', editor, editor.ui.view.editable.isFocused)
           this.editor = editor
           this.editor.setData(this.currentFile.content || '')
           this.cachedDoc = {
@@ -104,6 +105,13 @@ export default {
             content: this.currentFile.content
           }
           this.showMask = false
+          this.editor.ui.focusTracker.on('focus', () => {
+            console.log('focus')
+          })
+          // setInterval(() => {
+          //   console.log('isFocused', this.editor.ui.view.editable.isFocused)
+          // })
+          // this.editor.ui.view.editable
         })
         .catch(error => {
           console.error(error)

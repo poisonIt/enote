@@ -123,7 +123,6 @@ export default {
     },
 
     path (val) {
-      console.log('path', val)
       let ancestorFolders = val.ancestor_folders
       if (val.parentFolder === null) {
         return '/'

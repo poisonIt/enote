@@ -282,10 +282,16 @@ export default {
     background-image url(../../../assets/images/lanhu/stick_top@2x.png)
 
 .need_push
-  width 10px
-  height 10px
+  position absolute
+  right 50px
+  width 16px
+  height 16px
   border-radius 50%
-  background-color red
+  background-image url(../../../assets/images/lanhu/sync@2x.png)
+  background-repeat no-repeat
+  background-size contain
+  background-position center
+  opacity .6
   &.local
     background-color green
 

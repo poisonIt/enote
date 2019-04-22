@@ -59,3 +59,7 @@ export function uploadFile (file) {
   data.append('upload', file)
   return axios.post('/file/upload', data)
 }
+
+export function createTag (params) {
+  return axios.post('/note/createTag', params)
+}

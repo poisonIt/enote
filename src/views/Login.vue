@@ -55,8 +55,6 @@ export default {
     ]),
 
     postData () {
-      this.goHome()
-
       if (this.isLoading) return
       this.isLoading = true
       const { username, password } = this
@@ -117,7 +115,7 @@ export default {
                   console.log('saveLocalRes', saveLocalRes)
                   this.isLoading = false
                   // setTimeout(() => {
-                    this.goHome()
+                  this.goHome()
                   // }, 10000)
                 })
             })

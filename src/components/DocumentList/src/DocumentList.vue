@@ -177,9 +177,9 @@ export default {
   watch: {
     allFileArr (val) {
       this.fileList = val
-      console.log('watch-allFileArr', val, this.currentNav)
       if (this.currentNav && this.currentNav.link === 'latest') {
-        this.list = val.filter(item => item.trash === 'NORMAL')
+        this.list = this.fileListSortFunc(val.filter(item => item.trash === 'NORMAL'))
+        console.log('watch-allFileArr', this.list, val, this.currentNav)
         this.selectFile(0)
       }
     },
@@ -204,38 +204,8 @@ export default {
         this.list = this.fileList.filter(item => item.trash === 'TRASH')
       }
       this.list = this.fileListSortFunc(this.list)
+      console.log('watch-currentNav-0000', this.list)
       this.selectFile(0)
-    },
-
-    viewFileType (val) {
-      // let currentFiles = this.getCurrentFiles(this.currentFolder)
-      // let list = []
-      // console.log('viewFileType', val, this.latestFiles, this.allFileArr, currentFiles)
-      // switch (val) {
-      //   case 'latest':
-      //     list = this.allFileArr
-      //     break
-      //   case 'folders':
-      //     list = currentFiles
-      //     break
-      //   case 'new folder':
-      //     list = currentFiles
-      //     break
-      //   case 'tags':
-      //     if (this.selectedTags.length === 0) {
-      //       list = this.latestFiles
-      //       break
-      //     }
-      //     list = this.latestFiles.filter(item => intersection(item.tags, this.selectedTags).length === this.selectedTags.length)
-      //     break
-      //   case 'recycle':
-      //     list = this.recycle
-      //     break
-      //   default:
-      //     list = this.latestFiles
-      //     break
-      // }
-      // this.fileList = this.fileListSortFunc(clone(list))
     },
 
     selectedTags (val) {
@@ -267,7 +237,8 @@ export default {
     },
 
     list (val) {
-      // console.log('watch-list', val)
+      console.log('watch-list', val)
+      this.selectFile(0)
       return
     },
 

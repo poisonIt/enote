@@ -103,7 +103,8 @@ export default {
           noteContent: file.content,
           noteId: file.remote_id || file.id,
           title: file.title,
-          trash: file.trash
+          trash: file.trash,
+          top: file.top
         }
       }
     },

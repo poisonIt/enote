@@ -123,6 +123,7 @@ const mutations = {
     let file = state.files_map[fileId]
     if (!file.tags) file.tags = []
     file.tags.push(tagId)
+    console.log('ADD_FILE_TAG', file, file.tags)
   },
 
   REMOVE_FILE_TAG (state, opts) {
@@ -171,7 +172,6 @@ const mutations = {
         if (folderTmp) {
           folderKeys.forEach(name => {
             if (folderTmp[name] !== file[name]) {
-              console.log('rerere', name, folderTmp[name], file[name])
               folderTmp[name] = file[name]
             }
           })
@@ -263,12 +263,16 @@ const mutations = {
     if (state.stick_top_files.indexOf(id) === -1) {
       state.stick_top_files.unshift(id)
     }
+    state.files_map[id].top = true
+    state.files_map[id].need_push_remotely = true
   },
 
   CANCEL_STICK_TOP_FILE (state, id) {
     // remove(state.stick_top_files, id)
     let idx = state.stick_top_files.indexOf(id)
     state.stick_top_files.splice(idx, 1)
+    state.files_map[id].top = false
+    state.files_map[id].need_push_remotely = true
   },
 
   SET_STICK_TOP_FILES (state, arr) {
@@ -406,31 +410,31 @@ const actions = {
 
   async ADD_FILE_TAG ({ commit }, opts) {
     let { id, tag } = opts
-    await LocalDAO.tag.getByName(tag).then(tagObj => {
-      if (!tagObj) {
-        LocalDAO.tag.add({
+    let tagObj = await LocalDAO.tag.getByName(tag)
+    console.log('ADD_FILE_TAG', tagObj)
+    if (!tagObj) {
+      LocalDAO.tag.add({
+        fileId: id,
+        name: tag
+      }).then(tagId => {
+        commit('ADD_FILE_TAG', {
           fileId: id,
-          name: tag
-        }).then(tagId => {
-          commit('ADD_FILE_TAG', {
-            fileId: id,
-            tagId: tagObj._id
-          })
-          // commit('SAVE_FILES')
+          tagId: tagId
         })
-      } else {
-        LocalDAO.tag.addFile({
+        // commit('SAVE_FILES')
+      })
+    } else {
+      LocalDAO.tag.addFile({
+        fileId: id,
+        tagId: tagObj._id
+      }).then(() => {
+        commit('ADD_FILE_TAG', {
           fileId: id,
           tagId: tagObj._id
-        }).then(() => {
-          commit('ADD_FILE_TAG', {
-            fileId: id,
-            tagId: tagObj._id
-          })
-          // commit('SAVE_FILES')
         })
-      }
-    })
+        // commit('SAVE_FILES')
+      })
+    }
   },
 
   REMOVE_FILE_TAG ({ commit }, opts) {
@@ -515,16 +519,16 @@ const actions = {
     }
   },
 
-  SET_FILE_PUSH_FINISHED ({ commit }, obj) {
-    commit('SET_FILE_PUSH_FINISHED', obj)
-    LocalDAO.files.update({
-      id: obj.id,
-      data: {
-        remote_id: obj.remote_id,
-        need_push: false
-      }
-    })
-  },
+  // SET_FILE_PUSH_FINISHED ({ commit }, obj) {
+  //   commit('SET_FILE_PUSH_FINISHED', obj)
+  //   LocalDAO.files.update({
+  //     id: obj.id,
+  //     data: {
+  //       remote_id: obj.remote_id,
+  //       need_push: false
+  //     }
+  //   })
+  // },
 
   SAVE_FILE_TITLE ({ commit }, obj) {
     commit('SAVE_FILE_TITLE', obj)

@@ -519,16 +519,16 @@ const actions = {
     }
   },
 
-  // SET_FILE_PUSH_FINISHED ({ commit }, obj) {
-  //   commit('SET_FILE_PUSH_FINISHED', obj)
-  //   LocalDAO.files.update({
-  //     id: obj.id,
-  //     data: {
-  //       remote_id: obj.remote_id,
-  //       need_push: false
-  //     }
-  //   })
-  // },
+  SET_FILE_PUSH_FINISHED ({ commit }, obj) {
+    commit('SET_FILE_PUSH_FINISHED', obj)
+    LocalDAO.files.update({
+      id: obj.id,
+      data: {
+        remote_id: obj.remote_id,
+        need_push: false
+      }
+    })
+  },
 
   SAVE_FILE_TITLE ({ commit }, obj) {
     commit('SAVE_FILE_TITLE', obj)

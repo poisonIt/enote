@@ -16,9 +16,12 @@ function getAll () {
   })
 }
 
-function removeAll () {
+function removeAll (files) {
   return new Promise((resolve, reject) => {
-    tagsDB.remove({}, { multi: true }, (err, num) => { console.log('num', num) })
+    tagsDB.remove({}, { multi: true }, (err, numRemoved) => {
+      if (err) reject(err)
+      resolve(numRemoved)
+    })
   })
 }
 
@@ -171,26 +174,33 @@ function removeFile (req) {
   })
 }
 
-// function update (obj) {
-//   const { id, content } = obj
-//   return new Promise((resolve, reject) => {
-//     tagsDB.find({ _id: id }, (err, docs) => {
-//       console.log('update-get', docs)
-//     })
-//     tagsDB.update(
-//       { _id: id },
-//       { $set: { content: content } },
-//       {},
-//       (err, docs) => {
-//         console.log('2222222', docs)
-//         if (err) {
-//           reject(err)
-//         }
-//         resolve()
-//       }
-//     )
-//   })
-// }
+function update (opts) {
+  const { id, data } = opts
+  console.log('update-local', id, opts.data)
+
+  return new Promise((resolve, reject) => {
+    tagsDB.findOne({ _id: id }, (err, tagDoc) => {
+      if (err) {
+        reject(err)
+      } else {
+        // console.log('update-tagDoc', tagDoc, data)
+        tagsDB.update(
+          { _id: id },
+          { $set: {
+            remote_id: data.remote_id !== undefined ? data.remote_id : tagDoc.remote_id
+          }},
+          {
+            returnUpdatedDocs: true
+          },
+          (err, num, docs) => {
+            if (err) reject(err)
+            resolve(docs)
+          }
+        )
+      }
+    })
+  })
+}
 
 function remove (req) {
   const { name } = req
@@ -202,7 +212,7 @@ function remove (req) {
         if (err) {
           reject(err)
         }
-        resolve()
+        resolve(numRemoved)
       }
     )
   })
@@ -215,7 +225,8 @@ export default {
   getByName,
   getByFileId,
   add,
-  addFile,
+  // addFile,
+  update,
   removeFile,
   remove
 }

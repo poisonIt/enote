@@ -1,4 +1,5 @@
 const state = {
+  network_status: 'online',
   view_type: 'expanded',
   name: '最新文档',
   move_file: '',
@@ -20,6 +21,10 @@ const state = {
 }
 
 const mutations = {
+  SET_NETWORK_STATUS (state, val) {
+    state.network_status = val
+  },
+
   SET_VIEW_FOLDER (state, id) {
     state.view_folder = id
   },
@@ -91,6 +96,10 @@ const mutations = {
 }
 
 const actions = {
+  SET_NETWORK_STATUS ({ commit }, val) {
+    commit('SET_NETWORK_STATUS', val)
+  },
+
   SET_VIEW_FOLDER ({ commit }, id) {
     commit('SET_VIEW_FOLDER', id)
   },
@@ -161,6 +170,10 @@ const actions = {
 }
 
 const getters = {
+  GET_NETWORK_STATUS (state) {
+    return state.network_status
+  },
+
   GET_VIEW_FOLDER (state) {
     return state.view_folder
   },

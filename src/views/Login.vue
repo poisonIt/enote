@@ -54,7 +54,7 @@ export default {
       'SET_TOKEN'
     ]),
 
-    postData () {
+    async postData () {
       if (this.isLoading) return
       this.isLoading = true
       const { username, password } = this
@@ -74,7 +74,8 @@ export default {
             pullTags()
           ]).then(pullResp => {
             console.log('pullResp', pullResp)
-            LocalDAO.files.removeAll().then(() => {
+            LocalDAO.tag.removeAll().then(() => {
+              LocalDAO.files.removeAll().then(() => {
               if (pullResp[0].returnMsg !== 'success') {
                 // alert(`获取用户信息：${pullResp[0].returnMsg}`)
                 this.isLoading = false
@@ -99,25 +100,26 @@ export default {
                 return
               }
 
-              const saveUserInfoTask = LocalDAO.user.update(pullResp[0].userData)
+                const saveUserInfoTask = LocalDAO.user.update(pullResp[0].userData)
 
-              const saveNoteBooksTask = pullResp[1].data.body
-                .map(item => LocalDAO.files.add(this.transNoteBookData(item)))
+                const saveNoteBooksTask = pullResp[1].data.body
+                  .map(item => LocalDAO.files.add(this.transNoteBookData(item)))
 
-              const saveNoteTask = pullResp[2].data.body
-                .map(item => LocalDAO.files.add(this.transNoteData(item)))
+                const saveNoteTask = pullResp[2].data.body
+                  .map(item => LocalDAO.files.add(this.transNoteData(item)))
 
-              const saveTagTask = (pullResp[3].data.body || [])
-                .map(item => LocalDAO.tag.add(this.transTagData(item)))
+                const saveTagTask = (pullResp[3].data.body || [])
+                  .map(item => LocalDAO.tag.add(this.transTagData(item)))
 
-              Promise.all([saveUserInfoTask, ...saveNoteBooksTask, ...saveNoteTask, ...saveTagTask])
-                .then(saveLocalRes => {
-                  console.log('saveLocalRes', saveLocalRes)
-                  this.isLoading = false
-                  // setTimeout(() => {
-                  this.goHome()
-                  // }, 10000)
-                })
+                Promise.all([saveUserInfoTask, ...saveNoteBooksTask, ...saveNoteTask, ...saveTagTask])
+                  .then(saveLocalRes => {
+                    console.log('saveLocalRes', saveLocalRes)
+                    this.isLoading = false
+                    // setTimeout(() => {
+                    this.goHome()
+                    // }, 10000)
+                  })
+              })
             })
           })
         } else {
@@ -200,6 +202,7 @@ export default {
         trash: obj.trash,
         file_size: obj.size,
         content: obj.noteContent,
+        tags: obj.tagId.filter(item => item),
         need_push: false,
         top: obj.top
       }

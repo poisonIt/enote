@@ -1,4 +1,5 @@
 import File from './file'
+import LocalDAO from '../../db/api'
 
 export default class FileTree {
   constructor (options) {
@@ -9,6 +10,8 @@ export default class FileTree {
     }
 
     this.map = {}
+    this.tags_map = {}
+    this.tags_remote_map = {}
     this.remote_map = {}
     this.arr = []
     this.flat_map = {}
@@ -24,8 +27,14 @@ export default class FileTree {
     })
   }
 
-  init (data) {
-    data.forEach(item => {
+  init (tags, files) {
+    tags.forEach(tag => {
+      this.tags_map[tag._id] = tag
+      if (tag.remote_id) {
+        this.tags_remote_map[tag.remote_id] = tag
+      }
+    })
+    files.forEach(item => {
       this.addFile(item, true)
     })
 
@@ -43,8 +52,14 @@ export default class FileTree {
       }
     }
     this.root.getAncestorFolders()
-    // console.log('init-0', this.root)
     return this
+  }
+
+  addTag (data) {
+    this.tags_map[data._id] = data
+    if (data.remote_id) {
+      this.tags_remote_map[data.remote_id] = data
+    }
   }
 
   addFile (data) {
@@ -221,7 +236,14 @@ function createFlatFile (file) {
     child_docs: file.child_docs,
     content: file.content,
     file_size: file.file_size,
-    tags: file.tags || [],
+    tags: file.tags.map(tagId => {
+      let tag = file.store.tags_map[tagId]
+      if (!tag) {
+        tag = file.store.tags_remote_map[tagId]
+      }
+      console.log('121212', file.store.tags_map, tagId, tag)
+      return tag._id
+    }) || [],
     top: file.top || false
   }
 }

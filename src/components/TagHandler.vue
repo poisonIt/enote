@@ -10,7 +10,7 @@
       ref="tagList" 
       :style="{ maxWidth: tagListWidth }">
       <div class="tag-item"
-        v-for="(item, index) in tags"
+        v-for="(item, index) in currentTags"
         :key="index">
         {{ item.name }}
         <span class="del-tag" @click="deleteTag(item)"></span>
@@ -32,17 +32,12 @@
           <ul class="all-tag-list">
             <li class="all-tag-list-item"
               v-for="(item, index) in allTags"
-              @click="toggleAllTagChecked(item)"
               :key="index">
-                <!-- <div class="input-checkbox">
-                  <div class="checkbox-empty"
-                    v-if="item.checked"></div>
-                  <div class="checkbox-checked" v-else></div>
-                </div> -->
-                <label style="width: 100%;height: 100%;">
+                <div style="width: 100%;height: 100%;"
+                  @click="toggleAllTagChecked(item)">
                   <input type="checkbox" v-model="item.checked">
                   {{ item.name }}
-                </label>
+                </div>
             </li>
           </ul>
         </div>
@@ -60,9 +55,9 @@ export default {
 
   data () {
     return {
-      c: false,
-      allTags: [],
-      tags: [],
+      // allTags: [],
+      // tags: [],
+      currentTags: [],
       addTagName: '',
       isListShowed: false,
       containerWidth: '0px',
@@ -75,8 +70,8 @@ export default {
       isShowed: 'GET_SHOW_TAG_HANDLER',
       currentFile: 'GET_CURRENT_FILE',
       viewType: 'GET_VIEW_TYPE',
-      // tags: 'GET_CURRENT_FILE_TAGS',
-      // tagsMap: 'GET_ALL_TAGS_MAP'
+      allTagsArr: 'GET_ALL_TAGS',
+      allTagsMap: 'GET_TAGS_MAP'
     }),
 
     // tags () {
@@ -92,25 +87,60 @@ export default {
       }
     },
 
-    currentFile (val) {
-      if (val) {
-        LocalDAO.tag.getByFileId(val.id).then(res => {
-          console.log('getTags', res)
-          this.tags = res
-          this.handleResize()
+    currentFile: {
+      handler: function (val) {
+        if (val && val.tags) {
+          console.log('tag- ', val.tags)
+          this.currentTags = []
+          val.tags.forEach(tagId => {
+            let tag = this.allTagsMap[tagId]
+            console.log('allTagsMap', this.allTagsMap)
+            // if (!tag) {
+            //   let idx = val.tags.indexOf(tagId)
+            //   this.REMOVE_FILE_TAG({
+            //     fileId: this.currentFile.id,
+            //     tagId: tagId
+            //   })
+            // } else {
+              this.currentTags.push(tag)
+            // }
+          })
+        }
+      },
+      deep: true
+    },
+
+    allTagsMap (val) {
+      if (this.currentFile && this.currentFile.tags) {
+        this.currentTags = []
+        this.currentFile.tags.forEach(tagId => {
+          let tag = val[tagId]
+          if (!tag) {
+            this.REMOVE_FILE_TAG({
+              fileId: this.currentFile.id,
+              tagId: tagId
+            })
+          } else {
+            this.currentTags.push(tag)
+          }
         })
       }
     },
 
-    alltags: {
-      handler: (val) => {
-        console.log('watch-all-tags', val)
-      },
-      deep: true
+    allTagsArr (val) {
+      console.log('watch-allTagsArr', val)
+      this.allTags = []
+      val.forEach(item => {
+        let tag = {
+          _id: item._id,
+          name: item.name,
+          file_ids: item.file_ids,
+          remote_id: item.remote_id,
+          checked: !!item.checked
+        }
+        this.allTags.push(tag)
+      })
     }
-  },
-
-  created () {
   },
 
   mounted () {
@@ -149,45 +179,50 @@ export default {
         tag: this.addTagName
       }).then(() => {
         this.addTagName = ''
-        this.updateCurrentFileTag()
+        // this.updateCurrentFileTag()
       })
     },
 
     deleteTag (tag) {
       console.log('deleteTag', tag)
-      LocalDAO.tag.removeFile({
+      this.REMOVE_FILE_TAG({
         fileId: this.currentFile.id,
         tagId: tag._id
-      }).then(() => {
-        this.REMOVE_FILE_TAG({
-          fileId: this.currentFile.id,
-          tagName: tag._id
-        }).then(() => {
-          this.updateCurrentFileTag()
-        })
       })
+      this.currentTags.forEach(item => {
+        item.checked = this.currentFile.tags.indexOf(item._id) > -1
+      })
+      // LocalDAO.tag.removeFile({
+      //   fileId: this.currentFile.id,
+      //   tagId: tag._id
+      // }).then(() => {
+      //   this.REMOVE_FILE_TAG({
+      //     fileId: this.currentFile.id,
+      //     tagName: tag._id
+      //   }).then(() => {
+      //     this.updateCurrentFileTag()
+      //   })
+      // })
     },
 
     updateCurrentFileTag () {
-      LocalDAO.tag.getByFileId(this.currentFile.id).then(res => {
-        this.tags = res.sort((a, b) => {
-          return a.create_at.getTime() - b.create_at.getTime()
-        })
-      })
-      this.SET_TAGS_FROM_LOCAL()
+      // LocalDAO.tag.getByFileId(this.currentFile.id).then(res => {
+      //   this.tags = res
+      // })
+      // this.SET_TAGS_FROM_LOCAL()
     },
 
-    toggleList () {
+    async toggleList () {
       this.isListShowed = !this.isListShowed
-      LocalDAO.tag.getAll().then(res => {
-        this.allTags = res
-        this.allTags.forEach(item => {
-          item.checked = item.file_ids.indexOf(this.currentFile.id) > -1
-        })
-        // this.allTagsChecked = this.allTags.filter(item => item.checked).map(item => {
-        //   return item._id
-        // })
+      // let allTags = await LocalDAO.tag.getAll()
+      console.log('getTags', this.allTags)
+      // this.allTags = res
+      this.allTags.forEach(item => {
+        item.checked = this.currentFile.tags.indexOf(item._id) > -1
       })
+      // this.allTagsChecked = this.allTags.filter(item => item.checked).map(item => {
+      //   return item._id
+      // })
     },
 
     toggleAllTagChecked (tag) {
@@ -196,26 +231,12 @@ export default {
         this.ADD_FILE_TAG({
           id: this.currentFile.id,
           tag: tag.name
-        }).then(() => {
-          tag.checked = true
-          this.updateCurrentFileTag()
         })
+        tag.checked = true
       } else {
         this.deleteTag(tag)
-        // this.REMOVE_FILE_TAG({
-        //   fileId: this.currentFile.id,
-        //   tagId: tag._id
-        // }).then(() => {
-        //   tag.checked = false
-        //   this.updateCurrentFileTag()
-        // })
+        tag.checked = false
       }
-      // let idx = this.allTagsChecked.indexOf(tag._id)
-      // if (idx > -1) {
-      //   this.allTagsChecked.splice(idx, 1)
-      // } else {
-      //   this.allTagsChecked.push(tag._id)
-      // }
     }
   }
 }

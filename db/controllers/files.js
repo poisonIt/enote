@@ -1,7 +1,5 @@
-import doc from './doc'
 import docTemplate from '../docTemplate'
 import fileModel from '../models/file'
-import docModel from '../models/doc'
 const { remote } = require('electron')
 const { filesDB } = remote.app.database
 
@@ -56,7 +54,7 @@ function add (opts) {
 
 function update (opts) {
   const { id, data } = opts
-  // console.log('update-local', id, opts.data)
+  console.log('update-local', id, opts.data)
 
   return new Promise((resolve, reject) => {
     filesDB.findOne({ _id: id }, (err, fileDoc) => {
@@ -91,7 +89,6 @@ function update (opts) {
       }
     })
   })
- 
 }
 
 export default {

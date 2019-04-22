@@ -28,11 +28,11 @@ Vue.use(BSelect)
 Vue.use(BOption)
 Vue.use(Menu)
 Vue.prototype.$Message = Message
+Vue.prototype.$hub = EventHub
 
 Vue.prototype.$remote = remote
 Vue.prototype.$shell = shell
 Vue.prototype.$webFrame = webFrame
-Vue.prototype.$hub = EventHub
 
 // const curWin = remote.getCurrentWindow()
 // const ses = curWin.webContents.session
@@ -40,13 +40,6 @@ Vue.prototype.$hub = EventHub
 // console.log(app, ses.getUserAgent())
 // shell.beep()
 // console.log(curWin.webContents)
-// const { files_db } = remote.app.database
-
-// files_db.remove({}, { multi: true }, function (err, numRemoved) {
-//   console.log(numRemoved + ' docs removed' )
-// })
-
-// axios.defaults.headers.delete['Content-Type'] = 'application/x-www-form-urlencoded'
 
 axios.interceptors.request.use(config => {
   console.log('interceptors', store, config)

@@ -24,7 +24,7 @@
 <script>
 import { mapGetters, mapActions } from 'vuex'
 import pReduce from 'p-reduce'
-import { pushNotebook, pushNote } from '@/service'
+import { pushNotebook, pushNote, createTag } from '@/service'
 
 
 export default {
@@ -50,7 +50,9 @@ export default {
     ...mapGetters({
       viewType: 'GET_VIEW_TYPE',
       allFileMap: 'GET_FILES',
+      allTagMap: 'GET_TAGS_MAP',
       isSyncing: 'GET_IS_SYNCING',
+      tagsNeedPush: 'GET_TAGS_NEED_PUSH',
       filesNeedPush: 'GET_FILES_NEED_PUSH'
     })
   },
@@ -104,7 +106,11 @@ export default {
           noteId: file.remote_id || file.id,
           title: file.title,
           trash: file.trash,
-          top: file.top
+          top: file.top,
+          tagId: file.tags.map(tagId => {
+            let tag = this.allTagMap[tagId]
+            return tag.remote_id
+          })
         }
       }
     },
@@ -132,10 +138,25 @@ export default {
             }
           })
         })
+      } else if (type === 'tag') {
+        return new Promise((resolve, reject) => {
+          createTag(data).then(resp => {
+            if (resp.data.returnCode === 200) {
+              resolve(resp.data.body)
+            } else {
+              this.SET_IS_SYNCING(false)
+              reject(resp.data.returnMsg)
+            }
+          })
+        })
       }
     },
 
     async pushData (foldersNeedPushByDepth, foldersNeedPush, docsNeedPush) {
+      let tagPromises = this.createPromise({
+        tags: this.tagsNeedPush.map(item => item.name)
+      }, 'tag')
+
       let folderPromises = foldersNeedPushByDepth.map(files => {
         let data = files.map(file => {
           return this.tranData(file)
@@ -149,6 +170,17 @@ export default {
         })
       , 'doc')
 
+      let tagRes = await tagPromises
+
+      this.tagsNeedPush.forEach((item, index) =>{
+        this.UPDATE_TAG({
+          id: item._id,
+          data: {
+            remote_id: tagRes[index].tagId
+          }
+        })
+      })
+
       let noteBookRes = await pReduce(folderPromises, async (total, res) => {
         if (total === 0) {
           total = []
@@ -157,20 +189,23 @@ export default {
         return [...total, ...res]
       }, 0)
 
-      let noteRes = await docPromises
-      console.log('noteBookRes', noteBookRes, noteRes)
       foldersNeedPush.forEach((item, index) => {
         this.SET_FILE_PUSH_FINISHED({
           id: item.id,
           remote_id: noteBookRes[index].noteBookId
         })
       })
+
+      let noteRes = await docPromises
+      
       docsNeedPush.forEach((item, index) => {
         this.SET_FILE_PUSH_FINISHED({
           id: item.id,
           remote_id: noteRes[index].noteBookId
         })
       })
+
+      console.log('noteBookRes', tagRes, noteBookRes, noteRes)
       this.SET_IS_SYNCING(false)
     },
 
@@ -198,7 +233,6 @@ export default {
           }
         }
       }
-
 
       this.pushData(foldersNeedPushByDepth, foldersNeedPush, docsNeedPush)
     }

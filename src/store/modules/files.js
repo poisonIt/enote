@@ -70,7 +70,6 @@ const mutations = {
 
   APPEND_FILE (state, opts) {
     let { fileId, targetId } = opts
-    console.log('APPEND_FILE', opts)
 
     fileTree.appendFile({
       id: fileId,
@@ -80,15 +79,12 @@ const mutations = {
 
   MOVE_FILE (state, opts) {
     let { fileId, broId, type } = opts // type: 'before', 'after'
-    console.log('MOVE_FILE', opts)
 
     fileTree.moveFile({
       id: fileId,
       broId: broId,
       type: type
     }).updateFlatMap(true)
-
-    console.log('MOVE_FILE-map', fileTree.map)
   },
 
   SET_TAGS (state, tags) {
@@ -96,40 +92,92 @@ const mutations = {
     state.tags_map = {}
     state.tags_arr = []
     tags.forEach(item => {
-      if (!item.note_ids) {
-        item.note_ids = []
-      }
-      if (item._id === '1ZM2YfYYigN7h740') {
-        item.note_ids = ['0beCoLNsVzcO3a6P']
-      }
-      console.log('item', item)
       map[item._id] = item
     })
     for (let i in state.files_map) {
       let file = state.files_map[i]
       file.tags.forEach(tagId => {
         let tag = map[tagId]
-        tags.note_ids.push(tagId)
+        if (!tag) {
+          let idx = file.tags.indexOf(tagId)
+          file.tags.splice(idx, 1)
+          file.need_push_remotely = true
+          LocalDAO.files.update({
+            id: file.id,
+            data: {
+              tags: file.tags
+            }
+          })
+        } else {
+          // if (!tag.file_ids) {
+          //   tag.file_ids = []
+          // }
+          tag.file_ids.push(file.id)
+        }
       })
     }
     state.tags_map = map
-    console.log('tags_map', state.tags_map)
     state.tags_arr = Object.keys(state.tags_map)
       .map(key => state.tags_map[key])
   },
 
+  UPDATE_TAG (state, opts) {
+    let { id, data } = opts
+    for (let name in data) {
+      if (state.tags_map[id].hasOwnProperty(name)) {
+        state.tags_map[id][name] = data[name]
+      }
+    }
+  },
+
   ADD_FILE_TAG (state, opts) {
-    let { fileId, tagId } = opts
+    console.log('ADD_FILE_TAG', opts)
+    let { fileId, tag } = opts
     let file = state.files_map[fileId]
     if (!file.tags) file.tags = []
-    file.tags.push(tagId)
-    console.log('ADD_FILE_TAG', file, file.tags)
+    if (file.tags.indexOf(tag._id) > -1) return
+    file.tags.push(tag._id)
+    file.need_push_remotely = true
+    // if (tag.file_ids && tag.file_ids.indexOf(fileId) === -1) {
+    //   tag.file_ids.push(fileId)
+    // } else {
+    //   tag.file_ids = [fileId]
+    // }
+    let tagItem = state.tags_map[tag._id]
+    if (!tagItem) {
+      state.tags_map[tag._id] = tag
+      state.tags_arr.push(tag)
+    }
+    console.log('ADD_FILE_TAG-111', file, state.tags_arr, state.tags_map)
+    LocalDAO.files.update({
+      id: file.id,
+      data: {
+        tags: file.tags
+      }
+    })
   },
 
   REMOVE_FILE_TAG (state, opts) {
     let { fileId, tagId } = opts
     let file = state.files_map[fileId]
-    remove(file.tags, tagId)
+    let tagItem = state.tags_map[tagId]
+    let idxLocal = file.tags.indexOf(tagId)
+    let idxRemote = file.tags.indexOf(tagItem.remote_id)
+    let idx = idxLocal > -1 ? idxLocal : idxRemote
+    file.tags.splice(idx, 1)
+    file.need_push_remotely = true
+    // if (tagItem) {
+    //   let tagIdx = tagItem.file_ids.indexOf(fileId)
+    //   let tagIdxRemote = tagItem.file_ids.indexOf(tagItem.remote_id)
+    //   let tagIndex = tagIdx > -1 ? tagIdx : tagIdxRemote
+    //   // tagItem.file_ids.splice(tagIndex, 1)
+    // }
+    LocalDAO.files.update({
+      id: file.id,
+      data: {
+        tags: file.tags
+      }
+    })
   },
 
   CLEAR_ALL_RECYCLE (state) {
@@ -206,27 +254,6 @@ const mutations = {
     })
   },
 
-  // SAVE_FILES (state) {
-  //   console.log('SAVE_FILES-1111', state)
-  //   state.files_arr
-  //     .filter(item => item.need_push_locally)
-  //     .forEach(file => {
-  //       console.log('SAVE_FILES-2222', file.id)
-  //       if (file.id !== '000000') {
-  //         LocalDAO.files.update({
-  //           id: file.id,
-  //           data: file
-  //         }).then(resp => {
-  //           console.log('UPDATE_resp', resp)
-  //           // file.need_push_locally = false
-  //           state.files_map[file.id].need_push_locally = false
-  //           fileTree.finishPushLocally(file.id)
-  //           console.log('UPDATE_resp-222', state)
-  //         })
-  //       }
-  //     })
-  // },
-
   FILES_SAVED (state, arr) {
     arr.forEach(item => {
       state.files_map[item.id].need_push_locally = false
@@ -279,10 +306,6 @@ const mutations = {
     state.stick_top_files = arr
   },
 
-  // SAVE_STICK_TOP_FILES (state) {
-  //   LocalDAO.tops.save(state.stick_top_files)
-  // },
-
   SET_SHARE_INFO (state, obj) {
     state.share_info = obj
   }
@@ -290,9 +313,6 @@ const mutations = {
 
 const actions = {
   async SET_FILES_FROM_LOCAL ({ commit, dispatch }) {
-    // fetchLocalTops().then(topFiles => {
-    //   commit('SET_STICK_TOP_FILES', topFiles)
-    // })
     console.log('SET_FILES_FROM_LOCAL')
     let flatMap = await fetchLocalFiles()
     let topFiles = []
@@ -302,9 +322,7 @@ const actions = {
         topFiles.push(file.id)
       }
     }
-    console.log('11111', topFiles)
     commit('REFRESH_FILES')
-    // commit('UPDATE_FOLDERS')
     let filesSaved = await saveLocalFiles()
     commit('FILES_SAVED', filesSaved)
     if (filesSaved.length > 0) {
@@ -408,6 +426,11 @@ const actions = {
     })
   },
 
+  async UPDATE_TAG ({ commit }, opts) {
+    let tagUpdated = await LocalDAO.tag.update(opts)
+    commit('UPDATE_TAG', opts)
+  },
+
   async ADD_FILE_TAG ({ commit }, opts) {
     let { id, tag } = opts
     let tagObj = await LocalDAO.tag.getByName(tag)
@@ -416,24 +439,30 @@ const actions = {
       LocalDAO.tag.add({
         fileId: id,
         name: tag
-      }).then(tagId => {
+      }).then(newTag => {
+        console.log('afafafafa', newTag)
+        fileTree.addTag(newTag)
         commit('ADD_FILE_TAG', {
           fileId: id,
-          tagId: tagId
+          tag: newTag
         })
         // commit('SAVE_FILES')
       })
     } else {
-      LocalDAO.tag.addFile({
+      commit('ADD_FILE_TAG', {
         fileId: id,
-        tagId: tagObj._id
-      }).then(() => {
-        commit('ADD_FILE_TAG', {
-          fileId: id,
-          tagId: tagObj._id
-        })
-        // commit('SAVE_FILES')
+        tag: tagObj
       })
+      // LocalDAO.tag.addFile({
+      //   fileId: id,
+      //   tagId: tagObj._id
+      // }).then(() => {
+      //   commit('ADD_FILE_TAG', {
+      //     fileId: id,
+      //     tag: tagObj
+      //   })
+      //   // commit('SAVE_FILES')
+      // })
     }
   },
 
@@ -504,11 +533,9 @@ const actions = {
   },
 
   SAVE_FILES () { // 本地存储文件
-    console.log('SAVE_FILES')
     for (let i in fileTree.flat_map) {
       let file = fileTree.flat_map[i]
       if (file.need_push_locally) {
-        console.log('SAVE_FILES-11111', file.title, file.content, file)
         LocalDAO.files.update({
           id: file.data._id,
           data: file
@@ -640,6 +667,10 @@ const getters = {
     return state.files_arr.filter(item => item.need_push_remotely)
   },
 
+  GET_TAGS_NEED_PUSH (state) {
+    return state.tags_arr.filter(item => !item.remote_id)
+  },
+
   GET_ALL_TAGS (state) {
     return state.tags_arr
   },
@@ -650,11 +681,6 @@ const getters = {
 
   // GET_ALL_TAGS_MAP (state) {
   //   return state.tags_map
-  // },
-
-  // GET_CURRENT_FILE_TAGS (state) {
-  //   let tagArr = state.files_map[state.current_file_id].tags || []
-  //   return tagArr.map(tagId => state.tags_map[tagId])
   // },
 
   GET_SEARCH_KEYWORD (state) {
@@ -672,10 +698,12 @@ const getters = {
 
 function fetchLocalFiles () {
   return new Promise((resolve, reject) => {
-    LocalDAO.files.getAll().then(resp => {
-      console.log('fetchLocalFiles-files', resp)
-      fileTree.init(resp).updateFlatMap()
-      resolve(fileTree.flat_map)
+    LocalDAO.tag.getAll().then(tagResp => {
+      LocalDAO.files.getAll().then(fileResp => {
+        console.log('fetchLocalFiles-files', fileResp)
+        fileTree.init(tagResp, fileResp).updateFlatMap()
+        resolve(fileTree.flat_map)
+      })
     })
   })
 }

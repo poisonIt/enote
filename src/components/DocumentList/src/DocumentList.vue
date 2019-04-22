@@ -179,13 +179,11 @@ export default {
       this.fileList = val
       if (this.currentNav && this.currentNav.link === 'latest') {
         this.list = this.fileListSortFunc(val.filter(item => item.trash === 'NORMAL'))
-        console.log('watch-allFileArr', this.list, val, this.currentNav)
         this.selectFile(0)
       }
     },
 
     currentNav (val) {
-      console.log('watch-currentNav', val, this.fileList)
       if (val.link === 'latest') {
         this.list = this.fileList.filter(item => 
           item.trash === 'NORMAL')
@@ -200,25 +198,29 @@ export default {
         this.list = this.fileList.filter(item => item.trash === 'NORMAL'
           && (item.parent_folder === val.id || item.parent_folder === val.remote_id))
       }
+      // if (val.)
       if (val.link === 'recycle') {
         this.list = this.fileList.filter(item => item.trash === 'TRASH')
       }
       this.list = this.fileListSortFunc(this.list)
-      console.log('watch-currentNav-0000', this.list)
       this.selectFile(0)
     },
 
     selectedTags (val) {
-      console.log('watch-selectedTags', val)
-      let tagNotes = val.map(tagId => this.tagsMap[tagId].note_ids)
-      if (tagNotes.length === 0) {
-        this.list = this.fileList
+      console.log('watch-selectedTags', val, this.tagsMap)
+      this.list = this.allFileArr.filter(item => item.trash === 'NORMAL')
+      if (val.length > 0) {
+        let arr = []
+        this.list
+          .filter(item => item.type === 'doc')
+          .forEach(file => {
+            if ([...val].sort().toString() == [...intersection(file.tags, val)].sort().toString()) {
+              arr.push(file)
+            }
+          })
+        this.list = this.fileListSortFunc(arr)
       } else {
-        let fileIds = tagNotes[0]
-        tagNotes.forEach(item => {
-          fileIds = intersection(fileIds, item)
-        })
-        this.list = fileIds.map(item => this.allFileMap[item])
+        return this.fileListSortFunc(this.list)
       }
     },
 

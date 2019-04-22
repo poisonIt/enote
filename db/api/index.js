@@ -1,17 +1,11 @@
 import user from '../controllers/user'
-import structure from '../controllers/structure'
-import files from '../controllers/files'
-import doc from '../controllers/doc'
 import tag from '../controllers/tag'
-import tops from '../controllers/tops'
+import files from '../controllers/files'
 
 const LocalDAO = {
   user,
-  structure,
-  files,
-  doc,
   tag,
-  tops
+  files
 }
 
 export default LocalDAO

@@ -95,7 +95,8 @@ export default {
 
     openYoudaoWindow () {
       ipcRenderer.send('createWindow', {
-        name: 'youdao'
+        name: 'youdao',
+        userCode: this.userInfo
       })
     }
   }

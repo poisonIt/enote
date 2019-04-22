@@ -153,9 +153,12 @@ export default {
     },
 
     async pushData (foldersNeedPushByDepth, foldersNeedPush, docsNeedPush) {
-      let tagPromises = this.createPromise({
-        tags: this.tagsNeedPush.map(item => item.name)
-      }, 'tag')
+      let tagPromises = null
+      if (this.tagsNeedPush.length > 0) {
+        tagPromises = this.createPromise({
+          tags: this.tagsNeedPush.map(item => item.name)
+        }, 'tag')
+      }
 
       let folderPromises = foldersNeedPushByDepth.map(files => {
         let data = files.map(file => {
@@ -170,7 +173,10 @@ export default {
         })
       , 'doc')
 
-      let tagRes = await tagPromises
+      let tagRes = []
+      if (tagPromises) {
+        tagRes = await tagPromises
+      }
 
       this.tagsNeedPush.forEach((item, index) =>{
         this.UPDATE_TAG({

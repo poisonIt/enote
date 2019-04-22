@@ -24,9 +24,11 @@ export default {
 
   mounted () {
     window.addEventListener('online', () => {
+      console.log('online')
       this.SET_NETWORK_STATUS('online')
     })
     window.addEventListener('offline', () => {
+      console.log('offline')
       this.SET_NETWORK_STATUS('offline')
     })
 

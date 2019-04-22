@@ -10,7 +10,8 @@ function fileModel (opts) {
     trash: opts.trash || 'NORMAL',
     need_push: opts.need_push !== undefined ? opts.need_push : true,
     content: opts.content || '',
-    tags: opts.tags || []
+    tags: opts.tags || [],
+    top: opts.top || false,
   }
 }
 

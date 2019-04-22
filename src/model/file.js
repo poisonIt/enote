@@ -149,6 +149,10 @@ export default class File {
       return 0
     }
   }
+
+  get top () {
+    return this.data.top
+  }
 }
 
 function updateChildDepth (file, change) {

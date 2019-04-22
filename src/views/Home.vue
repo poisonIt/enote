@@ -193,7 +193,7 @@ export default {
   },
 
   mounted () {
-    if (this.userInfo.friend_list.length > 0) {
+    if (this.userInfo.friend_list && this.userInfo.friend_list.length > 0) {
       this.selectedFd = this.userInfo.friend_list[0]
     }
   },
@@ -226,9 +226,9 @@ export default {
       }, 300)
     },
 
-    closeUserPanel () {
-      this.TOGGLE_SHOW_USER_PANEL(false)
-    },
+    // closeUserPanel () {
+    //   this.TOGGLE_SHOW_USER_PANEL(false)
+    // },
 
     asyncUser () {
       this.isSyncPanelShowed = true
@@ -247,9 +247,9 @@ export default {
       setInterval(itvCb, 30)
     },
 
-    closeSyncPanel () {
-      this.isSyncPanelShowed = false
-    },
+    // closeSyncPanel () {
+    //   this.isSyncPanelShowed = false
+    // },
 
     closeSharePanel () {
       this.TOGGLE_SHOW_SHARE_PANEL(false)

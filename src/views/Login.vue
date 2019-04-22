@@ -55,6 +55,8 @@ export default {
     ]),
 
     postData () {
+      this.goHome()
+
       if (this.isLoading) return
       this.isLoading = true
       const { username, password } = this
@@ -200,7 +202,8 @@ export default {
         trash: obj.trash,
         file_size: obj.size,
         content: obj.noteContent,
-        need_push: false
+        need_push: false,
+        top: obj.top
       }
     },
 

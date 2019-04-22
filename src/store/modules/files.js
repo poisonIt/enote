@@ -162,6 +162,9 @@ const mutations = {
 
     for (let i in state.files_map) {
       let file = state.files_map[i]
+      // if (file.top) {
+      //   state.stick_top_files.push(file.id)
+      // }
       arr.push(file)
       if (file.type === 'folder' && file.parent_folder === '/') {
         let folderTmp = folders[file.id]
@@ -263,6 +266,7 @@ const mutations = {
   },
 
   CANCEL_STICK_TOP_FILE (state, id) {
+    // remove(state.stick_top_files, id)
     let idx = state.stick_top_files.indexOf(id)
     state.stick_top_files.splice(idx, 1)
   },
@@ -271,9 +275,9 @@ const mutations = {
     state.stick_top_files = arr
   },
 
-  SAVE_STICK_TOP_FILES (state) {
-    LocalDAO.tops.save(state.stick_top_files)
-  },
+  // SAVE_STICK_TOP_FILES (state) {
+  //   LocalDAO.tops.save(state.stick_top_files)
+  // },
 
   SET_SHARE_INFO (state, obj) {
     state.share_info = obj
@@ -286,7 +290,15 @@ const actions = {
     //   commit('SET_STICK_TOP_FILES', topFiles)
     // })
     console.log('SET_FILES_FROM_LOCAL')
-    await fetchLocalFiles()
+    let flatMap = await fetchLocalFiles()
+    let topFiles = []
+    for (let i in flatMap) {
+      let file = flatMap[i]
+      if (file.top) {
+        topFiles.push(file.id)
+      }
+    }
+    console.log('11111', topFiles)
     commit('REFRESH_FILES')
     // commit('UPDATE_FOLDERS')
     let filesSaved = await saveLocalFiles()
@@ -294,6 +306,7 @@ const actions = {
     if (filesSaved.length > 0) {
       commit('UPDATE_FILES_ARR')
     }
+    commit('SET_STICK_TOP_FILES', topFiles)
     // dispatch('SET_FILES').then(() => {
       // dispatch('SET_DOC_BRIEF_FORM_LOCAL')
     // })
@@ -525,14 +538,24 @@ const actions = {
     commit('SET_SEARCH_KEYWORD', str)
   },
 
-  STICK_TOP_FILE ({ commit }, id) {
+  async STICK_TOP_FILE ({ commit }, id) {
+    await LocalDAO.files.update({
+      id: id,
+      data: {
+        top: true
+      }
+    })
     commit('STICK_TOP_FILE', id)
-    commit('SAVE_STICK_TOP_FILES')
   },
 
-  CANCEL_STICK_TOP_FILE ({ commit }, id) {
+  async CANCEL_STICK_TOP_FILE ({ commit }, id) {
+    await LocalDAO.files.update({
+      id: id,
+      data: {
+        top: false
+      }
+    })
     commit('CANCEL_STICK_TOP_FILE', id)
-    commit('SAVE_STICK_TOP_FILES')
   },
 
   SET_SHARE_INFO ({ commit }, obj) {
@@ -585,6 +608,8 @@ const getters = {
     return [...childFolders, ...childDocs]
       .map(id => state.files_map[id])
       .filter(file => {
+        if (!file) return false
+        console.log('0000-file', file)
         if (file.trash !== 'NORMAL') {
           return false
         }

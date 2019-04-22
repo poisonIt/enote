@@ -203,6 +203,7 @@ export default {
       if (val.link === 'recycle') {
         this.list = this.fileList.filter(item => item.trash === 'TRASH')
       }
+      this.list = this.fileListSortFunc(this.list)
       this.selectFile(0)
     },
 
@@ -319,9 +320,7 @@ export default {
     },
 
     stickTopFiles (val) {
-      console.log('stickTopFiles', val)
-      return
-      this.fileList = this.fileListSortFunc(this.list)
+      this.list = this.fileListSortFunc(this.list)
     }
   },
 

@@ -77,7 +77,8 @@ function update (opts) {
             content: data.content !== undefined ? data.content : fileDoc.content,
             need_push: data.need_push !== undefined ? data.need_push : true,
             trash: data.trash !== undefined ? data.trash : fileDoc.trash,
-            tags: data.tags !== undefined ? data.tags : fileDoc.tags
+            tags: data.tags !== undefined ? data.tags : fileDoc.tags,
+            top: data.top !== undefined ? data.top : fileDoc.top
           }},
           {
             returnUpdatedDocs: true

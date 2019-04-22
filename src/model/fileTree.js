@@ -196,7 +196,7 @@ export default class FileTree {
 }
 
 function createFlatFile (file) {
-  // console.log('createFlatFile', file.title, file.cache_id)
+  console.log('createFlatFile', file.title, file)
   // file.getAncestorFolders()
   return {
     id: file.data._id,
@@ -221,7 +221,8 @@ function createFlatFile (file) {
     child_docs: file.child_docs,
     content: file.content,
     file_size: file.file_size,
-    tags: file.tags || []
+    tags: file.tags || [],
+    top: file.top || false
   }
 }
 

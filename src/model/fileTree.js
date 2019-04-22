@@ -242,8 +242,11 @@ function createFlatFile (file) {
         tag = file.store.tags_remote_map[tagId]
       }
       console.log('121212', file.store.tags_map, tagId, tag)
+      if (!tag) {
+        return false
+      }
       return tag._id
-    }) || [],
+    }).filter(item => item) || [],
     top: file.top || false
   }
 }

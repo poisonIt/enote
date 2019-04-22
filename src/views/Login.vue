@@ -202,7 +202,7 @@ export default {
         trash: obj.trash,
         file_size: obj.size,
         content: obj.noteContent,
-        tags: obj.tagId.filter(item => item),
+        tags: obj.tagId ? obj.tagId.filter(item => item) : [],
         need_push: false,
         top: obj.top
       }

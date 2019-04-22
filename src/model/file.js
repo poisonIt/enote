@@ -25,6 +25,7 @@ export default class File {
   }
 
   getAncestorFolders () {
+    console.log('getAncestorFolders', this)
     if (this.depth !== 0) { 
       let parentFolder = this.store.map[this.parent_folder]
       if (!parentFolder && this.parent_folder !== '/') {
@@ -66,6 +67,7 @@ export default class File {
   }
 
   update (data, forceUpdate) {
+    console.log('update', data)
     if (data.parent_folder && this.parent_folder !== data.parent_folder) {
       let newParentFolder = this.store.map[data.parent_folder] || this.store.root
       if (this.depth !== newParentFolder.depth + 1) {
@@ -160,6 +162,8 @@ export default class File {
 }
 
 function updateChildDepth (file, change) {
+  console.log('updateChildDepth', file)
+  if (file.type === 'doc') return
   file.child_folders.forEach(item => {
     let child = file.store.map[item]
     child.depth += change

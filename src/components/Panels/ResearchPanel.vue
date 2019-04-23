@@ -68,14 +68,23 @@
           <div class="form-label">上传附件</div>
           <Upload
             multiple
+            ref="upload"
+            :show-upload-list="false"
             :before-upload="handleUpload"
-            action="//jsonplaceholder.typicode.com/posts/"
-            style="width: 85%;margin-left: 10px;padding-top: 7px;">
+            :on-success="handleSuccess"
+            action=""
+            style="width: 85%;padding-top: 7px;">
             <Button
               class="upload-button"
               icon="ios-cloud-upload-outline">新增文件
             </Button>
           </Upload>
+          <ul class="upload-list">
+            <li class="upload-list-item" v-for="(item, index) in uploadList" :key="index">
+              <span>{{ item.name }}</span>
+              <div class="icon-del"></div>
+            </li>
+          </ul>
         </div>
         <!-- <Loading class="loading" :type="8" fill="#DDAF59" v-if="isLoading"></Loading> -->
       </div>
@@ -112,6 +121,7 @@ export default {
       trade: '',
       title: '',
       keywords: '',
+      uploadList: [],
       largeTypeArr: [
         {
           name: '公司研究',
@@ -152,12 +162,17 @@ export default {
     userInfo (val) {
       this.fdList = val.friend_list
     },
+
+    uploadList (val) {
+      console.log('watch-uploadList', val)
+    }
   },
 
   mounted () {
     // if (this.userInfo.friend_list.length > 0) {
     //   this.selectedFd = this.userInfo.friend_list[0]
     // }
+    this.uploadList = this.$refs.upload.fileList
   },
 
   methods: {
@@ -171,7 +186,12 @@ export default {
     
     handleUpload (file) {
       console.log('handleUpload', file)
-      return false
+      this.uploadList.push(file)
+      return true
+    },
+
+    handleSuccess (res, file) {
+      console.log('handleSuccess', res, file)
     }
   }
 }
@@ -189,6 +209,7 @@ export default {
   padding 20px 30px 0
 
 .form-item
+  position relative
   width 100%
   display flex
   flex-direction row
@@ -205,6 +226,7 @@ export default {
       border 1px solid #DDAF59
   textarea
     width 85%
+    height 46px
     margin-left 9px
     padding-left 10px
     border-radius 4px
@@ -235,6 +257,36 @@ export default {
     color #DDAF59 !important
     border-color #DDAF59 !important
 
+.upload-list
+  position absolute
+  width 85.4%
+  height 100px
+  right 0
+  top 50px
+  line-height 32px
+  font-size 12px
+  color #333
+  overflow scroll
+  .upload-list-item
+    position relative
+
+.icon-del
+  position absolute
+  top 50%
+  right 12px
+  transform translateY(-50%)
+  width 24px
+  height 24px
+  background-image url('../../assets/images/lanhu/icon_del@2x.png')
+  background-size contain
+  background-position center
+  background-repeat no-repeat
+
+.button-group
+  width 38%
+  bottom 14px
+  left 77%
+
 .loading
   display flex
   width 100%
@@ -245,10 +297,5 @@ export default {
   /* justify-items center */
   justify-content center
   align-items center
-
-.button-group
-  width 38%
-  bottom -24px
-  left 77%
 </style>
 

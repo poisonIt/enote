@@ -17,7 +17,7 @@
               disabled="disabled"
               @click="handleLinkFocus"
               ref="linkInput">
-            <div class="button primary">复制链接</div>
+            <div class="button primary" @click="copyShareUrl">复制链接</div>
           </div>
           <div class="password">
             <form>
@@ -119,6 +119,7 @@
 </template>
 
 <script>
+import { clipboard } from 'electron'
 import { mapActions, mapGetters } from 'vuex'
 import LocalDAO from '../../../db/api'
 import {
@@ -364,6 +365,11 @@ export default {
       this.closeFrdPanel()
       this.entitledUser = this.friendChecked.map(item => item.userCode)
       this.modifyShare()
+    },
+
+    copyShareUrl () {
+      clipboard.writeText(this.shareUrl)
+      this.$Message.success('复制成功')
     }
   }
 }

@@ -66,12 +66,18 @@ export default {
       let authenticateResp = await authenticate({
         username: username,
         password: password
+      }).catch(err => {
+        this.isLoading = false
+        return
       })
      
       if (authenticateResp.data.returnCode === 200) {
         const id_token = authenticateResp.data.body.id_token
         this.SET_TOKEN(id_token)
-        let userResp = await this.pullUserInfo(id_token, username, password)
+        let userResp = await this.pullUserInfo(id_token, username, password).catch(err => {
+          this.isLoading = false
+          return
+        })
         if (!userResp.userData) return
         await LocalDAO.user.update(userResp.userData)
         await this.pushData()
@@ -139,14 +145,20 @@ export default {
     },
 
     async pullUserInfo (id_token, username, password) {
-      const userInfoResp = await getUserInfo(id_token)
+      const userInfoResp = await getUserInfo(id_token).catch(err => {
+        this.isLoading = false
+        return
+      })
       if (userInfoResp.data.returnCode !== 200) {
         return {
           returnMsg: userInfoResp.data.returnMsg
         }
       }
 
-      const friendResp = await getFriendList(id_token)
+      const friendResp = await getFriendList(id_token).catch(err => {
+        this.isLoading = false
+        return
+      })
       if (friendResp.data.returnCode !== 200) {
         return {
           returnMsg: friendResp.data.returnMsg

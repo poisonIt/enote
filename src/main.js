@@ -59,6 +59,7 @@ axios.interceptors.request.use(config => {
   }
   return config
 }, error => {
+  Message.error(error)
   return Promise.reject(error)
 })
 
@@ -72,7 +73,7 @@ axios.interceptors.response.use(data => {
     return data
   }
 }, error => {
-  console.log('error', error)
+  Message.error(error)
   return Promise.reject(error)
 })
 

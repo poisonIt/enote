@@ -53,6 +53,12 @@ export default {
     })
   },
 
+  // mounted () {
+  //   setInterval(() => {
+  //     this.asyncData()
+  //   }, 5000)
+  // },
+
   methods: {
     toggleMenu () {
       this.isMenuVisible = !this.isMenuVisible

@@ -10,7 +10,7 @@ import Modal from '@/components/Modal'
 import BSelect from '@/components/Select'
 import BOption from '@/components/Option'
 import Menu from '@/components/Menu'
-import { Message } from 'iview'
+import { Message, Upload, Button } from 'iview'
 import '@/assets/css/font-awesome.min.css'
 import 'iview/dist/styles/iview.css'
 import '@/assets/styles/iview.styl'
@@ -27,6 +27,8 @@ Vue.use(Modal)
 Vue.use(BSelect)
 Vue.use(BOption)
 Vue.use(Menu)
+Vue.component('Upload', Upload)
+Vue.component('Button', Button)
 Vue.prototype.$Message = Message
 Vue.prototype.$hub = EventHub
 

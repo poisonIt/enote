@@ -21,7 +21,7 @@
           </div>
           <div class="password">
             <form>
-              <input type="checkbox" id="password-check">
+              <input type="checkbox" id="password-check" v-model="pwd">
               <label for="password-check">设置密码</label>
               <span style="margin-left: 10px;color: #333;user-select: all;">{{ sharePwd }}</span>
             </form>
@@ -111,7 +111,7 @@
         </div>
       </div>
       <div class="button-group" slot="footer">
-        <div class="button primary">完成</div>
+        <div class="button primary" @click="handleFriendChecked">完成</div>
         <div class="button" @click="isFrdPanelShowed = false">取消</div>
       </div>
     </modal>
@@ -136,6 +136,7 @@ export default {
 
   data () {
     return {
+      isFirstData: false,
       isLoading: true,
       isSyncPanelShowed: false,
       isFrdPanelShowed: false,
@@ -146,6 +147,7 @@ export default {
       friendChecked: [],
       validity: '000',
       shareUrl: '',
+      pwd: true,
       sharePwd: '',
       entitledType: 'PUBLIC',
       validities: [
@@ -176,7 +178,8 @@ export default {
           id: 'PRIVATE',
           children: []
         }
-      ]
+      ],
+      entitledUser: []
     }
   },
 
@@ -199,8 +202,13 @@ export default {
       this.fdList = val.friend_list
     },
 
+    pwd (val) {
+      this.modifyShare()
+    },
+
     validity (val) {
       console.log('watch-validity', val)
+      this.modifyShare()
     },
 
     fdSearchKey (val) {
@@ -214,6 +222,15 @@ export default {
 
     entitledType (val) {
       console.log('entitledType', val)
+      this.modifyShare()
+    },
+
+    friendChecked (val) {
+      console.log('friendChecked', val)
+    },
+
+    entitledUser (val) {
+      console.log('entitledUser', val)
     }
   },
 
@@ -233,15 +250,44 @@ export default {
     },
 
     async createShare () {
+      console.log('createShare')
+      this.isFirstData = true
       this.isLoading = true
 
       let shareResp = await publishShare({
-        noteId: this.currentFile.remote_id,
-        pwd: true
+        noteId: this.currentFile.remote_id
       })
 
       console.log('publishShare-resp', shareResp)
+      this.handleShareFinished(shareResp)
+      this.$nextTick(() => {
+        this.isFirstData = false
+      })
+    },
 
+    async modifyShare () {
+      console.log('modifyShare', this.isFirstData)
+      if (this.isFirstData) {
+        // this.isFirstData = false
+        return
+      }
+      this.isLoading = true
+
+      let data = {
+        noteId: this.currentFile.remote_id,
+        pwd: this.pwd,
+        entitledType: this.entitledType,
+        validityType: this.validity,
+        entitledUser: this.entitledUser
+      }
+
+      let shareResp = await publishShare(data)
+
+      console.log('modifyShare-resp', shareResp)
+      this.handleShareFinished(shareResp)
+    },
+
+    handleShareFinished (shareResp) {
       this.isLoading = false
       if (shareResp.data.returnCode === 200) {
         this.shareInfo = shareResp.data.body
@@ -249,6 +295,17 @@ export default {
         this.sharePwd = this.shareInfo.sharePwd
         this.entitledType = this.shareInfo.entitledType
         this.validity = String(this.shareInfo.validityType)
+        this.entitledUser = this.shareInfo.entitledUser || []
+        
+        this.friendChecked = this.fdList.filter(item => {
+          if (this.entitledUser.indexOf(item.userCode) > -1) {
+            item.state = true
+            return true
+          }
+        })
+        console.log('handleShareFinished-friendChecked', this.friendChecked)
+
+        this.pwd = !!this.sharePwd
 
         this.$refs.validitySelect.broadcast('b-option', 'select', this.validity)
         this.$refs.validitySelect.selectedLabel = (this.validity === '0'
@@ -301,6 +358,12 @@ export default {
     handleFriendUnChecked (fd) {
       fd.state = false
       this.handleFriendStateChange()
+    },
+
+    handleFriendChecked () {
+      this.closeFrdPanel()
+      this.entitledUser = this.friendChecked.map(item => item.userCode)
+      this.modifyShare()
     }
   }
 }

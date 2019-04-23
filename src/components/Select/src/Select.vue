@@ -6,7 +6,7 @@
     v-clickoutside="handleClose">
     <input
       class="b-select__inner"
-      :class="[{ 'active' : visible }]"
+      :class="[{ active : visible, disabled: disabled }]"
       type="text"
       v-model="selectedLabel"
       :placeholder="placeholder"
@@ -54,6 +54,10 @@ export default {
     placeholder: {
       type: String,
       default: '请选择'
+    },
+    disabled: {
+      type: Boolean,
+      default: false
     }
   },
   computed: {
@@ -79,6 +83,7 @@ export default {
   // },
   methods: {
     toggleMenu () {
+      if (this.disabled) return
       this.visible = !this.visible
     },
     handleClose () {
@@ -124,5 +129,8 @@ export default {
   &.active
     border-color #DDAF59
   &::placeholder
-    color #b5b5b5
+    color #999999
+  &.disabled
+    &::placeholder
+      color #eee
 </style>

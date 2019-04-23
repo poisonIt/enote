@@ -38,42 +38,9 @@
         <div class="button" @click="closeMovePanel">取消</div>
       </div>
     </modal>
-    <!-- <modal
-      width="380px"
-      height="240px"
-      top="30vh"
-      transition-name="fade-in-down"
-      title="个人信息"
-      @close="closeUserPanel"
-      :visible.sync="isUserPanelShowed">
-      <div class="user-info">
-        <div class="item">
-          <span>员工信息</span>
-          <span>{{ userInfo.account_name_cn }}</span>
-        </div>
-        <div class="item">
-          <span>所属部门</span>
-          <span>{{ userInfo.department_name }}</span>
-        </div>
-        <div class="item">
-          <span>所属岗位</span>
-          <span>{{ userInfo.position_name }}</span>
-        </div>
-      </div>
-    </modal> -->
-    <!-- <modal
-      width="500px"
-      height="280px"
-      top="32vh"
-      transition-name="fade-in-down"
-      title="有道云笔记同步"
-      @close="closeSyncPanel"
-      :visible.sync="isSyncPanelShowed">
-      <p style="font-size: 12px;margin: 50px 20px 20px">数据同步中...</p>
-      <ProgressBar :value="syncProgress"></ProgressBar>
-    </modal> -->
     <UserPanel></UserPanel>
     <SharePanel></SharePanel>
+    <ResearchPanel></ResearchPanel>
   </div>
 </template>
 
@@ -92,6 +59,7 @@ import FolderComp from '@/components/FolderComp.vue'
 // import ProgressBar from '@/components/ProgressBar'
 import UserPanel from '@/components/Panels/UserPanel'
 import SharePanel from '@/components/Panels/SharePanel'
+import ResearchPanel from '@/components/Panels/ResearchPanel'
 import LocalDAO from '../../db/api'
 import { ipcRenderer } from 'electron'
 
@@ -111,7 +79,8 @@ export default {
     FolderComp,
     // ProgressBar,
     UserPanel,
-    SharePanel
+    SharePanel,
+    ResearchPanel
   },
 
   data () {

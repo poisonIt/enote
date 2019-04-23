@@ -42,6 +42,7 @@ function update (opts) {
         {_id: userDoc._id},
         { $set: {
           username: opts.username !== undefined ? opts.username : userDoc.username,
+          usercode: opts.usercode !== undefined ? opts.usercode : userDoc.usercode,
           password: opts.password !== undefined ? opts.password : userDoc.password,
           oa_id: opts.oa_id !== undefined ? opts.oa_id : userDoc.oa_id,
           account_name_cn: opts.account_name_cn !== undefined ? opts.account_name_cn : userDoc.account_name_cn,

@@ -162,10 +162,8 @@ export default class File {
 }
 
 function updateChildDepth (file, change) {
-  console.log('updateChildDepth', file)
   if (file.type === 'doc') return
-  file.child_folders.forEach(item => {
-    let child = file.store.map[item]
+  file.child_folders.forEach(child => {
     child.depth += change
     child.parentFolder = file
     child.ancestor_folders = [...file.ancestor_folders, file]

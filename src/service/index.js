@@ -63,3 +63,11 @@ export function uploadFile (file) {
 export function createTag (params) {
   return axios.post('/note/createTag', params)
 }
+
+export function getSync () {
+  return axios.get('/youdao/sync')
+}
+
+export function syncSate () {
+  return axios.get('/youdao/syncState')
+}

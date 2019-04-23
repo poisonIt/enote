@@ -1,6 +1,7 @@
 function userModel (opts) {
   return {
     username: opts.username || '',
+    usercode: opts.usercode || '',
     password: opts.password || '',
     oa_id: opts.oa_id || '',
     account_name_cn: opts.account_name_cn || '',

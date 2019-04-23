@@ -1,6 +1,14 @@
 'use strict'
 import path from 'path'
-import { app, protocol, BrowserWindow, Menu, dialog, shell, ipcMain } from 'electron'
+import {
+  app,
+  protocol,
+  BrowserWindow,
+  Menu,
+  dialog,
+  session,
+  shell,
+  ipcMain } from 'electron'
 import {
   createProtocol,
   installVueDevtools
@@ -141,7 +149,8 @@ protocol.registerStandardSchemes(['app'], { secure: true })
 
 function createLoginWindow () {
   loginWin = new BrowserWindow({
-    width: 442,
+    id: 'login',
+    width: isDevelopment ? 1024 : 442,
     height: 490,
     // frame: false,
     titleBarStyle: 'hidden',
@@ -155,7 +164,7 @@ function createLoginWindow () {
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode
     loginWin.loadURL(process.env.WEBPACK_DEV_SERVER_URL)
-    // if (!process.env.IS_TEST) loginWin.webContents.openDevTools()
+    loginWin.webContents.openDevTools()
   } else {
     createProtocol('app')
     // Load the index.html when not in development
@@ -170,7 +179,8 @@ function createLoginWindow () {
 function createHomeWindow () {
   // Create the browser window.
   win = new BrowserWindow({
-    width: 960,
+    id: 'home',
+    width: isDevelopment ? 1366 : 960,
     height: 640,
     // frame: false,
     titleBarStyle: 'hidden',
@@ -184,7 +194,7 @@ function createHomeWindow () {
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode
     win.loadURL(process.env.WEBPACK_DEV_SERVER_URL + '#/home')
-    // if (!process.env.IS_TEST) win.webContents.openDevTools()
+    win.webContents.openDevTools()
   } else {
     createProtocol('app')
     // Load the index.html when not in development
@@ -196,34 +206,26 @@ function createHomeWindow () {
   })
 }
 
-function createYoudaoAsyncWindow () {
-  const youdaoAsyncUrl = 'https://note.youdao.com/oauth/authorize2?client_id=838948a8e2be4d35f253cb82f2687d15&response_type=code&redirect_uri=https://iapp.htffund.com/&state=123'
-  // Create the browser window.
+function createYoudaoAsyncWindow (event, url) {
   youdaoWin = new BrowserWindow({
+    id: 'youdao',
     width: 960,
     height: 640,
     title: '绑定有道云账号',
-    // frame: false,
-    // titleBarStyle: 'hidden',
     webPreferences: {
       nodeIntegration: false,
       webSecurity: false
     }
   })
   youdaoWin.setMinimumSize(960, 640)
+  youdaoWin.loadURL(url)
 
-  if (process.env.WEBPACK_DEV_SERVER_URL) {
-    // Load the url of the dev server if in development mode
-    youdaoWin.loadURL(youdaoAsyncUrl)
-    // if (!process.env.IS_TEST) youdaoWin.webContents.openDevTools()
-  } else {
-    createProtocol('app')
-    // Load the index.html when not in development
-    youdaoWin.loadURL(youdaoAsyncUrl)
-  }
+  // event.sender.send('youdao-reply', {
+  //   url: url,
+  //   winUrl: youdaoWin.getURL()
+  // })
 
   youdaoWin.on('closed', () => {
-    youdaoWin.loadURL(youdaoAsyncUrl)
     youdaoWin = null
   })
 }
@@ -241,7 +243,7 @@ ipcMain.on('changeWindow', (event, arg) => {
 
 ipcMain.on('createWindow', (event, arg) => {
   if (arg.name === 'youdao') {
-    createYoudaoAsyncWindow(arg.userCode)
+    createYoudaoAsyncWindow(event, arg.url)
   }
 })
 
@@ -274,6 +276,13 @@ app.on('ready', async () => {
   Menu.setApplicationMenu(menu)
   createLoginWindow()
   app.database = loadDB(app)
+
+  // session.defaultSession.webRequest.onBeforeRequest(['https://iapp.htffund.com/*'], (details, callback) => {
+  //   console.log('session', details)
+  //   callback({
+  //     cancel: false
+  //   })
+  // })
 })
 
 // Exit cleanly on request from parent process in development mode.
@@ -290,3 +299,4 @@ if (isDevelopment) {
     })
   }
 }
+

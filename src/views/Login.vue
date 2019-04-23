@@ -163,6 +163,7 @@ export default {
     transUserData (obj) {
       return {
         username: obj.userName,
+        usercode: obj.userCode,
         access_token: obj.accessToken,
         account_name_cn: obj.accountNameCN,
         department_id: obj.departmentId,

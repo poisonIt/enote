@@ -153,6 +153,7 @@ export default {
       'EDIT_FILE',
       'TOGGLE_SHOW_TAG_HANDLER',
       'TOGGLE_SHOW_SHARE_PANEL',
+      'TOGGLE_SHOW_RESEARCH_PANEL',
       'SET_SHARE_INFO'
     ]),
 
@@ -218,6 +219,7 @@ export default {
 
     fetch () {
       console.log('fetch')
+      this.TOGGLE_SHOW_RESEARCH_PANEL(true)
     },
 
     search () {

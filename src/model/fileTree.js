@@ -241,7 +241,6 @@ function createFlatFile (file) {
       if (!tag) {
         tag = file.store.tags_remote_map[tagId]
       }
-      console.log('121212', file.store.tags_map, tagId, tag)
       if (!tag) {
         return false
       }

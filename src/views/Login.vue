@@ -59,6 +59,7 @@ export default {
     ]),
 
     async postData () {
+      this.goHome()
       if (this.isLoading) return
       this.isLoading = true
       const { username, password } = this
@@ -74,10 +75,7 @@ export default {
       if (authenticateResp.data.returnCode === 200) {
         const id_token = authenticateResp.data.body.id_token
         this.SET_TOKEN(id_token)
-        let userResp = await this.pullUserInfo(id_token, username, password).catch(err => {
-          this.isLoading = false
-          return
-        })
+        let userResp = await this.pullUserInfo(id_token, username, password)
         if (!userResp.userData) return
         await LocalDAO.user.update(userResp.userData)
         await this.pushData()

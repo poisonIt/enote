@@ -140,6 +140,10 @@ export default {
         }
         this.allTags.push(tag)
       })
+    },
+
+    currentTags (val) {
+      this.handleResize()
     }
   },
 
@@ -166,6 +170,7 @@ export default {
         if (this.$refs.tagListButton && this.$refs.addInput) {
           this.tagListWidth = containerW - 60 - 100 - 40 + 'px'
         }
+        this.$refs.tagList.scrollLeft = 100 * this.currentTags.length
       })
     },
 

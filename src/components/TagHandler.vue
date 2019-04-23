@@ -144,6 +144,12 @@ export default {
 
     currentTags (val) {
       this.handleResize()
+    },
+
+    isShowed (val) {
+      if (val) {
+        this.handleResize()
+      }
     }
   },
 

@@ -71,7 +71,6 @@
             ref="upload"
             :show-upload-list="false"
             :before-upload="handleUpload"
-            :on-success="handleSuccess"
             action=""
             style="width: 85%;padding-top: 7px;">
             <Button
@@ -79,7 +78,7 @@
               icon="ios-cloud-upload-outline">新增文件
             </Button>
           </Upload>
-          <ul class="upload-list">
+          <ul class="upload-list" ref="uploadList">
             <li class="upload-list-item" v-for="(item, index) in uploadList" :key="index">
               <span>{{ item.name }}</span>
               <div class="icon-del" @click="deleteFile(item)"></div>
@@ -152,13 +151,6 @@ export default {
   },
 
   watch: {
-    isResearchPanelShowed (val) {
-      if (val) {
-        console.log('watch-isResearchPanelShowed', val)
-        // this.createShare()
-      }
-    },
-
     userInfo (val) {
       this.fdList = val.friend_list
     },
@@ -169,9 +161,6 @@ export default {
   },
 
   mounted () {
-    // if (this.userInfo.friend_list.length > 0) {
-    //   this.selectedFd = this.userInfo.friend_list[0]
-    // }
     this.uploadList = this.$refs.upload.fileList
   },
 
@@ -185,13 +174,11 @@ export default {
     },
     
     handleUpload (file) {
-      console.log('handleUpload', file)
       this.uploadList.push(file)
+      this.$nextTick(() => {
+        this.$refs.uploadList.scrollTop = 32 * (this.uploadList.length + 1)
+      })
       return true
-    },
-
-    handleSuccess (res, file) {
-      console.log('handleSuccess', res, file)
     },
 
     deleteFile (file) {

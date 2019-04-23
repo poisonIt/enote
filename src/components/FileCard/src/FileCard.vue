@@ -244,6 +244,7 @@ export default {
       margin 0
 
 .header
+  position relative
   width inherit
   display flex
   flex-direction row

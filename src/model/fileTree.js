@@ -20,7 +20,8 @@ export default class FileTree {
       data: {
         _id: '/',
         title: '我的文件夹',
-        type: 'folder'
+        type: 'folder',
+        tags: []
       },
       depth: 0,
       store: this

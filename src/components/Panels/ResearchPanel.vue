@@ -82,7 +82,7 @@
           <ul class="upload-list">
             <li class="upload-list-item" v-for="(item, index) in uploadList" :key="index">
               <span>{{ item.name }}</span>
-              <div class="icon-del"></div>
+              <div class="icon-del" @click="deleteFile(item)"></div>
             </li>
           </ul>
         </div>
@@ -192,6 +192,11 @@ export default {
 
     handleSuccess (res, file) {
       console.log('handleSuccess', res, file)
+    },
+
+    deleteFile (file) {
+      let idx = this.uploadList.indexOf(file)
+      this.uploadList.splice(idx, 1)
     }
   }
 }

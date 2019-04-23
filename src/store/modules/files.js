@@ -89,8 +89,9 @@ const mutations = {
 
   SET_TAGS (state, tags) {
     let map = {}
-    state.tags_map = {}
-    state.tags_arr = []
+    // let arr =[]
+    // state.tags_map = {}
+    // state.tags_arr = []
     tags.forEach(item => {
       map[item._id] = item
     })
@@ -112,7 +113,7 @@ const mutations = {
           // if (!tag.file_ids) {
           //   tag.file_ids = []
           // }
-          tag.file_ids.push(file.id)
+          // tag.file_ids.push(file.id)
         }
       })
     }
@@ -128,6 +129,19 @@ const mutations = {
         state.tags_map[id][name] = data[name]
       }
     }
+  },
+
+  DELETE_TAG (state, tagId) {
+    // state.files_arr.forEach(file => {
+    //   if (file.tags.indexOf(tagId) > -1) {
+    //     let idx = file.tags.indexOf(tagId)
+    //     file.tags.splice(idx, 1)
+    //   }
+    // })
+    // let tag = state.tags_map[tagId]
+    // state.tags_arr.splice(state.tags_arr.indexOf(tag), 1)
+    // state.tags_map = {}
+    // state.tags_arr.forEach(item => {})
   },
 
   ADD_FILE_TAG (state, opts) {
@@ -431,6 +445,13 @@ const actions = {
     commit('UPDATE_TAG', opts)
   },
 
+  async DELETE_TAG ({ commit, dispatch }, tagId) {
+    await LocalDAO.tag.deleteById({
+      id: tagId
+    })
+    dispatch('SET_TAGS_FROM_LOCAL')
+  },
+
   async ADD_FILE_TAG ({ commit }, opts) {
     let { id, tag } = opts
     let tagObj = await LocalDAO.tag.getByName(tag)
@@ -449,6 +470,9 @@ const actions = {
         // commit('SAVE_FILES')
       })
     } else {
+      await LocalDAO.tag.resumeById({
+        id: tagObj._id
+      })
       commit('ADD_FILE_TAG', {
         fileId: id,
         tag: tagObj

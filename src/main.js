@@ -49,7 +49,7 @@ axios.interceptors.request.use(config => {
   if (store.state.user.id_token) {
     config.headers['Authorization'] = 'Bearer' + store.state.user.id_token
   }
-  if (config.method === 'delete') {
+  if (config.method === 'delete' && config.url.indexOf('deleteTag') === -1) {
     console.log('config-data', config.data)
     let formData = new FormData()
     Object.keys(config.data).forEach(key => {

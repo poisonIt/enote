@@ -88,7 +88,13 @@
 <script>
 import { cloneDeep } from 'lodash'
 import { mapActions, mapGetters } from 'vuex'
-import { folderMenu, rootFolderMenu, resourceMenu, recycleMenu } from '../Menu'
+import {
+  folderMenu,
+  rootFolderMenu,
+  resourceMenu,
+  recycleMenu,
+  tagMenu
+} from '../Menu'
 import { GenNonDuplicateID } from '@/utils/utils'
 import mixins from '../mixins'
 import Tree from '@/components/Tree'
@@ -116,7 +122,8 @@ export default {
         rootFolderMenu,
         [...folderMenu, ...resourceMenu[0]],
         [...folderMenu, ...resourceMenu[1]],
-        recycleMenu
+        recycleMenu,
+        tagMenu
       ],
       nodeInput: '',
       folderIndex: 1,
@@ -198,6 +205,7 @@ export default {
       'EDIT_FILE',
       'APPEND_FILE',
       'MOVE_FILE',
+      'DELETE_TAG',
       'CLEAR_ALL_RECYCLE',
       'RESUME_ALL_RECYCLE',
       'SET_VIEW_FOLDER',
@@ -253,6 +261,7 @@ export default {
     handleContextmenu (node) {
       this.popupedNode = node
       const d = node.data
+      console.log('handleContextmenu', d.type)
       if (d.type === 'folder' && d.link === 'folders') {
         this.popupNativeMenu(this.nativeMenus[0])
       }
@@ -261,6 +270,9 @@ export default {
           ? this.nativeMenus[1]
           : this.nativeMenus[2]
         this.popupNativeMenu(resourceMenu)
+      }
+      if (d.type === 'select') {
+        this.popupNativeMenu(this.nativeMenus[4])
       }
       if (d.type === 'recycle') {
         this.popupNativeMenu(this.nativeMenus[3])
@@ -397,8 +409,9 @@ export default {
       this.clickRecycleNode()
     },
 
-    handleClearTag () {
-      console.log('handleClearTag')
+    handleDeleteTag () {
+      console.log('handleDeleteTag', this.popupedNode)
+      this.DELETE_TAG(this.popupedNode.data.id)
     },
 
     iconClassComputed (node) {

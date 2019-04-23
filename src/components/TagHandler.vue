@@ -89,6 +89,9 @@ export default {
 
     currentFile: {
       handler: function (val) {
+        if (!val || val.id !== this.currentFileIdCached) {
+          this.TOGGLE_SHOW_TAG_HANDLER(false)
+        }
         if (val && val.tags) {
           console.log('tag- ', val.tags)
           this.currentTags = []
@@ -105,6 +108,7 @@ export default {
               this.currentTags.push(tag)
             // }
           })
+          this.currentFileIdCached = val.id
         }
       },
       deep: true
@@ -148,13 +152,13 @@ export default {
 
     isShowed (val) {
       if (val) {
-        this.handleResize()
+        this.handleResize(true)
       }
     }
   },
 
   mounted () {
-    this.handleResize()
+    this.handleResize(true)
     this.$hub.pool.push(() => {
       this.handleResize()
     })
@@ -165,10 +169,11 @@ export default {
       'SAVE_FILE_TITLE',
       'ADD_FILE_TAG',
       'REMOVE_FILE_TAG',
-      'SET_TAGS_FROM_LOCAL'
+      'SET_TAGS_FROM_LOCAL',
+      'TOGGLE_SHOW_TAG_HANDLER'
     ]),
 
-    handleResize () {
+    handleResize (isFisrt) {
       this.$nextTick(() => {
         let space = this.viewType === 'expanded' ? 540 : 390
         let containerW = document.body.clientWidth - space
@@ -176,7 +181,9 @@ export default {
         if (this.$refs.tagListButton && this.$refs.addInput) {
           this.tagListWidth = containerW - 60 - 100 - 40 + 'px'
         }
-        this.$refs.tagList.scrollLeft = 100 * this.currentTags.length
+        if (this.$refs.tagList && !isFisrt) {
+          this.$refs.tagList.scrollLeft = 100 * this.currentTags.length
+        }
       })
     },
 

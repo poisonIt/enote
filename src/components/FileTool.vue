@@ -53,11 +53,14 @@ export default {
     })
   },
 
-  // mounted () {
-  //   setInterval(() => {
-  //     this.asyncData()
-  //   }, 5000)
-  // },
+  mounted () {
+    let asyncItv = setInterval(() => {
+      this.pushData().catch(err => {
+        this.$Message.error('同步失败，请重新登录')
+        clearInterval(asyncItv)
+      })
+    }, 5000)
+  },
 
   methods: {
     toggleMenu () {
@@ -86,9 +89,17 @@ export default {
     },
 
     asyncData () {
-      this.pushData().then(resp => {
-        console.log('push-resp', resp)
-        this.pullData()
+      return new Promise((resolve, reject) => {
+        this.pushData().then(pushResp => {
+          console.log('push-resp', pushResp)
+          this.pullData().then(pullResp => {
+            resolve()
+          }).catch(err => {
+            reject(err)
+          })
+        }).catch(err => {
+          reject(err)
+        })
       })
     }
   }

@@ -5,11 +5,30 @@ import tagModel from '../models/tag'
 function getAll () {
   // tagsDB.remove({}, { multi: true }, (err, num) => { console.log('num', num) })
   return new Promise((resolve, reject) => {
-    tagsDB.find({}, (err, docs) => {
+    tagsDB.find({
+      trash: 'NORMAL'
+    }, (err, docs) => {
       if (err) {
         console.error(err)
       } else {
         console.log('getAll-tags', docs)
+        resolve(docs)
+      }
+    })
+  })
+}
+
+function getAllTrash () {
+  console.log('getAllTrash')
+  // tagsDB.remove({}, { multi: true }, (err, num) => { console.log('num', num) })
+  return new Promise((resolve, reject) => {
+    tagsDB.find({
+      trash: 'TRASH'
+    }, (err, docs) => {
+      if (err) {
+        console.error(err)
+      } else {
+        console.log('getAll-trash-tags', docs)
         resolve(docs)
       }
     })
@@ -202,11 +221,49 @@ function update (opts) {
   })
 }
 
-function remove (req) {
-  const { name } = req
+function deleteById (req) {
+  const { id } = req
+  return new Promise((resolve, reject) => {
+    tagsDB.update(
+      { _id: id },
+      { $set: {
+        trash: 'TRASH'
+      }},
+      {
+        returnUpdatedDocs: true
+      },
+      (err, num, docs) => {
+        if (err) reject(err)
+        resolve(docs)
+      }
+    )
+  })
+}
+
+function resumeById (req) {
+  const { id } = req
+  return new Promise((resolve, reject) => {
+    tagsDB.update(
+      { _id: id },
+      { $set: {
+        trash: 'NORMAL'
+      }},
+      {
+        returnUpdatedDocs: true
+      },
+      (err, num, docs) => {
+        if (err) reject(err)
+        resolve(docs)
+      }
+    )
+  })
+}
+
+function removeById (req) {
+  const { id } = req
   return new Promise((resolve, reject) => {
     tagsDB.remove(
-      { name: name },
+      { _id: id },
       {},
       (err, numRemoved) => {
         if (err) {
@@ -220,6 +277,7 @@ function remove (req) {
 
 export default {
   getAll,
+  getAllTrash,
   removeAll,
   getById,
   getByName,
@@ -228,5 +286,7 @@ export default {
   // addFile,
   update,
   removeFile,
-  remove
+  deleteById,
+  resumeById,
+  removeById
 }

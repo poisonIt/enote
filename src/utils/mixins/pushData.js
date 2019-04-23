@@ -1,6 +1,7 @@
 import pReduce from 'p-reduce'
 import { mapGetters, mapActions } from 'vuex'
-import { pushNotebook, pushNote, createTag } from '@/service'
+import { pushNotebook, pushNote, createTag, deleteTag } from '@/service'
+import LocalDAO from '../../../db/api'
 
 export default {
   data () {
@@ -85,10 +86,30 @@ export default {
             }
           })
         })
+      } else if (type === 'deleteTag') {
+        return new Promise((resolve, reject) => {
+          console.log('deleteTag-data', data)
+          deleteTag(data).then(resp => {
+            if (resp.data.returnCode === 200) {
+              resolve(resp.data.body)
+            } else {
+              this.SET_IS_SYNCING(false)
+              reject(resp.data.returnMsg)
+            }
+          })
+        })
       }
     },
 
-    async runPushTasks (foldersNeedPushByDepth, foldersNeedPush, docsNeedPush) {
+    async runPushTasks (tagsNeedDelete, foldersNeedPushByDepth, foldersNeedPush, docsNeedPush) {
+      let tagTrashPromises = null
+      console.log('runPushTasks-2222', tagsNeedDelete)
+      if (tagsNeedDelete.length > 0) {
+        tagTrashPromises = this.createPromise({
+          tags: tagsNeedDelete.map(item => item.remote_id)
+        }, 'deleteTag')
+      }
+
       let tagPromises = null
       if (this.tagsNeedPush.length > 0) {
         tagPromises = this.createPromise({
@@ -109,10 +130,21 @@ export default {
         })
       , 'doc')
 
+      let deleteTagRes = []
+      if (tagTrashPromises) {
+        deleteTagRes = await tagTrashPromises
+      }
+
       let tagRes = []
       if (tagPromises) {
         tagRes = await tagPromises
       }
+
+      await Promise.all(tagsNeedDelete.map(tag => {
+        return LocalDAO.tag.removeById({
+          id: tag._id
+        })
+      }))
 
       this.tagsNeedPush.forEach((item, index) =>{
         this.UPDATE_TAG({
@@ -152,35 +184,44 @@ export default {
     },
 
     pushData () {
-      console.log('pushData')
       return new Promise((resolve, reject) => {
-        console.log('pushData-1111')
-        let foldersNeedPush = this.filesNeedPush
-          .filter(item => item.type === 'folder')
-          .sort((a, b) => a.depth - b.depth)
-  
-        let foldersNeedPushByDepth = []
-  
-        let docsNeedPush = this.filesNeedPush
-          .filter(item => item.type === 'doc')
-        console.log('pushData-2222')
-        if (foldersNeedPush.length + docsNeedPush.length === 0) resolve()
-        console.log('syncData', foldersNeedPush, docsNeedPush)
-        this.SET_IS_SYNCING(true)
-        if (foldersNeedPush.length > 0) {
-          let minDepth = foldersNeedPush[0].depth
-          let maxDepth = foldersNeedPush[foldersNeedPush.length - 1].depth
+        LocalDAO.tag.getAllTrash().then(trashTagResp => {
+          let tagsNeedDelete = trashTagResp.filter(item => item.remote_id)
+          // tagsNeedDelete = []
+          if (this.filesNeedPush.length + tagsNeedDelete.length === 0) {
+            console.log('no-file-need-push')
+            resolve()
+            return
+          }
+          let foldersNeedPush = this.filesNeedPush
+            .filter(item => item.type === 'folder')
+            .sort((a, b) => a.depth - b.depth)
     
-          for (let i = minDepth; i <= maxDepth; i++) {
-            let arr = foldersNeedPush.filter(item => item.depth === i)
-            if (arr.length > 0) {
-              foldersNeedPushByDepth.push(arr)
+          let foldersNeedPushByDepth = []
+    
+          let docsNeedPush = this.filesNeedPush
+            .filter(item => item.type === 'doc')
+          // if (foldersNeedPush.length + docsNeedPush.length === 0) {
+          //   console.log('pushData', foldersNeedPush.length, docsNeedPush.length)
+          //   resolve()
+          // }
+          console.log('syncData', foldersNeedPush, docsNeedPush)
+          this.SET_IS_SYNCING(true)
+          if (foldersNeedPush.length > 0) {
+            let minDepth = foldersNeedPush[0].depth
+            let maxDepth = foldersNeedPush[foldersNeedPush.length - 1].depth
+      
+            for (let i = minDepth; i <= maxDepth; i++) {
+              let arr = foldersNeedPush.filter(item => item.depth === i)
+              if (arr.length > 0) {
+                foldersNeedPushByDepth.push(arr)
+              }
             }
           }
-        }
-  
-        let resps = this.runPushTasks(foldersNeedPushByDepth, foldersNeedPush, docsNeedPush)
-        resolve(resps)
+    
+          let resps = this.runPushTasks(tagsNeedDelete, foldersNeedPushByDepth, foldersNeedPush, docsNeedPush)
+          resolve(resps)
+        })
       })
     }
   }

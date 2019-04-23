@@ -64,6 +64,16 @@ export function createTag (params) {
   return axios.post('/note/createTag', params)
 }
 
+export function deleteTag (params) {
+  console.log('deleteTag', params)
+  return axios.delete('/note/deleteTag', {
+    data: params,
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+}
+
 export function getSync () {
   return axios.get('/youdao/sync')
 }

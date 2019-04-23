@@ -1,5 +1,5 @@
 <template>
-  <div id="navbar">
+  <div id="navbar" ref="navbar">
     <Tree
       v-show="viewType === 'expanded'"
       :data="nav"

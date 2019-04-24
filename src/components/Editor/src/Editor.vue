@@ -38,6 +38,10 @@ export default {
 
   watch: {
     currentFile (val, oldVal) {
+      if (!val) {
+        this.showMask = true
+        return
+      }
       if (val && val.type === 'doc') {
         this.showMask = true
         setTimeout(() => {

@@ -23,7 +23,7 @@ export default {
         content: ''
       },
       showMask: true,
-      editor: {},
+      editor: null,
     }
   },
 
@@ -42,7 +42,7 @@ export default {
         this.showMask = true
         setTimeout(() => {
           this.initEditor()
-        }, 300)
+        }, 100)
       }
     },
 
@@ -66,56 +66,61 @@ export default {
 
     initEditor () {
       const _self = this
-      if (this.editor.destroy) {
-        this.editor.destroy()
-        this.editor = null
-      }
-      ClassicEditor
-        .create(this.$refs.editor, {
-          language: 'zh-cn',
-          // toolbar: [ 'undo', 'redo', 'heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', 'highlight:yellowMarker', 'Image' ],
-          extraPlugins: [ uploadAdapter, Autosave ],
-          autosave: {
-            save (editor) {
-              let editorData = editor.getData()
-              if (editorData !== _self.cachedDoc.content) {
-                if (_self.currentFile === _self.cachedDoc.id) {
-                  _self.EDIT_DOC({
-                    id: _self.cachedDoc.id,
-                    content: editorData
-                  })
-                  _self.cachedDoc.content = editorData
-                } else {
-                  _self.EDIT_DOC({
-                    id: _self.cachedDoc.id,
-                    content: editorData
-                  })
-                  _self.cachedDoc.content = editorData
+      if (this.editor) {
+        this.editor.setData(this.currentFile.content || '')
+        this.cachedDoc = {
+          id: this.currentFile.id,
+          content: this.currentFile.content
+        }
+        this.showMask = false
+      } else {
+        ClassicEditor
+          .create(this.$refs.editor, {
+            language: 'zh-cn',
+            // toolbar: [ 'undo', 'redo', 'heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', 'highlight:yellowMarker', 'Image' ],
+            extraPlugins: [ uploadAdapter, Autosave ],
+            autosave: {
+              save (editor) {
+                let editorData = editor.getData()
+                if (editorData !== _self.cachedDoc.content) {
+                  if (_self.currentFile === _self.cachedDoc.id) {
+                    _self.EDIT_DOC({
+                      id: _self.cachedDoc.id,
+                      content: editorData
+                    })
+                    _self.cachedDoc.content = editorData
+                  } else {
+                    _self.EDIT_DOC({
+                      id: _self.cachedDoc.id,
+                      content: editorData
+                    })
+                    _self.cachedDoc.content = editorData
+                  }
                 }
               }
-            }
-          },
-        })
-        .then(editor => {
-          console.log('editor', editor, editor.ui.view.editable.isFocused)
-          this.editor = editor
-          this.editor.setData(this.currentFile.content || '')
-          this.cachedDoc = {
-            id: this.currentFile.id,
-            content: this.currentFile.content
-          }
-          this.showMask = false
-          this.editor.ui.focusTracker.on('focus', () => {
-            console.log('focus')
+            },
           })
-          // setInterval(() => {
-          //   console.log('isFocused', this.editor.ui.view.editable.isFocused)
-          // })
-          // this.editor.ui.view.editable
-        })
-        .catch(error => {
-          console.error(error)
-        })
+          .then(editor => {
+            console.log('editor', editor, editor.ui.view.editable.isFocused)
+            this.editor = editor
+            this.editor.setData(this.currentFile.content || '')
+            this.cachedDoc = {
+              id: this.currentFile.id,
+              content: this.currentFile.content
+            }
+            this.showMask = false
+            this.editor.ui.focusTracker.on('focus', () => {
+              console.log('focus')
+            })
+            // setInterval(() => {
+            //   console.log('isFocused', this.editor.ui.view.editable.isFocused)
+            // })
+            // this.editor.ui.view.editable
+          })
+          .catch(error => {
+            console.error(error)
+          })
+      }
     },
 
     onEditorReady (editor) {

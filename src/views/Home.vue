@@ -19,7 +19,7 @@
       <div slot="right">
         <FileHandler></FileHandler>
         <TagHandler></TagHandler>
-        <Editor style="height: 100%" v-show="currentFile && currentFile.type === 'doc'"></Editor>
+        <Editor style="height: 100%"></Editor>
         <FolderComp style="height: 100%" v-show="currentFile && currentFile.type === 'folder'"></FolderComp>
       </div>
     </PageLayout>

@@ -12,11 +12,18 @@ export default {
 
 <style lang="stylus" scoped>
 .foler-comp
+  width 100%
+  height 100%
+  position absolute
+  top 60px
+  left 0
   text-align center
   line-height 400px
   display flex
   align-items center
   justify-content center
+  background-color #fff
+  z-index 99999
 
 .folder-icon
   width 80px

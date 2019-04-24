@@ -6,7 +6,7 @@
     <div class="section middle" style="background-color: #FCFBF7;">
       <slot name="middle"></slot>
     </div>
-    <div class="section right">
+    <div class="section right" style="position: relative">
       <slot name="right"></slot>
     </div>
   </div>

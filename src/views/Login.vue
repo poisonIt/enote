@@ -53,9 +53,14 @@ export default {
     }
   },
 
+  created () {
+    // this.SET_FILES_FROM_LOCAL()
+  },
+
   methods: {
     ...mapActions([
-      'SET_TOKEN'
+      'SET_TOKEN',
+      'SET_FILES_FROM_LOCAL'
     ]),
 
     async postData () {
@@ -78,65 +83,13 @@ export default {
         let userResp = await this.pullUserInfo(id_token, username, password)
         if (!userResp.userData) return
         await LocalDAO.user.update(userResp.userData)
+        await this.pushImgs()
+        await this.SET_FILES_FROM_LOCAL()
         await this.pushData()
         await this.pullData()
+        // setTimeout(() => {
         this.goHome()
-
-        // Promise.all([
-        //   this.pullUserInfo(id_token, username, password),
-        //   pullNotebooks(),
-        //   pullNote(),
-        //   pullTags()
-        // ]).then(pullResp => {
-        //   console.log('pullResp', pullResp)
-        //   LocalDAO.tag.removeAll().then(() => {
-        //     LocalDAO.files.removeAll().then(() => {
-        //     if (pullResp[0].returnMsg !== 'success') {
-        //       // alert(`获取用户信息：${pullResp[0].returnMsg}`)
-        //       this.isLoading = false
-        //       return
-        //     }
-
-        //     if (pullResp[1].data.returnMsg !== 'success') {
-        //       // alert(`获取笔记本：${pullResp[1].data.returnMsg}`)
-        //       this.isLoading = false
-        //       return
-        //     }
-
-        //     if (pullResp[2].data.returnMsg !== 'success') {
-        //       // alert(`获取笔记：${pullResp[2].data.returnMsg}`)
-        //       this.isLoading = false
-        //       return
-        //     }
-
-        //     if (pullResp[3].data.returnMsg !== 'success') {
-        //       // alert(`获取标签：${pullResp[3].data.returnMsg}`)
-        //       this.isLoading = false
-        //       return
-        //     }
-
-        //       const saveUserInfoTask = LocalDAO.user.update(pullResp[0].userData)
-
-        //       const saveNoteBooksTask = pullResp[1].data.body
-        //         .map(item => LocalDAO.files.add(this.transNoteBookData(item)))
-
-        //       const saveNoteTask = pullResp[2].data.body
-        //         .map(item => LocalDAO.files.add(this.transNoteData(item)))
-
-        //       const saveTagTask = (pullResp[3].data.body || [])
-        //         .map(item => LocalDAO.tag.add(this.transTagData(item)))
-
-        //       Promise.all([saveUserInfoTask, ...saveNoteBooksTask, ...saveNoteTask, ...saveTagTask])
-        //         .then(saveLocalRes => {
-        //           console.log('saveLocalRes', saveLocalRes)
-        //           this.isLoading = false
-        //           // setTimeout(() => {
-        //           this.goHome()
-        //           // }, 10000)
-        //         })
-        //     })
-        //   })
-        // })
+        // }, 1000)
       } else {
         this.isLoading = false
       }

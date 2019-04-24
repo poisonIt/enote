@@ -10,7 +10,7 @@ function loadDB (app) {
   let filesDB = null
   let docsDB = null
   let tagsDB = null
-  let topsDB = null
+  let imgsDB = null
 
   userDB = new Datastore({
     filename: path.resolve(app.getAppPath(), '../database/user.db'),
@@ -37,8 +37,8 @@ function loadDB (app) {
     autoload: true
   })
 
-  topsDB = new Datastore({
-    filename: path.resolve(app.getAppPath(), '../database/tops.db'),
+  imgsDB = new Datastore({
+    filename: path.resolve(app.getAppPath(), '../database/imgs.db'),
     autoload: true
   })
 
@@ -48,7 +48,7 @@ function loadDB (app) {
     filesDB,
     docsDB,
     tagsDB,
-    topsDB
+    imgsDB
   }
 }
 

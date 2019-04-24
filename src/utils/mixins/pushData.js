@@ -1,7 +1,10 @@
 import pReduce from 'p-reduce'
 import { mapGetters, mapActions } from 'vuex'
-import { pushNotebook, pushNote, createTag, deleteTag } from '@/service'
+import { pushNotebook, pushNote, createTag, deleteTag, uploadFile } from '@/service'
 import LocalDAO from '../../../db/api'
+import { readFileSync, createReadStream, unlinkSync } from 'fs'
+
+const mimes = ['image/png', 'image/gif','image/jpeg']
 
 export default {
   data () {
@@ -96,6 +99,32 @@ export default {
               this.SET_IS_SYNCING(false)
               reject(resp.data.returnMsg)
             }
+          })
+        })
+      } else if (type === 'img') {
+        return new Promise((resolve, reject) => {
+          uploadFile(data.file).then(resp => {
+            LocalDAO.files.getById({
+              id: data.img.doc_id
+            }).then(doc => {
+              let oldContent = doc.content
+              console.log('resp', resp)
+              let newContent = doc.content.replace(new RegExp(data.img.path,'gm'), resp.data.body[0].url)
+              console.log('newContent', newContent)
+              LocalDAO.files.update({
+                id: data.img.doc_id,
+                data: {
+                  content: newContent
+                }
+              }).then(() => {
+                LocalDAO.img.removeById({
+                  id: data.img._id
+                }).then(() => {
+                  unlinkSync(data.img.path.replace('file:///', ''))
+                  resolve()
+                })
+              })
+            })
           })
         })
       }
@@ -223,6 +252,58 @@ export default {
           resolve(resps)
         })
       })
-    }
+    },
+
+    async pushImgs () {
+      return new Promise((resolve, reject) => {
+        LocalDAO.img.getAll().then(allImgs => {
+          console.log('pushImgs-allImgs', allImgs)
+          Promise.all(allImgs.filter(img => mimes.indexOf(img.mime) > -1 && img.path)
+          .map(img => {
+            let buffer = readFileSync(img.path.replace('file:///', ''))
+            let blob = new Blob([buffer])
+            let file = new window.File([blob], img.name, {type: img.mime})
+            return this.createPromise({
+              img: img,
+              file: file
+            }, 'img')
+          })).then(imgResp => {
+            console.log('imgResp', imgResp)
+            resolve(imgResp)
+          })
+          // allImgs.forEach(img => {
+          //   if (mimes.indexOf(img.mime) > -1 && img.path) {
+          //     console.log('img', img)
+          //     let buffer = readFileSync(img.path.replace('file:///', ''))
+          //     let blob = new Blob([buffer])
+          //     let file = new window.File([blob], img.name, {type: img.mime})
+              
+          //     uploadFile(file).then(resp => {
+          //       LocalDAO.files.getById({
+          //         id: img.doc_id
+          //       }).then(doc => {
+          //         let oldContent = doc.content
+          //         let newContent = doc.content.replace(new RegExp(img.path,'gm'), resp.data.body[0].url)
+          //         console.log('newContent', newContent)
+          //         LocalDAO.files.update({
+          //           id: img.doc_id,
+          //           data: {
+          //             content: newContent
+          //           }
+          //         }).then(() => {
+          //           LocalDAO.img.removeById({
+          //             id: img._id
+          //           }).then(() => {
+          //             unlinkSync(img.path.replace('file:///', ''))
+          //             resolve()
+          //           })
+          //         })
+          //       })
+          //     })
+          //   }
+          // })
+        })
+      })
+    },
   }
 }

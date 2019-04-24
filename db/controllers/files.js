@@ -39,6 +39,21 @@ function getAll () {
   })
 }
 
+function getById (req) {
+  let { id } = req
+  return new Promise((resolve, reject) => {
+    filesDB.findOne({
+      _id: id
+    }, (err, doc) => {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(doc)
+      }
+    })
+  })
+}
+
 function add (opts) {
   opts.content = opts.is_temp ? docTemplate : opts.content
   return new Promise((resolve, reject) => {
@@ -93,6 +108,7 @@ function update (opts) {
 
 export default {
   getAll,
+  getById,
   add,
   saveAll,
   removeAll,

@@ -81,3 +81,27 @@ export function getSync () {
 export function syncSate () {
   return axios.get('/youdao/syncState')
 }
+
+export function getReportSubclass (params) {
+  console.log('getReportSubclass', params)
+  return axios.get('/report/reportSubclass', {
+    params: params
+  })
+}
+
+export function getReportStock (params) {
+  console.log('getReportStock', params)
+  return axios.get('/report/stocks', {
+    params: params
+  })
+}
+
+export function getReportTrade (params) {
+  return axios.get('/report/trades', {
+    params: params
+  })
+}
+
+export function addReport (params) {
+  return axios.post('/report/addReport', params)
+}

@@ -10,7 +10,7 @@ import Modal from '@/components/Modal'
 import BSelect from '@/components/Select'
 import BOption from '@/components/Option'
 import Menu from '@/components/Menu'
-import { Message, Upload, Button } from 'iview'
+import { Message, Upload, Button, Select, Option, Form, FormItem } from 'iview'
 import '@/assets/css/font-awesome.min.css'
 import 'iview/dist/styles/iview.css'
 import '@/assets/styles/iview.styl'
@@ -29,6 +29,10 @@ Vue.use(BOption)
 Vue.use(Menu)
 Vue.component('Upload', Upload)
 Vue.component('Button', Button)
+Vue.component('Select', Select)
+Vue.component('Option', Option)
+// Vue.component('Form', Form)
+Vue.component('FormItem', FormItem)
 Vue.prototype.$Message = Message
 Vue.prototype.$hub = EventHub
 

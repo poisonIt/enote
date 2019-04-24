@@ -48,21 +48,62 @@
             </b-option>
           </BSelect>
         </div>
-        <div class="form-item small">
+        <div class="form-item small" v-if="largeType != 100035 && largeType != 100031">
           <div class="form-label">选择股票</div>
-          <input type="text" v-model="stock">
+          <!-- <input type="text" v-model="stock"> -->
+          <!-- <div></div> -->
+          <Select
+            class="stock-select"
+            v-model="stock"
+            :remote-method="stockMenuMethod"
+            filterable
+            :loading="loadingStock"
+            remote>
+            <Option
+              v-for="(option, index) in stockMenuData"
+              :value="option.value"
+              :key="index">
+              {{option.label}}
+            </Option>
+          </Select>
         </div>
-        <div class="form-item small">
+        <div class="form-item small" v-if="largeType != 100031">
           <div class="form-label">选择行业</div>
-          <input type="text" v-model="trade">
+          <Select
+            class="stock-select"
+            v-model="trade"
+            :remote-method="tradeMenuMethod"
+            filterable
+            :loading="loadingTrade"
+            remote>
+            <Option
+              v-for="(option, index) in tradeMenuData"
+              :value="option.value"
+              :key="index">
+              {{option.label}}
+            </Option>
+          </Select>
         </div>
         <div class="form-item">
           <div class="form-label">报告标题</div>
-          <textarea type="text" v-model="title"></textarea>
+          <textarea type="text"
+            v-model="title"
+            :class="{ error: showTitleError }"
+            @blur="handleTitleBlur"/>
+          <span class="tip-error" v-show="showTitleError">请不要超出50个中文字符长度</span>
+          <!-- <Form ref="formCustom" :model="titleFrom" :rules="ruleCustom" :label-width="0">
+            <FormItem label="" prop="title">
+              <textarea type="text" v-model="titleFrom.title"/>
+            </FormItem>
+          </Form> -->
         </div>
         <div class="form-item">
           <div class="form-label">关键字</div>
-          <textarea type="text" v-model="keywords"></textarea>
+          <textarea type="text"
+            v-model="keywords"
+            :class="{ error: showKeywordError }"
+            @blur="handleKeywordBlur"/>
+          <span class="tip-error" v-show="showKeywordError">请不要超出50个中文字符长度</span>
         </div>
         <div class="form-item">
           <div class="form-label">上传附件</div>
@@ -88,7 +129,7 @@
         <!-- <Loading class="loading" :type="8" fill="#DDAF59" v-if="isLoading"></Loading> -->
       </div>
       <div class="button-group" slot="footer">
-          <div class="button primary">完成</div>
+          <div class="button primary" @click="postReport">完成</div>
           <div class="button" @click="closeResearchPanel">取消</div>
         </div>
     </modal>
@@ -96,11 +137,14 @@
 </template>
 
 <script>
+import { debounce } from 'lodash'
 import { mapActions, mapGetters } from 'vuex'
 import LocalDAO from '../../../db/api'
 import {
-  publishShare,
-  unPublishShare
+  getReportStock,
+  getReportTrade,
+  getReportSubclass,
+  addReport
 } from '../../service'
 import Loading from '@/components/Loading'
 
@@ -112,14 +156,33 @@ export default {
   },
 
   data () {
+    const validateStrLen = (rule, value, callback) => {
+      console.log('validateStrLen', rule, value)
+      if (value === '') {
+        callback(new Error('Please enter your password'))
+      } else {
+        if (value.length > 100) {
+          callback(new Error('请不要超出50个中文字符长度'))
+        }
+        callback()
+      }
+    }
     return {
       isLoading: true,
+      loadingStock: true,
+      loadingTrade: true,
+      isStockMenuVisible: false,
       largeType: '',
       smallType: '',
       stock: '',
       trade: '',
+      titleFrom: {
+        title: ''
+      },
       title: '',
+      showTitleError: false,
       keywords: '',
+      showKeywordError: false,
       uploadList: [],
       largeTypeArr: [
         {
@@ -136,9 +199,23 @@ export default {
           name: '行业报告',
           id: '100035',
           children: []
+        },
+        {
+          name: '宏观经济报告',
+          id: '100031',
+          children: []
         }
       ],
-      smallTypeArr: []
+      smallTypeArr: [],
+      stockMenuData: [],
+      tradeMenuData: [],
+      ruleCustom: {
+        title: [
+          // { required: true, message: '1111', trigger: 'blur' },
+          { type: 'string', max: 20, message: 'Introduce no less than 20 words', trigger: 'blur' },
+          // { validator: validateStrLen, trigger: 'blur' }
+        ]
+      }
     }
   },
 
@@ -157,6 +234,27 @@ export default {
 
     uploadList (val) {
       console.log('watch-uploadList', val)
+    },
+
+    largeType (val) {
+      console.log('watch-largeType', val)
+      getReportSubclass({
+        columnid: val
+      }).then(resp => {
+        this.smallTypeArr = resp.data.body.map(item => {
+          return {
+            name: item.name,
+            id: item.objid,
+            children: []
+          }
+        })
+      })
+    },
+
+    title (val, oldVal) {
+      if (val.length > 100) {
+        
+      }
     }
   },
 
@@ -184,6 +282,101 @@ export default {
     deleteFile (file) {
       let idx = this.uploadList.indexOf(file)
       this.uploadList.splice(idx, 1)
+    },
+
+    closeStockMenu () {
+      this.isStockMenuVisible = false
+    },
+
+    stockMenuMethod: debounce(function (query) {
+      this.searchStock(query)
+    }, 300),
+
+    tradeMenuMethod: debounce(function (query) {
+      this.searchTrade(query)
+    }, 300),
+
+    searchStock (query) {
+      this.loadingStock = true
+      console.log('searchStock'. query)
+      getReportStock({
+        searchname: query.trim()
+      }).then(resp => {
+        this.loadingStock = false
+        if (resp.data.returnCode === 200) {
+          this.stockMenuData = resp.data.body.body.map(item => {
+            return {
+              value: item.scode,
+              label: item.sname
+            }
+          })
+        } else {
+          this.stockMenuData = []
+        }
+      })
+    },
+
+    searchTrade (query) {
+      this.loadingTrade = true
+      getReportTrade({
+        searchname: query.trim()
+      }).then(resp => {
+        this.loadingTrade = false
+        if (resp.data.returnCode === 200) {
+          this.tradeMenuData = resp.data.body.map(item => {
+            return {
+              value: item.id,
+              label: item.name
+            }
+          })
+        } else {
+          this.tradeMenuData = []
+        }
+      })
+    },
+
+    handleStockMenuClick (value) {
+      console.log('handleStockMenuClick', value)
+    },
+
+    handleTitleBlur () {
+      if (this.title.length > 100) {
+        this.showTitleError = true
+      } else {
+        this.showTitleError = false
+      }
+    },
+
+    handleKeywordBlur () {
+      if (this.keywords.length > 100) {
+        this.showKeywordError = true
+      } else {
+        this.showKeywordError = false
+      }
+    },
+
+    postReport () {
+      let stockItem = this.stockMenuData.filter(item => item.value === this.stock)[0]
+      let tradeItem = this.tradeMenuData.filter(item => item.value === this.trade)[0]
+      console.log(stockItem, tradeItem)
+      addReport({
+        indcode: this.trade,
+        indname: tradeItem.label,
+        isupdatepeandeps: 0,
+        mktcode: '',
+        reporttypeid: this.smallType,
+        scode: this.stock,
+        scodename: stockItem.label,
+        status: 50,
+        stype: 2,
+        summary: this.keyword,
+        title: this.title,
+        username: this.userInfo.username
+      }).then(res => {
+        if (res.data.returnCode === 200) {
+          this.closeResearchPanel()
+        }
+      })
     }
   }
 }
@@ -219,14 +412,18 @@ export default {
   textarea
     width 85%
     height 46px
+    line-height 24px
     margin-left 9px
     padding-left 10px
+    margin-bottom 10px
     border-radius 4px
     border 1px solid #E9E9E9
     outline none
     resize none
     &:focus
       border 1px solid #DDAF59
+    &.error
+      border-color red
 
 .form-item
   &.small
@@ -289,5 +486,20 @@ export default {
   /* justify-items center */
   justify-content center
   align-items center
+
+.stock-select
+  width 140px !important
+  height 28px !important
+  position absolute !important
+  top 6px !important
+  left 63px !important
+
+.tip-error
+  position absolute
+  bottom -10px
+  left 64px
+  color red
+  font-size 12px
+  line-height 18px
 </style>
 

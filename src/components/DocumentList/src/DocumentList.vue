@@ -170,7 +170,8 @@ export default {
       viewFileSortOrder: 'GET_VIEW_FILE_SORT_ORDER',
       tagsMap: 'GET_TAGS_MAP',
       selectedTags: 'GET_SELECTED_TAGS',
-      currentNav: 'GET_CURRENT_NAV'
+      currentNav: 'GET_CURRENT_NAV',
+      searchKeyword: 'GET_SEARCH_KEYWORD'
     })
   },
 

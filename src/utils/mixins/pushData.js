@@ -40,6 +40,7 @@ export default {
           trash: file.trash
         }
       } else if (file.type === 'doc') {
+        console.log('doc-push', file)
         return {
           noteBookId: parentFolder ? parentFolder.remote_id : '/',
           noteContent: file.content,
@@ -49,8 +50,8 @@ export default {
           top: file.top,
           tagId: file.tags.map(tagId => {
             let tag = this.allTagMap[tagId]
-            return tag.remote_id
-          })
+            return tag ? tag.remote_id : undefined
+          }).filter(tag => tag)
         }
       }
     },
@@ -192,6 +193,8 @@ export default {
         return [...total, ...res]
       }, 0)
 
+      console.log('noteBookRes', noteBookRes)
+
       foldersNeedPush.forEach((item, index) => {
         this.SET_FILE_PUSH_FINISHED({
           id: item.id,
@@ -200,13 +203,24 @@ export default {
       })
 
       let noteRes = await docPromises
+
+      console.log('noteRes', noteRes)
       
       docsNeedPush.forEach((item, index) => {
         this.SET_FILE_PUSH_FINISHED({
           id: item.id,
-          remote_id: noteRes[index].noteBookId
+          remote_id: noteRes[index].noteId
         })
       })
+
+      let deleteFilePromise = this.filesNeedPush.filter(file => file.trash === 'DELETE')
+        .map(file => {
+          return LocalDAO.files.removeById({
+            id: file.id
+          })
+        })
+
+      await Promise.all(deleteFilePromise)
 
       this.SET_IS_SYNCING(false)
       return [tagRes, noteBookRes, noteRes]

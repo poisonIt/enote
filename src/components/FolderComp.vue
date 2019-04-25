@@ -1,5 +1,5 @@
 <template>
-  <div class="foler-comp">
+  <div class="folder-comp">
     <div class="folder-icon"></div>
   </div>
 </template>
@@ -11,7 +11,7 @@ export default {
 </script>
 
 <style lang="stylus" scoped>
-.foler-comp
+.folder-comp
   width 100%
   height 100%
   position absolute
@@ -23,7 +23,7 @@ export default {
   align-items center
   justify-content center
   background-color #fff
-  z-index 99999
+  z-index 9999
 
 .folder-icon
   width 80px

@@ -43,6 +43,7 @@ const mutations = {
   },
 
   UPDATE_FILE (state, opts) {
+    console.log('UPDATE_FILE', opts)
     fileTree.updateFile(opts)
   },
 
@@ -218,6 +219,7 @@ const mutations = {
 
   REFRESH_FILES (state) {
     state.files_map = cloneDeep(fileTree.flat_map)
+    console.log('REFRESH_FILES', state.files_map)
     let arr = []
     let folders = {}
     state.files_arr = []
@@ -624,7 +626,7 @@ const getters = {
   },
 
   GET_FILES_ARRAY (state) {
-    return state.files_arr
+    return state.files_arr.filter(file => file.title.indexOf(state.search_keyword) > -1)
   },
 
   GET_LATEST_FILES (state) {

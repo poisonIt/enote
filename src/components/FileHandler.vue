@@ -159,6 +159,7 @@ export default {
 
     handleInputBlur () {
       this.isInputFocused = false
+      if (this.titleValue === this.currentFile.title) return
       this.EDIT_FILE({
         id: this.currentFile.id,
         title: this.titleValue !== '' ? this.titleValue : '无标题笔记'

@@ -177,7 +177,7 @@ export default {
   },
 
   methods: {
-    ...mapActions(['SAVE_FILE_TITLE', 'DELETE_FILE']),
+    ...mapActions(['EDIT_FILE', 'DELETE_FILE']),
 
     handleClick () {
       this.dispatch('FileCardGroup', 'item-click', this)
@@ -199,7 +199,7 @@ export default {
 
     handleTitleInputBlur () {
       this.showTitleInput = false
-      this.SAVE_FILE_TITLE({
+      this.EDIT_FILE({
         id: this.file_id,
         title: this.titleValue
       })

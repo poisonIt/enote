@@ -29,7 +29,7 @@ export default [
     label: '移动',
     eventListener: {
       eventName: 'click',
-      callbackName: 'handleExportPDF'
+      callbackName: 'handleMove'
     }
   },
   {

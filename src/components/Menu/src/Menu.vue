@@ -193,7 +193,7 @@ export default {
   border-radius 2px
   overflow hidden
   box-shadow 0px 0px 6px 0px rgba(0,0,0,0.15)
-  z-index 9999
+  z-index 99999
   .item-list
     z-index 1
     .item

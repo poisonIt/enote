@@ -150,6 +150,8 @@ export default {
 <style lang="stylus" scoped>
 #editor-container
   position relative
+.ck-editor
+  height 100% !important
 .mask
   position absolute
   width 100%

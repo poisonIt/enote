@@ -1,8 +1,8 @@
 <template>
   <div class="home">
-    <button style="position: fixed;top: 30px;left: 20px;z-index: 9999999;" @click="resetData">reset</button>
+    <!-- <button style="position: fixed;top: 30px;left: 20px;z-index: 9999999;" @click="resetData">reset</button>
     <button style="position: fixed;top: 30px;left: 80px;z-index: 9999999;" @click="removeTags">removeTags</button>
-    <button style="position: fixed;top: 30px;left: 160px;z-index: 9999999;" @click="goLogin">goLogin</button>
+    <button style="position: fixed;top: 30px;left: 160px;z-index: 9999999;" @click="goLogin">goLogin</button> -->
     <PageLayout>
       <div slot="left">
         <div id="nav">

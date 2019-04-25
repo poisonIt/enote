@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <div class="avatar" :class="{ expanded : viewType === 'expanded' }" @click="showUserPanel">
-      <img src="http://img5.duitang.com/uploads/item/201512/18/20151218165511_AQW4B.jpeg" alt="">
+      <img src="file:////Users/bowiego/Desktop/WechatIMG44.jpeg" alt="">
       <img :src="userInfo.image_url" alt="">
     </div>
   </div>

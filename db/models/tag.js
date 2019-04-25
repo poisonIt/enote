@@ -1,4 +1,4 @@
-function fileModel (opts) {
+function TagModel (opts) {
   return {
     remote_id: opts.remote_id,
     name: opts.name || '未命名标签',
@@ -6,4 +6,4 @@ function fileModel (opts) {
   }
 }
 
-export default fileModel
+export default TagModel

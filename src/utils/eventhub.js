@@ -44,8 +44,6 @@ export default new Vue({
         cbs
       } = this
 
-      console.log('dispatchHub', cbs, eventName)
-
       if (cbs[eventName].hasOwnProperty(from.$options._componentTag)) {
         this.$emit(eventName, from.$options._componentTag, params)
       }

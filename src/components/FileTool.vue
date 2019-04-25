@@ -49,12 +49,16 @@ export default {
 
   computed: {
     ...mapGetters({
-      viewType: 'GET_VIEW_TYPE'
+      viewType: 'GET_VIEW_TYPE',
+      isEditorFocused: 'GET_IS_EDITOR_FOCUSED'
     })
   },
 
   mounted () {
     let asyncItv = setInterval(() => {
+      this.checkIsEditorFocused()
+      console.log('isEditorFocused', this.isEditorFocused)
+      if(this.isEditorFocused) return
       this.pushData().catch(err => {
         this.$Message.error('同步失败，请重新登录')
         clearInterval(asyncItv)
@@ -101,6 +105,10 @@ export default {
           reject(err)
         })
       })
+    },
+
+    checkIsEditorFocused () {
+      this.$hub.dispatchHub('getIsFocused', this)
     }
   }
 }

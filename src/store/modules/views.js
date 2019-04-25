@@ -18,7 +18,8 @@ const state = {
   editor_content_cache: '',
   cached_doc: '',
   current_nav: null,
-  is_syncing: false
+  is_syncing: false,
+  is_editor_focused: false
 }
 
 const mutations = {
@@ -97,6 +98,10 @@ const mutations = {
 
   SET_IS_SYNCING (state, val) {
     state.is_syncing = val
+  },
+
+  SET_IS_EDITOR_FOCUSED (state, val) {
+    state.is_editor_focused = val
   }
 }
 
@@ -175,6 +180,10 @@ const actions = {
 
   SET_IS_SYNCING ({ commit }, val) {
     commit('SET_IS_SYNCING', val)
+  },
+
+  SET_IS_EDITOR_FOCUSED ({ commit }, val) {
+    commit('SET_IS_EDITOR_FOCUSED', val)
   }
 }
 
@@ -257,6 +266,10 @@ const getters = {
 
   GET_IS_SYNCING (state) {
     return state.is_syncing
+  },
+
+  GET_IS_EDITOR_FOCUSED (state) {
+    return state.is_editor_focused
   }
 }
 

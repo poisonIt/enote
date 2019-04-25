@@ -26,22 +26,6 @@ function removeAll (files) {
   })
 }
 
-function removeById (req) {
-  const { id } = req
-  return new Promise((resolve, reject) => {
-    filesDB.remove(
-      { _id: id },
-      {},
-      (err, numRemoved) => {
-        if (err) {
-          reject(err)
-        }
-        resolve(numRemoved)
-      }
-    )
-  })
-}
-
 function getAll () {
   return new Promise((resolve, reject) => {
     filesDB.find({}, (err, docs) => {
@@ -128,6 +112,5 @@ export default {
   add,
   saveAll,
   removeAll,
-  removeById,
   update
 }

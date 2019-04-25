@@ -7,6 +7,7 @@
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
+import mixins from '../mixins'
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic'
 import uploadAdapter from './upload'
 import Autosave from '@ckeditor/ckeditor5-autosave/src/autosave'
@@ -15,6 +16,8 @@ import '../../../assets/styles/editor.css'
 
 export default {
   name: 'EditorComp',
+
+  mixins: mixins,
 
   data () {
     return {
@@ -65,7 +68,8 @@ export default {
       'EDIT_DOC',
       'SET_EDITOR_CONTENT_CACHE',
       'SET_CACHED_DOC',
-      'EDIT_FILE'
+      'EDIT_FILE',
+      'SET_IS_EDITOR_FOCUSED'
     ]),
 
     initEditor () {

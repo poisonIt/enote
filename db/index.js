@@ -5,50 +5,43 @@ const path = require('path')
 // const isDevelopment = process.env.NODE_ENV !== 'production'
 
 function loadDB (app) {
-  let userDB = null
-  let structureDB = null
-  let filesDB = null
-  let docsDB = null
-  let tagsDB = null
-  let imgsDB = null
-
-  userDB = new Datastore({
+  const userDB = new Datastore({
     filename: path.resolve(app.getAppPath(), '../database/user.db'),
     autoload: true
   })
 
-  structureDB = new Datastore({
-    filename: path.resolve(app.getAppPath(), '../database/structure.db'),
+  const folderDB = new Datastore({
+    filename: path.resolve(app.getAppPath(), '../database/folder.db'),
     autoload: true
   })
 
-  filesDB = new Datastore({
-    filename: path.resolve(app.getAppPath(), '../database/files.db'),
+  const noteDB = new Datastore({
+    filename: path.resolve(app.getAppPath(), '../database/note.db'),
     autoload: true
   })
 
-  docsDB = new Datastore({
-    filename: path.resolve(app.getAppPath(), '../database/docs.db'),
+  const docDB = new Datastore({
+    filename: path.resolve(app.getAppPath(), '../database/doc.db'),
     autoload: true
   })
 
-  tagsDB = new Datastore({
-    filename: path.resolve(app.getAppPath(), '../database/tags.db'),
+  const tagDB = new Datastore({
+    filename: path.resolve(app.getAppPath(), '../database/tag.db'),
     autoload: true
   })
 
-  imgsDB = new Datastore({
-    filename: path.resolve(app.getAppPath(), '../database/imgs.db'),
+  const imgDB = new Datastore({
+    filename: path.resolve(app.getAppPath(), '../database/img.db'),
     autoload: true
   })
 
   return {
     userDB,
-    structureDB,
-    filesDB,
-    docsDB,
-    tagsDB,
-    imgsDB
+    folderDB,
+    noteDB,
+    docDB,
+    tagDB,
+    imgDB
   }
 }
 

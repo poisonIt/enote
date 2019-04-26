@@ -1,8 +1,8 @@
 <template>
   <div class="home">
-    <!-- <button style="position: fixed;top: 30px;left: 20px;z-index: 9999999;" @click="resetData">reset</button>
-    <button style="position: fixed;top: 30px;left: 80px;z-index: 9999999;" @click="removeTags">removeTags</button>
-    <button style="position: fixed;top: 30px;left: 160px;z-index: 9999999;" @click="goLogin">goLogin</button> -->
+    <button style="position: fixed;top: 30px;left: 20px;z-index: 9999999;" @click="resetData">reset</button>
+    <!-- <button style="position: fixed;top: 30px;left: 80px;z-index: 9999999;" @click="removeTags">removeTags</button> -->
+    <button style="position: fixed;top: 30px;left: 160px;z-index: 9999999;" @click="goLogin">goLogin</button>
     <PageLayout>
       <div slot="left">
         <div id="nav">
@@ -23,7 +23,7 @@
         <FolderComp style="height: 100%" v-show="currentFile && currentFile.type === 'folder'"></FolderComp>
       </div>
     </PageLayout>
-    <modal
+    <!-- <modal
       width="400px"
       height="464px"
       transition-name="fade-in-down"
@@ -37,7 +37,7 @@
         <div class="button primary" @click="confirmMovePanel">保存</div>
         <div class="button" @click="closeMovePanel">取消</div>
       </div>
-    </modal>
+    </modal> -->
     <UserPanel></UserPanel>
     <SharePanel></SharePanel>
     <ResearchPanel></ResearchPanel>
@@ -153,7 +153,7 @@ export default {
   },
 
   created () {
-    this.SET_FILES_FROM_LOCAL()
+    // this.SET_FILES_FROM_LOCAL()
     LocalDAO.user.get().then(resp => {
       console.log('userInfo', resp)
       this.fdList = resp.friend_list
@@ -252,8 +252,9 @@ export default {
     },
 
     resetData () {
-      LocalDAO.tag.removeAll()
-      LocalDAO.files.removeAll()
+      // LocalDAO.folder.removeAll()
+      LocalDAO.note.removeAll()
+      LocalDAO.doc.removeAll()
     },
 
     removeTags () {

@@ -55,15 +55,15 @@ export default {
   },
 
   mounted () {
-    let asyncItv = setInterval(() => {
-      this.checkIsEditorFocused()
-      console.log('isEditorFocused', this.isEditorFocused)
-      if(this.isEditorFocused) return
-      this.pushData().catch(err => {
-        this.$Message.error('同步失败，请重新登录')
-        clearInterval(asyncItv)
-      })
-    }, 5000)
+    // let asyncItv = setInterval(() => {
+    //   this.checkIsEditorFocused()
+    //   console.log('isEditorFocused', this.isEditorFocused)
+    //   if(this.isEditorFocused) return
+    //   this.pushData().catch(err => {
+    //     this.$Message.error('同步失败，请重新登录')
+    //     clearInterval(asyncItv)
+    //   })
+    // }, 5000)
   },
 
   methods: {
@@ -75,8 +75,8 @@ export default {
       this.isMenuVisible = false
     },
 
-    newDoc () {
-      // this.$hub.dispatchHub('newDoc', this)
+    newNote () {
+      // this.$hub.dispatchHub('newNote', this)
       this.$hub.dispatchHub('newTemplateDoc', this)
     },
 
@@ -86,7 +86,7 @@ export default {
 
     handleMenuClick (value) {
       if (value === 'new_doc') {
-        this.newDoc()
+        this.newNote()
       } else if (value === 'new_folder') {
         this.newFolder()
       }

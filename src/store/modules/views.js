@@ -17,7 +17,7 @@ const state = {
   editor_content: '',
   editor_content_cache: '',
   cached_doc: '',
-  current_nav: null,
+  // current_nav: null,
   is_syncing: false,
   is_editor_focused: false
 }
@@ -92,9 +92,9 @@ const mutations = {
     state.show_tag_handler = !!val
   },
 
-  SET_CURRENT_NAV (state, val) {
-    state.current_nav = val
-  },
+  // SET_CURRENT_NAV (state, val) {
+  //   state.current_nav = val
+  // },
 
   SET_IS_SYNCING (state, val) {
     state.is_syncing = val
@@ -174,9 +174,9 @@ const actions = {
     commit('TOGGLE_SHOW_TAG_HANDLER', val)
   },
 
-  SET_CURRENT_NAV ({ commit }, val) {
-    commit('SET_CURRENT_NAV', val)
-  },
+  // SET_CURRENT_NAV ({ commit }, val) {
+  //   commit('SET_CURRENT_NAV', val)
+  // },
 
   SET_IS_SYNCING ({ commit }, val) {
     commit('SET_IS_SYNCING', val)
@@ -260,9 +260,9 @@ const getters = {
     return state.show_tag_handler
   },
 
-  GET_CURRENT_NAV (state) {
-    return state.current_nav
-  },
+  // GET_CURRENT_NAV (state) {
+  //   return state.current_nav
+  // },
 
   GET_IS_SYNCING (state) {
     return state.is_syncing

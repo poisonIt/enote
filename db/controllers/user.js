@@ -11,6 +11,18 @@ function remove (files) {
   })
 }
 
+// function add (opts) {
+//   return new Promise((resolve, reject) => {
+//     userDB.insert(folderModel(opts), (err, newDoc) => {
+//       if (err) {
+//         console.error(err)
+//       } else {
+//         resolve(newDoc)
+//       }
+//     })
+//   })
+// }
+
 function get () {
   return new Promise((resolve, reject) => {
     userDB.find({}, (err, docs) => {

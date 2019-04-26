@@ -276,13 +276,6 @@ app.on('ready', async () => {
   Menu.setApplicationMenu(menu)
   createLoginWindow()
   app.database = loadDB(app)
-
-  // session.defaultSession.webRequest.onBeforeRequest(['https://iapp.htffund.com/*'], (details, callback) => {
-  //   console.log('session', details)
-  //   callback({
-  //     cancel: false
-  //   })
-  // })
 })
 
 // Exit cleanly on request from parent process in development mode.

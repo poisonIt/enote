@@ -6,7 +6,7 @@ const folderMenu = [
         label: '新建笔记',
         eventListener: {
           eventName: 'click',
-          callbackName: 'handleNewDoc'
+          callbackName: 'handleNewNote'
         }
       },
       {

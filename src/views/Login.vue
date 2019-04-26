@@ -54,6 +54,8 @@ export default {
   },
 
   created () {
+    // LocalDAO.files.removeAll()
+
     // this.SET_FILES_FROM_LOCAL()
   },
 
@@ -83,10 +85,10 @@ export default {
         let userResp = await this.pullUserInfo(id_token, username, password)
         if (!userResp.userData) return
         await LocalDAO.user.update(userResp.userData)
-        await this.pushImgs()
-        await this.SET_FILES_FROM_LOCAL()
-        await this.pushData()
-        await this.pullData()
+        // await this.pushImgs()
+        // await this.SET_FILES_FROM_LOCAL()
+        // await this.pushData()
+        // await this.pullData()
         // setTimeout(() => {
         this.goHome()
         // }, 1000)
@@ -269,7 +271,6 @@ input
   transition all ease 0.3s
   &:focus
     border 1px solid #DDAF59
-
 
 .button
   background-color #DDAF59

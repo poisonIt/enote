@@ -9,7 +9,7 @@
         <span style="color: #828282">{{ path }}</span>
       </div>
       <div class="manager">
-        <Tree
+        <!-- <Tree
           :item-height="'40px'"
           :data="nav"
           :labelProxy="'name'"
@@ -24,7 +24,7 @@
               @click="handleItemClick(node)">
             </div>
           </div>
-        </Tree>
+        </Tree> -->
       </div>
     </div>
   </div>

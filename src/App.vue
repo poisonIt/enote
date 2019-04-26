@@ -13,12 +13,22 @@
 import { mapActions } from 'vuex'
 // import AppHeader from '@/components/AppHeader'
 import Home from '@/views/Home'
-import LocalDAO from '../db/api'
+import { getAllLocalNote, getAllLocalDoc } from '@/service/local'
 
 export default {
   components: {
     // AppHeader,
     Home
+  },
+
+  created () {
+    getAllLocalNote().then(res => {
+      console.log('getAllLocalNote', res)
+    })
+
+    getAllLocalDoc().then(res => {
+      console.log('getAllLocalDoc', res)
+    })
   },
 
 

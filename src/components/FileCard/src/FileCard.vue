@@ -129,6 +129,7 @@ export default {
       if (this.searchKeyword === '') {
         return [this.titleEllipsis]
       } else {
+        return ''
         return this.searchSubStr(this.titleEllipsis, this.searchKeyword)
       }
     }

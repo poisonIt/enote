@@ -1,3 +1,9 @@
 import Tree from './src/Tree'
+import TreeStore from './src/TreeStore'
+import TreeNode from './src/TreeNode'
 
-export default Tree
+export {
+  Tree,
+  TreeStore,
+  TreeNode
+}

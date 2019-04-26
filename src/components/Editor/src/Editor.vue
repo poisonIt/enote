@@ -13,6 +13,7 @@ import uploadAdapter from './upload'
 import Autosave from '@ckeditor/ckeditor5-autosave/src/autosave'
 import '@ckeditor/ckeditor5-build-classic/build/translations/zh-cn'
 import '../../../assets/styles/editor.css'
+import { getLocalDoc, updateLocalDoc } from '@/service/local'
 
 export default {
   name: 'EditorComp',
@@ -25,15 +26,17 @@ export default {
         id: '',
         content: ''
       },
+      currentDoc: {},
       showMask: true,
       editor: null,
+      content: ''
     }
   },
 
   computed: {
     ...mapGetters({
       contentCache: 'GET_EDITOR_CONTENT_CACHE',
-      content: 'GET_EDITOR_CONTENT',
+      // content: 'GET_EDITOR_CONTENT',
       currentFile: 'GET_CURRENT_FILE',
       viewType: 'GET_VIEW_TYPE'
     })
@@ -41,21 +44,25 @@ export default {
 
   watch: {
     currentFile (val, oldVal) {
+      console.log('currentFile', val)
       if (!val) {
         this.showMask = true
         return
       }
-      if (val && val.type === 'doc') {
+      if (val && val.type === 'note') {
         this.showMask = true
-        setTimeout(() => {
-          this.initEditor()
-        }, 100)
+        getLocalDoc({ noteId: val._id }).then(res => {
+          console.log('getLocalDoc-res', res)
+          this.currentDoc = res
+          this.content = this.currentDoc.content
+          this.initEditor(res.content)
+        })
       }
     },
 
-    content (val) {
-      this.editorHtml = val
-    },
+    // content (val) {
+    //   this.editorHtml = val
+    // },
 
     viewType (val) {
       this.handleResize()
@@ -72,13 +79,13 @@ export default {
       'SET_IS_EDITOR_FOCUSED'
     ]),
 
-    initEditor () {
+    initEditor (content) {
       const _self = this
       if (this.editor) {
-        this.editor.setData(this.currentFile.content || '')
+        this.editor.setData(content || '')
         this.cachedDoc = {
           id: this.currentFile.id,
-          content: this.currentFile.content
+          content: content
         }
         this.showMask = false
       } else {
@@ -92,16 +99,24 @@ export default {
                 let editorData = editor.getData()
                 if (editorData !== _self.cachedDoc.content) {
                   if (_self.currentFile === _self.cachedDoc.id) {
-                    _self.EDIT_DOC({
-                      id: _self.cachedDoc.id,
+                    updateLocalDoc({
+                      id: _self.currentDoc._id,
                       content: editorData
                     })
+                    // _self.EDIT_DOC({
+                    //   id: _self.cachedDoc.id,
+                    //   content: editorData
+                    // })
                     _self.cachedDoc.content = editorData
                   } else {
-                    _self.EDIT_DOC({
-                      id: _self.cachedDoc.id,
+                    updateLocalDoc({
+                      id: _self.currentDoc._id,
                       content: editorData
                     })
+                    // _self.EDIT_DOC({
+                    //   id: _self.cachedDoc.id,
+                    //   content: editorData
+                    // })
                     _self.cachedDoc.content = editorData
                   }
                 }
@@ -111,10 +126,10 @@ export default {
           .then(editor => {
             console.log('editor', editor, editor.ui.view.editable.isFocused)
             this.editor = editor
-            this.editor.setData(this.currentFile.content || '')
+            this.editor.setData(content || '')
             this.cachedDoc = {
               id: this.currentFile.id,
-              content: this.currentFile.content
+              content: content
             }
             this.showMask = false
             this.editor.ui.focusTracker.on('focus', () => {

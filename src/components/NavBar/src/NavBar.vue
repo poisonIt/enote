@@ -1,6 +1,16 @@
 <template>
   <div id="navbar" ref="navbar">
     <Tree
+      :model="folderTree"
+      default-tree-node-name="新建文件夹"
+      v-bind:default-expanded="true"
+      @contextmenu="handleContextmenu"
+      @add-node="handleAddNode"
+      @set-current="handleSetCurrentFolder"
+      @change-name-blur="handleChangeNodeName"
+      @drop="handleNodeDrop">
+    </Tree>
+    <!-- <Tree
       v-show="viewType === 'expanded'"
       :data="nav"
       theme="dark"
@@ -44,7 +54,7 @@
           @blur="handleNodeInputBlur"
           ref="nodeInput"/>
       </div>
-    </Tree>
+    </Tree> -->
     <div class="nav-mini" v-show="viewType === 'unexpanded'">
       <div class="icon icon-latest"
         :class="{
@@ -97,8 +107,30 @@ import {
 } from '../Menu'
 import { GenNonDuplicateID } from '@/utils/utils'
 import mixins from '../mixins'
-import Tree from '@/components/Tree'
+import { Tree, TreeStore, TreeNode } from '@/components/Tree'
 import LocalDAO from '../../../../db/api'
+import {
+  getAllLocalFolder,
+  addLocalFolder,
+  updateLocalFolder,
+  addLocalNote
+} from '@/service/local'
+// import folderData from '../folderData'
+
+const rootFolder = {
+  name: '我的文件夹',
+  id: '0',
+  pid: null,
+  dragDisabled: true,
+  addTreeNodeDisabled: true,
+  addLeafNodeDisabled: true,
+  editNodeDisabled: true,
+  delNodeDisabled: true,
+  children: [],
+  data: {
+    type: 'folder'
+  }
+}
 
 export default {
   name: 'NavBar',
@@ -151,7 +183,8 @@ export default {
           link: 'recycle',
           type: 'recycle'
         }
-      ]
+      ],
+      folderTree: new TreeStore([rootFolder])
     }
   },
 
@@ -186,12 +219,44 @@ export default {
     }
   },
 
-  mounted () {
-    const curNode = this.$refs.tree.store.currentNode
-    console.log('curNode', curNode)
-    if (curNode) {
-      this.handleItemClick(curNode)
+  created () {
+    function getChildren (cur, arr) {
+      cur.children = arr.filter(item => item.pid === cur.id).map(item => {
+        return {
+          id: item._id,
+          pid: item.pid,
+          name: item.title,
+          data: item,
+          children: []
+        }
+      })
+      cur.children.forEach(child => {
+        getChildren(child, arr)
+      })
     }
+
+    getAllLocalFolder().then(res => {
+      let rootChildren = res.filter(item => item.pid === '0').map(item => {
+        return {
+          id: item._id,
+          pid: item.pid,
+          name: item.title,
+          data: item,
+          children: []
+        }
+      })
+      rootChildren.forEach(item => getChildren(item, res))
+      rootFolder.children = rootChildren
+      this.folderTree = new TreeStore([rootFolder])
+    })
+  },
+
+  mounted () {
+    // const curNode = this.$refs.tree.store.currentNode
+    // console.log('curNode', curNode)
+    // if (curNode) {
+    //   this.handleItemClick(curNode)
+    // }
     this.SET_TAGS_FROM_LOCAL()
     // LocalDAO.tag.getAll().then(res => {
     //   this.updateTags(res)
@@ -215,7 +280,8 @@ export default {
       'TOGGLE_SHOW_MOVE_PANEL',
       'SET_TAGS_FROM_LOCAL',
       'SET_SELECTED_TAGS',
-      'SET_CURRENT_NAV'
+      'SET_CURRENT_NAV',
+      'ADD_FILE'
     ]),
 
     getTreeNode (link) {
@@ -258,10 +324,17 @@ export default {
       this.SET_CURRENT_NAV(node.data)
     },
 
-    handleContextmenu (node) {
-      this.popupedNode = node
-      const d = node.data
-      console.log('handleContextmenu', d.type)
+    handleSetCurrentFolder (node) {
+      console.log('handleSetCurrentFolder', node)
+      this.SET_CURRENT_NAV(node.data)
+    },
+
+    handleContextmenu (nodeInstance) {
+      console.log('handleContextmenu-11', nodeInstance)
+      this.popupedNode = nodeInstance
+      nodeInstance.click()
+      const d = nodeInstance.model.data
+      console.log('handleContextmenu', nodeInstance, d.type)
       if (d.type === 'folder' && d.link === 'folders') {
         this.popupNativeMenu(this.nativeMenus[0])
       }
@@ -279,58 +352,88 @@ export default {
       }
     },
 
-    handleNewDoc (isCurrent, isTemp) {
-      console.log('handleNewDoc')
-      if (isCurrent) {
-        this.popupedNode = this.currentNode
-      }
-      if (this.popupedNode === null ||
-        this.popupedNode.data.link === 'latest' ||
-        this.popupedNode.data.link === 'recycle') {
-        this.popupedNode = this.getTreeNode('folders')
-      }
-      let cache_id = GenNonDuplicateID(6)
-      this.ADD_FILE({
+    handleNewNote (isCurrent, isTemp) {
+      console.log('handleNewNote', this.popupedNode)
+      addLocalNote({
         title: '无标题笔记',
-        type: 'doc',
-        cache_id: cache_id,
-        parent_folder: this.popupedNode.data.id,
-        is_temp: isTemp
-      }).then(() => {
-        this.$nextTick(() => {
-          for (let i in this.popupedNode.store.nodeMap) {
-            let node = this.popupedNode.store.nodeMap[i]
-            if (node.data.id === this.popupedNode.data.id) {
-              this.handleItemClick(node)
-              return
-            }
-          }
-        })
+        pid: this.popupedNode.model.id
+      }).then(res => {
+        console.log('add-local-note-res', res)
+        this.ADD_FILE(res)
+        // this.SET_CURRENT_FILES(this.popupedNode.model.data).then(() => {
+        //   this.SET_CURRENT_FILE(res._id)
+        // })
       })
+      
+      // if (isCurrent) {
+      //   this.popupedNode = this.currentNode
+      // }
+      // if (this.popupedNode === null ||
+      //   this.popupedNode.data.link === 'latest' ||
+      //   this.popupedNode.data.link === 'recycle') {
+      //   this.popupedNode = this.getTreeNode('folders')
+      // }
+      // let cache_id = GenNonDuplicateID(6)
+      // this.ADD_FILE({
+      //   title: '无标题笔记',
+      //   type: 'doc',
+      //   cache_id: cache_id,
+      //   parent_folder: this.popupedNode.data.id,
+      //   is_temp: isTemp
+      // }).then(() => {
+      //   this.$nextTick(() => {
+      //     for (let i in this.popupedNode.store.nodeMap) {
+      //       let node = this.popupedNode.store.nodeMap[i]
+      //       if (node.data.id === this.popupedNode.data.id) {
+      //         this.handleItemClick(node)
+      //         return
+      //       }
+      //     }
+      //   })
+      // })
     },
 
-    handleNewTemplateDoc (isCurrent) {
-      this.handleNewDoc(isCurrent, true)
+    handleNewTemplateNote (isCurrent) {
+      this.handleNewNote(isCurrent, true)
     },
 
     handleNewFolder (isCurrent) {
-      if (isCurrent) {
-        this.popupedNode = this.currentNode
-      }
-      if (this.popupedNode === null ||
-        this.popupedNode.data.link === 'latest' ||
-        this.popupedNode.data.link === 'recycle') {
-        this.popupedNode = this.getTreeNode('folders')
-      }
+      // if (isCurrent) {
+      //   this.popupedNode = this.currentNode
+      // }
+      // if (this.popupedNode === null ||
+      //   this.popupedNode.data.link === 'latest' ||
+      //   this.popupedNode.data.link === 'recycle') {
+      //   this.popupedNode = this.getTreeNode('folders')
+      // }
       let cache_id = GenNonDuplicateID(6)
-      this.$refs.tree.setCurrentNodeData(cache_id)
-      this.ADD_FILE({
-        title: '新建文件夹',
-        link: 'new folder',
-        type: 'folder',
-        cache_id: cache_id,
-        parent_folder: this.popupedNode.data.id
+      // this.$refs.tree.setCurrentNodeData(cache_id)
+      this.popupedNode.addChild({}, true)
+      // this.ADD_FILE({
+      //   title: '新建文件夹',
+      //   link: 'new folder',
+      //   type: 'folder',
+      //   cache_id: cache_id,
+      //   parent_folder: this.popupedNode.data.id
+      // })
+    },
+
+    handleAddNode (node) {
+      console.log('handleAddNode', node)
+      addLocalFolder({
+        title: node.name,
+        pid: node.pid
+      }).then(res => {
+        node.id = res._id
+        node.data = {
+          id: res._id,
+          type: 'folder'
+        }
       })
+      // LocalDAO.folder.add({
+      //   parent_id: node.parent.data.id,
+      //   title: node.name
+      // })
     },
 
     handleInsertChildNode (childNode) {
@@ -343,34 +446,33 @@ export default {
 
     handleRename () {
       this.typingNode = this.popupedNode
-      this.nodeInput = this.typingNode.data.title
-      this.$nextTick(() => {
-        const inputEl = document.querySelectorAll('input.node-input.show')
-        console.log('inputEl', inputEl[0])
-        inputEl[0].select()
-        this.$refs.tree.setCurrentNodeData(this.typingNode.data.id)
+      // this.nodeInput = this.typingNode.data.title
+      this.popupedNode.setEditable()
+      // this.$nextTick(() => {
+      //   const inputEl = document.querySelectorAll('input.node-input.show')
+      //   console.log('inputEl', inputEl[0])
+      //   inputEl[0].select()
+      //   this.$refs.tree.setCurrentNodeData(this.typingNode.data.id)
+      // })
+    },
+
+    handleChangeNodeName (node) {
+      console.log('handleChangeNodeName', node)
+      updateLocalFolder({
+        id: node.id,
+        title: node.name
       })
     },
 
-    handleNodeInputBlur () {
-      console.log('handleNodeInputBlur-00000', this.typingNode.data)
-      this.EDIT_FILE({
-        id: this.typingNode.data.id,
-        title: this.nodeInput
-      })
-      // this.$refs.tree.setCurrentNodeData(this.typingNode.data.id)
-      // this.typingNode.data.title = this.nodeInput
-      // this.$nextTick(() => {
-      //   for (let i in this.typingNode.store.nodeMap) {
-      //     let nodeTemp = this.typingNode.store.nodeMap[i]
-      //     if (nodeTemp.data.id === this.typingNode.data.id) {
-      //       console.log('handleNodeInputBlur-11111', nodeTemp)
-      //       // this.handleItemClick(nodeTemp)
-      //       // this.typingNode = null
-      //       return
-      //     }
-      //   }
-      // })
+    handleNodeDrop ({node, oldParent}) {
+      console.log('handleNodeDrop', node, oldParent, node.id, oldParent.id)
+      if (node.pid !== oldParent.id) {
+        console.log('move')
+        updateLocalFolder({
+          id: node.id,
+          pid: node.pid
+        })
+      }
     },
 
     handleMove () {

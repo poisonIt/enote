@@ -311,7 +311,6 @@ export default {
     click () {
       var root = this.getRootNode()
       this.model.store.setCurrentNode(this.model, root)
-      console.log('click', this)
       root.$emit('click', this.model)
     },
 

@@ -4,7 +4,6 @@ const state = {
   view_type: 'expanded',
   name: '最新文档',
   move_file: '',
-  view_folder: '',
   view_file_type: 'latest',
   view_file_list_type: 'summary',
   view_file_sort_type: 'create_at',
@@ -30,10 +29,6 @@ const mutations = {
 
   SET_NETWORK_STATUS (state, val) {
     state.network_status = val
-  },
-
-  SET_VIEW_FOLDER (state, id) {
-    state.view_folder = id
   },
 
   SET_VIEW_TYPE (state, type) {
@@ -119,10 +114,6 @@ const actions = {
     commit('SET_NETWORK_STATUS', val)
   },
 
-  SET_VIEW_FOLDER ({ commit }, id) {
-    commit('SET_VIEW_FOLDER', id)
-  },
-
   SET_VIEW_TYPE ({ commit }, type) {
     commit('SET_VIEW_TYPE', type)
   },
@@ -203,10 +194,6 @@ const getters = {
 
   GET_NETWORK_STATUS (state) {
     return state.network_status
-  },
-
-  GET_VIEW_FOLDER (state) {
-    return state.view_folder
   },
 
   GET_VIEW_TYPE (state) {

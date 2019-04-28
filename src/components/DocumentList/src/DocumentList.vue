@@ -167,7 +167,6 @@ export default {
       viewFileType: 'GET_VIEW_FILE_TYPE',
       currentNav: 'GET_CURRENT_NAV',
       currentFile: 'GET_CURRENT_FILE',
-      viewFolder: 'GET_VIEW_FOLDER',
       viewFileListType: 'GET_VIEW_FILE_LIST_TYPE',
       viewFileSortType: 'GET_VIEW_FILE_SORT_TYPE',
       viewFileSortOrder: 'GET_VIEW_FILE_SORT_ORDER',
@@ -245,55 +244,6 @@ export default {
       this.updateFileList()
     },
 
-    fileList (val, oldVal) {
-      // console.log('fileList', val, oldVal)
-      // if (oldVal.length === 0 && this.viewFileType === 'latest') {
-      //   this.selectFile(0)
-      //   this.$nextTick(() => {
-      //     this.$refs.body.scrollTo(0, 0)
-      //   })
-      // }
-      // // val.forEach((item, index) => {
-      // //   this.$set(this.list, index, item)
-      // // })
-      // this.list = val
-    },
-
-    list (val) {
-      // console.log('watch-list', val)
-      // if (val.length > 0) {
-      //   this.selectFile(0)
-      // }
-    },
-
-    latestFiles (val) {
-      // console.log('watch-latestFiles', val)
-      return
-      if (this.viewFileType === 'latest') {
-        this.fileList = this.fileListSortFunc(_.clone(val))
-      }
-    },
-
-    recycle (val) {
-      return
-      if (this.viewFileType === 'recycle') {
-        this.fileList = this.fileListSortFunc(_.clone(val))
-      }
-    },
-
-    viewFolder (val, oldVal) {
-      return
-      if (this.fileList.length > 0) {
-        this.selectFile(0)
-      } else {
-        this.SET_CURRENT_FILE('')
-      }
-      this.list = this.fileList
-      this.$nextTick(() => {
-        this.$refs.body.scrollTo(0, 0)
-      })
-    },
-
     viewFileSortType (val) {
       console.log('viewFileSortType', val)
       return
@@ -329,23 +279,15 @@ export default {
     updateFileList () {
       let notes = this.fileListSortFunc(this.noteList.filter(file => file.title.indexOf(this.searchKeyword) > -1))
       let folders = this.folderList.filter(file => file.title.indexOf(this.searchKeyword) > -1)
-      console.log('notes', notes)
 
       this.fileList = _.flatten([folders, notes])
     },
 
     selectFile (index) {
       const file = this.fileList[index]
-      if (!file) {
-        this.SET_CURRENT_FILE(null)
-        return
-      } else if (file === this.currentFile) {
-        return
-      }
+      console.log('selectFile', index, file)
       this.$refs.fileCardGroup.select(index) // visually select file
-      if (this.currentFile !== file) {
-        this.SET_CURRENT_FILE(file)
-      }
+      this.SET_CURRENT_FILE(file)
     },
 
     handleFileTitleClick (index) {
@@ -386,18 +328,6 @@ export default {
       return [...topList, ...downList]
     },
 
-    getParentFolderTitle (file) {
-      console.log('getParentFolderTitle', file)
-      return '/'
-      let parentFolderId = file.parent_folder
-      return parentFolderId !== '/' ? this.allFileMap[parentFolderId].title : '我的文件夹'
-      // let parentFolderId = folders[folders.length - 1]
-      // if (parentFolderId && this.folders[parentFolderId]) {
-      //   return this.folders[parentFolderId].title
-      // }
-      // return ''
-    },
-
     newNote () {
       this.$hub.dispatchHub('newNote', this)
     },
@@ -405,6 +335,7 @@ export default {
     handleContextmenu (props) {
       console.log('handleContextmenu-11', props)
       this.popupedFile = props.file_id
+      if (this.currentNav.type === 'bin') return
       if (props.type === 'note') {
         let idx = this.stickTopFiles.indexOf(props.file_id) === -1 ? 0 : 1
         this.popupNativeMenu(this.nativeMenus[idx])
@@ -414,17 +345,16 @@ export default {
     },
 
     handleStickTop () {
-      console.log('handleStickTop', this.popupedFile)
       updateLocalNote({
         id: this.popupedFile,
         top: true
       }).then(() => {
         let file = _.find(this.fileList, { _id: this.popupedFile })
         let idx = this.fileList.indexOf(file)
-        console.log('handleStickTop-file', file, this.popupedFile)
         file.top = true
         this.fileList.splice(idx, 1)
         this.fileList.unshift(file)
+        this.selectFile(0)
       })
     },
 
@@ -433,7 +363,6 @@ export default {
     },
 
     handleNewNote () {
-      console.log('handleNewNote', this.popupedFile)
       addLocalNote({
         title: '无标题笔记',
         pid: this.popupedFile,
@@ -445,7 +374,6 @@ export default {
     },
 
     handleRename () {
-      console.log('handleRename')
       this.$hub.dispatchHub('renameFileCard', this, this.popupedFile)
     },
 
@@ -461,20 +389,6 @@ export default {
     handleDelete () {
       console.log('handleDelete')
       this.$hub.dispatchHub('deleteFileCard', this, this.currentFile.id)
-    },
-
-    getCurrentFiles (currentFolder) {
-      if (!currentFolder) {
-        console.log('getCurrentFiles', this.latestFiles, this.rootFiles)
-        return this.rootFiles
-      } else {
-        const childFolders = currentFolder.children || []
-        const childDocs = currentFolder.child_docs || []
-
-        return [...childFolders, ...childDocs]
-          .filter(file => !file.trash)
-      }
-
     }
   }
 }

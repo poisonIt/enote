@@ -20,7 +20,7 @@ function getAll () {
       if (err) {
         reject(err)
       } else {
-        console.log('all documents in collection folder_db:', folders)
+        // console.log('all documents in collection folder_db:', folders)
         resolve(folders)
       }
     })
@@ -44,7 +44,6 @@ function getById (req) {
 
 function getByPid (req) {
   let { pid } = req
-  console.log('getByPid', req)
   return new Promise((resolve, reject) => {
     if (pid === '0') {
       db.folderDB.find({
@@ -54,7 +53,6 @@ function getByPid (req) {
         if (err) {
           reject(err)
         } else {
-          console.log('getByPid-111', folders)
           resolve(folders.map(item => {
             item.folder_title = '我的文件夹'
             return item

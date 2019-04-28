@@ -22,7 +22,7 @@ function getAll () {
       if (err) {
         reject(err)
       } else {
-        console.log('all documents in collection files_db:', notes)
+        // console.log('all documents in collection files_db:', notes)
         resolve(notes)
       }
     })

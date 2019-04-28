@@ -249,7 +249,6 @@ export default {
       'DELETE_TAG',
       'CLEAR_ALL_RECYCLE',
       'RESUME_ALL_RECYCLE',
-      'SET_VIEW_FOLDER',
       'SET_VIEW_NAME',
       'SET_VIEW_FILE_TYPE',
       'SET_CURRENT_FOLDER',
@@ -310,35 +309,6 @@ export default {
       })
     },
 
-    getTreeNode (link) {
-      let nodeMap = this.$refs.tree.store.nodeMap
-      for (let i in nodeMap) {
-        let node = nodeMap[i]
-        if (node.data.link === link) {
-          return node
-        }
-      }
-    },
-
-    handleItemClick (node) {
-      console.log('handleItemClick', node.data.title, node.data.id)
-      node.instance.handleClick()
-      this.currentNode = node
-      this.SET_VIEW_FOLDER(node.uid)
-      if (node.data.type !== 'select') {
-        this.SET_VIEW_NAME(node.data.title)
-      }
-      if (node.data.type === 'select') {
-        this.SET_VIEW_FILE_TYPE('tags')
-      } else {
-        this.SET_VIEW_FILE_TYPE(node.data.link)
-      }
-      if (node.data.type === 'folder') {
-        this.SET_CURRENT_FOLDER(node.data.id)
-      }
-      this.SET_CURRENT_NAV(node.data)
-    },
-
     handleSetCurrentFolder (node) {
       this.SET_CURRENT_NAV(node.data)
     },
@@ -387,28 +357,10 @@ export default {
     },
 
     handleNewFolder (isCurrent) {
-      // if (isCurrent) {
-      //   this.popupedNode = this.currentNode
-      // }
-      // if (this.popupedNode === null ||
-      //   this.popupedNode.data.link === 'latest' ||
-      //   this.popupedNode.data.link === 'recycle') {
-      //   this.popupedNode = this.getTreeNode('folders')
-      // }
-      let cache_id = GenNonDuplicateID(6)
-      // this.$refs.tree.setCurrentNodeData(cache_id)
       this.popupedNode.addChild({}, true)
-      // this.ADD_FILE({
-      //   title: '新建文件夹',
-      //   link: 'new folder',
-      //   type: 'folder',
-      //   cache_id: cache_id,
-      //   parent_folder: this.popupedNode.data.id
-      // })
     },
 
     handleAddNode (node) {
-      console.log('handleAddNode', node)
       addLocalFolder({
         title: node.name,
         pid: node.pid
@@ -419,10 +371,6 @@ export default {
           type: 'folder'
         }
       })
-      // LocalDAO.folder.add({
-      //   parent_id: node.parent.data.id,
-      //   title: node.name
-      // })
     },
 
     handleInsertChildNode (childNode) {
@@ -435,14 +383,7 @@ export default {
 
     handleRename () {
       this.typingNode = this.popupedNode
-      // this.nodeInput = this.typingNode.data.title
       this.popupedNode.setEditable()
-      // this.$nextTick(() => {
-      //   const inputEl = document.querySelectorAll('input.node-input.show')
-      //   console.log('inputEl', inputEl[0])
-      //   inputEl[0].select()
-      //   this.$refs.tree.setCurrentNodeData(this.typingNode.data.id)
-      // })
     },
 
     handleChangeNodeName (node) {

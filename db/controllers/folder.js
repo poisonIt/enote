@@ -1,11 +1,11 @@
 import folderModel from '../models/folder'
 import { getValid } from '../tools'
 const { remote } = require('electron')
-const { folderDB } = remote.app.database
+const db = remote.app.database
 
 function removeAll (files) {
   return new Promise((resolve, reject) => {
-    folderDB.remove({}, { multi: true }, (err, numRemoved) => {
+    db.folderDB.remove({}, { multi: true }, (err, numRemoved) => {
       if (err) reject(err)
       resolve(numRemoved)
     })
@@ -14,11 +14,13 @@ function removeAll (files) {
 
 function getAll () {
   return new Promise((resolve, reject) => {
-    folderDB.find({}, (err, folders) => {
+    db.folderDB.find({
+      trash: 'NORMAL'
+    }, (err, folders) => {
       if (err) {
         reject(err)
       } else {
-        console.log('all documents in collection files_db:', folders)
+        console.log('all documents in collection folder_db:', folders)
         resolve(folders)
       }
     })
@@ -28,7 +30,7 @@ function getAll () {
 function getById (req) {
   let { id } = req
   return new Promise((resolve, reject) => {
-    folderDB.findOne({
+    db.folderDB.findOne({
       _id: id
     }, (err, folder) => {
       if (err) {
@@ -40,9 +42,62 @@ function getById (req) {
   })
 }
 
+function getByPid (req) {
+  let { pid } = req
+  console.log('getByPid', req)
+  return new Promise((resolve, reject) => {
+    if (pid === '0') {
+      db.folderDB.find({
+        pid: pid,
+        trash: 'NORMAL'
+      }, (err, folders) => {
+        if (err) {
+          reject(err)
+        } else {
+          console.log('getByPid-111', folders)
+          resolve(folders.map(item => {
+            item.folder_title = '我的文件夹'
+            return item
+          }))
+        }
+      })
+    } else {
+      getById({ id: pid, trash: 'NORMAL' }).then(folderDoc => {
+        db.folderDB.find({
+          pid: pid,
+          trash: 'NORMAL'
+        }, (err, folders) => {
+          if (err) {
+            reject(err)
+          } else {
+            resolve(folders.map(item => {
+              item.folder_title = folderDoc.title
+              return item
+            }))
+          }
+        })
+      })
+    }
+  })
+}
+
+function getTrash () {
+  return new Promise((resolve, reject) => {
+    db.folderDB.find({
+      trash: 'TRASH'
+    }, (err, folders) => {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(folders)
+      }
+    })
+  })
+}
+
 function add (opts) {
   return new Promise((resolve, reject) => {
-    folderDB.insert(folderModel(opts), (err, newFolder) => {
+    db.folderDB.insert(folderModel(opts), (err, newFolder) => {
       if (err) {
         console.error(err)
       } else {
@@ -57,11 +112,11 @@ function update (opts) {
   console.log('update-local', id, opts)
 
   return new Promise((resolve, reject) => {
-    folderDB.findOne({ _id: id }, (err, folder) => {
+    db.folderDB.findOne({ _id: id }, (err, folder) => {
       if (err) {
         reject(err)
       } else {
-        folderDB.update(
+        db.folderDB.update(
           { _id: id },
           { $set: {
             pid: getValid('pid', opts, folder),
@@ -89,6 +144,8 @@ export default {
   removeAll,
   getAll,
   getById,
+  getByPid,
+  getTrash,
   add,
   update
 }

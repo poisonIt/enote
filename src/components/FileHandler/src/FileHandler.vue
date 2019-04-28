@@ -5,12 +5,12 @@
     :style="{ width: containerWidth }">
     <div class="title" :class="{ disable : viewFileType === 'recycle' }">
       <input
-        :class="{ hide : !isInputFocused }"
+        ref="input"
         type="text"
         v-model="titleValue"
         @focus="isInputFocused = true"
         @blur="handleInputBlur"
-        @keyup.enter="handleInputBlur">
+        @keyup.enter="handleInputEnter">
       <p class="ellipsis">{{ titleValue }}</p>
     </div>
     <div class="handler">
@@ -40,7 +40,7 @@
             <span>作者：</span>
             <span>{{ userInfo.account_name_cn || userInfo.username }}</span>
           </div>
-          <div class="item">
+          <div class="item" v-if="currentFile.content">
             <span>字数：</span>
             <span>{{ currentFile.content.length }}</span>
           </div>
@@ -65,6 +65,10 @@
 <script>
 import dayjs from 'dayjs'
 import { mapGetters, mapActions } from 'vuex'
+import {
+  updateLocalFolder,
+  updateLocalNote
+} from '@/service/local'
 
 export default {
   name: 'FileHandler',
@@ -123,6 +127,7 @@ export default {
     },
 
     path (val) {
+      return '/'
       let ancestorFolders = val.ancestor_folders
       if (val.parentFolder === null) {
         return '/'
@@ -157,12 +162,27 @@ export default {
       'SET_SHARE_INFO'
     ]),
 
-    handleInputBlur () {
+    handleInputEnter () {
+      this.$refs.input.blur()
+    },
+
+    async handleInputBlur () {
       this.isInputFocused = false
       if (this.titleValue === this.currentFile.title) return
-      this.EDIT_FILE({
-        id: this.currentFile.id,
-        title: this.titleValue !== '' ? this.titleValue : '无标题笔记'
+      if (this.currentFile.type === 'folder') {
+        await updateLocalFolder({
+          id: this.currentFile._id,
+          title: this.titleValue
+        })
+      } else {
+        await updateLocalNote({
+          id: this.currentFile._id,
+          title: this.titleValue
+        })
+      }
+      this.$hub.dispatchHub('updateFile', this, {
+        id: this.currentFile._id,
+        name: this.titleValue
       })
     },
 
@@ -318,19 +338,19 @@ export default {
   background-repeat no-repeat
   margin 0 5px
   &.icon-share
-    background-image url('../assets/images/lanhu/share@2x.png')
+    background-image url('../../../assets/images/lanhu/share@2x.png')
   &.icon-fetch
-    background-image url('../assets/images/lanhu/fetch@2x.png')
+    background-image url('../../../assets/images/lanhu/fetch@2x.png')
   &.icon-search
-    background-image url('../assets/images/lanhu/search@2x.png')
+    background-image url('../../../assets/images/lanhu/search@2x.png')
   &.icon-tag
-    background-image url('../assets/images/lanhu/tag_grey@2x.png')
+    background-image url('../../../assets/images/lanhu/tag_grey@2x.png')
   &.icon-more
-    background-image url('../assets/images/lanhu/more@2x.png')
+    background-image url('../../../assets/images/lanhu/more@2x.png')
   &.icon-window
-    background-image url('../assets/images/lanhu/window@2x.png')
+    background-image url('../../../assets/images/lanhu/window@2x.png')
   &.icon-info
-    background-image url('../assets/images/lanhu/info@2x.png')
+    background-image url('../../../assets/images/lanhu/info@2x.png')
 
 .more, .info
   position absolute

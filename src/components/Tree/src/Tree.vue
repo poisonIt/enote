@@ -31,11 +31,12 @@
         </span>
         <span v-else>
           <slot name="treeNodeIcon">
-            <i class="tn-icon tn-menu-icon tn-icon-folder"></i>
+            <i class="tn-icon tn-menu-icon"
+              :class="[itemIconClass, { current: isCurrent }, { expanded: expanded }]"></i>
           </slot>
         </span>
 
-        <div class="tn-node-content" v-if="!editable">
+        <div class="tn-node-content ellipsis" v-if="!editable">
           {{model.name}}
         </div>
         <input v-else class="tn-input" type="text" ref="nodeInput" :value="model.name" @input="updateName" @blur="blur">
@@ -76,6 +77,7 @@
       <Tree v-for="model in model.children"
         :default-tree-node-name="defaultTreeNodeName"
         :default-leaf-node-name="defaultLeafNodeName"
+        :flat-ids="flatIds"
         v-bind:default-expanded="defaultExpanded"
         :model="model"
         :key='model.id'>
@@ -90,11 +92,14 @@
 
 <script>
 import { Tree, TreeStore, TreeNode } from '../index.js'
+import Emitter from '@/utils/mixins/emitter'
 import { addHandler, removeHandler } from './tools.js'
 let fromComp = null
 
 export default {
   name: 'Tree',
+
+  mixins: [ Emitter ],
 
   components: {
     Tree
@@ -129,6 +134,11 @@ export default {
     defaultExpanded: {
       type: Boolean,
       default: true
+    },
+
+    flatIds: {
+      type: Array,
+      default: () => []
     }
   },
 
@@ -138,7 +148,11 @@ export default {
     },
 
     itemIconClass () {
-      return this.model.isLeaf ? 'tn-icon-file' : 'tn-icon-folder'
+      if (this.model.data.type === 'folder') {
+        return this.model.isLeaf ? 'tn-icon-file' : 'tn-icon-folder'
+      } else {
+        return 'tn-icon-' + this.model.data.type
+      }
     },
 
     caretClass () {
@@ -158,7 +172,7 @@ export default {
         },
         isDragEnterNode
       } = this
-      const isFat = this.model.name === '我的文件夹'
+      const isFat = this.flatIds.indexOf(this.model.id) > -1
 
       return {
         'tree-node': true,
@@ -176,6 +190,21 @@ export default {
 
   created () {
     this.model.instance = this
+    this.id = this.model.data ? this.model.id : '0'
+    this.$on('select', (params) => {
+      if (this.model.id === params.id) {
+        this.click()
+      }
+    })
+    this.$on('update-model', (params) => {
+      if (this.model.id === params.id) {
+        for (let i in this.model.store.cacheProperty) {
+          if (i !== 'id') {
+            this.model[i] = this.model.store.cacheProperty[i]
+          }
+        }
+      }
+    })
   },
 
   mounted () {
@@ -189,6 +218,12 @@ export default {
     if (this.model.editable) {
       this.setEditable()
     }
+
+    // let root = this.getRootNode()
+    // if (this.model.id === '0' && this.model.name !== 'root') {
+    //   console.log('set', this.model)
+    //   this.model.store.setCurrentNode(this.model, root)
+    // }
   },
 
   beforeDestroy () {
@@ -199,7 +234,7 @@ export default {
     updateName(e) {
       var oldName = this.model.name;
       this.model.changeName(e.target.value)
-      var node = this.getRootNode();
+      var node = this.getRootNode()
       node.$emit('change-name', {
         'id': this.model.id,
         'oldName': oldName,
@@ -254,9 +289,29 @@ export default {
       root.$emit('contextmenu', this)
     },
 
+    updateNodeModel (params) {
+      this.model.store.cacheProperty = params
+      this.broadcast('tree', 'update-model', {
+        id: params.id
+      }, true)
+    },
+
+    select (id) {
+      this.broadcast('tree', 'select', {
+        id: id
+      }, true)
+    },
+
+    selectParent () {
+      let parentId = this.model.store.currentNode.parent.id
+      if (parentId === 0) return
+      this.select(parentId)
+    },
+
     click () {
       var root = this.getRootNode()
       this.model.store.setCurrentNode(this.model, root)
+      console.log('click', this)
       root.$emit('click', this.model)
     },
 
@@ -373,6 +428,9 @@ export default {
 
     getRootNode () {
       var node = this.$parent
+      if (this.model.name === 'root') {
+        return this
+      }
       while (node._props.model.name !== 'root') {
         node = node.$parent
       }
@@ -478,7 +536,26 @@ export default {
     border-bottom 3px solid transparent
 .tn-icon-caret-down
   transform rotate(90deg)
-.tn-icon-folder
+.tn-menu-icon
   margin-right 10px
-  background-image url(../../../assets/images/lanhu/folder_close_highlight@2x.png)
+.tn-icon-latest
+  background-image url(../../../assets/images/lanhu/documents@2x.png)
+  &.current
+    background-image url(../../../assets/images/lanhu/documents_highlight@2x.png)
+.tn-icon-folder
+  background-image url(../../../assets/images/lanhu/folder_close@2x.png)
+  &.expanded
+    background-image url(../../../assets/images/lanhu/folder_open@2x.png)
+  &.current
+    background-image url(../../../assets/images/lanhu/folder_close_highlight@2x.png)
+    &.expanded
+     background-image url(../../../assets/images/lanhu/folder_open_highlight@2x.png)
+.tn-icon-tag
+  background-image url(../../../assets/images/lanhu/tag@2x.png)
+  &.current
+    background-image url(../../../assets/images/lanhu/tag_highlight@2x.png)
+.tn-icon-bin
+  background-image url(../../../assets/images/lanhu/recycle@2x.png)
+  &.current
+    background-image url(../../../assets/images/lanhu/recycle_highlight@2x.png)
 </style>

@@ -6,15 +6,16 @@ const readFile = function (path, cb) {
       if (err) {
         reject(err)
       }
-      fs.stat(path, function (err, stats) {
-        if (err) {
-          reject(err)
-        }
-        resolve({
-          data: data,
-          size: stats.size
-        })
-      })
+      resolve(data)
+      // fs.stat(path, function (err, stats) {
+      //   if (err) {
+      //     reject(err)
+      //   }
+      //   resolve({
+      //     data: data,
+      //     size: stats.size
+      //   })
+      // })
     })
   })
 }

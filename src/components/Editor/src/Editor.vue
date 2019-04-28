@@ -28,15 +28,12 @@ export default {
       },
       currentDoc: {},
       showMask: true,
-      editor: null,
-      content: ''
+      editor: null
     }
   },
 
   computed: {
     ...mapGetters({
-      contentCache: 'GET_EDITOR_CONTENT_CACHE',
-      // content: 'GET_EDITOR_CONTENT',
       currentFile: 'GET_CURRENT_FILE',
       viewType: 'GET_VIEW_TYPE'
     })
@@ -44,25 +41,32 @@ export default {
 
   watch: {
     currentFile (val, oldVal) {
-      console.log('currentFile', val)
       if (!val) {
         this.showMask = true
         return
       }
       if (val && val.type === 'note') {
         this.showMask = true
+        if (this.editor) {
+          // 切换选中笔记，保存上一个笔记修改内容
+          if (this.editor.getData() !== this.cachedDoc.content) {
+            console.log('0000000')
+            updateLocalDoc({
+              id: this.cachedDoc._id,
+              content: this.editor.getData()
+            })
+          }
+        }
         getLocalDoc({ noteId: val._id }).then(res => {
-          console.log('getLocalDoc-res', res)
           this.currentDoc = res
-          this.content = this.currentDoc.content
+          this.cachedDoc = {
+            _id: res._id,
+            content: res.content
+          }
           this.initEditor(res.content)
         })
       }
     },
-
-    // content (val) {
-    //   this.editorHtml = val
-    // },
 
     viewType (val) {
       this.handleResize()
@@ -83,10 +87,6 @@ export default {
       const _self = this
       if (this.editor) {
         this.editor.setData(content || '')
-        this.cachedDoc = {
-          id: this.currentFile.id,
-          content: content
-        }
         this.showMask = false
       } else {
         ClassicEditor
@@ -97,48 +97,25 @@ export default {
             autosave: {
               save (editor) {
                 let editorData = editor.getData()
-                if (editorData !== _self.cachedDoc.content) {
-                  if (_self.currentFile === _self.cachedDoc.id) {
-                    updateLocalDoc({
-                      id: _self.currentDoc._id,
-                      content: editorData
-                    })
-                    // _self.EDIT_DOC({
-                    //   id: _self.cachedDoc.id,
-                    //   content: editorData
-                    // })
-                    _self.cachedDoc.content = editorData
-                  } else {
-                    updateLocalDoc({
-                      id: _self.currentDoc._id,
-                      content: editorData
-                    })
-                    // _self.EDIT_DOC({
-                    //   id: _self.cachedDoc.id,
-                    //   content: editorData
-                    // })
-                    _self.cachedDoc.content = editorData
-                  }
+                if (_self.currentDoc._id === _self.cachedDoc._id
+                  && editorData !== _self.cachedDoc.content) {
+                  updateLocalDoc({
+                    id: _self.currentDoc._id,
+                    content: editorData
+                  })
+                  _self.cachedDoc.content = editorData
                 }
               }
             },
           })
           .then(editor => {
-            console.log('editor', editor, editor.ui.view.editable.isFocused)
             this.editor = editor
             this.editor.setData(content || '')
             this.cachedDoc = {
-              id: this.currentFile.id,
+              _id: this.currentDoc._id,
               content: content
             }
             this.showMask = false
-            this.editor.ui.focusTracker.on('focus', () => {
-              console.log('focus')
-            })
-            // setInterval(() => {
-            //   console.log('isFocused', this.editor.ui.view.editable.isFocused)
-            // })
-            // this.editor.ui.view.editable
           })
           .catch(error => {
             console.error(error)

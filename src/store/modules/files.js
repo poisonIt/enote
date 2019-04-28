@@ -5,8 +5,7 @@ import { getLocalNoteByPid } from '@/service/local'
 const state = {
   search_keyword: '',
   current_nav: null,
-  current_files: [],
-  current_file_id: null
+  current_file: null
 }
 
 const mutations = {
@@ -15,22 +14,11 @@ const mutations = {
   },
 
   SET_CURRENT_NAV (state, val) {
-    console.log('SET_CURRENT_NAV', val)
     state.current_nav = val
   },
 
-  SET_CURRENT_FILES (state, val) {
-    state.current_files = val
-  },
-
-  SET_CURRENT_FILE (state, id) {
-    state.current_file_id = id
-  },
-
-  ADD_FILE (state, file) {
-    console.log('ADD_FILE', file)
-    state.current_files.push(file)
-    state.current_file_id = file._id
+  SET_CURRENT_FILE (state, file) {
+    state.current_file = file
   }
 }
 
@@ -41,23 +29,10 @@ const actions = {
 
   SET_CURRENT_NAV({ commit, dispatch }, val) {
     commit('SET_CURRENT_NAV', val)
-    dispatch('SET_CURRENT_FILES', val)
   },
 
-  async SET_CURRENT_FILES ({ commit }, nav) {
-    if (nav.type === 'folder') {
-      let currentFiles = await getLocalNoteByPid({ pid: nav._id })
-      commit('SET_CURRENT_FILES', currentFiles)
-    }
-  },
-
-  SET_CURRENT_FILE ({ commit }, id) {
-    console.log('SET_CURRENT_FILE', id)
-    commit('SET_CURRENT_FILE', id)
-  },
-
-  ADD_FILE ({ commit }, file) {
-    commit('ADD_FILE', file)
+  SET_CURRENT_FILE ({ commit }, file) {
+    commit('SET_CURRENT_FILE', file)
   }
 }
 
@@ -70,16 +45,9 @@ const getters = {
     return state.current_nav
   },
 
-  GET_CURRENT_FILES (state) {
-    return state.current_files
-  },
-
   GET_CURRENT_FILE (state) {
-    let result = _.find(state.current_files, { _id: state.current_file_id })
-    console.log('GET_CURRENT_FILE', result)
-    return result
-    // return state.current_files.filter(item => item._id === state.current_file_id)[0]
-  },
+    return state.current_file
+  }
 }
 
 export default {

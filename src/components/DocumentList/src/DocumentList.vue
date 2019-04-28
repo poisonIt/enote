@@ -2,7 +2,7 @@
   <div class="document-list">
     <div class="header">
       <div class="button button-back"
-        :class="{ disable : viewFileType !== 'new folder' }"
+        :class="{ disable : !currentNav || !currentNav._id || currentNav.type !== 'folder' }"
         @click="handleBack">
       </div>
       <SearchBar></SearchBar>
@@ -27,16 +27,17 @@
         @handleSelect="selectFile"
         @titleClick="handleFileTitleClick">
         <FileCard
-          v-for="(item, index) in list"
+          v-for="(item, index) in fileList"
           :key="index"
+          :pid="item.pid"
           :mini="viewFileListType === 'list'"
-          :file_id="item.id"
+          :file_id="item._id"
           :type="item.type"
           :title="item.title"
           :content="item.brief"
-          :isTop="stickTopFiles.indexOf(item.id) > -1"
+          :isTop="item.top"
           :update_at="item.update_at | yyyymmdd"
-          :file_size="Number(item.content.length)"
+          :file_size="Number(item.content ? item.content.length : '')"
           :parent_folder="item.folder_title || ''"
           :need_push="item.need_push_remotely"
           :need_push_local="item.need_push_locally"
@@ -54,14 +55,15 @@
     </div>
     <div class="footer">
       <div class="num">
-        总共 {{ fileList.length }} 项
+        总共 {{ list.length }} 项
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import { clone, intersection } from 'lodash'
+// import { clone, intersection } from 'lodash'
+import * as _ from 'lodash'
 import dayjs from 'dayjs'
 import mixins from '../mixins'
 // import { readFile } from '@/utils/file'
@@ -76,6 +78,16 @@ import {
   fileInfoMenu
 } from '../Menu'
 import LocalDAO from '@/../db/api'
+import {
+  getAllLocalFolder,
+  getAllLocalNote,
+  getLocalFolderByPid,
+  getLocalNoteByPid,
+  getLocalTrashFolder,
+  getLocalTrashNote,
+  addLocalNote,
+  updateLocalNote
+} from'@/service/local'
 
 export default {
   name: 'DocumentList',
@@ -152,16 +164,8 @@ export default {
     }),
     ...mapGetters({
       contentCache: 'GET_EDITOR_CONTENT_CACHE',
-      viewName: 'GET_VIEW_NAME',
       viewFileType: 'GET_VIEW_FILE_TYPE',
-      allFileMap: 'GET_FILES',
-      allFileArr: 'GET_FILES_ARRAY',
-      rootFiles: 'GET_ROOT_FILES',
-      latestFiles: 'GET_LATEST_FILES',
-      folders: 'GET_FOLEDERS',
-      recycle: 'GET_RECYCLE_FILES',
-      files: 'GET_CURRENT_FILES',
-      currentFolder: 'GET_CURRENT_FOLDER',
+      currentNav: 'GET_CURRENT_NAV',
       currentFile: 'GET_CURRENT_FILE',
       viewFolder: 'GET_VIEW_FOLDER',
       viewFileListType: 'GET_VIEW_FILE_LIST_TYPE',
@@ -169,54 +173,57 @@ export default {
       viewFileSortOrder: 'GET_VIEW_FILE_SORT_ORDER',
       tagsMap: 'GET_TAGS_MAP',
       selectedTags: 'GET_SELECTED_TAGS',
-      currentNav: 'GET_CURRENT_NAV',
       searchKeyword: 'GET_SEARCH_KEYWORD'
     })
   },
 
   watch: {
-    files (val) {
-      console.log('watch-files', val)
-      this.list = val
-      this.stickTopFiles = []
-      let idx = this.list.indexOf(this.currentFile)
-      this.selectFile(idx === -1 ? 0 : idx)
-    },
-
-    allFileArr (val) {
-      this.fileList = val
-      if (this.currentNav && this.currentNav.link === 'latest') {
-        this.list = this.fileListSortFunc(val.filter(item => item.trash === 'NORMAL'))
-        this.selectFile(0)
-      }
-    },
-
-    currentNav (val) {
+    async currentNav (val) {
       console.log('currentNav', val)
-      return
-      if (val.link === 'latest') {
-        this.list = this.fileList.filter(item => 
-          item.trash === 'NORMAL')
-          .sort((a, b) => a.update_at - b.update_at)
+      let localFiles = [[], []]
+      if (val.type === 'latest') {
+        localFiles = await Promise.all([
+          getAllLocalFolder(),
+          getAllLocalNote()
+        ])
+      } else if (val.type === 'folder') {
+        if (val.pid === undefined) {
+          localFiles = await Promise.all([
+            getLocalFolderByPid({
+              pid: '0'
+            }),
+            getLocalNoteByPid({
+              pid: '0'
+            }
+          )])
+        } else {
+          localFiles = await Promise.all([
+            getLocalFolderByPid({
+              pid: val._id
+            }),
+            getLocalNoteByPid({
+              pid: val._id
+            }
+          )])
+        }
+      } else if (val.type === 'tag') {
+      } else if (val.type === 'bin') {
+        localFiles = await Promise.all([
+          getLocalTrashFolder(),
+          getLocalTrashNote()
+        ])
       }
-      if (val.link === 'folders') {
-        this.list = this.fileList.filter(item => item.trash === 'NORMAL'
-          && item.parent_folder === '/')
-      }
-      if (val.link === 'new folder') {
-        console.log('this.fileList', this.fileList)
-        this.list = this.fileList.filter(item => item.trash === 'NORMAL'
-          && (item.parent_folder === val.id || item.parent_folder === val.remote_id))
-      }
-      // if (val.)
-      if (val.link === 'recycle') {
-        this.list = this.fileList.filter(item => item.trash === 'TRASH')
-      }
-      this.list = this.fileListSortFunc(this.list)
+      console.log('localFiles', localFiles)
+      this.folderList = localFiles[0]
+      this.noteList = localFiles[1]
+      this.list = _.flatten(localFiles)
+      this.stickTopFiles = []
+      this.updateFileList()
       this.selectFile(0)
     },
 
     selectedTags (val) {
+      return
       console.log('watch-selectedTags', val, this.tagsMap)
       this.list = this.allFileArr.filter(item => item.trash === 'NORMAL')
       if (val.length > 0) {
@@ -234,6 +241,10 @@ export default {
       }
     },
 
+    searchKeyword (val) {
+      this.updateFileList()
+    },
+
     fileList (val, oldVal) {
       // console.log('fileList', val, oldVal)
       // if (oldVal.length === 0 && this.viewFileType === 'latest') {
@@ -249,7 +260,7 @@ export default {
     },
 
     list (val) {
-      console.log('watch-list', val)
+      // console.log('watch-list', val)
       // if (val.length > 0) {
       //   this.selectFile(0)
       // }
@@ -259,14 +270,14 @@ export default {
       // console.log('watch-latestFiles', val)
       return
       if (this.viewFileType === 'latest') {
-        this.fileList = this.fileListSortFunc(clone(val))
+        this.fileList = this.fileListSortFunc(_.clone(val))
       }
     },
 
     recycle (val) {
       return
       if (this.viewFileType === 'recycle') {
-        this.fileList = this.fileListSortFunc(clone(val))
+        this.fileList = this.fileListSortFunc(_.clone(val))
       }
     },
 
@@ -315,9 +326,16 @@ export default {
       'TOGGLE_SHOW_MOVE_PANEL'
     ]),
 
+    updateFileList () {
+      let notes = this.fileListSortFunc(this.noteList.filter(file => file.title.indexOf(this.searchKeyword) > -1))
+      let folders = this.folderList.filter(file => file.title.indexOf(this.searchKeyword) > -1)
+      console.log('notes', notes)
+
+      this.fileList = _.flatten([folders, notes])
+    },
+
     selectFile (index) {
-      const file = this.list[index]
-      console.log('selectFile', index, file, this.list)
+      const file = this.fileList[index]
       if (!file) {
         this.SET_CURRENT_FILE(null)
         return
@@ -326,7 +344,7 @@ export default {
       }
       this.$refs.fileCardGroup.select(index) // visually select file
       if (this.currentFile !== file) {
-        this.SET_CURRENT_FILE(file._id)
+        this.SET_CURRENT_FILE(file)
       }
     },
 
@@ -357,19 +375,15 @@ export default {
     },
 
     fileListSortFunc (list) {
-      let topList = list.filter(item => item.top)
-      let downList = list.filter(item => !item.top)
-      this.stickTopFiles = topList
-
       let order = this.viewFileSortOrder === 'down' ? -1 : 1
-      // let downList = list.sort((a, b) => {
-      //   return (Number(a[this.viewFileSortType]) - Number(b[this.viewFileSortType])) * order
-      // }).filter(file => this.stickTopFiles.indexOf(file.id) === -1)
-
-      console.log('fileListSortFunc', topList, downList)
-      return [...topList, ...downList].sort((a, b) => {
+      let listTemp = list.sort((a, b) => {
         return (Number(a[this.viewFileSortType]) - Number(b[this.viewFileSortType])) * order
       })
+      let topList = listTemp.filter(item => item.top)
+      let downList = listTemp.filter(item => !item.top)
+      this.stickTopFiles = topList
+
+      return [...topList, ...downList]
     },
 
     getParentFolderTitle (file) {
@@ -389,9 +403,9 @@ export default {
     },
 
     handleContextmenu (props) {
-      console.log('handleContextmenu-11', props, this.nativeMenus)
+      console.log('handleContextmenu-11', props)
       this.popupedFile = props.file_id
-      if (props.type === 'doc') {
+      if (props.type === 'note') {
         let idx = this.stickTopFiles.indexOf(props.file_id) === -1 ? 0 : 1
         this.popupNativeMenu(this.nativeMenus[idx])
       } else if (props.type === 'folder') {
@@ -400,15 +414,39 @@ export default {
     },
 
     handleStickTop () {
-      this.STICK_TOP_FILE(this.popupedFile)
+      console.log('handleStickTop', this.popupedFile)
+      updateLocalNote({
+        id: this.popupedFile,
+        top: true
+      }).then(() => {
+        let file = _.find(this.fileList, { _id: this.popupedFile })
+        let idx = this.fileList.indexOf(file)
+        console.log('handleStickTop-file', file, this.popupedFile)
+        file.top = true
+        this.fileList.splice(idx, 1)
+        this.fileList.unshift(file)
+      })
     },
 
     handleCancelStickTop () {
       this.CANCEL_STICK_TOP_FILE(this.popupedFile)
     },
 
+    handleNewNote () {
+      console.log('handleNewNote', this.popupedFile)
+      addLocalNote({
+        title: '无标题笔记',
+        pid: this.popupedFile,
+        isTemp: false
+      }).then(res => {
+        console.log('add-local-note-res', res)
+        this.$hub.dispatchHub('setCurrentFolder', this, this.popupedFile)
+      })
+    },
+
     handleRename () {
-      this.$hub.dispatchHub('renameFileCard', this, this.currentFile.id)
+      console.log('handleRename')
+      this.$hub.dispatchHub('renameFileCard', this, this.popupedFile)
     },
 
     handleMove () {

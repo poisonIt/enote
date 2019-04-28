@@ -1,13 +1,15 @@
 import noteModel from '../models/note'
-import doc from './doc'
 import { getValid } from '../tools'
+import doc from './doc'
 import folder from './folder'
+import docTemp from '../docTemplate'
+
 const { remote } = require('electron')
-const { noteDB } = remote.app.database
+const db = remote.app.database
 
 function removeAll (files) {
   return new Promise((resolve, reject) => {
-    noteDB.remove({}, { multi: true }, (err, numRemoved) => {
+    db.noteDB.remove({}, { multi: true }, (err, numRemoved) => {
       if (err) reject(err)
       resolve(numRemoved)
     })
@@ -16,7 +18,7 @@ function removeAll (files) {
 
 function getAll () {
   return new Promise((resolve, reject) => {
-    noteDB.find({}, (err, notes) => {
+    db.noteDB.find({ trash: 'NORMAL' }, (err, notes) => {
       if (err) {
         reject(err)
       } else {
@@ -30,7 +32,7 @@ function getAll () {
 function getById (req) {
   let { id } = req
   return new Promise((resolve, reject) => {
-    noteDB.findOne({
+    db.noteDB.findOne({
       _id: id
     }, (err, note) => {
       if (err) {
@@ -44,34 +46,64 @@ function getById (req) {
 
 function getByPid (req) {
   let { pid } = req
-  console.log('getByPid', pid)
   return new Promise((resolve, reject) => {
-    folder.getById({ id: pid }).then(folderDoc => {
-      console.log('folderDoc', folderDoc)
-      noteDB.find({
-        pid: pid
+    if (pid === '0') {
+      db.noteDB.find({
+        pid: pid,
+        trash: 'NORMAL'
       }, (err, notes) => {
         if (err) {
           reject(err)
         } else {
           resolve(notes.map(item => {
-            item.folder_title = folderDoc.title
+            item.folder_title = '我的文件夹'
             return item
           }))
         }
       })
+    } else {
+      folder.getById({ id: pid }).then(folderDoc => {
+        db.noteDB.find({
+          pid: pid,
+          trash: 'NORMAL'
+        }, (err, notes) => {
+          if (err) {
+            reject(err)
+          } else {
+            resolve(notes.map(item => {
+              item.folder_title = folderDoc.title
+              return item
+            }))
+          }
+        })
+      })
+    }
+  })
+}
+
+function getTrash () {
+  return new Promise((resolve, reject) => {
+    db.noteDB.find({
+      trash: 'TRASH'
+    }, (err, notes) => {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(notes)
+      }
     })
   })
 }
 
 function add (opts) {
   return new Promise((resolve, reject) => {
-    noteDB.insert(noteModel(opts), (err, newNote) => {
+    db.noteDB.insert(noteModel(opts), (err, newNote) => {
       if (err) {
         console.error(err)
       } else {
         doc.add({
-          note_id: newNote._id
+          note_id: newNote._id,
+          content: opts.isTemp ? docTemp : ''
         }).then(newDoc => {
           resolve(newNote)
         })
@@ -85,11 +117,11 @@ function update (opts) {
   console.log('update-local', id, opts)
 
   return new Promise((resolve, reject) => {
-    noteDB.findOne({ _id: id }, (err, note) => {
+    db.noteDB.findOne({ _id: id }, (err, note) => {
       if (err) {
         reject(err)
       } else {
-        noteDB.update(
+        db.noteDB.update(
           { _id: id },
           { $set: {
             remote_id: getValid('remote_id', opts, note),
@@ -121,6 +153,7 @@ export default {
   getAll,
   getById,
   getByPid,
+  getTrash,
   add,
   update
 }

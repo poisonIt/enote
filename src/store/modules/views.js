@@ -1,4 +1,5 @@
 const state = {
+  is_db_ready: false,
   network_status: 'online',
   view_type: 'expanded',
   name: '最新文档',
@@ -23,6 +24,10 @@ const state = {
 }
 
 const mutations = {
+  SET_DB_READY (state, val) {
+    state.is_db_ready = val
+  },
+
   SET_NETWORK_STATUS (state, val) {
     state.network_status = val
   },
@@ -106,6 +111,10 @@ const mutations = {
 }
 
 const actions = {
+  SET_DB_READY({ commit }, val) {
+    commit('SET_DB_READY', val)
+  },
+
   SET_NETWORK_STATUS ({ commit }, val) {
     commit('SET_NETWORK_STATUS', val)
   },
@@ -188,6 +197,10 @@ const actions = {
 }
 
 const getters = {
+  GET_DB_READY (state) {
+    return state.is_db_ready
+  },
+
   GET_NETWORK_STATUS (state) {
     return state.network_status
   },

@@ -1,11 +1,11 @@
-const { remote } = require('electron')
-const { tagsDB } = remote.app.database
 import tagModel from '../models/tag'
+const { remote } = require('electron')
+const db = remote.app.database
 
 function getAll () {
-  // tagsDB.remove({}, { multi: true }, (err, num) => { console.log('num', num) })
+  // db.tagsDB.remove({}, { multi: true }, (err, num) => { console.log('num', num) })
   return new Promise((resolve, reject) => {
-    tagsDB.find({
+    db.tagsDB.find({
       trash: 'NORMAL'
     }, (err, docs) => {
       if (err) {
@@ -20,9 +20,9 @@ function getAll () {
 
 function getAllTrash () {
   console.log('getAllTrash')
-  // tagsDB.remove({}, { multi: true }, (err, num) => { console.log('num', num) })
+  // db.tagsDB.remove({}, { multi: true }, (err, num) => { console.log('num', num) })
   return new Promise((resolve, reject) => {
-    tagsDB.find({
+    db.tagsDB.find({
       trash: 'TRASH'
     }, (err, docs) => {
       if (err) {
@@ -37,7 +37,7 @@ function getAllTrash () {
 
 function removeAll (files) {
   return new Promise((resolve, reject) => {
-    tagsDB.remove({}, { multi: true }, (err, numRemoved) => {
+    db.tagsDB.remove({}, { multi: true }, (err, numRemoved) => {
       if (err) reject(err)
       resolve(numRemoved)
     })
@@ -45,10 +45,10 @@ function removeAll (files) {
 }
 
 function getById (id) {
-  // tagsDB.remove({}, { multi: true }, (err, num) => { console.log('num', num) })
+  // db.tagsDB.remove({}, { multi: true }, (err, num) => { console.log('num', num) })
   // return
   return new Promise((resolve, reject) => {
-    tagsDB.findOne({ _id: id }, (err, doc) => {
+    db.tagsDB.findOne({ _id: id }, (err, doc) => {
       if (err) {
         console.error(err)
       } else {
@@ -59,10 +59,10 @@ function getById (id) {
 }
 
 function getByName (name) {
-  // tagsDB.remove({}, { multi: true }, (err, num) => { console.log('num', num) })
+  // db.tagsDB.remove({}, { multi: true }, (err, num) => { console.log('num', num) })
   // return
   return new Promise((resolve, reject) => {
-    tagsDB.findOne({ name: name }, (err, doc) => {
+    db.tagsDB.findOne({ name: name }, (err, doc) => {
       if (err) {
         console.error(err)
       } else {
@@ -73,11 +73,11 @@ function getByName (name) {
 }
 
 function getByFileId (fileId) {
-  // tagsDB.remove({}, { multi: true }, (err, num) => { console.log('num', num) })
+  // db.tagsDB.remove({}, { multi: true }, (err, num) => { console.log('num', num) })
   // return
   return new Promise((resolve, reject) => {
     console.log('333', fileId, this)
-    tagsDB.find({
+    db.tagsDB.find({
       file_ids: {
         $elemMatch: fileId
       }},
@@ -86,7 +86,7 @@ function getByFileId (fileId) {
         resolve(docs)
       }
     )
-    // tagsDB.find({ name: name }, (err, doc) => {
+    // db.tagsDB.find({ name: name }, (err, doc) => {
     //   if (err) {
     //     console.error(err)
     //   } else {
@@ -98,7 +98,7 @@ function getByFileId (fileId) {
 
 // function get (id) {
 //   return new Promise((resolve, reject) => {
-//     tagsDB.findOne({ _id: id }, (err, doc) => {
+//     db.tagsDB.findOne({ _id: id }, (err, doc) => {
 //       if (err) {
 //         console.error(err)
 //       } else {
@@ -111,11 +111,11 @@ function getByFileId (fileId) {
 function add (opts) {
   let { name, remote_id } = opts
   return new Promise((resolve, reject) => {
-    tagsDB.findOne({ name: name }, (err, tagDoc) => {
+    db.tagsDB.findOne({ name: name }, (err, tagDoc) => {
       console.log('tagDoc-exist', tagDoc, remote_id)
       if (tagDoc) {
         if (remote_id && tagDoc.remote_id !== remote_id) {
-          tagsDB.update(
+          db.tagsDB.update(
             { _id: tagDoc._id },
             { $set: {
               remote_id: remote_id
@@ -132,7 +132,7 @@ function add (opts) {
           resolve(tagDoc)
         }
       } else {
-        tagsDB.insert(tagModel(opts), (err, newTag) => {
+        db.tagsDB.insert(tagModel(opts), (err, newTag) => {
           if (err) {
             console.error(err)
           } else {
@@ -146,7 +146,7 @@ function add (opts) {
 
 // function add (content) {
 //   return new Promise((resolve, reject) => {
-//     tagsDB.insert({ content: content }, (err, newDoc) => {
+//     db.tagsDB.insert({ content: content }, (err, newDoc) => {
 //       if (err) {
 //         console.error(err)
 //       } else {
@@ -159,7 +159,7 @@ function add (opts) {
 function addFile (req) {
   const { fileId, tagId } = req
   return new Promise((resolve, reject) => {
-    tagsDB.update(
+    db.tagsDB.update(
       { _id: tagId },
       { $push: { file_ids: fileId } },
       {},
@@ -176,7 +176,7 @@ function addFile (req) {
 function removeFile (req) {
   const { fileId, tagId } = req
   return new Promise((resolve, reject) => {
-    tagsDB.update(
+    db.tagsDB.update(
       { _id: tagId },
       { $pull: { file_ids: fileId } },
       {
@@ -198,12 +198,12 @@ function update (opts) {
   console.log('update-local', id, opts.data)
 
   return new Promise((resolve, reject) => {
-    tagsDB.findOne({ _id: id }, (err, tagDoc) => {
+    db.tagsDB.findOne({ _id: id }, (err, tagDoc) => {
       if (err) {
         reject(err)
       } else {
         // console.log('update-tagDoc', tagDoc, data)
-        tagsDB.update(
+        db.tagsDB.update(
           { _id: id },
           { $set: {
             remote_id: data.remote_id !== undefined ? data.remote_id : tagDoc.remote_id
@@ -224,7 +224,7 @@ function update (opts) {
 function deleteById (req) {
   const { id } = req
   return new Promise((resolve, reject) => {
-    tagsDB.update(
+    db.tagsDB.update(
       { _id: id },
       { $set: {
         trash: 'TRASH'
@@ -243,7 +243,7 @@ function deleteById (req) {
 function resumeById (req) {
   const { id } = req
   return new Promise((resolve, reject) => {
-    tagsDB.update(
+    db.tagsDB.update(
       { _id: id },
       { $set: {
         trash: 'NORMAL'
@@ -262,7 +262,7 @@ function resumeById (req) {
 function removeById (req) {
   const { id } = req
   return new Promise((resolve, reject) => {
-    tagsDB.remove(
+    db.tagsDB.remove(
       { _id: id },
       {},
       (err, numRemoved) => {

@@ -14,6 +14,9 @@ import {
   installVueDevtools
 } from 'vue-cli-plugin-electron-builder/lib'
 import { loadDB } from '../db'
+import { readFile, writeFile } from './utils/file'
+import { getAppConf } from './tools/appConf'
+
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
 // Keep a global reference of the window object, if you don't, the window will
@@ -247,6 +250,20 @@ ipcMain.on('createWindow', (event, arg) => {
   }
 })
 
+ipcMain.on('loadDB', (event, arg) => {
+  const DBs = {
+    folderDB: 'folder',
+    noteDB: 'note',
+    docDB: 'doc',
+    tagDB: 'tag',
+    picDB: 'pic'
+  }
+  for (let i in DBs) {
+    app.database[i] = loadDB(path.resolve(app.getAppPath(), `${arg.path}/${DBs[i]}.db`))
+  }
+  event.sender.send('db-loaded')
+})
+
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
   // On macOS it is common for applications and their menu bar
@@ -259,6 +276,7 @@ app.on('window-all-closed', () => {
 app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
+
   if (win === null) {
     createLoginWindow()
   }
@@ -274,8 +292,33 @@ app.on('ready', async () => {
   }
   const menu = Menu.buildFromTemplate(template)
   Menu.setApplicationMenu(menu)
-  createLoginWindow()
-  app.database = loadDB(app)
+
+  app.database = {
+    userDB: loadDB(path.resolve(app.getAppPath(), '../database/user.db')),
+    folderDB: {},
+    noteDB: {},
+    docDB: {},
+    tagDB: {},
+    picDB: {}
+  }
+
+  getAppConf(app.getAppPath()).then(appConf => {
+    if (appConf.user) {
+      app.database.userDB.findOne({ _id: appConf.user }, (err, user) => {
+        if (err) {
+          createLoginWindow()
+        } else {
+          if (user) {
+            createHomeWindow()
+          } else {
+            createLoginWindow()
+          }
+        }
+      })
+    } else {
+      createLoginWindow()
+    }
+  })
 })
 
 // Exit cleanly on request from parent process in development mode.

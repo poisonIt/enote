@@ -13,7 +13,7 @@
 import { mapActions } from 'vuex'
 // import AppHeader from '@/components/AppHeader'
 import Home from '@/views/Home'
-import { getAllLocalNote, getAllLocalDoc } from '@/service/local'
+// import { getAllLocalNote, getAllLocalDoc } from '@/service/local'
 
 export default {
   components: {
@@ -22,13 +22,13 @@ export default {
   },
 
   created () {
-    getAllLocalNote().then(res => {
-      console.log('getAllLocalNote', res)
-    })
+    // getAllLocalNote().then(res => {
+    //   console.log('getAllLocalNote', res)
+    // })
 
-    getAllLocalDoc().then(res => {
-      console.log('getAllLocalDoc', res)
-    })
+    // getAllLocalDoc().then(res => {
+    //   console.log('getAllLocalDoc', res)
+    // })
   },
 
 

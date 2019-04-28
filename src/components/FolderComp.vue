@@ -26,10 +26,10 @@ export default {
   z-index 9999
 
 .folder-icon
-  width 80px
-  height 80px
-  opacity 0.3
-  background-image url(../assets/images/folder-multiple.png)
+  width 144px
+  height 144px
+  transform translateY(-30%)
+  background-image url(../assets/images/lanhu/folder-multiple@2x.png)
   background-repeat no-repeat
   background-size contain
   background-position center

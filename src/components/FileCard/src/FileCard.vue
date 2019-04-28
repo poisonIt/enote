@@ -42,6 +42,9 @@
 <script>
 import { mapGetters, mapActions } from 'vuex'
 import mixins from '../mixins'
+import {
+  updateLocalFolder
+} from '@/service/local'
 
 export default {
   name: 'FileCard',
@@ -67,6 +70,9 @@ export default {
       default: 'doc'
     },
     file_id: {
+      type: String
+    },
+    pid: {
       type: String
     },
     title: {
@@ -129,7 +135,6 @@ export default {
       if (this.searchKeyword === '') {
         return [this.titleEllipsis]
       } else {
-        return ''
         return this.searchSubStr(this.titleEllipsis, this.searchKeyword)
       }
     }
@@ -200,9 +205,14 @@ export default {
 
     handleTitleInputBlur () {
       this.showTitleInput = false
-      this.EDIT_FILE({
+      updateLocalFolder({
         id: this.file_id,
         title: this.titleValue
+      }).then(res => {
+        this.$hub.dispatchHub('updateFile', this, {
+          id: this.file_id,
+          name: this.titleValue
+        })
       })
     },
 

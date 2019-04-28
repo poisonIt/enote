@@ -1,8 +1,8 @@
 <template>
   <div class="home">
-    <button style="position: fixed;top: 30px;left: 20px;z-index: 9999999;" @click="resetData">reset</button>
+    <!-- <button style="position: fixed;top: 30px;left: 20px;z-index: 9999999;" @click="resetData">reset</button> -->
     <!-- <button style="position: fixed;top: 30px;left: 80px;z-index: 9999999;" @click="removeTags">removeTags</button> -->
-    <button style="position: fixed;top: 30px;left: 160px;z-index: 9999999;" @click="goLogin">goLogin</button>
+    <button style="position: fixed;top: 30px;left: 160px;z-index: 9999999;" @click="goLogin">logout</button>
     <PageLayout>
       <div slot="left">
         <div id="nav">
@@ -45,6 +45,7 @@
 </template>
 
 <script>
+import { ipcRenderer } from 'electron'
 import { mapActions, mapGetters } from 'vuex'
 import User from '@/components/User'
 import Move from '@/components/Move'
@@ -52,7 +53,7 @@ import NavBar from '@/components/NavBar'
 import FileTool from '@/components/FileTool'
 import PageLayout from '@/components/PageLayout.vue'
 import DocumentList from '@/components/DocumentList'
-import FileHandler from '@/components/FileHandler.vue'
+import FileHandler from '@/components/FileHandler'
 import TagHandler from '@/components/TagHandler.vue'
 import Editor from '@/components/Editor'
 import FolderComp from '@/components/FolderComp.vue'
@@ -61,7 +62,8 @@ import UserPanel from '@/components/Panels/UserPanel'
 import SharePanel from '@/components/Panels/SharePanel'
 import ResearchPanel from '@/components/Panels/ResearchPanel'
 import LocalDAO from '../../db/api'
-import { ipcRenderer } from 'electron'
+import { getLocalUserById } from '@/service/local'
+import { getAppConf } from '@/tools/appConf'
 
 export default {
   name: 'home',
@@ -153,12 +155,22 @@ export default {
   },
 
   created () {
+    ipcRenderer.on('db-loaded', (event, arg) => {
+      this.handleDBLoaded()
+    })
     // this.SET_FILES_FROM_LOCAL()
-    LocalDAO.user.get().then(resp => {
-      console.log('userInfo', resp)
-      this.fdList = resp.friend_list
-      this.SET_USER_INFO(resp)
-      this.SET_TOKEN(resp.id_token)
+    getAppConf(this.$remote.app.getAppPath()).then(appConf => {
+      ipcRenderer.send('loadDB', {
+        path: `../database/${appConf.user}`
+      })
+      getLocalUserById({
+        id: appConf.user
+      }).then(resp => {
+        console.log('getLocalUserById', resp)
+        this.fdList = resp.friend_list
+        this.SET_USER_INFO(resp)
+        this.SET_TOKEN(resp.id_token)
+      })
     })
   },
 
@@ -177,7 +189,8 @@ export default {
       'TOGGLE_SHOW_USER_PANEL',
       'TOGGLE_SHOW_SHARE_PANEL',
       'SET_FILE_PUSH_FINISHED',
-      'SET_VIEW_TYPE'
+      'SET_VIEW_TYPE',
+      'SET_DB_READY'
     ]),
 
     closeMovePanel () {
@@ -262,9 +275,14 @@ export default {
     },
 
     goLogin () {
+      localStorage.setItem('last_user', '')
       ipcRenderer.send('changeWindow', {
         name: 'login'
       })
+    },
+
+    handleDBLoaded () {
+      this.SET_DB_READY(true)
     }
   }
 }

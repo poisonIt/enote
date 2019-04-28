@@ -36,6 +36,7 @@ import {
   pullTags
 } from '../service'
 import LocalDAO from '../../db/api'
+import { saveAppConf } from '../tools/appConf'
 import { mapActions } from 'vuex'
 import pullData from '@/utils/mixins/pullData'
 import pushData from '@/utils/mixins/pushData'
@@ -54,9 +55,13 @@ export default {
   },
 
   created () {
-    // LocalDAO.files.removeAll()
+    LocalDAO.user.getAll().then(res => {
+      console.log('user-resp', res)
+    })
 
-    // this.SET_FILES_FROM_LOCAL()
+    ipcRenderer.on('db-loaded', (event, arg) => {
+      this.handleDBLoaded()
+    })
   },
 
   methods: {
@@ -84,17 +89,34 @@ export default {
         this.SET_TOKEN(id_token)
         let userResp = await this.pullUserInfo(id_token, username, password)
         if (!userResp.userData) return
-        await LocalDAO.user.update(userResp.userData)
-        // await this.pushImgs()
-        // await this.SET_FILES_FROM_LOCAL()
-        // await this.pushData()
-        // await this.pullData()
-        // setTimeout(() => {
-        this.goHome()
-        // }, 1000)
+        userResp.userData.is_last_login = true
+        let userSaved = await LocalDAO.user.update(userResp.userData)
+        saveAppConf(this.$remote.app.getAppPath(), {
+          user: userSaved._id
+        })  
+        console.log('userSaved', userSaved)
+        ipcRenderer.send('loadDB', {
+          path: `../database/${userSaved._id}`
+        })
+        console.log('userResp', userResp)
       } else {
         this.isLoading = false
       }
+    },
+
+    async handleDBLoaded () {
+      console.log('handleDBLoaded')
+      let localFolders = await LocalDAO.folder.getAll()
+      console.log('localFolders', localFolders)
+      // await this.pushImgs()
+      // await this.SET_FILES_FROM_LOCAL()
+      // await this.pushData()
+      // await this.pullData()
+      this.handleDataFinished()
+    },
+
+    handleDataFinished () {
+      this.goHome()
     },
 
     async pullUserInfo (id_token, username, password) {

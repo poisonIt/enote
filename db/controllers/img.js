@@ -1,11 +1,11 @@
-const { remote } = require('electron')
-const { imgsDB } = remote.app.database
 import imgModel from '../models/img'
+const { remote } = require('electron')
+const db = remote.app.database
 
 function getAll () {
-  // imgsDB.remove({}, { multi: true }, (err, num) => { console.log('num', num) })
+  // db.imgsDB.remove({}, { multi: true }, (err, num) => { console.log('num', num) })
   return new Promise((resolve, reject) => {
-    imgsDB.find({}, (err, docs) => {
+    db.imgsDB.find({}, (err, docs) => {
       if (err) {
         console.error(err)
       } else {
@@ -19,12 +19,12 @@ function getAll () {
 function add (req) {
   let { name, src, doc_id } = req
   return new Promise((resolve, reject) => {
-    imgsDB.findOne({ src: src }, (err, imgDoc) => {
+    db.imgsDB.findOne({ src: src }, (err, imgDoc) => {
       if (imgDoc) {
         console.log('img-exist', imgDoc)
         resolve(imgDoc)
       } else {
-        imgsDB.insert(imgModel(req), (err, newImg) => {
+        db.imgsDB.insert(imgModel(req), (err, newImg) => {
           if (err) {
             console.error(err)
           } else {
@@ -39,7 +39,7 @@ function add (req) {
 function removeById (req) {
   const { id } = req
   return new Promise((resolve, reject) => {
-    imgsDB.remove(
+    db.imgsDB.remove(
       { _id: id },
       {},
       (err, numRemoved) => {
@@ -55,7 +55,7 @@ function removeById (req) {
 function removeBySrc (req) {
   const { src } = req
   return new Promise((resolve, reject) => {
-    imgsDB.remove(
+    db.imgsDB.remove(
       { src: src },
       {},
       (err, numRemoved) => {

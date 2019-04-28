@@ -28,13 +28,16 @@ import Emitter from '@/utils/mixins/emitter'
 
 export default {
   name: 'BOption',
+
   mixins: [ Emitter ],
+
   data () {
     return {
       showChildren: false,
       selected: false
     }
   },
+
   props: {
     value: {
       required: true

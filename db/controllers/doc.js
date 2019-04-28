@@ -1,11 +1,12 @@
 import docModel from '../models/doc'
 import { getValid } from '../tools'
+
 const { remote } = require('electron')
-const { docDB } = remote.app.database
+const db = remote.app.database
 
 function removeAll (files) {
   return new Promise((resolve, reject) => {
-    docDB.remove({}, { multi: true }, (err, numRemoved) => {
+    db.docDB.remove({}, { multi: true }, (err, numRemoved) => {
       if (err) reject(err)
       resolve(numRemoved)
     })
@@ -14,7 +15,7 @@ function removeAll (files) {
 
 function getAll () {
   return new Promise((resolve, reject) => {
-    docDB.find({}, (err, docs) => {
+    db.docDB.find({}, (err, docs) => {
       if (err) {
         reject(err)
       } else {
@@ -28,7 +29,7 @@ function getAll () {
 function getById (req) {
   let { id } = req
   return new Promise((resolve, reject) => {
-    docDB.findOne({
+    db.docDB.findOne({
       _id: id
     }, (err, doc) => {
       if (err) {
@@ -44,7 +45,7 @@ function getByNoteId (req) {
   let { noteId } = req
   console.log('getByNoteId', req)
   return new Promise((resolve, reject) => {
-    docDB.findOne({
+    db.docDB.findOne({
       note_id: noteId
     }, (err, doc) => {
       console.log('getByNoteId-result', doc)
@@ -59,7 +60,7 @@ function getByNoteId (req) {
 
 function add (opts) {
   return new Promise((resolve, reject) => {
-    docDB.insert(docModel(opts), (err, newdoc) => {
+    db.docDB.insert(docModel(opts), (err, newdoc) => {
       if (err) {
         console.error(err)
       } else {
@@ -74,11 +75,11 @@ function update (opts) {
   console.log('update-local', id, opts)
 
   return new Promise((resolve, reject) => {
-    docDB.findOne({ _id: id }, (err, doc) => {
+    db.docDB.findOne({ _id: id }, (err, doc) => {
       if (err) {
         reject(err)
       } else {
-        docDB.update(
+        db.docDB.update(
           { _id: id },
           { $set: {
             note_id: getValid('note_id', opts, doc),

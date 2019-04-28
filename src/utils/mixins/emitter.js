@@ -1,11 +1,26 @@
-function broadcast (componentName, eventName, params) {
+function broadcast (componentName, eventName, params, deep) {
   this.$children.forEach(child => {
     var name = child.$options._componentTag
 
-    if (name === componentName) {
-      child.$emit.apply(child, [eventName].concat(params))
+    if (!deep) {
+      if (name === componentName) {
+        child.$emit.apply(child, [eventName].concat(params))
+      } else {
+        broadcast.apply(child, [componentName, eventName].concat([params]))
+      }
     } else {
-      broadcast.apply(child, [componentName, eventName].concat([params]))
+      let correct = true
+      for (let i in params) {
+        if (child[i] !== params[i]) {
+          correct = false
+          break
+        }
+      }
+      if (correct) {
+        child.$emit.apply(child, [eventName].concat(params))
+      } else {
+        broadcast.apply(child, [componentName, eventName].concat([params, true]))
+      }
     }
   })
 }
@@ -27,8 +42,8 @@ export default {
       }
     },
 
-    broadcast (componentName, eventName, params) {
-      broadcast.call(this, componentName, eventName, params)
+    broadcast (componentName, eventName, params, deep) {
+      broadcast.call(this, componentName, eventName, params, deep)
     }
   }
 }

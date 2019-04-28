@@ -3,6 +3,7 @@ import TreeNode from './TreeNode'
 function TreeStore (opts) {
   this.root = new TreeNode({ name: 'root', isLeaf: false, id: 0 }, this)
   this.initNode(this.root, opts)
+  this.currentNode = null
   return this.root
 }
 
@@ -14,7 +15,6 @@ TreeStore.prototype.initNode = function (node, opts) {
     if (_opts.children && _opts.children.length > 0) {
       this.initNode(child, _opts.children)
     }
-    this.currentNode = child
     node.addChildren(child)
   }
 }

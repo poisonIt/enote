@@ -3,6 +3,7 @@ import Router from 'vue-router'
 import { ipcRenderer } from 'electron'
 
 import Home from '@/views/Home'
+import Background from '@/views/Background'
 import Login from '@/views/Login'
 
 Vue.use(Router)
@@ -14,22 +15,17 @@ export default new Router({
     {
       path: '/',
       name: 'Login',
-      component: Login,
-      // beforeEnter: (to, from, next) => {
-      //   ipcRenderer.send('changeWindowSize', {width: 442, height: 490})
-      //   console.log('进入主页')
-      //   next()
-      // }
+      component: Login
     },
     {
       path: '/home',
       name: 'Home',
-      component: Home,
-      // beforeEnter: (to, from, next) => {
-      //   ipcRenderer.send('changeWindowSize', {width: 960, height: 640})
-      //   console.log('进入主页')
-      //   next()
-      // }
+      component: Home
+    },
+    {
+      path: '/background',
+      name: 'Background',
+      component: Background
     }
   ]
 })

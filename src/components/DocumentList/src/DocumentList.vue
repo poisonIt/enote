@@ -58,10 +58,14 @@
         总共 {{ list.length }} 项
       </div>
     </div>
+    <div class="list-loading" v-if="isListLoading">
+      <Loading :type="1" fill="#DDAF59" style="transform: scale(1.2) translateY(-60px)"></Loading>
+    </div>
   </div>
 </template>
 
 <script>
+import { ipcRenderer } from 'electron'
 // import { clone, intersection } from 'lodash'
 import * as _ from 'lodash'
 import dayjs from 'dayjs'
@@ -69,6 +73,7 @@ import mixins from '../mixins'
 // import { readFile } from '@/utils/file'
 import { mapGetters, mapState, mapActions } from 'vuex'
 import SearchBar from '@/components/SearchBar'
+import Loading from '@/components/Loading'
 import { FileCard, FileCardGroup } from '@/components/FileCard'
 import {
   docHandleMenu1,
@@ -96,12 +101,14 @@ export default {
 
   components: {
     SearchBar,
+    Loading,
     FileCard,
     FileCardGroup
   },
 
   data () {
     return {
+      isListLoading: true,
       isFirstSelect: true,
       list: [],
       fileList: [],
@@ -178,47 +185,59 @@ export default {
 
   watch: {
     async currentNav (val) {
-      console.log('currentNav', val)
+      console.log('currentNav', val, this.$remote.app.database)
+      this.isListLoading = true
       let localFiles = [[], []]
       if (val.type === 'latest') {
-        localFiles = await Promise.all([
-          getAllLocalFolder(),
-          getAllLocalNote()
-        ])
+        ipcRenderer.send('fetch-local-data', {
+          name: ['getAllLocalFolder', 'getAllLocalNote'],
+          from: 'DocumentList'
+        })
+        // localFiles = await Promise.all([
+        //   getAllLocalFolder(),
+        //   getAllLocalNote()
+        // ])
       } else if (val.type === 'folder') {
         if (val.pid === undefined) {
-          localFiles = await Promise.all([
-            getLocalFolderByPid({
-              pid: '0'
-            }),
-            getLocalNoteByPid({
-              pid: '0'
-            }
-          )])
+          ipcRenderer.send('fetch-local-data', {
+            name: ['getLocalFolderByPid', 'getLocalNoteByPid'],
+            params: [{ pid: '0' }, { pid: '0' }],
+            from: 'DocumentList',
+          })
+          // localFiles = await Promise.all([
+          //   getLocalFolderByPid({
+          //     pid: '0'
+          //   }),
+          //   getLocalNoteByPid({
+          //     pid: '0'
+          //   }
+          // )])
         } else {
-          localFiles = await Promise.all([
-            getLocalFolderByPid({
-              pid: val._id
-            }),
-            getLocalNoteByPid({
-              pid: val._id
-            }
-          )])
+          ipcRenderer.send('fetch-local-data', {
+            name: ['getLocalFolderByPid', 'getLocalNoteByPid'],
+            params: [{ pid: val._id }, { pid: val._id }],
+            from: 'DocumentList',
+          })
+          // localFiles = await Promise.all([
+          //   getLocalFolderByPid({
+          //     pid: val._id
+          //   }),
+          //   getLocalNoteByPid({
+          //     pid: val._id
+          //   }
+          // )])
         }
       } else if (val.type === 'tag') {
       } else if (val.type === 'bin') {
-        localFiles = await Promise.all([
-          getLocalTrashFolder(),
-          getLocalTrashNote()
-        ])
+        ipcRenderer.send('fetch-local-data', {
+          name: ['getLocalTrashFolder', 'getLocalTrashNote'],
+          from: 'DocumentList',
+        })
+        // localFiles = await Promise.all([
+        //   getLocalTrashFolder(),
+        //   getLocalTrashNote()
+        // ])
       }
-      console.log('localFiles', localFiles)
-      this.folderList = localFiles[0]
-      this.noteList = localFiles[1]
-      this.list = _.flatten(localFiles)
-      this.stickTopFiles = []
-      this.updateFileList()
-      this.selectFile(0)
     },
 
     selectedTags (val) {
@@ -258,6 +277,22 @@ export default {
     stickTopFiles (val) {
       this.list = this.fileListSortFunc(this.list)
     }
+  },
+
+  created () {
+    ipcRenderer.on('fetch-local-data-response', (event, arg) => {
+      if (arg.from === 'DocumentList') {
+        let localFiles = arg.res
+        console.log('fetch-local-data-response', event, localFiles)
+        this.folderList = localFiles[0]
+        this.noteList = localFiles[1]
+        this.list = _.flatten(localFiles)
+        this.stickTopFiles = []
+        this.updateFileList()
+        this.selectFile(0)
+        this.isListLoading = false
+      }
+    })
   },
 
   methods: {
@@ -415,6 +450,7 @@ export default {
       font-size 14px
 
 .body
+  position relative
   height 100%
   padding-bottom 90px
   overflow-y scroll
@@ -482,4 +518,16 @@ export default {
     &.summary
       &::before
         background-image url(../../../assets/images/lanhu/view@2x.png)
+
+.list-loading
+  position absolute
+  top 0
+  width 100%
+  height 100%
+  margin-top 60px
+  display flex
+  align-items center
+  justify-content center
+  background-color #fcfbf7
+  z-index 9999999
 </style>

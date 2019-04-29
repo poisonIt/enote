@@ -58,6 +58,7 @@ export default {
           }
         }
         getLocalDoc({ noteId: val._id }).then(res => {
+          console.log('111111')
           this.currentDoc = res
           this.cachedDoc = {
             _id: res._id,
@@ -87,6 +88,7 @@ export default {
       const _self = this
       if (this.editor) {
         this.editor.setData(content || '')
+        console.log('22222')
         this.showMask = false
       } else {
         ClassicEditor

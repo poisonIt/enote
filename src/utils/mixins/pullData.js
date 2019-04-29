@@ -56,7 +56,9 @@ export default {
       //   return
       // }
 
-      const saveNoteBooksTask = pullResp[0].data.body
+      let dataBody = pullResp[0].data.body
+      dataBody.splice(200, 500)
+      const saveNoteBooksTask = dataBody
         .map(item => LocalDAO.folder.add(this.transNoteBookData(item)))
 
       // const saveNoteTask = pullResp[1].data.body

@@ -148,10 +148,14 @@ export default {
     },
 
     itemIconClass () {
-      if (this.model.data.type === 'folder') {
-        return this.model.isLeaf ? 'tn-icon-file' : 'tn-icon-folder'
+      if (this.model.data) {
+        if (this.model.data.type === 'folder') {
+          return this.model.isLeaf ? 'tn-icon-file' : 'tn-icon-folder'
+        } else {
+          return 'tn-icon-' + this.model.data.type
+        }
       } else {
-        return 'tn-icon-' + this.model.data.type
+        return ''
       }
     },
 

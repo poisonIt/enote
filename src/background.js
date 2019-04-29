@@ -22,6 +22,7 @@ const isDevelopment = process.env.NODE_ENV !== 'production'
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win
+let backWin
 let loginWin
 let youdaoWin
 
@@ -196,6 +197,7 @@ function createHomeWindow () {
     id: 'home',
     width: isDevelopment ? 1366 : 960,
     height: 640,
+    backgroundColor: '#fcfbf7',
     // frame: false,
     titleBarStyle: 'hidden',
     icon: path.join(__static, 'icon.png'),
@@ -203,20 +205,32 @@ function createHomeWindow () {
       webSecurity: false
     }
   })
+  backWin = new BrowserWindow({
+    id: 'background',
+    show: false
+  })
+
   win.setMinimumSize(960, 640)
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode
     win.loadURL(process.env.WEBPACK_DEV_SERVER_URL + '#/home')
     win.webContents.openDevTools()
+    backWin.loadURL(process.env.WEBPACK_DEV_SERVER_URL + '#/background')
+    backWin.webContents.openDevTools()
   } else {
     createProtocol('app')
     // Load the index.html when not in development
     win.loadURL('app://./index.html#/home')
+    backWin.loadURL('app://./index.html#/background')
   }
 
   win.on('closed', () => {
     win = null
+  })
+
+  backWin.on('closed', () => {
+    backWin = null
   })
 }
 
@@ -273,6 +287,14 @@ ipcMain.on('loadDB', (event, arg) => {
     app.database[i] = loadDB(path.resolve(app.getAppPath('userData'), `${arg.path}/${DBs[i]}.db`))
   }
   event.sender.send('db-loaded')
+})
+
+ipcMain.on('fetch-local-data', (event, arg) => {
+  backWin.webContents.send('fetch-local-data', arg)
+})
+
+ipcMain.on('fetch-local-data-response', (event, arg) => {
+  win.webContents.send('fetch-local-data-response', arg)
 })
 
 // Quit when all windows are closed.

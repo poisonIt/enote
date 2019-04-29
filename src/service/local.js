@@ -61,6 +61,5 @@ export function getLocalDoc (params) {
 }
 
 export function updateLocalDoc (params) {
-  console.log('updateLocalDoc', params)
   return LocalDAO.doc.update(params)
 }

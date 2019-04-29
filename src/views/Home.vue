@@ -41,12 +41,16 @@
     <UserPanel></UserPanel>
     <SharePanel></SharePanel>
     <ResearchPanel></ResearchPanel>
+    <div class="home-loading" v-if="!isHomeReady">
+      <Loading :type="1" fill="#DDAF59" style="transform: scale(1.2)"></Loading>
+    </div>
   </div>
 </template>
 
 <script>
 import { ipcRenderer } from 'electron'
 import { mapActions, mapGetters } from 'vuex'
+
 import User from '@/components/User'
 import Move from '@/components/Move'
 import NavBar from '@/components/NavBar'
@@ -61,6 +65,8 @@ import FolderComp from '@/components/FolderComp.vue'
 import UserPanel from '@/components/Panels/UserPanel'
 import SharePanel from '@/components/Panels/SharePanel'
 import ResearchPanel from '@/components/Panels/ResearchPanel'
+import Loading from '@/components/Loading'
+
 import LocalDAO from '../../db/api'
 import { getLocalUserById } from '@/service/local'
 import { getAppConf, saveAppConf } from '@/tools/appConf'
@@ -82,7 +88,8 @@ export default {
     // ProgressBar,
     UserPanel,
     SharePanel,
-    ResearchPanel
+    ResearchPanel,
+    Loading
   },
 
   data () {
@@ -135,7 +142,8 @@ export default {
       isMovePanelShowed: 'GET_SHOW_MOVE_PANEL',
       isUserPanelShowed: 'GET_SHOW_USER_PANEL',
       isSharePanelShowed: 'GET_SHOW_SHARE_PANEL',
-      userInfo: 'GET_USER_INFO'
+      userInfo: 'GET_USER_INFO',
+      isHomeReady: 'GET_IS_HOME_READY'
     })
   },
 
@@ -358,4 +366,14 @@ export default {
   &.unexpanded
     &::after
       transform translate(-50%, -50%) rotate(0)
+
+.home-loading
+  position fixed
+  width 100%
+  height 100%
+  display flex
+  align-items center
+  justify-content center
+  background-color #fcfbf7
+  z-index 9999999
 </style>

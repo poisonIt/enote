@@ -3,7 +3,7 @@ import App from './App.vue'
 import router from './route'
 import store from './store'
 import axios from 'axios'
-import Worker from 'worker-loader!./worker.js'
+import Worker from 'worker-loader!./file.worker.js'
 import EventHub from '@/utils/eventhub'
 import CollapseTransition from '@/utils/transitions'
 import Modal from '@/components/Modal'
@@ -39,7 +39,10 @@ Vue.prototype.$remote = remote
 Vue.prototype.$shell = shell
 Vue.prototype.$webFrame = webFrame
 
+// console.log('Worker', Worker)
+let worker = new Worker()
 Vue.prototype.$worker = new Worker()
+// worker.postMessage(1)
 
 // const curWin = remote.getCurrentWindow()
 // const ses = curWin.webContents.session
@@ -49,13 +52,11 @@ Vue.prototype.$worker = new Worker()
 // console.log(curWin.webContents)
 
 axios.interceptors.request.use(config => {
-  console.log('interceptors', store, config)
   config.url = `${serviceUrl}${config.url}`
   if (store.state.user.id_token) {
     config.headers['Authorization'] = 'Bearer' + store.state.user.id_token
   }
   if (config.method === 'delete' && config.url.indexOf('deleteTag') === -1) {
-    console.log('config-data', config.data)
     let formData = new FormData()
     Object.keys(config.data).forEach(key => {
       formData.append(key, config.data[key])

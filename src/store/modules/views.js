@@ -19,7 +19,8 @@ const state = {
   cached_doc: '',
   // current_nav: null,
   is_syncing: false,
-  is_editor_focused: false
+  is_editor_focused: false,
+  is_home_ready: false
 }
 
 const mutations = {
@@ -102,6 +103,10 @@ const mutations = {
 
   SET_IS_EDITOR_FOCUSED (state, val) {
     state.is_editor_focused = val
+  },
+
+  SET_IS_HOME_READY (state, val) {
+    state.is_home_ready = val
   }
 }
 
@@ -184,6 +189,10 @@ const actions = {
 
   SET_IS_EDITOR_FOCUSED ({ commit }, val) {
     commit('SET_IS_EDITOR_FOCUSED', val)
+  },
+
+  SET_IS_HOME_READY ({ commit }, val) {
+    commit('SET_IS_HOME_READY', val)
   }
 }
 
@@ -270,6 +279,10 @@ const getters = {
 
   GET_IS_EDITOR_FOCUSED (state) {
     return state.is_editor_focused
+  },
+
+  GET_IS_HOME_READY (state) {
+    return state.is_home_ready
   }
 }
 

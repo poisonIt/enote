@@ -53,6 +53,7 @@
 </template>
 
 <script>
+import { ipcRenderer } from 'electron'
 import { cloneDeep } from 'lodash'
 import { mapActions, mapGetters } from 'vuex'
 import {
@@ -195,34 +196,38 @@ export default {
       viewType: 'GET_VIEW_TYPE',
       viewFileType: 'GET_VIEW_FILE_TYPE',
       allTags: 'GET_ALL_TAGS'
-    }),
-
-    // selectedNodes () {
-    //   let result = []
-    //   for (let i in this.$refs.tree.store.nodeMap) {
-    //     if (this.$refs.tree.store.nodeMap[i].selected) {
-    //       result.push(this.$refs.tree.store.nodeMap[i])
-    //     }
-    //   }
-    //   console.log('selectedNodes', result)
-    //   return result
-    // }
+    })
   },
 
   watch: {
     isDBReady (val) {
       let _self = this
       if (val) {
-        getAllLocalFolder().then(res => {
-          this.$worker.postMessage(['calcLocalData', res])
+        ipcRenderer.send('fetch-local-data', {
+          name: ['getAllLocalFolder'],
+          from: 'NavBar'
         })
-        this.$worker.onmessage = function (event) {
-          if (event.data !== 'Unknown command') {
-            let newRootFolder = event.data
-            _self.folderTree = new TreeStore([latestNav, newRootFolder, tagNav, binNav])
-            _self.$nextTick(() => {
-              _self.$refs.tree.$children[0].click()
-            })
+        ipcRenderer.on('fetch-local-data-response', (event, arg) => {
+          if (arg.from === 'NavBar') {
+            this.$worker.postMessage(['calcLocalData', arg.res[0]])
+          }
+        })
+        // getAllLocalFolder().then(res => {
+          // console.log('res', res)
+          // this.$worker.postMessage(['calcLocalData', res])
+        // })
+        this.$worker.onmessage = function (e) {
+          console.log('e', e)
+          if (e.data !== 'Unknown command') {
+            if (e.data[0] === 'calcLocalData') {
+              console.log(e.data)
+              let newRootFolder = e.data[1]
+              _self.folderTree = new TreeStore([latestNav, newRootFolder, tagNav, binNav])
+              _self.$nextTick(() => {
+                _self.$refs.tree.$children[0].click()
+                _self.SET_IS_HOME_READY(true)
+              })
+            }
           }
         }
       }
@@ -268,80 +273,9 @@ export default {
       'SET_TAGS_FROM_LOCAL',
       'SET_SELECTED_TAGS',
       'SET_CURRENT_NAV',
-      'ADD_FILE'
+      'ADD_FILE',
+      'SET_IS_HOME_READY'
     ]),
-
-    fetchLocalFolders () {
-      function getChildren (cur, arr) {
-        cur.children = arr.filter(item => item.pid === cur.id).map(item => {
-          return {
-            id: item._id,
-            pid: item.pid,
-            name: item.title,
-            data: item,
-            children: []
-          }
-        })
-        cur.children.forEach(child => {
-          getChildren(child, arr)
-        })
-      }
-
-      getAllLocalFolder().then(res => {
-        console.log('fetchLocalFolders', res)
-        let newRootFolder = {
-          name: '我的文件夹',
-          id: '0',
-          pid: null,
-          dragDisabled: true,
-          addTreeNodeDisabled: true,
-          addLeafNodeDisabled: true,
-          editNodeDisabled: true,
-          delNodeDisabled: true,
-          children: [],
-          data: {
-            type: 'folder'
-          }
-        }
-        let rootChildren = res.filter(item => item.pid === '0').map((item, index) => {
-          console.log('rootChildren-item', index)
-          return {
-            id: item._id,
-            pid: item.pid,
-            name: item.title,
-            data: item,
-            children: []
-          }
-        })
-        // console.log('getAllLocalFolder', rootChildren)
-        // for (let i = 0; i < 40; i++) {
-        //   console.log(i)
-        //   for (let j = 0; j < 5; j++) {
-        //     let c = {
-        //       id: `${rootChildren[j]._id}${i}${j}`,
-        //       pid: rootChildren[j].pid,
-        //       name: `新建文件夹${i}${j}`,
-        //       data: { type: 'folder' },
-        //       children: []
-        //     }
-        //     console.log('c', c)
-        //     rootChildren.push(c)
-        //   }
-        // }
-        console.log('rootChildren', rootChildren)
-        rootChildren.forEach((item, index) => {
-          console.log('rootChildren-111', index)
-          getChildren(item, res)
-        })
-        newRootFolder.children = rootChildren
-        console.log('newRootFolder', newRootFolder)
-        this.folderTree = new TreeStore([latestNav, newRootFolder, tagNav, binNav])
-        console.log('folderTree', this.folderTree)
-        this.$nextTick(() => {
-          this.$refs.tree.$children[1].click()
-        })
-      })
-    },
 
     handleSetCurrentFolder (node) {
       this.SET_CURRENT_NAV(node.data)

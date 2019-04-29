@@ -3,7 +3,7 @@ import App from './App.vue'
 import router from './route'
 import store from './store'
 import axios from 'axios'
-import CKEditor from '@ckeditor/ckeditor5-vue'
+import Worker from 'worker-loader!./worker.js'
 import EventHub from '@/utils/eventhub'
 import CollapseTransition from '@/utils/transitions'
 import Modal from '@/components/Modal'
@@ -17,11 +17,10 @@ import '@/assets/styles/iview.styl'
 import '@/assets/styles/common.styl'
 
 const { remote, shell, webFrame } = require('electron')
-console.log(remote.app.getAppPath())
+console.log(remote.app.getAppPath('userData'))
 
 const serviceUrl = 'http://122.152.201.59:8000/api'
 
-Vue.use(CKEditor)
 Vue.use(CollapseTransition)
 Vue.use(Modal)
 Vue.use(BSelect)
@@ -39,6 +38,8 @@ Vue.prototype.$hub = EventHub
 Vue.prototype.$remote = remote
 Vue.prototype.$shell = shell
 Vue.prototype.$webFrame = webFrame
+
+Vue.prototype.$worker = new Worker()
 
 // const curWin = remote.getCurrentWindow()
 // const ses = curWin.webContents.session

@@ -115,6 +115,7 @@ export default {
               _id: this.currentDoc._id,
               content: content
             }
+            this.handleEditorReady()
             this.showMask = false
           })
           .catch(error => {
@@ -123,8 +124,7 @@ export default {
       }
     },
 
-    onEditorReady (editor) {
-      this.editorInstance = editor
+    handleEditorReady (editor) {
       this.handleResize()
       this.$hub.pool.push(() => {
         this.handleResize()
@@ -133,6 +133,7 @@ export default {
 
     handleResize () {
       let space = this.viewType === 'expanded' ? 500 : 360
+      console.log('handleResize', space)
       document.getElementsByClassName('ck-content')[0].style.width = document.body.clientWidth - space + 'px'
     }
   }

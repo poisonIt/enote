@@ -43,12 +43,10 @@ function getById (req) {
 
 function getByNoteId (req) {
   let { noteId } = req
-  console.log('getByNoteId', req)
   return new Promise((resolve, reject) => {
     db.docDB.findOne({
       note_id: noteId
     }, (err, doc) => {
-      console.log('getByNoteId-result', doc)
       if (err) {
         reject(err)
       } else {
@@ -72,7 +70,6 @@ function add (opts) {
 
 function update (opts) {
   const { id } = opts
-  console.log('update-local', id, opts)
 
   return new Promise((resolve, reject) => {
     db.docDB.findOne({ _id: id }, (err, doc) => {

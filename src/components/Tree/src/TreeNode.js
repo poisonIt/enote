@@ -19,6 +19,9 @@ TreeNode.prototype.changeName = function (name) {
 }
 
 TreeNode.prototype.addChildren = function (children) {
+  if (!children.children) {
+    children.children = []
+  }
   if (!this.children) {
     this.children = []
   }

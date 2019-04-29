@@ -91,7 +91,7 @@ export default {
         if (!userResp.userData) return
         userResp.userData.is_last_login = true
         let userSaved = await LocalDAO.user.update(userResp.userData)
-        saveAppConf(this.$remote.app.getAppPath(), {
+        saveAppConf(this.$remote.app.getAppPath('appData'), {
           user: userSaved._id
         })  
         console.log('userSaved', userSaved)
@@ -111,7 +111,7 @@ export default {
       // await this.pushImgs()
       // await this.SET_FILES_FROM_LOCAL()
       // await this.pushData()
-      // await this.pullData()
+      await this.pullData()
       this.handleDataFinished()
     },
 
@@ -173,45 +173,45 @@ export default {
       }
     },
 
-    transNoteBookData (obj) {
-      console.log('transNoteBookData', obj.noteBookId, obj.title, obj)
-      return {
-        type: 'folder',
-        remote_id: obj.noteBookId,
-        title: obj.title || '',
-        seq: obj.seq || 0,
-        create_at: new Date(obj.createDt).valueOf(),
-        update_at: new Date(obj.modifyDt).valueOf(),
-        parent_folder: obj.parentId !== '0' ? obj.parentId : '/',
-        trash: obj.trash,
-        need_push: false
-      }
-    },
+    // transNoteBookData (obj) {
+    //   console.log('transNoteBookData', obj.noteBookId, obj.title, obj)
+    //   return {
+    //     type: 'folder',
+    //     remote_id: obj.noteBookId,
+    //     title: obj.title || '',
+    //     seq: obj.seq || 0,
+    //     create_at: new Date(obj.createDt).valueOf(),
+    //     update_at: new Date(obj.modifyDt).valueOf(),
+    //     pid: obj.parentId !== '0' ? obj.parentId : '/',
+    //     trash: obj.trash,
+    //     need_push: false
+    //   }
+    // },
 
-    transNoteData (obj) {
-      console.log('transNoteData', obj.noteId, obj.title, obj)
-      return {
-        type: 'doc',
-        remote_id: obj.noteId,
-        title: obj.title || '',
-        create_at: new Date(obj.createDt).valueOf(),
-        update_at: new Date(obj.modifyDt).valueOf(),
-        parent_folder: obj.noteBookId !== '0' ? obj.noteBookId : '/',
-        trash: obj.trash,
-        file_size: obj.size,
-        content: obj.noteContent,
-        tags: obj.tagId ? obj.tagId.filter(item => item) : [],
-        need_push: false,
-        top: obj.top
-      }
-    },
+    // transNoteData (obj) {
+    //   console.log('transNoteData', obj.noteId, obj.title, obj)
+    //   return {
+    //     type: 'doc',
+    //     remote_id: obj.noteId,
+    //     title: obj.title || '',
+    //     create_at: new Date(obj.createDt).valueOf(),
+    //     update_at: new Date(obj.modifyDt).valueOf(),
+    //     parent_folder: obj.noteBookId !== '0' ? obj.noteBookId : '/',
+    //     trash: obj.trash,
+    //     file_size: obj.size,
+    //     content: obj.noteContent,
+    //     tags: obj.tagId ? obj.tagId.filter(item => item) : [],
+    //     need_push: false,
+    //     top: obj.top
+    //   }
+    // },
 
-    transTagData (obj) {
-      return {
-        name: obj.tagName,
-        remote_id: obj.tagId
-      }
-    }
+    // transTagData (obj) {
+    //   return {
+    //     name: obj.tagName,
+    //     remote_id: obj.tagId
+    //   }
+    // }
   }
 }
 </script>

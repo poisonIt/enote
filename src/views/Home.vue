@@ -63,7 +63,7 @@ import SharePanel from '@/components/Panels/SharePanel'
 import ResearchPanel from '@/components/Panels/ResearchPanel'
 import LocalDAO from '../../db/api'
 import { getLocalUserById } from '@/service/local'
-import { getAppConf } from '@/tools/appConf'
+import { getAppConf, saveAppConf } from '@/tools/appConf'
 
 export default {
   name: 'home',
@@ -159,7 +159,7 @@ export default {
       this.handleDBLoaded()
     })
     // this.SET_FILES_FROM_LOCAL()
-    getAppConf(this.$remote.app.getAppPath()).then(appConf => {
+    getAppConf(this.$remote.app.getAppPath('appData')).then(appConf => {
       ipcRenderer.send('loadDB', {
         path: `../database/${appConf.user}`
       })
@@ -275,7 +275,9 @@ export default {
     },
 
     goLogin () {
-      localStorage.setItem('last_user', '')
+      saveAppConf(this.$remote.app.getAppPath('appData'), {
+        user: ''
+      })
       ipcRenderer.send('changeWindow', {
         name: 'login'
       })

@@ -187,8 +187,9 @@ export default {
     },
 
     handleResize () {
+      console.log('handleResize-filehandler')
       this.$nextTick(() => {
-        let space = this.viewType === 'expanded' ? 540 : 390
+        let space = this.viewType === 'expanded' ? 500 : 360
         this.containerWidth = document.body.clientWidth - space + 'px'
       })
     },

@@ -26,6 +26,17 @@ let loginWin
 let youdaoWin
 
 let template = [{
+  label: app.getName(),
+  submenu: [{
+    label: '退出',
+    accelerator: 'CmdOrCtrl+Q',
+    click: (item, focusedWindow) => {
+      if (focusedWindow) {
+        app.quit()
+      }
+    }
+  }]
+}, {
   label: '编辑',
   submenu: [{
     label: '撤销',
@@ -259,7 +270,7 @@ ipcMain.on('loadDB', (event, arg) => {
     picDB: 'pic'
   }
   for (let i in DBs) {
-    app.database[i] = loadDB(path.resolve(app.getAppPath(), `${arg.path}/${DBs[i]}.db`))
+    app.database[i] = loadDB(path.resolve(app.getAppPath('userData'), `${arg.path}/${DBs[i]}.db`))
   }
   event.sender.send('db-loaded')
 })
@@ -294,7 +305,7 @@ app.on('ready', async () => {
   Menu.setApplicationMenu(menu)
 
   app.database = {
-    userDB: loadDB(path.resolve(app.getAppPath(), '../database/user.db')),
+    userDB: loadDB(path.resolve(app.getAppPath('userData'), '../database/user.db')),
     folderDB: {},
     noteDB: {},
     docDB: {},
@@ -302,7 +313,7 @@ app.on('ready', async () => {
     picDB: {}
   }
 
-  getAppConf(app.getAppPath()).then(appConf => {
+  getAppConf(app.getAppPath('userData')).then(appConf => {
     if (appConf.user) {
       app.database.userDB.findOne({ _id: appConf.user }, (err, user) => {
         if (err) {

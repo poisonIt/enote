@@ -6,7 +6,7 @@ import { GenNonDuplicateID } from '@/utils/utils'
 const { remote } = require('electron')
 const path = require('path')
 
-const appPath = remote.app.getAppPath('')
+const appPath = remote.app.getAppPath('userData')
 const resourcePath = path.resolve(appPath, '../resource/')
 console.log('appPath-upload', appPath, resourcePath)
 

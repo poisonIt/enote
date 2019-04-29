@@ -211,8 +211,20 @@ export default {
 
   watch: {
     isDBReady (val) {
+      let _self = this
       if (val) {
-        this.fetchLocalFolders()
+        getAllLocalFolder().then(res => {
+          this.$worker.postMessage(['calcLocalData', res])
+        })
+        this.$worker.onmessage = function (event) {
+          if (event.data !== 'Unknown command') {
+            let newRootFolder = event.data
+            _self.folderTree = new TreeStore([latestNav, newRootFolder, tagNav, binNav])
+            _self.$nextTick(() => {
+              _self.$refs.tree.$children[0].click()
+            })
+          }
+        }
       }
     },
 
@@ -276,7 +288,23 @@ export default {
       }
 
       getAllLocalFolder().then(res => {
-        let rootChildren = res.filter(item => item.pid === '0').map(item => {
+        console.log('fetchLocalFolders', res)
+        let newRootFolder = {
+          name: '我的文件夹',
+          id: '0',
+          pid: null,
+          dragDisabled: true,
+          addTreeNodeDisabled: true,
+          addLeafNodeDisabled: true,
+          editNodeDisabled: true,
+          delNodeDisabled: true,
+          children: [],
+          data: {
+            type: 'folder'
+          }
+        }
+        let rootChildren = res.filter(item => item.pid === '0').map((item, index) => {
+          console.log('rootChildren-item', index)
           return {
             id: item._id,
             pid: item.pid,
@@ -300,9 +328,15 @@ export default {
         //     rootChildren.push(c)
         //   }
         // }
-        rootChildren.forEach(item => getChildren(item, res))
-        rootFolder.children = rootChildren
-        this.folderTree = new TreeStore([latestNav, rootFolder, tagNav, binNav])
+        console.log('rootChildren', rootChildren)
+        rootChildren.forEach((item, index) => {
+          console.log('rootChildren-111', index)
+          getChildren(item, res)
+        })
+        newRootFolder.children = rootChildren
+        console.log('newRootFolder', newRootFolder)
+        this.folderTree = new TreeStore([latestNav, newRootFolder, tagNav, binNav])
+        console.log('folderTree', this.folderTree)
         this.$nextTick(() => {
           this.$refs.tree.$children[1].click()
         })

@@ -15,7 +15,6 @@
   "dependencies": {
     "@ckeditor/ckeditor5-autosave": "^10.0.2",
     "@ckeditor/ckeditor5-build-classic": "^11.2.0",
-    "@ckeditor/ckeditor5-vue": "^1.0.0-beta.1",
     "axios": "^0.18.0",
     "dayjs": "^1.8.0",
     "iview": "^3.4.0",
@@ -24,8 +23,7 @@
     "p-reduce": "^2.1.0",
     "vue": "^2.5.21",
     "vue-router": "^3.0.4",
-    "vuex": "^3.0.1",
-    "wangeditor": "^3.1.1"
+    "vuex": "^3.0.1"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.3.0",
@@ -38,12 +36,11 @@
     "electron-icon-builder": "^1.0.0",
     "eslint": "^5.8.0",
     "eslint-plugin-vue": "^5.0.0",
-    "less": "^3.9.0",
-    "less-loader": "^4.1.0",
     "stylus": "^0.54.5",
     "stylus-loader": "^3.0.2",
     "vue-cli-plugin-electron-builder": "^1.0.0-rc.10",
-    "vue-template-compiler": "^2.5.21"
+    "vue-template-compiler": "^2.5.21",
+    "worker-loader": "^2.0.0"
   },
   "main": "background.js"
 }

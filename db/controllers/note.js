@@ -103,8 +103,8 @@ function add (opts) {
       } else {
         doc.add({
           note_id: newNote._id,
-          content: opts.isTemp ? docTemp : ''
-        }).then(newDoc => {
+          content: opts.isTemp ? docTemp : (opts.content || '')
+        }).then(newNote => {
           resolve(newNote)
         })
       }
@@ -131,7 +131,7 @@ function update (opts) {
             trash: getValid('trash', opts, note),
             update_at: new Date(),
             need_push: opts.need_push !== undefined ? opts.need_push : true,
-            content: getValid('content', opts, note),
+            // content: getValid('content', opts, note),
             tags: getValid('tags', opts, note),
             top: getValid('top', opts, note)
           }},

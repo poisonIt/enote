@@ -28,12 +28,14 @@ export default {
     async runPullTasks () {
       let pullResp = await Promise.all([
         pullNotebooks(),
-        // pullNote(),
+        pullNote(),
         // pullTags()
       ])
       console.log('runPullTasks', pullResp)
 
       await LocalDAO.folder.removeAll()
+      await LocalDAO.note.removeAll()
+      await LocalDAO.doc.removeAll()
       // await LocalDAO.tag.removeAll()
       // await LocalDAO.files.removeAll()
       console.log('runPullTasks-1111')
@@ -44,11 +46,11 @@ export default {
         return
       }
 
-      // if (pullResp[1].data.returnMsg !== 'success') {
-      //   // alert(`获取笔记：${pullResp[2].data.returnMsg}`)
-      //   this.isLoading = false
-      //   return
-      // }
+      if (pullResp[1].data.returnMsg !== 'success') {
+        // alert(`获取笔记：${pullResp[2].data.returnMsg}`)
+        this.isLoading = false
+        return
+      }
 
       // if (pullResp[2].data.returnMsg !== 'success') {
       //   // alert(`获取标签：${pullResp[3].data.returnMsg}`)
@@ -57,18 +59,19 @@ export default {
       // }
 
       let dataBody = pullResp[0].data.body
-      dataBody.splice(200, 500)
       const saveNoteBooksTask = dataBody
         .map(item => LocalDAO.folder.add(this.transNoteBookData(item)))
 
-      // const saveNoteTask = pullResp[1].data.body
-      //   .map(item => LocalDAO.files.add(this.transNoteData(item)))
+      const saveNoteTask = pullResp[1].data.body
+        .map(item => {
+          return LocalDAO.note.add(this.transNoteData(item)
+        )})
 
       // const saveTagTask = (pullResp[2].data.body || [])
       //   .map(item => LocalDAO.tag.add(this.transTagData(item)))
 
       // let saveLocalRes = await Promise.all([...saveNoteBooksTask, ...saveNoteTask, ...saveTagTask])
-      let saveLocalRes = await Promise.all(saveNoteBooksTask)
+      let saveLocalRes = await Promise.all([...saveNoteBooksTask, ...saveNoteTask])
       console.log('saveLocalRes', saveLocalRes)
 
       return saveLocalRes
@@ -92,12 +95,12 @@ export default {
     transNoteData (obj) {
       console.log('transNoteData', obj.noteId, obj.title, obj)
       return {
-        type: 'doc',
+        type: 'note',
         remote_id: obj.noteId,
         title: obj.title || '',
         create_at: new Date(obj.createDt).valueOf(),
         update_at: new Date(obj.modifyDt).valueOf(),
-        parent_folder: obj.noteBookId !== '0' ? obj.noteBookId : '/',
+        pid: obj.noteBookId !== '0' ? obj.noteBookId : '/',
         trash: obj.trash,
         file_size: obj.size,
         content: obj.noteContent,

@@ -58,7 +58,6 @@ export default {
           }
         }
         getLocalDoc({ noteId: val._id }).then(res => {
-          console.log('111111')
           this.currentDoc = res
           this.cachedDoc = {
             _id: res._id,
@@ -134,7 +133,7 @@ export default {
     },
 
     handleResize () {
-      let space = this.viewType === 'expanded' ? 500 : 360
+      let space = this.viewType === 'expanded' ? 540 : 390
       console.log('handleResize', space)
       document.getElementsByClassName('ck-content')[0].style.width = document.body.clientWidth - space + 'px'
     }

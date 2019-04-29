@@ -224,7 +224,7 @@ export default {
               let newRootFolder = e.data[1]
               _self.folderTree = new TreeStore([latestNav, newRootFolder, tagNav, binNav])
               _self.$nextTick(() => {
-                _self.$refs.tree.$children[0].click()
+                _self.$refs.tree.$children[1].click()
                 _self.SET_IS_HOME_READY(true)
               })
             }

@@ -9,7 +9,7 @@ function noteModel (opts) {
     update_at: opts.update_at || new Date().valueOf(),
     trash: opts.trash || 'NORMAL',
     need_push: opts.need_push !== undefined ? opts.need_push : true,
-    content: opts.content || '',
+    // content: opts.content || '',
     tags: opts.tags || [],
     top: opts.top || false,
   }

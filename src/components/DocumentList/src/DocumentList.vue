@@ -187,6 +187,7 @@ export default {
     async currentNav (val) {
       console.log('currentNav', val, this.$remote.app.database)
       this.isListLoading = true
+      this.selectFile(-1)
       let localFiles = [[], []]
       if (val.type === 'latest') {
         ipcRenderer.send('fetch-local-data', {
@@ -390,6 +391,7 @@ export default {
         this.fileList.splice(idx, 1)
         this.fileList.unshift(file)
         this.selectFile(0)
+        this.$refs.body.scrollTop = 0
       })
     },
 

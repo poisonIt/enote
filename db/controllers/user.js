@@ -1,10 +1,11 @@
 import userModel from '../models/user'
 const { remote } = require('electron')
 const db = remote.app.database
-console.log('remote', remote)
+console.log('remote', remote, db)
 
 function getAll () {
   return new Promise((resolve, reject) => {
+    resolve({})
     db.userDB.find({}, (err, users) => {
       if (err) {
         reject(err)
@@ -19,13 +20,14 @@ function getAll () {
 function getById (req) {
   const { id } = req
   return new Promise((resolve, reject) => {
-    db.userDB.findOne({ _id: id }, (err, user) => {
-      if (err) {
-        reject(err)
-      } else {
-        resolve(user)
-      }
-    })
+    resolve({})
+    // db.userDB.findOne({ _id: id }, (err, user) => {
+    //   if (err) {
+    //     reject(err)
+    //   } else {
+    //     resolve(user)
+    //   }
+    // })
   })
 }
 

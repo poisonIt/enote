@@ -185,11 +185,13 @@ export default {
 
   watch: {
     async currentNav (val) {
-      console.log('currentNav', val, this.$remote.app.database)
+      console.log('currentNav', val)
       this.isListLoading = true
       this.selectFile(-1)
       let localFiles = [[], []]
+      console.log('000000')
       if (val.type === 'latest') {
+        console.log('111111')
         ipcRenderer.send('fetch-local-data', {
           name: ['getAllLocalFolder', 'getAllLocalNote'],
           from: 'DocumentList'
@@ -198,22 +200,23 @@ export default {
         //   getAllLocalFolder(),
         //   getAllLocalNote()
         // ])
+        // this.handleDataFetched(localFiles)
       } else if (val.type === 'folder') {
-        if (val.pid === undefined) {
-          ipcRenderer.send('fetch-local-data', {
-            name: ['getLocalFolderByPid', 'getLocalNoteByPid'],
-            params: [{ pid: '0' }, { pid: '0' }],
-            from: 'DocumentList',
-          })
-          // localFiles = await Promise.all([
-          //   getLocalFolderByPid({
-          //     pid: '0'
-          //   }),
-          //   getLocalNoteByPid({
-          //     pid: '0'
-          //   }
-          // )])
-        } else {
+        // if (val.id === undefined) {
+        //   ipcRenderer.send('fetch-local-data', {
+        //     name: ['getLocalFolderByPid', 'getLocalNoteByPid'],
+        //     params: [{ pid: '0' }, { pid: '0' }],
+        //     from: 'DocumentList',
+        //   })
+        //   // localFiles = await Promise.all([
+        //   //   getLocalFolderByPid({
+        //   //     pid: '0'
+        //   //   }),
+        //   //   getLocalNoteByPid({
+        //   //     pid: '0'
+        //   //   }
+        //   // )])
+        // } else {
           ipcRenderer.send('fetch-local-data', {
             name: ['getLocalFolderByPid', 'getLocalNoteByPid'],
             params: [{ pid: val._id }, { pid: val._id }],
@@ -227,7 +230,7 @@ export default {
           //     pid: val._id
           //   }
           // )])
-        }
+        // }
       } else if (val.type === 'tag') {
       } else if (val.type === 'bin') {
         ipcRenderer.send('fetch-local-data', {
@@ -285,13 +288,7 @@ export default {
       if (arg.from === 'DocumentList') {
         let localFiles = arg.res
         console.log('fetch-local-data-response', event, localFiles)
-        this.folderList = localFiles[0]
-        this.noteList = localFiles[1]
-        this.list = _.flatten(localFiles)
-        this.stickTopFiles = []
-        this.updateFileList()
-        this.selectFile(0)
-        this.isListLoading = false
+        this.handleDataFetched(localFiles)
       }
     })
   },
@@ -311,6 +308,16 @@ export default {
       'SET_VIEW_FILE_SORT_ORDER',
       'TOGGLE_SHOW_MOVE_PANEL'
     ]),
+
+    handleDataFetched (localFiles) {
+      this.folderList = localFiles[0]
+      this.noteList = localFiles[1]
+      this.list = _.flatten(localFiles)
+      this.stickTopFiles = []
+      this.updateFileList()
+      this.selectFile(0)
+      this.isListLoading = false
+    },
 
     updateFileList () {
       let notes = this.fileListSortFunc(this.noteList.filter(file => file.title.indexOf(this.searchKeyword) > -1))

@@ -163,6 +163,8 @@ export default {
   },
 
   created () {
+    // LocalDAO.note.removeAll()
+    // LocalDAO.folder.removeAll()
     ipcRenderer.on('db-loaded', (event, arg) => {
       this.handleDBLoaded()
     })

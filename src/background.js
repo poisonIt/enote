@@ -13,7 +13,7 @@ import {
   createProtocol,
   installVueDevtools
 } from 'vue-cli-plugin-electron-builder/lib'
-import { loadDB } from '../db'
+import { loadDB, loadLDB } from '../db'
 import { readFile, writeFile } from './utils/file'
 import { getAppConf } from './tools/appConf'
 
@@ -199,7 +199,7 @@ function createHomeWindow () {
     height: 640,
     backgroundColor: '#fcfbf7',
     // frame: false,
-    titleBarStyle: 'hidden',
+    // titleBarStyle: 'hidden',
     icon: path.join(__static, 'icon.png'),
     webPreferences: {
       webSecurity: false
@@ -207,7 +207,7 @@ function createHomeWindow () {
   })
   backWin = new BrowserWindow({
     id: 'background',
-    show: false
+    // show: false
   })
 
   win.setMinimumSize(960, 640)
@@ -286,6 +286,37 @@ ipcMain.on('loadDB', (event, arg) => {
   for (let i in DBs) {
     app.database[i] = loadDB(path.resolve(app.getAppPath('userData'), `${arg.path}/${DBs[i]}.db`))
   }
+  // app.databaseNote = loadLDB(path.resolve(app.getAppPath('userData'), `${arg.path}`))
+  // // app.sqliteDB = loadSqlite(path.resolve(app.getAppPath('userData'), `${arg.path}/sqlite/sq.db`))
+
+  // app.sqliteDB = new sqlite3.Database(path.resolve(app.getAppPath('userData'), `sq.db`))
+  // console.log('sqliteDB-1111', app.sqliteDB)
+
+  // app.sqliteDB.serialize(function() {
+  //   console.log('sqliteDB-222')
+  //   // app.sqliteDB.run("CREATE TABLE lorem (info TEXT)");
+  //   console.log('sqliteDB-333')
+  
+  //   // var stmt = app.sqliteDB.prepare("INSERT INTO lorem ([info]) VALUES (?)");
+  //   // for (var i = 0; i < 1000; i++) {
+  //   //   stmt.run("Ipsum " + i);
+  //   // }
+  //   // stmt.finalize();
+  //   console.log('sqliteDB-444')
+  
+  //   app.sqliteDB.each("SELECT rowid AS id, info FROM lorem", function(err, row) {
+  //       console.log(row.id + ": " + row.info);
+  //   });
+  //   console.log('sqliteDB-555')
+  //   app.sqliteDB.all("select * from lorem", function (err, res) {
+  //     console.log(err, res)
+  //     backWin.webContents.send('fetch-local-data', {
+  //       from: 'sqlite',
+  //       res: res
+  //     })
+  //   })
+  // });
+
   event.sender.send('db-loaded')
 })
 

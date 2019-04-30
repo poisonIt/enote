@@ -13,6 +13,7 @@ function removeAll (files) {
 }
 
 function getAll () {
+  console.log('get-all-db')
   return new Promise((resolve, reject) => {
     db.folderDB.find({
       trash: 'NORMAL'
@@ -20,7 +21,7 @@ function getAll () {
       if (err) {
         reject(err)
       } else {
-        // console.log('all documents in collection folder_db:', folders)
+        console.log('all documents in collection folder_db:', folders)
         resolve(folders)
       }
     })

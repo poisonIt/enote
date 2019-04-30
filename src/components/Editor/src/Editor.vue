@@ -57,7 +57,8 @@ export default {
             })
           }
         }
-        getLocalDoc({ noteId: val._id }).then(res => {
+        getLocalDoc({ note_id: val._id }).then(res => {
+          console.log('getLocalDoc-res', res)
           this.currentDoc = res
           this.cachedDoc = {
             _id: res._id,

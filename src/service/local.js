@@ -1,12 +1,20 @@
 import LocalDAO from '../../db/api'
 
+export {
+  saveAll,
+  removeAll,
+  removeById,
+  getAll,
+  getAllByPid,
+  updateById
+}
 // user
 export function getLocalUserById (params) {
   return LocalDAO.user.getById(params)
 }
 
 export function updateLocalUser (params) {
-  return LocalDAO.user.update(params)
+  return LocalDAO.user.updateById(params)
 }
 
 // folder
@@ -15,7 +23,7 @@ export function getAllLocalFolder () {
 }
 
 export function getLocalFolderByPid (params) {
-  return LocalDAO.folder.getByPid(params)
+  return LocalDAO.folder.getAllByPid(params)
 }
 
 export function getLocalTrashFolder () {
@@ -36,7 +44,7 @@ export function getAllLocalNote () {
 }
 
 export function getLocalNoteByPid (params) {
-  return LocalDAO.note.getByPid(params)
+  return LocalDAO.note.getAllByPid(params)
 }
 
 export function getLocalTrashNote () {

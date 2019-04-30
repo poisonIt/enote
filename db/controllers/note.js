@@ -3,6 +3,7 @@ import { getValid } from '../tools'
 import doc from './doc'
 import folder from './folder'
 import docTemp from '../docTemplate'
+import * as _ from 'lodash'
 
 const { remote } = require('electron')
 const db = remote.app.database
@@ -17,13 +18,15 @@ function removeAll (files) {
 }
 
 function getAll () {
+  // console.log('getAll-note')
   return new Promise((resolve, reject) => {
     db.noteDB.find({ trash: 'NORMAL' }, (err, notes) => {
       if (err) {
         reject(err)
       } else {
-        // console.log('all documents in collection files_db:', notes)
-        resolve(notes)
+        let result = notes
+        console.log('all documents in collection note_db:', result)
+        resolve(result)
       }
     })
   })
@@ -72,7 +75,7 @@ function getByPid (req) {
           } else {
             resolve(notes.map(item => {
               item.folder_title = folderDoc.title
-              return item
+              return Object.assign({}, item)
             }))
           }
         })

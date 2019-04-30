@@ -9,8 +9,9 @@ export default {
 
   methods: {
     handleFileAdded (file) {
-      this.list.push(file)
-      this.selectFile(this.list.indexOf(file))
+      console.log('handleFileAdded', file)
+      this.fileList.unshift(file)
+      this.selectFile(0)
     },
 
     handleFileUpdate (params) {

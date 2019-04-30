@@ -278,6 +278,7 @@ export default {
     ]),
 
     handleSetCurrentFolder (node) {
+      console.log('handleSetCurrentFolder', node, node.data.type)
       this.SET_CURRENT_NAV(node.data)
     },
 
@@ -325,20 +326,17 @@ export default {
     },
 
     handleNewFolder (isCurrent) {
-      this.popupedNode.addChild({}, true)
+      addLocalFolder({
+        pid: this.popupedNode.model.id
+      }).then(res => {
+        this.popupedNode.addChild({
+          id: res._id,
+          type: 'folder'
+        }, true)
+      })
     },
 
     handleAddNode (node) {
-      addLocalFolder({
-        title: node.name,
-        pid: node.pid
-      }).then(res => {
-        node.id = res._id
-        node.data = {
-          id: res._id,
-          type: 'folder'
-        }
-      })
     },
 
     handleInsertChildNode (childNode) {

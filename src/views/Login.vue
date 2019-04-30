@@ -71,7 +71,7 @@ export default {
     ]),
 
     async postData () {
-      // this.goHome()
+      this.goHome()
       if (this.isLoading) return
       this.isLoading = true
       const { username, password } = this

@@ -13,7 +13,7 @@ import { TreeStore } from '@/components/Tree'
 let rootFolder = {
   name: '我的文件夹',
   id: '0',
-  pid: null,
+  pid: '/',
   dragDisabled: true,
   addTreeNodeDisabled: true,
   addLeafNodeDisabled: true,
@@ -21,7 +21,8 @@ let rootFolder = {
   delNodeDisabled: true,
   children: [],
   data: {
-    type: 'folder'
+    type: 'folder',
+    id: '0'
   }
 }
 const mockArr = [[
@@ -68,11 +69,8 @@ const mockArr = [[
 //   })
 // }
 
-console.log('QueueClass', QueueClass)
 // const queue = new PQueue()
 const queue = new PQueue({ queueClass: QueueClass })
-
-// serialize()
 
 export default {
   name: 'Background',
@@ -125,7 +123,6 @@ export default {
         this.getFolderChildren(item, folderFiles)
       })
       rootFolder.children = rootChildren
-      console.log('rootFolder', rootFolder)
       return rootFolder
     },
 

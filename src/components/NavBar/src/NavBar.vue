@@ -312,9 +312,10 @@ export default {
 
     handleNewNote (isTemp) {
       console.log('handleNewNote', this.popupedNode)
+      let nodeData = this.popupedNode.model.data
       addLocalNote({
         title: '无标题笔记',
-        pid: this.popupedNode.model.id,
+        pid: nodeData.id || nodeData._id || '0',
         isTemp: isTemp
       }).then(res => {
         this.$hub.dispatchHub('addFile', this, res)
@@ -326,8 +327,9 @@ export default {
     },
 
     handleNewFolder (isCurrent) {
+      let nodeData = this.popupedNode.model.data
       addLocalFolder({
-        pid: this.popupedNode.model.id
+        pid: nodeData.id || nodeData._id || '0'
       }).then(res => {
         this.popupedNode.addChild({
           id: res._id,

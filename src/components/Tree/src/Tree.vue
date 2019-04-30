@@ -193,6 +193,7 @@ export default {
   // },
 
   created () {
+    console.log('created', this.model)
     this.model.instance = this
     this.id = this.model.data ? this.model.id : '0'
     this.$on('select', (params) => {

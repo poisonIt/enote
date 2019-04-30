@@ -54,6 +54,7 @@ function saveAll (req) {
 
 // add
 function add (req) {
+  // console.log('add-folder', req)
   let data = folderModel(req)
 
   return new Promise((resolve, reject) => {

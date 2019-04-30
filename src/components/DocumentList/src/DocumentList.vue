@@ -44,7 +44,7 @@
           @contextmenu="handleContextmenu">
         </FileCard>
       </FileCardGroup>
-      <div class="no-file" v-if="list.length === 0">
+      <div class="no-file" v-if="fileList.length === 0">
         <span v-if="viewFileType === 'recycle'">回收站为空</span>
         <span v-if="viewFileType !== 'recycle'">没有找到文件</span>
         <div v-if="viewFileType !== 'recycle'"
@@ -219,7 +219,7 @@ export default {
         // } else {
           ipcRenderer.send('fetch-local-data', {
             name: ['getLocalFolderByPid', 'getLocalNoteByPid'],
-            params: [{ pid: val._id }, { pid: val._id }],
+            params: [{ pid: val._id || val.id || '0' }, { pid: val._id || val.id || '0' }],
             from: 'DocumentList',
           })
           // localFiles = await Promise.all([
@@ -315,7 +315,7 @@ export default {
       this.list = _.flatten(localFiles)
       this.stickTopFiles = []
       this.updateFileList()
-      this.selectFile(0)
+      this.selectFile(this.list.length > 0 ? 0 : -1)
       this.isListLoading = false
     },
 

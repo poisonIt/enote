@@ -1,7 +1,13 @@
-import { LinvoDB } from './index.js'
 import { getValid } from '../tools'
+import userModel from '../models/user'
+import { LinvoDB } from '../index'
 
-var User = new LinvoDB('user', {
+let User = {}
+
+function createCollection (path) {
+  LinvoDB.dbPath = path
+
+  User = new LinvoDB('user', {
     username: String,
     password: String,
     oa_id: String,
@@ -18,7 +24,8 @@ var User = new LinvoDB('user', {
     },
     access_token: String,
     id_token: String
-})
+  })
+}
 
 // save
 function saveAll (req) {
@@ -33,10 +40,11 @@ function saveAll (req) {
 
 // add
 function add (req) {
-  const { data } = req
+  console.log('add-user', req)
+  let data = userModel(req)
 
   return new Promise((resolve, reject) => {
-    User.insert(data).exec((err, users) => {
+    User.insert(data, (err, users) => {
       resolve(users)
     })
   })
@@ -45,7 +53,10 @@ function add (req) {
 // remove
 function removeAll () {
   return new Promise((resolve, reject) => {
-    User.remove({}).exec((err, users) => {
+    User.find({}).exec((err, users) => {
+      users.forEach(user => {
+        User.remove()
+      })
       resolve(users.length)
     })
   })
@@ -55,7 +66,8 @@ function removeById (req) {
   const { id } = req
 
   return new Promise((resolve, reject) => {
-    User.remove({ _id: id }).exec((err, user) => {
+    User.findOne({ _id: id }).exec((err, user) => {
+      User.remove()
       resolve()
     })
   })
@@ -63,46 +75,37 @@ function removeById (req) {
 
 // update
 function update (req) {
-  const { id } = req
+  const { usercode } = req
+  console.log('update-user', req)
 
   return new Promise((resolve, reject) => {
-    User.find({ _id: id })
+    User.findOne({ usercode: usercode })
     .exec((err, user) => {
-      User.update(
-        { _id: id },
-        { $set: {
-          remote_id: getValid('remote_id', req, user),
-          pid: getValid('pid', req, user),
-          title: getValid('title', req, user),
-          seq: getValid('seq', req, user),
-          trash: getValid('trash', req, user),
-          update_at: new Date(),
-          need_push: req.need_push !== undefined ? req.need_push : true,
-          tags: getValid('tags', req, user),
-          top: getValid('top', req, user)
+      console.log('update-user-111', user)
+      if (!user) {
+        add(req).then(user => {
+          resolve(user)
+        })
+      } else {
+        User.update(
+          { usercode: usercode },
+          { $set: req },
+          { multi: true },
+          (err, numReplaced, newUser) => {
+            console.log('update-folder-111', numReplaced, newUser)
+            resolve(newUser)
           }
-        }
-      ).exec((err, newUser) => {
-        resolve(newUser)
-      })
+        )
+      }
     })
   })
 }
 
 // get
 function getAll () {
+  console.log('User', User)
   return new Promise((resolve, reject) => {
     User.find({}).exec((err, users) => {
-      resolve(users)
-    })
-  })
-}
-
-function getAllByPid (req) {
-  const { pid } = req
-
-  return new Promise((resolve, reject) => {
-    User.find({ pid: pid }).exec((err, users) => {
       resolve(users)
     })
   })
@@ -112,19 +115,19 @@ function getById (req) {
   const { id } = req
 
   return new Promise((resolve, reject) => {
-    User.findOne({ _id: id }).exec((err, user) => {
-      resolve(user)
+    User.findOne({ _id: id }).exec((err, doc) => {
+      resolve(doc)
     })
   })
 }
 
 export default {
+  createCollection,
   saveAll,
   add,
   removeAll,
   removeById,
   update,
   getAll,
-  getAllByPid,
   getById
 }

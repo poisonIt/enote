@@ -67,6 +67,7 @@ import SharePanel from '@/components/Panels/SharePanel'
 import ResearchPanel from '@/components/Panels/ResearchPanel'
 import Loading from '@/components/Loading'
 
+import { createCollection } from '../../db'
 import LocalDAO from '../../db/api'
 import { getLocalUserById } from '@/service/local'
 import { getAppConf, saveAppConf } from '@/tools/appConf'
@@ -165,23 +166,26 @@ export default {
   created () {
     // LocalDAO.note.removeAll()
     // LocalDAO.folder.removeAll()
-    ipcRenderer.on('db-loaded', (event, arg) => {
-      this.handleDBLoaded()
-    })
+    this.handleDBLoaded()
+    
+    // ipcRenderer.on('db-loaded', (event) => {
+    //   console.log('db-loaded')
+    //   this.handleDBLoaded()
+    // })
     // this.SET_FILES_FROM_LOCAL()
-    getAppConf(this.$remote.app.getAppPath('appData')).then(appConf => {
-      ipcRenderer.send('loadDB', {
-        path: `../database/${appConf.user}`
-      })
-      getLocalUserById({
-        id: appConf.user
-      }).then(resp => {
-        console.log('getLocalUserById', resp)
-        this.fdList = resp.friend_list
-        this.SET_USER_INFO(resp)
-        this.SET_TOKEN(resp.id_token)
-      })
-    })
+    // getAppConf(this.$remote.app.getAppPath('appData')).then(appConf => {
+    //   ipcRenderer.send('loadDB', {
+    //     path: `../database/${appConf.user}`
+    //   })
+    //   getLocalUserById({
+    //     id: appConf.user
+    //   }).then(resp => {
+    //     console.log('getLocalUserById', resp)
+    //     this.fdList = resp.friend_list
+    //     this.SET_USER_INFO(resp)
+    //     this.SET_TOKEN(resp.id_token)
+    //   })
+    // })
   },
 
   mounted () {
@@ -294,6 +298,10 @@ export default {
     },
 
     handleDBLoaded () {
+      const { user, dbPath } = this.$remote.app.appConf
+      createCollection('folder', dbPath + '/' + user)
+      createCollection('note', dbPath + '/' + user)
+      createCollection('doc', dbPath + '/' + user)
       this.SET_DB_READY(true)
     }
   }

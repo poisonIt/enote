@@ -201,35 +201,36 @@ export default {
 
   watch: {
     isDBReady (val) {
+      console.log('watch-isDBReady', val)
       let _self = this
       if (val) {
-        ipcRenderer.send('fetch-local-data', {
-          name: ['getAllLocalFolder'],
-          from: 'NavBar'
-        })
-        ipcRenderer.on('fetch-local-data-response', (event, arg) => {
-          if (arg.from === 'NavBar') {
-            this.$worker.postMessage(['calcLocalData', arg.res[0]])
-          }
-        })
-        // getAllLocalFolder().then(res => {
-          // console.log('res', res)
-          // this.$worker.postMessage(['calcLocalData', res])
+        // ipcRenderer.send('fetch-local-data', {
+        //   name: ['getAllLocalFolder'],
+        //   from: 'NavBar'
         // })
-        this.$worker.onmessage = function (e) {
-          console.log('e', e)
-          if (e.data !== 'Unknown command') {
-            if (e.data[0] === 'calcLocalData') {
-              console.log(e.data)
-              let newRootFolder = e.data[1]
-              _self.folderTree = new TreeStore([latestNav, newRootFolder, tagNav, binNav])
-              _self.$nextTick(() => {
-                _self.$refs.tree.$children[1].click()
-                _self.SET_IS_HOME_READY(true)
-              })
-            }
-          }
-        }
+        // ipcRenderer.on('fetch-local-data-response', (event, arg) => {
+        //   if (arg.from === 'NavBar') {
+        //     this.$worker.postMessage(['calcLocalData', arg.res[0]])
+        //   }
+        // })
+        // // getAllLocalFolder().then(res => {
+        //   // console.log('res', res)
+        //   // this.$worker.postMessage(['calcLocalData', res])
+        // // })
+        // this.$worker.onmessage = function (e) {
+        //   console.log('e', e)
+        //   if (e.data !== 'Unknown command') {
+        //     if (e.data[0] === 'calcLocalData') {
+        //       console.log(e.data)
+        //       let newRootFolder = e.data[1]
+        //       _self.folderTree = new TreeStore([latestNav, newRootFolder, tagNav, binNav])
+        //       _self.$nextTick(() => {
+        //         _self.$refs.tree.$children[1].click()
+        //         _self.SET_IS_HOME_READY(true)
+        //       })
+        //     }
+        //   }
+        // }
       }
     },
 
@@ -245,6 +246,34 @@ export default {
   },
 
   mounted () {
+    const _self = this
+    ipcRenderer.send('fetch-local-data', {
+      name: ['getAllLocalFolder'],
+      from: 'NavBar'
+    })
+    ipcRenderer.on('fetch-local-data-response', (event, arg) => {
+      if (arg.from === 'NavBar') {
+        this.$worker.postMessage(['calcLocalData', arg.res[0]])
+      }
+    })
+    // getAllLocalFolder().then(res => {
+      // console.log('res', res)
+      // this.$worker.postMessage(['calcLocalData', res])
+    // })
+    this.$worker.onmessage = function (e) {
+      console.log('e', e)
+      if (e.data !== 'Unknown command') {
+        if (e.data[0] === 'calcLocalData') {
+          console.log(e.data)
+          let newRootFolder = e.data[1]
+          _self.folderTree = new TreeStore([latestNav, newRootFolder, tagNav, binNav])
+          _self.$nextTick(() => {
+            _self.$refs.tree.$children[1].click()
+            _self.SET_IS_HOME_READY(true)
+          })
+        }
+      }
+    }
     // const curNode = this.$refs.tree.store.currentNode
     // console.log('curNode', curNode)
     // if (curNode) {

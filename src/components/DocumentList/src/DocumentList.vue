@@ -91,6 +91,7 @@ import {
   getLocalTrashFolder,
   getLocalTrashNote,
   addLocalNote,
+  removeLocalNote,
   updateLocalNote
 } from'@/service/local'
 
@@ -312,6 +313,16 @@ export default {
     handleDataFetched (localFiles) {
       this.folderList = localFiles[0]
       this.noteList = localFiles[1]
+      const len = this.noteList.length
+      if (len > 1000) {
+        let arr = this.noteList.map(item => item._id)
+          .splice(0, len - 1000)
+
+        console.log('arr', arr)
+        arr.forEach(id => {
+          removeLocalNote({ id: id })
+        })
+      }
       this.list = _.flatten(localFiles)
       this.stickTopFiles = []
       this.updateFileList()

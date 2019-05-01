@@ -1,28 +1,34 @@
-import { LinvoDB } from './index.js'
 import { getValid } from '../tools'
 import docModel from '../models/doc'
+import { LinvoDB } from '../index'
 
-var Doc = new LinvoDB('doc', {
-  type: {
-    type: String,
-    default: 'doc'
-  },
-  remote_id: {
-    type: String
-  },
-  note_id: String,
-  remote_note_id: String,
-  content: {
-    type: String,
-    default: ''
-  },
-  create_at: Date,
-  update_at: Date,
-  need_push: {
-    type: Boolean,
-    default: true
-  }
-})
+let Doc = {}
+
+function createCollection (path) {
+  LinvoDB.dbPath = path
+
+  Doc = new LinvoDB('doc', {
+    type: {
+      type: String,
+      default: 'doc'
+    },
+    remote_id: {
+      type: String
+    },
+    note_id: String,
+    remote_note_id: String,
+    content: {
+      type: String,
+      default: ''
+    },
+    create_at: Date,
+    update_at: Date,
+    need_push: {
+      type: Boolean,
+      default: true
+    }
+  })
+}
 
 // save
 function saveAll (req) {
@@ -65,6 +71,17 @@ function removeById (req) {
   return new Promise((resolve, reject) => {
     Doc.findOne({ _id: id }).exec((err, doc) => {
       Doc.remove()
+      resolve()
+    })
+  })
+}
+
+function removeByNoteId (req) {
+  const { note_id } = req
+
+  return new Promise((resolve, reject) => {
+    Doc.findOne({ note_id: note_id }).exec((err, doc) => {
+      doc.remove()
       resolve()
     })
   })
@@ -129,10 +146,12 @@ function getTrash () {
 }
 
 export default {
+  createCollection,
   saveAll,
   add,
   removeAll,
   removeById,
+  removeByNoteId,
   update,
   getAll,
   getByNoteId,

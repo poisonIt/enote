@@ -13,7 +13,7 @@ import {
   createProtocol,
   installVueDevtools
 } from 'vue-cli-plugin-electron-builder/lib'
-import { loadDB, loadLDB } from '../db'
+// import { loadDB } from '../db'
 import { readFile, writeFile } from './utils/file'
 import { getAppConf } from './tools/appConf'
 
@@ -191,6 +191,26 @@ function createLoginWindow () {
   })
 }
 
+function createBackgroundWindow () {
+  backWin = new BrowserWindow({
+    id: 'background',
+    // show: false
+  })
+
+  if (process.env.WEBPACK_DEV_SERVER_URL) {
+    // Load the url of the dev server if in development mode
+    backWin.loadURL(process.env.WEBPACK_DEV_SERVER_URL + '#/background')
+    backWin.webContents.openDevTools()
+  } else {
+    createProtocol('app')
+    backWin.loadURL('app://./index.html#/background')
+  }
+
+  backWin.on('closed', () => {
+    backWin = null
+  })
+}
+
 function createHomeWindow () {
   // Create the browser window.
   win = new BrowserWindow({
@@ -205,10 +225,6 @@ function createHomeWindow () {
       webSecurity: false
     }
   })
-  backWin = new BrowserWindow({
-    id: 'background',
-    // show: false
-  })
 
   win.setMinimumSize(960, 640)
 
@@ -216,21 +232,14 @@ function createHomeWindow () {
     // Load the url of the dev server if in development mode
     win.loadURL(process.env.WEBPACK_DEV_SERVER_URL + '#/home')
     win.webContents.openDevTools()
-    backWin.loadURL(process.env.WEBPACK_DEV_SERVER_URL + '#/background')
-    backWin.webContents.openDevTools()
   } else {
     createProtocol('app')
     // Load the index.html when not in development
     win.loadURL('app://./index.html#/home')
-    backWin.loadURL('app://./index.html#/background')
   }
 
   win.on('closed', () => {
     win = null
-  })
-
-  backWin.on('closed', () => {
-    backWin = null
   })
 }
 
@@ -275,49 +284,30 @@ ipcMain.on('createWindow', (event, arg) => {
   }
 })
 
-ipcMain.on('loadDB', (event, arg) => {
-  const DBs = {
-    folderDB: 'folder',
-    noteDB: 'note',
-    docDB: 'doc',
-    tagDB: 'tag',
-    picDB: 'pic'
+ipcMain.on('userDB-ready', (event, arg) => {
+  if (!loginWin) {
+    createLoginWindow()
   }
-  for (let i in DBs) {
-    app.database[i] = loadDB(path.resolve(app.getAppPath('userData'), `${arg.path}/${DBs[i]}.db`))
+
+  // event.sender.send('db-loaded')
+})
+
+ipcMain.on('login-ready', (event) => {
+  getAppConf(app.getAppPath('userData')).then(appConf => {
+    app.appConf.user = appConf.user
+    backWin.webContents.send('login-ready')
+  })
+  // event.sender.send('db-loaded')
+})
+
+ipcMain.on('local-service-response', (event, arg) => {
+  if (arg.to === 'login') {
+    loginWin.webContents.send('local-service-response', arg.data)
   }
-  // app.databaseNote = loadLDB(path.resolve(app.getAppPath('userData'), `${arg.path}`))
-  // // app.sqliteDB = loadSqlite(path.resolve(app.getAppPath('userData'), `${arg.path}/sqlite/sq.db`))
+})
 
-  // app.sqliteDB = new sqlite3.Database(path.resolve(app.getAppPath('userData'), `sq.db`))
-  // console.log('sqliteDB-1111', app.sqliteDB)
-
-  // app.sqliteDB.serialize(function() {
-  //   console.log('sqliteDB-222')
-  //   // app.sqliteDB.run("CREATE TABLE lorem (info TEXT)");
-  //   console.log('sqliteDB-333')
-  
-  //   // var stmt = app.sqliteDB.prepare("INSERT INTO lorem ([info]) VALUES (?)");
-  //   // for (var i = 0; i < 1000; i++) {
-  //   //   stmt.run("Ipsum " + i);
-  //   // }
-  //   // stmt.finalize();
-  //   console.log('sqliteDB-444')
-  
-  //   app.sqliteDB.each("SELECT rowid AS id, info FROM lorem", function(err, row) {
-  //       console.log(row.id + ": " + row.info);
-  //   });
-  //   console.log('sqliteDB-555')
-  //   app.sqliteDB.all("select * from lorem", function (err, res) {
-  //     console.log(err, res)
-  //     backWin.webContents.send('fetch-local-data', {
-  //       from: 'sqlite',
-  //       res: res
-  //     })
-  //   })
-  // });
-
-  event.sender.send('db-loaded')
+ipcMain.on('db-loaded', (event) => {
+  win.webContents.send('db-loaded')
 })
 
 ipcMain.on('fetch-local-data', (event, arg) => {
@@ -357,31 +347,39 @@ app.on('ready', async () => {
   const menu = Menu.buildFromTemplate(template)
   Menu.setApplicationMenu(menu)
 
-  app.database = {
-    userDB: loadDB(path.resolve(app.getAppPath('userData'), '../database/user.db')),
-    folderDB: {},
-    noteDB: {},
-    docDB: {},
-    tagDB: {},
-    picDB: {}
-  }
+  // app.database = {
+  //   userDB: loadLinvoDB(path.resolve(app.getAppPath('userData'), '../database')),
+  //   folderDB: {},
+  //   noteDB: {},
+  //   docDB: {},
+  //   tagDB: {},
+  //   picDB: {}
+  // }
 
+  // createCollection('user', app.database.userDB)
+
+  let dataPath = app.getAppPath('userData')
   getAppConf(app.getAppPath('userData')).then(appConf => {
-    if (appConf.user) {
-      app.database.userDB.findOne({ _id: appConf.user }, (err, user) => {
-        if (err) {
-          createLoginWindow()
-        } else {
-          if (user) {
-            createHomeWindow()
-          } else {
-            createLoginWindow()
-          }
-        }
-      })
-    } else {
-      createLoginWindow()
+    app.appConf = {
+      user: appConf.user,
+      dbPath: path.resolve(dataPath, `../database`),
     }
+    createBackgroundWindow()
+    // if (appConf.user) {
+    //   app.database.userDB.findOne({ _id: appConf.user }, (err, user) => {
+    //     if (err) {
+    //       createLoginWindow()
+    //     } else {
+    //       if (user) {
+    //         createHomeWindow()
+    //       } else {
+    //         createLoginWindow()
+    //       }
+    //     }
+    //   })
+    // } else {
+    //   createLoginWindow()
+    // }
   })
 })
 

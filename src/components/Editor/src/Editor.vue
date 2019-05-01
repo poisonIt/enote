@@ -57,6 +57,11 @@ export default {
             })
           }
         }
+        // ipcRenderer.send('fetch-local-data', {
+        //   name: ['getLocalDoc'],
+        //   params: [{ note_id: val._id }],
+        //   from: 'DocumentList'
+        // })
         getLocalDoc({ note_id: val._id }).then(res => {
           console.log('getLocalDoc-res', res)
           this.currentDoc = res

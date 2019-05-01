@@ -1,45 +1,53 @@
-import { LinvoDB } from './index.js'
 import { getValid } from '../tools'
 import noteModel from '../models/note'
 import docCtr from './doc'
 import docTemp from '../docTemplate'
+import { LinvoDB } from '../index'
+import doc from './doc';
 
-var Note = new LinvoDB('note', {
-  type: {
-    type: String,
-    default: 'note'
-  },
-  remote_id: {
-    type: String
-  },
-  pid: {
-    type: String,
-    default: '0'
-  },
-  title: {
-    type: String,
-    default: '无标题笔记'
-  },
-  seq: {
-    type: Number,
-    default: 0
-  },
-  create_at: Date,
-  update_at: Date,
-  trash: {
-    type: String,
-    default: 'NORMAL'
-  },
-  need_push: {
-    type: Boolean,
-    default: true
-  },
-  tags: [String],
-  top: {
-    type: Boolean,
-    default: false
-  }
-})
+let Note = {}
+
+function createCollection (path) {
+  LinvoDB.dbPath = path
+
+  Note = new LinvoDB('note', {
+    type: {
+      type: String,
+      default: 'note'
+    },
+    remote_id: {
+      type: String
+    },
+    pid: {
+      type: String,
+      default: '0'
+    },
+    title: {
+      type: String,
+      default: '无标题笔记'
+    },
+    seq: {
+      type: Number,
+      default: 0
+    },
+    create_at: Date,
+    update_at: Date,
+    trash: {
+      type: String,
+      default: 'NORMAL'
+    },
+    need_push: {
+      type: Boolean,
+      default: true
+    },
+    tags: [String],
+    top: {
+      type: Boolean,
+      default: false
+    }
+  })
+}
+
 
 // save
 function saveAll (req) {
@@ -86,8 +94,15 @@ function removeById (req) {
 
   return new Promise((resolve, reject) => {
     Note.findOne({ _id: id }).exec((err, note) => {
-      note.remove()
-      resolve()
+      if (note) {
+        console.log('removeById', id, note)
+        note.remove()
+        doc.removeByNoteId({ note_id: id }).then(() => {
+          resolve()
+        })
+      } else {
+        reject()
+      }
     })
   })
 }
@@ -150,6 +165,7 @@ function getTrash () {
 }
 
 export default {
+  createCollection,
   saveAll,
   add,
   removeAll,

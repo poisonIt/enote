@@ -1,47 +1,51 @@
-import { LinvoDB } from './index.js'
+// import { folderDB } from './index.js'
 import { getValid } from '../tools'
 import folderModel from '../models/folder'
+import { LinvoDB } from '../index'
 
-var Folder = new LinvoDB('folder', {
-  type: {
-    type: String,
-    default: 'folder'
-  },
-  remote_id: {
-    type: String
-  },
-  pid: {
-    type: String,
-    default: '0'
-  },
-  title: {
-    type: String,
-    default: '新建文件夹'
-  },
-  seq: {
-    type: Number,
-    default: 0
-  },
-  create_at: Date,
-  update_at: Date,
-  trash: {
-    type: String,
-    default: 'NORMAL'
-  },
-  need_push: {
-    type: Boolean,
-    default: true
-  },
-  tags: [String],
-  top: {
-    type: Boolean,
-    default: false
-  }
-})
+let Folder = {}
 
-// let folder = new Folder({})
-// folder.save()
-// save
+function createCollection (path) {
+  LinvoDB.dbPath = path
+
+  Folder = new LinvoDB('folder', {
+    type: {
+      type: String,
+      default: 'folder'
+    },
+    remote_id: {
+      type: String
+    },
+    pid: {
+      type: String,
+      default: '0'
+    },
+    title: {
+      type: String,
+      default: '新建文件夹'
+    },
+    seq: {
+      type: Number,
+      default: 0
+    },
+    create_at: Date,
+    update_at: Date,
+    trash: {
+      type: String,
+      default: 'NORMAL'
+    },
+    need_push: {
+      type: Boolean,
+      default: true
+    },
+    tags: [String],
+    top: {
+      type: Boolean,
+      default: false
+    }
+  })
+}
+
 function saveAll (req) {
   const { data } = req
 
@@ -150,6 +154,7 @@ function getTrash () {
 }
 
 export default {
+  createCollection,
   saveAll,
   add,
   removeAll,

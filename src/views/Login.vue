@@ -14,11 +14,11 @@
           type="password"
           v-model="password"
           placeholder="密码"
-          @keyup.enter="postData">
+          @keyup.enter="postInput">
       </div>
       <div class="button round"
         :class="{ disabled: isLoading }"
-        @click="postData">
+        @click="postInput">
         登录
       </div>
     </div>
@@ -26,8 +26,9 @@
 </template>
 
 <script>
-import { ipcRenderer } from 'electron'
-import { 
+import { ipcRenderer, remote } from 'electron'
+import { createCollection } from '../../db'
+import {
   authenticate,
   getUserInfo,
   getFriendList,
@@ -35,7 +36,7 @@ import {
   pullNote,
   pullTags
 } from '../service'
-import LocalDAO from '../../db/api'
+import * as LocalService from '../service/local'
 import { saveAppConf } from '../tools/appConf'
 import { mapActions } from 'vuex'
 import pullData from '@/utils/mixins/pullData'
@@ -55,13 +56,18 @@ export default {
   },
 
   created () {
-    LocalDAO.user.getAll().then(res => {
-      console.log('user-resp', res)
-    })
+    const dbPath = remote.app.appConf.dbPath
+    createCollection('user', dbPath)
 
-    ipcRenderer.on('db-loaded', (event, arg) => {
-      this.handleDBLoaded()
+    LocalService.getAllLocalUser().then(res => {
+      console.log('getAllLocalUser', res)
     })
+    // ipcRenderer.on('db-loaded', (event, arg) => {
+    //   this.handleDBLoaded()
+    // })
+    // ipcRenderer.on('db-loaded', (event, arg) => {
+    //   this.handleDBLoaded()
+    // })
   },
 
   methods: {
@@ -70,8 +76,9 @@ export default {
       'SET_FILES_FROM_LOCAL'
     ]),
 
-    async postData () {
-      this.goHome()
+    async postInput () {
+      this.handleFetch()
+      return
       if (this.isLoading) return
       this.isLoading = true
       const { username, password } = this
@@ -89,25 +96,32 @@ export default {
         this.SET_TOKEN(id_token)
         let userResp = await this.pullUserInfo(id_token, username, password)
         if (!userResp.userData) return
-        userResp.userData.is_last_login = true
-        let userSaved = await LocalDAO.user.update(userResp.userData)
+        // userResp.userData.is_last_login = true
+        let userSaved = await LocalService.updateLocalUser(userResp.userData)
         saveAppConf(this.$remote.app.getAppPath('appData'), {
           user: userSaved._id
-        })  
-        console.log('userSaved', userSaved)
-        ipcRenderer.send('loadDB', {
-          path: `../database/${userSaved._id}`
         })
+        console.log('userSaved', userSaved)
         console.log('userResp', userResp)
+        this.connectDB(userSaved._id)
+        this.isLoading = false
       } else {
         this.isLoading = false
       }
     },
 
-    async handleDBLoaded () {
+    connectDB (userId) {
+      const dbPath = remote.app.appConf.dbPath
+      createCollection('folder', dbPath + '/' + userId)
+      createCollection('note', dbPath + '/' + userId)
+      createCollection('doc', dbPath + '/' + userId)
+      this.handleFetch()
+    },
+
+    async handleFetch () {
       console.log('handleDBLoaded')
-      let localFolders = await LocalDAO.folder.getAll()
-      console.log('localFolders', localFolders)
+      // let localFolders = await LocalDAO.folder.getAll()
+      // console.log('localFolders', localFolders)
       // await this.pushImgs()
       // await this.SET_FILES_FROM_LOCAL()
       // await this.pushData()
@@ -117,6 +131,7 @@ export default {
     },
 
     handleDataFinished () {
+      ipcRenderer.send('login-ready')
       this.goHome()
     },
 

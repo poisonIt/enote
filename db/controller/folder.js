@@ -2,6 +2,7 @@
 import { getValid } from '../tools'
 import folderModel from '../models/folder'
 import { LinvoDB } from '../index'
+import noteCtr from './note'
 
 let Folder = {}
 
@@ -19,6 +20,9 @@ function createCollection (path) {
     pid: {
       type: String,
       default: '0'
+    },
+    remote_pid: {
+      type: String
     },
     title: {
       type: String,
@@ -50,7 +54,7 @@ function saveAll (req) {
   const { data } = req
 
   return new Promise((resolve, reject) => {
-    Folder.save(data).exec((err, folders) => {
+    Folder.save(data, (err, folders) => {
       resolve(folders)
     })
   })
@@ -74,7 +78,7 @@ function add (req) {
 // remove
 function removeAll () {
   return new Promise((resolve, reject) => {
-    Folder.find({}).exec((err, folders) => {
+    Folder.find({}, (err, folders) => {
       folders.forEach(folder => {
         folder.remove()
       })
@@ -87,7 +91,7 @@ function removeById (req) {
   const { id } = req
 
   return new Promise((resolve, reject) => {
-    Folder.findOne({ _id: id }).exec((err, folder) => {
+    Folder.findOne({ _id: id }, (err, folder) => {
       folder.remove()
       resolve()
     })
@@ -98,19 +102,59 @@ function removeById (req) {
 function update (req) {
   const { id } = req
 
+  if (!req.hasOwnProperty('need_push')) {
+    req.need_push = true
+  }
+
   return new Promise((resolve, reject) => {
     Folder.findOne({ _id: id })
     .exec((err, folder) => {
+      let old_remote_id = folder.remote_id
+      console.log('update-000-000', req, folder, old_remote_id)
+      
       Folder.update(
         { _id: id },
         { $set: req},
         { multi: true },
-        (err, newFolder) => {
+        (err, num, newFolder) => {
           console.log('update-folder-111', newFolder)
-          resolve(newFolder)
+          if (newFolder.remote_id !== old_remote_id) {
+            console.log('update-folder-222', newFolder)
+            updateByQuery({
+              query: { pid: newFolder._id },
+              data: { remote_pid: newFolder.remote_id }
+            }).then(() => {
+              noteCtr.updateByQuery({
+                query: { pid: newFolder._id },
+                data: { remote_pid: newFolder.remote_id }
+              }).then(() => {
+                resolve(newFolder)
+              })
+            })
+          } else {
+            resolve(newFolder)
+          }
         }
       )
     })
+  })
+}
+
+function updateByQuery (req) {
+  const { query, data } = req
+  data.need_push = true
+  console.log('updateByQuery', query ,data)
+
+  return new Promise((resolve, reject) => {
+    Folder.update(
+      query,
+      { $set: data },
+      { multi: true },
+      (err, num, newFolder) => {
+        console.log('update-folder-by-query-111', newFolder)
+        resolve(newFolder)
+      }
+    )
   })
 }
 
@@ -118,28 +162,48 @@ function update (req) {
 function getAll () {
   console.log('getAll-folder')
   return new Promise((resolve, reject) => {
-    Folder.find({}).exec((err, folders) => {
+    Folder.find({ trash: 'NORMAL' }, (err, folders) => {
+      resolve(folders)
+    })
+  })
+}
+
+function getAllByQuery (req) {
+  const { query } = req
+  console.log('getAllByQuery', req, query)
+
+  return new Promise((resolve, reject) => {
+    Folder.find(query, (err, folders) => {
       resolve(folders)
     })
   })
 }
 
 function getAllByPid (req) {
-  const { pid } = req
+  const { pid, remote_pid } = req
   console.log('getAllByPid', pid)
 
-  return new Promise((resolve, reject) => {
-    Folder.find({ pid: pid }).exec((err, folders) => {
-      resolve(folders)
+  if (remote_pid) {
+    return new Promise((resolve, reject) => {
+      Folder.find({ remote_pid: remote_pid }, (err, folders) => {
+        resolve(folders)
+      })
     })
-  })
+  } else {
+    return new Promise((resolve, reject) => {
+      Folder.find({ pid: pid }, (err, folders) => {
+        resolve(folders)
+      })
+    })
+  }
+
 }
 
 function getById (req) {
   const { id } = req
 
   return new Promise((resolve, reject) => {
-    Folder.findOne({ _id: id }).exec((err, folder) => {
+    Folder.findOne({ _id: id }, (err, folder) => {
       resolve(folder)
     })
   })
@@ -147,7 +211,7 @@ function getById (req) {
 
 function getTrash () {
   return new Promise((resolve, reject) => {
-    Folder.find({ trash: 'TRASH' }).exec((err, folders) => {
+    Folder.find({ trash: 'TRASH' }, (err, folders) => {
       resolve(folders)
     })
   })
@@ -161,6 +225,7 @@ export default {
   removeById,
   update,
   getAll,
+  getAllByQuery,
   getAllByPid,
   getById,
   getTrash

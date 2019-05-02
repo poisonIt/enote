@@ -1,5 +1,6 @@
 self.addEventListener('message', (e) => {
   var command = e.data[0]
+  console.log('message', command)
   if (command === 'calcLocalData') {
     let folderFiles = e.data[1]
 
@@ -22,6 +23,8 @@ self.addEventListener('message', (e) => {
       return {
         id: item._id,
         pid: item.pid,
+        remote_id: item.remote_id,
+        remote_pid: item.remote_pid,
         name: item.title,
         data: item,
         children: []
@@ -35,20 +38,18 @@ self.addEventListener('message', (e) => {
     // let folderTree = new TreeStore([latestNav, rootFolder, tagNav, binNav])
 
     self.postMessage([command, rootFolder])
-  } else if (command === 'fetchFileList') {
-    let type = e.data[1]
-    console.log('type', type)
-    self.postMessage([command, 'fetchFileList'])
   } else {
     self.postMessage('Unknown command')
   }
 }, false)
 
 function getChildren (cur, arr) {
-  cur.children = arr.filter(item => item.pid === cur.id).map(item => {
+  cur.children = arr.filter(item => (item.remote_pid === cur.remote_id || item.pid === cur.remote_id || item.pid === cur.id)).map(item => {
     return {
       id: item._id,
       pid: item.pid,
+      remote_id: item.remote_id,
+      remote_pid: item.remote_pid,
       name: item.title,
       data: item,
       children: []

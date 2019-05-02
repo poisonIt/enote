@@ -133,7 +133,7 @@ export default {
       console.log('url', url)
       // window.open('https://note.youdao.com/oauth/authorize2?client_id=838948a8e2be4d35f253cb82f2687d15&response_type=code&redirect_uri=https://iapp.htffund.com')
       // return
-      ipcRenderer.send('createWindow', {
+      ipcRenderer.send('create-youdao-window', {
         name: 'youdao',
         userCode: this.userInfo,
         url: url

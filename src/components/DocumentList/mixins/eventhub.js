@@ -15,12 +15,18 @@ export default {
     },
 
     handleFileUpdate (params) {
-      let file = _.find(this.list, { _id: params.id })
-      let idx = this.list.indexOf(file)
-      if (params.name) {
-        file.title = params.name
+      if (params.id === this.currentFile._id) {
+        this.UPDATE_CURRENT_FILE({
+          title: params.name
+        })
+      } else {
+        let file = _.find(this.list, { _id: params.id })
+        let idx = this.list.indexOf(file)
+        if (params.name) {
+          file.title = params.name
+        }
+        this.$set(this.list, idx, file)
       }
-      this.$set(this.list, idx, file)
     },
 
     clickFolderHub (id) {

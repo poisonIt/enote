@@ -100,11 +100,14 @@ export default {
       this.handleResize()
     },
 
-    currentFile (val) {
-      if (val) {
-        console.log('currentFile', val)
-        this.titleValue = val.title
-      }
+    currentFile: {
+      handler: function (val) {
+        if (val) {
+          console.log('currentFile', val)
+          this.titleValue = val.title
+        }
+      },
+      deep: true
     }
   },
 

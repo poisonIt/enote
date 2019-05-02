@@ -6,6 +6,7 @@
 </template>
 
 <script>
+import { ipcRenderer } from 'electron'
 import { mapGetters, mapActions } from 'vuex'
 import mixins from '../mixins'
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic'
@@ -51,32 +52,57 @@ export default {
           // 切换选中笔记，保存上一个笔记修改内容
           if (this.editor.getData() !== this.cachedDoc.content) {
             console.log('0000000')
-            updateLocalDoc({
-              id: this.cachedDoc._id,
-              content: this.editor.getData()
+            ipcRenderer.send('fetch-local-data', {
+              tasks: ['updateLocalDoc'],
+              params: [{
+                id: this.cachedDoc._id,
+                content: this.editor.getData()
+              }],
+              from: 'Editor'
             })
+            // updateLocalDoc({
+            //   id: this.cachedDoc._id,
+            //   content: this.editor.getData()
+            // })
           }
         }
-        // ipcRenderer.send('fetch-local-data', {
-        //   name: ['getLocalDoc'],
-        //   params: [{ note_id: val._id }],
-        //   from: 'DocumentList'
-        // })
-        getLocalDoc({ note_id: val._id }).then(res => {
-          console.log('getLocalDoc-res', res)
-          this.currentDoc = res
-          this.cachedDoc = {
-            _id: res._id,
-            content: res.content
-          }
-          this.initEditor(res.content)
+        ipcRenderer.send('fetch-local-data', {
+          tasks: ['getLocalDoc'],
+          params: [{ note_id: val._id }],
+          from: 'Editor'
         })
+        // getLocalDoc({ note_id: val._id }).then(res => {
+        //   console.log('getLocalDoc-res', res)
+        //   this.currentDoc = res
+        //   this.cachedDoc = {
+        //     _id: res._id,
+        //     content: res.content
+        //   }
+        //   this.initEditor(res.content)
+        // })
       }
     },
 
     viewType (val) {
       this.handleResize()
     }
+  },
+
+  created () {
+    ipcRenderer.on('fetch-local-data-response', (event, arg) => {
+      if (arg.from === 'Editor') {
+        console.log('fetch-local-data-response', event, arg)
+        if (arg.tasks.indexOf('getLocalDoc') > -1) {
+          let res = arg.res[arg.tasks.indexOf('getLocalDoc')]
+          this.currentDoc = res
+          this.cachedDoc = {
+            _id: res._id,
+            content: res.content
+          }
+          this.initEditor(res.content)
+        }
+      }
+    })
   },
 
   methods: {

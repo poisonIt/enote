@@ -1,17 +1,23 @@
 <template>
   <div id="navbar" ref="navbar">
-    <Tree
-      ref="tree"
-      :model="folderTree"
-      default-tree-node-name="新建文件夹"
-      v-bind:default-expanded="true"
-      :flat-ids="['0', 'latest', 'share', 'tag', 'bin']"
-      @contextmenu="handleContextmenu"
-      @add-node="handleAddNode"
-      @set-current="handleSetCurrentFolder"
-      @change-name-blur="handleChangeNodeName"
-      @drop="handleNodeDrop">
-    </Tree>
+    <!-- <div class="nav-item nav-latest" @click="handleClickNavItem('latest')">最新文档</div>
+    <div class="nav-item nav-share" @click="handleClickNavItem('share')">与我分享</div> -->
+    <!-- <div class="folder-tree"> -->
+      <Tree
+        ref="tree"
+        :model="folderTree"
+        default-tree-node-name="新建文件夹"
+        v-bind:default-expanded="true"
+        :flat-ids="['0', 'latest', 'share', 'tag', 'bin']"
+        @contextmenu="handleContextmenu"
+        @add-node="handleAddNode"
+        @set-current="handleSetCurrentFolder"
+        @change-name-blur="handleChangeNodeName"
+        @drop="handleNodeDrop">
+      </Tree>
+    <!-- </div> -->
+    <!-- <div class="nav-item nav-tag" @click="handleClickNavItem('tag')">标签</div>
+    <div class="nav-item nav-bin" @click="handleClickNavItem('bin')">回收站</div> -->
     <div class="nav-mini" v-show="viewType === 'unexpanded'">
       <div class="icon icon-latest"
         :class="{
@@ -202,36 +208,6 @@ export default {
   watch: {
     isDBReady (val) {
       console.log('watch-isDBReady', val)
-      let _self = this
-      if (val) {
-        // ipcRenderer.send('fetch-local-data', {
-        //   name: ['getAllLocalFolder'],
-        //   from: 'NavBar'
-        // })
-        // ipcRenderer.on('fetch-local-data-response', (event, arg) => {
-        //   if (arg.from === 'NavBar') {
-        //     this.$worker.postMessage(['calcLocalData', arg.res[0]])
-        //   }
-        // })
-        // // getAllLocalFolder().then(res => {
-        //   // console.log('res', res)
-        //   // this.$worker.postMessage(['calcLocalData', res])
-        // // })
-        // this.$worker.onmessage = function (e) {
-        //   console.log('e', e)
-        //   if (e.data !== 'Unknown command') {
-        //     if (e.data[0] === 'calcLocalData') {
-        //       console.log(e.data)
-        //       let newRootFolder = e.data[1]
-        //       _self.folderTree = new TreeStore([latestNav, newRootFolder, tagNav, binNav])
-        //       _self.$nextTick(() => {
-        //         _self.$refs.tree.$children[1].click()
-        //         _self.SET_IS_HOME_READY(true)
-        //       })
-        //     }
-        //   }
-        // }
-      }
     },
 
     allTags (val) {
@@ -247,49 +223,56 @@ export default {
 
   mounted () {
     const _self = this
-    ipcRenderer.send('fetch-local-data', {
-      name: ['getAllLocalFolder'],
-      from: 'NavBar'
-    })
-    ipcRenderer.on('fetch-local-data-response', (event, arg) => {
-      if (arg.from === 'NavBar') {
-        this.$worker.postMessage(['calcLocalData', arg.res[0]])
-      }
-    })
-    // getAllLocalFolder().then(res => {
-      // console.log('res', res)
-      // this.$worker.postMessage(['calcLocalData', res])
-    // })
+
+    this.$root.$navTree = this.$refs.tree
+
     this.$worker.onmessage = function (e) {
-      console.log('e', e)
       if (e.data !== 'Unknown command') {
         if (e.data[0] === 'calcLocalData') {
-          console.log(e.data)
           let newRootFolder = e.data[1]
+          // _self.folderTree = new TreeStore([newRootFolder])
           _self.folderTree = new TreeStore([latestNav, newRootFolder, tagNav, binNav])
           _self.$nextTick(() => {
-            _self.$refs.tree.$children[1].click()
+            _self.$refs.tree.$children[0].click()
             _self.SET_IS_HOME_READY(true)
+            ipcRenderer.send('show-home-window')
           })
         }
       }
     }
-    // const curNode = this.$refs.tree.store.currentNode
-    // console.log('curNode', curNode)
-    // if (curNode) {
-    //   this.handleItemClick(curNode)
-    // }
-    // this.SET_TAGS_FROM_LOCAL()
-    // LocalDAO.tag.getAll().then(res => {
-    //   this.updateTags(res)
+
+    ipcRenderer.on('fetch-local-data-response', (event, arg) => {
+      if (arg.from === 'NavBar') {
+        console.log('fetch-local-data-response', arg)
+        if (arg.tasks.indexOf('getAllLocalFolder') > -1) {
+          let res = arg.res[arg.tasks.indexOf('getAllLocalFolder')]
+          this.$worker.postMessage(['calcLocalData', res])
+        }
+        if (arg.tasks.indexOf('addLocalFolder') > -1) {
+          let res = arg.res[arg.tasks.indexOf('addLocalFolder')]
+          this.popupedNode.addChild({
+            id: arg.res[0]._id,
+            type: 'folder'
+          }, true)
+        }
+        if (arg.tasks.indexOf('addLocalNote') > -1) {
+          let res = arg.res[arg.tasks.indexOf('addLocalNote')]
+          this.$hub.dispatchHub('addFile', this, res)
+        }
+      }
+    })
+
+    ipcRenderer.send('home-window-ready')
+
+    // ipcRenderer.send('fetch-local-data', {
+    //   tasks: ['getAllLocalFolder'],
+    //   from: 'NavBar'
     // })
   },
 
   methods: {
     ...mapActions([
       'ADD_FILE',
-      'DELETE_FILE',
-      'EDIT_FILE',
       'APPEND_FILE',
       'MOVE_FILE',
       'DELETE_TAG',
@@ -306,8 +289,12 @@ export default {
       'SET_IS_HOME_READY'
     ]),
 
+    // handleClickNavItem (navName) {
+    //   this.setCurrentFolder(null)
+    // },
+
     handleSetCurrentFolder (node) {
-      console.log('handleSetCurrentFolder', node, node.data.type)
+      console.log('handleSetCurrentFolder', node, node.data.type, node.getDepth())
       this.SET_CURRENT_NAV(node.data)
     },
 
@@ -340,14 +327,15 @@ export default {
     },
 
     handleNewNote (isTemp) {
-      console.log('handleNewNote', this.popupedNode)
       let nodeData = this.popupedNode.model.data
-      addLocalNote({
-        title: '无标题笔记',
-        pid: nodeData.id || nodeData._id || '0',
-        isTemp: isTemp
-      }).then(res => {
-        this.$hub.dispatchHub('addFile', this, res)
+      ipcRenderer.send('fetch-local-data', {
+        tasks: ['addLocalNote'],
+        params: [{
+          title: '无标题笔记',
+          pid: nodeData.id || nodeData._id || '0',
+          isTemp: isTemp
+        }],
+        from: 'NavBar'
       })
     },
 
@@ -357,13 +345,10 @@ export default {
 
     handleNewFolder (isCurrent) {
       let nodeData = this.popupedNode.model.data
-      addLocalFolder({
-        pid: nodeData.id || nodeData._id || '0'
-      }).then(res => {
-        this.popupedNode.addChild({
-          id: res._id,
-          type: 'folder'
-        }, true)
+      ipcRenderer.send('fetch-local-data', {
+        tasks: ['addLocalFolder'],
+        params: [{ pid: nodeData.id || nodeData._id || '0' }],
+        from: 'NavBar'
       })
     },
 
@@ -385,9 +370,13 @@ export default {
 
     handleChangeNodeName (node) {
       console.log('handleChangeNodeName', node)
-      updateLocalFolder({
-        id: node.id,
-        title: node.name
+      ipcRenderer.send('fetch-local-data', {
+        tasks: ['updateLocalFolder'],
+        params: [{
+          id: node.data._id || node.data.id || node.id,
+          title: node.name
+        }],
+        from: 'NavBar'
       })
     },
 
@@ -491,98 +480,6 @@ export default {
           }
         })
       )
-    },
-
-    handleDragStart (node) {
-      this.dragNode = node
-    },
-
-    handleDragEnd (e) {
-      if (this.dragOverNode == null) return
-      if (this.dragNode === this.dragOverNode) {
-        this.dragOverNode.instance.toggleHightlight(false)
-        this.dragOverNode.instance.toggleHightlightBottom(false)
-        this.dragNode = null
-        this.dragOverNode = null
-        return
-      }
-
-      const nodeElRect = this.dragOverNode.instance.$el.getBoundingClientRect()
-
-      let eventArea = {
-        x: e.clientX,
-        y: e.clientY
-      }
-
-      if (eventArea.y < nodeElRect.top + 40 * 0.2) {
-        console.log('top')
-        this.MOVE_FILE({
-          fileId: this.dragNode.data.id,
-          broId: this.dragOverNode.data.id,
-          type: 'before'
-        })
-      } else if (eventArea.y > nodeElRect.top + 40 * 0.8) {
-        console.log('bottom')
-        this.MOVE_FILE({
-          fileId: this.dragNode.data.id,
-          broId: this.dragOverNode.data.id,
-          type: 'after'
-        })
-      } else {
-        if (this.dragNode.parent !== this.dragOverNode) {
-          this.APPEND_FILE({
-            fileId: this.dragNode.data.id,
-            targetId: this.dragOverNode.data.id
-          })
-        }
-      }
-
-      this.dragOverNode.instance.toggleHightlight(false)
-      this.dragOverNode.instance.toggleHightlightBottom(false)
-      this.dragNode = null
-      this.dragOverNode = null
-    },
-
-    handleDragOver (node, e) {
-      if (node === this.dragNode) {
-        this.dragOverNode && this.dragOverNode.instance.toggleHightlight(false)
-        this.dragOverNode && this.dragOverNode.instance.toggleHightlightBottom(false)
-        this.dragOverNode = null
-        return
-      }
-      if (node.data.type !== 'folder') return
-      this.dragOverNode = node
-      const nodeElRect = node.instance.$el.getBoundingClientRect()
-      
-      let eventArea = {
-        x: e.clientX,
-        y: e.clientY
-      }
-
-      if (eventArea.y < nodeElRect.top + 40 * 0.2) {
-        if (node.level === 1) return
-        node.instance.toggleHightlightTop(true)
-      } else if (eventArea.y > nodeElRect.top + 40 * 0.8) {
-        if (node.expanded && node.childNodes.length > 0) return
-        node.instance.toggleHightlightBottom(true)
-      } else {
-        node.instance.toggleHightlight(true)
-      }
-    },
-
-    handleRefreshed () {
-      // console.log('handleRefreshed')
-      // if (this.typingNode) {
-      //   for (let i in this.$refs.tree.store.nodeMap) {
-      //     let nodeTemp = this.$refs.tree.store.nodeMap[i]
-      //     if (nodeTemp.data.id === this.typingNode.data.id) {
-      //       console.log('handleNodeInputBlur-11111', nodeTemp)
-      //       this.handleItemClick(nodeTemp)
-      //       this.typingNode = null
-      //       return
-      //     }
-      //   }
-      // }
     }
   }
 }
@@ -592,166 +489,23 @@ export default {
 #navbar
   position relative
   flex 1
+  display flex
+  flex-direction column
   padding-bottom 30px
   overflow-y scroll
+
+.nav-item
+  height 40px
+  color #fff
+
+.folder-tree
+  flex 1
+  overflow-y scroll
+  position relative
 
 .child
   background-color #fff
 
-.nav-node
-  position relative
-  width 100%
-  height 40px
-  display flex
-  align-items center
-  -webkit-box-flex 1
-  &.unexpanded
-    height 60px
-  .title
-    font-size 14px
-    &.ellipsis
-      // padding-left 8px
-  .clear-tag
-    position absolute
-    display flex
-    align-items center
-    top 50%
-    right 18px
-    transform translateY(-50%)
-    text-align center
-    font-size 12px
-    color #DDAF59
-    & span:nth-of-type(1)
-      display block
-      transform scaleY(0.8)
-  .click-mask
-    position absolute
-    width 100%
-    height 100%
-    padding 0 40px
-  .dragover-mask
-    position absolute
-    top 0
-    left 0
-    width 100%
-    height 80%
-  .dragover-bottom-mask
-    width 100%
-    height 20%
-    position absolute
-    bottom 0
-    left 0
-  .icon
-    width 22px
-    height 22px
-    margin-right 10px
-  .node-input
-    width 98%
-    height 26px
-    padding-left 10px
-    border-radius 3px
-    border 1px solid #73a8d6
-    outline none
-    font-size 14px
-    .icon
-      width 16px
-      height 16px
-      display block
-      position absolute
-      top 12px
-      left 10px
-      display flex
-      justify-content center
-      align-items center
-      // transform translateY(-50%)
-      &::after
-        content ''
-        display block
-        width 0
-        height 0
-      &.icon-expand::after
-        width 0
-        height 0
-        border-top 4px solid transparent
-        border-left 6px solid #13ABC4
-        border-bottom 4px solid transparent
-      &.icon-expanded::after
-        transform rotate(90deg)
-
-.nav-mini
-  width 100%
-  display flex
-  flex-direction column
-  .icon
-    position relative
-    width 70px !important
-    height 60px
-    background-repeat  no-repeat
-    background-size 40%
-    background-position center
-    &.active
-      background-color #313336
-      &::after
-        content ''
-        display block
-        position absolute
-        right 0
-        top 0
-        width 2px
-        height 100%
-        background-color #DDAF59
-
-.icon
-  background-repeat  no-repeat
-  background-size 100%
-  background-position center
-.icon-latest
-  width 28px !important
-  background-image url(../../../assets/images/lanhu/documents@2x.png)
-  &.highlight
-    background-image url(../../../assets/images/lanhu/documents_highlight@2x.png)
-.icon-share
-  background-image url(../../../assets/images/lanhu/normal@2x.png)
-  &.highlight
-    background-image url(../../../assets/images/lanhu/normal_highlight@2x.png)
-.icon-folder_open
-  background-image url(../../../assets/images/lanhu/folder_open@2x.png)
-  &.highlight
-    background-image url(../../../assets/images/lanhu/folder_open_highlight@2x.png)
-.icon-folder_close
-  background-image url(../../../assets/images/lanhu/folder_close@2x.png)
-  &.highlight
-    background-image url(../../../assets/images/lanhu/folder_close_highlight@2x.png)
-.icon-tags
-  background-image url(../../../assets/images/lanhu/tag@2x.png)
-  &.highlight
-    background-image url(../../../assets/images/lanhu/tag_highlight@2x.png)
-.icon-recycle
-  background-image url(../../../assets/images/lanhu/recycle@2x.png)
-  &.highlight
-    background-image url(../../../assets/images/lanhu/recycle_highlight@2x.png)
-.icon-folder
-  display block
-  margin-right 6px
-  width 24px
-  height 24px
-  opacity 0.8
-  background-image url(../../../assets/images/folder-open-fill.png)
-  background-repeat no-repeat
-  background-size contain
-  background-position center
-
-// .tree-node.is-selected
-//   .icon-latest
-//     background-image url(../../../assets/images/lanhu/documents_highlight@2x.png)
-//   .icon-folder_open
-//     background-image url(../../../assets/images/lanhu/folder_open_highlight@2x.png)
-//   .icon-folder_close
-//     background-image url(../../../assets/images/lanhu/folder_close_highlight@2x.png)
-//   .icon-tags
-//     background-image url(../../../assets/images/lanhu/tag_highlight@2x.png)
-//   .icon-recycle
-//     background-image url(../../../assets/images/lanhu/recycle_highlight@2x.png)
 .push-mark
   position absolute
   top 10px

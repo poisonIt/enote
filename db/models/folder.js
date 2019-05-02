@@ -3,6 +3,7 @@ function folderModel (opts) {
     type: opts.type || 'folder',
     remote_id: opts.remote_id,
     pid: opts.pid || '0',
+    remote_pid: opts.remote_pid,
     title: opts.title || '新建文件夹',
     seq: opts.seq || 0,
     create_at: opts.create_at || new Date().valueOf(),

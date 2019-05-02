@@ -164,28 +164,14 @@ export default {
   },
 
   created () {
-    // LocalDAO.note.removeAll()
-    // LocalDAO.folder.removeAll()
+    ipcRenderer.on('fetch-user-data-response', (event, arg) => {
+      console.log('fetch-user-data-response-1111', arg)
+      if (arg.from === 'Home') {
+        this.SET_USER_INFO(arg.res)
+        this.SET_TOKEN(arg.res.id_token)
+      }
+    })
     this.handleDBLoaded()
-    
-    // ipcRenderer.on('db-loaded', (event) => {
-    //   console.log('db-loaded')
-    //   this.handleDBLoaded()
-    // })
-    // this.SET_FILES_FROM_LOCAL()
-    // getAppConf(this.$remote.app.getAppPath('appData')).then(appConf => {
-    //   ipcRenderer.send('loadDB', {
-    //     path: `../database/${appConf.user}`
-    //   })
-    //   getLocalUserById({
-    //     id: appConf.user
-    //   }).then(resp => {
-    //     console.log('getLocalUserById', resp)
-    //     this.fdList = resp.friend_list
-    //     this.SET_USER_INFO(resp)
-    //     this.SET_TOKEN(resp.id_token)
-    //   })
-    // })
   },
 
   mounted () {
@@ -292,9 +278,9 @@ export default {
       saveAppConf(this.$remote.app.getAppPath('appData'), {
         user: ''
       })
-      ipcRenderer.send('changeWindow', {
-        name: 'login'
-      })
+      // ipcRenderer.send('changeWindow', {
+      //   name: 'login'
+      // })
     },
 
     handleDBLoaded () {
@@ -302,6 +288,9 @@ export default {
       createCollection('folder', dbPath + '/' + user)
       createCollection('note', dbPath + '/' + user)
       createCollection('doc', dbPath + '/' + user)
+      ipcRenderer.send('fetch-user-data', {
+        from: 'Home'
+      })
       this.SET_DB_READY(true)
     }
   }

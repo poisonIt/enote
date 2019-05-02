@@ -19,7 +19,10 @@
       <div class="button round"
         :class="{ disabled: isLoading }"
         @click="postInput">
-        登录
+        <div class="login-loading" v-if="isLoading">
+          <Loading :type="1" fill="#fff" style="transform: scale(.8) translate(-10px, -15px)"></Loading>
+        </div>
+        <span v-if="!isLoading">登录</span>
       </div>
     </div>
   </div>
@@ -41,11 +44,16 @@ import { saveAppConf } from '../tools/appConf'
 import { mapActions } from 'vuex'
 import pullData from '@/utils/mixins/pullData'
 import pushData from '@/utils/mixins/pushData'
+import Loading from '@/components/Loading'
 
 export default {
   name: 'Login',
 
   mixins: [ pullData, pushData ],
+
+  components: {
+    Loading
+  },
 
   data () {
     return {
@@ -62,12 +70,6 @@ export default {
     LocalService.getAllLocalUser().then(res => {
       console.log('getAllLocalUser', res)
     })
-    // ipcRenderer.on('db-loaded', (event, arg) => {
-    //   this.handleDBLoaded()
-    // })
-    // ipcRenderer.on('db-loaded', (event, arg) => {
-    //   this.handleDBLoaded()
-    // })
   },
 
   methods: {
@@ -77,8 +79,6 @@ export default {
     ]),
 
     async postInput () {
-      this.handleFetch()
-      return
       if (this.isLoading) return
       this.isLoading = true
       const { username, password } = this
@@ -104,7 +104,6 @@ export default {
         console.log('userSaved', userSaved)
         console.log('userResp', userResp)
         this.connectDB(userSaved._id)
-        this.isLoading = false
       } else {
         this.isLoading = false
       }
@@ -119,20 +118,20 @@ export default {
     },
 
     async handleFetch () {
-      console.log('handleDBLoaded')
+      console.log('handleFetch')
       // let localFolders = await LocalDAO.folder.getAll()
       // console.log('localFolders', localFolders)
       // await this.pushImgs()
       // await this.SET_FILES_FROM_LOCAL()
       // await this.pushData()
-      // let pullResp = await this.pullData()
-      // console.log('pullResp', pullResp)
+      let pullResp = await this.pullData()
+      console.log('pullResp', pullResp)
       this.handleDataFinished()
     },
 
     handleDataFinished () {
       ipcRenderer.send('login-ready')
-      this.goHome()
+      ipcRenderer.send('create-home-window')
     },
 
     async pullUserInfo (id_token, username, password) {
@@ -165,12 +164,6 @@ export default {
         userData: userDataTransed,
         // returnMsg: friendResp.data.returnMsg
       }
-    },
-
-    goHome () {
-      ipcRenderer.send('changeWindow', {
-        name: 'home'
-      })
     },
 
     transUserData (obj) {
@@ -271,10 +264,19 @@ input
     border 1px solid #DDAF59
 
 .button
+  position relative
   background-color #DDAF59
   color #fff
   font-size 14px
   margin-top 38px
   &.disabled
     background-color #a2a2a2
+
+.login-loading
+  width 20px
+  height 20px
+  position absolute
+  top 50%
+  left 50%
+  transform translate(-50%, -50%)
 </style>

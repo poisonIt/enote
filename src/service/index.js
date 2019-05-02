@@ -28,7 +28,7 @@ export function pullTags () {
 }
 
 export function pushNotebook (params) {
-  console.log('pushNotebook', params)
+  console.log('pushNotebook', params[0].parentId)
   return axios.post('/noteBook/pushNotebook', params)
 }
 

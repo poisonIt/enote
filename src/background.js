@@ -13,8 +13,6 @@ import {
   createProtocol,
   installVueDevtools
 } from 'vue-cli-plugin-electron-builder/lib'
-// import { loadDB } from '../db'
-import { readFile, writeFile } from './utils/file'
 import { getAppConf } from './tools/appConf'
 
 const isDevelopment = process.env.NODE_ENV !== 'production'
@@ -163,6 +161,8 @@ let template = [{
 protocol.registerStandardSchemes(['app'], { secure: true })
 
 function createLoginWindow () {
+  if (win) win.close()
+
   loginWin = new BrowserWindow({
     id: 'login',
     width: isDevelopment ? 1024 : 442,
@@ -218,6 +218,7 @@ function createHomeWindow () {
     width: isDevelopment ? 1366 : 960,
     height: 640,
     backgroundColor: '#fcfbf7',
+    show: false,
     // frame: false,
     // titleBarStyle: 'hidden',
     icon: path.join(__static, 'icon.png'),
@@ -260,25 +261,38 @@ function createYoudaoAsyncWindow (event, url) {
   // event.sender.send('youdao-reply', {
   //   url: url,
   //   winUrl: youdaoWin.getURL()
-  // })
+  // }
 
   youdaoWin.on('closed', () => {
     youdaoWin = null
   })
 }
 
-ipcMain.on('changeWindow', (event, arg) => {
-  if (arg.name === 'home') {
-    loginWin && loginWin.close()
-    createHomeWindow()
-  }
-  if (arg.name === 'login') {
-    win && win.close()
-    createLoginWindow()
-  }
+// ipcMain.on('changeWindow', (event, arg) => {
+//   if (arg.name === 'home') {
+//     loginWin && loginWin.close()
+//     createHomeWindow()
+//   }
+//   if (arg.name === 'login') {
+//     win && win.close()
+//     createLoginWindow()
+//   }
+// })
+
+ipcMain.on('create-home-window', (event, arg) => {
+  createHomeWindow()
 })
 
-ipcMain.on('createWindow', (event, arg) => {
+ipcMain.on('home-window-ready', (event) => {
+  backWin.webContents.send('home-window-ready')
+})
+
+ipcMain.on('show-home-window', (event, arg) => {
+  win && win.show()
+  // loginWin && loginWin.close()
+})
+
+ipcMain.on('create-youdao-window', (event, arg) => {
   if (arg.name === 'youdao') {
     createYoudaoAsyncWindow(event, arg.url)
   }
@@ -297,17 +311,14 @@ ipcMain.on('login-ready', (event) => {
     app.appConf.user = appConf.user
     backWin.webContents.send('login-ready')
   })
-  // event.sender.send('db-loaded')
 })
 
-ipcMain.on('local-service-response', (event, arg) => {
-  if (arg.to === 'login') {
-    loginWin.webContents.send('local-service-response', arg.data)
-  }
+ipcMain.on('fetch-user-data', (event, arg) => {
+  backWin.webContents.send('fetch-user-data', arg)
 })
 
-ipcMain.on('db-loaded', (event) => {
-  win.webContents.send('db-loaded')
+ipcMain.on('fetch-user-data-response', (event, arg) => {
+  win.webContents.send('fetch-user-data-response', arg)
 })
 
 ipcMain.on('fetch-local-data', (event, arg) => {
@@ -347,17 +358,6 @@ app.on('ready', async () => {
   const menu = Menu.buildFromTemplate(template)
   Menu.setApplicationMenu(menu)
 
-  // app.database = {
-  //   userDB: loadLinvoDB(path.resolve(app.getAppPath('userData'), '../database')),
-  //   folderDB: {},
-  //   noteDB: {},
-  //   docDB: {},
-  //   tagDB: {},
-  //   picDB: {}
-  // }
-
-  // createCollection('user', app.database.userDB)
-
   let dataPath = app.getAppPath('userData')
   getAppConf(app.getAppPath('userData')).then(appConf => {
     app.appConf = {
@@ -365,21 +365,6 @@ app.on('ready', async () => {
       dbPath: path.resolve(dataPath, `../database`),
     }
     createBackgroundWindow()
-    // if (appConf.user) {
-    //   app.database.userDB.findOne({ _id: appConf.user }, (err, user) => {
-    //     if (err) {
-    //       createLoginWindow()
-    //     } else {
-    //       if (user) {
-    //         createHomeWindow()
-    //       } else {
-    //         createLoginWindow()
-    //       }
-    //     }
-    //   })
-    // } else {
-    //   createLoginWindow()
-    // }
   })
 })
 

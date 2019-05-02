@@ -1,5 +1,6 @@
 import { getValid } from '../tools'
 import noteModel from '../models/note'
+import folderCtr from './folder'
 import docCtr from './doc'
 import docTemp from '../docTemplate'
 import { LinvoDB } from '../index'
@@ -21,6 +22,9 @@ function createCollection (path) {
     pid: {
       type: String,
       default: '0'
+    },
+    remote_pid: {
+      type: String
     },
     title: {
       type: String,
@@ -54,16 +58,23 @@ function saveAll (req) {
   const { data } = req
 
   return new Promise((resolve, reject) => {
-    Note.save(data).exec((err, notes) => {
+    Note.save(data, (err, notes) => {
       resolve(notes)
     })
   })
 }
 
 // add
-function add (req) {
-  // console.log('add-note', req)
+async function add (req) {
+  console.log('add-note', req)
   let data = noteModel(req)
+
+  if (req.hasOwnProperty('pid')) {
+    let folder = await folderCtr.getById({ id: req.pid })
+    data.remote_pid = folder ? folder.remote_id : '0'
+    console.log('add-note-0000', folder, data)
+  }
+  console.log('add-note-1111', data)
 
   return new Promise((resolve, reject) => {
     Note.insert(data, (err, note) => {
@@ -80,7 +91,7 @@ function add (req) {
 // remove
 function removeAll () {
   return new Promise((resolve, reject) => {
-    Note.find({}).exec((err, notes) => {
+    Note.find({}, (err, notes) => {
       notes.forEach(note => {
         note.remove()
       })
@@ -93,7 +104,7 @@ function removeById (req) {
   const { id } = req
 
   return new Promise((resolve, reject) => {
-    Note.findOne({ _id: id }).exec((err, note) => {
+    Note.findOne({ _id: id }, (err, note) => {
       if (note) {
         console.log('removeById', id, note)
         note.remove()
@@ -108,8 +119,14 @@ function removeById (req) {
 }
 
 // update
-function update (req) {
+async function update (req) {
   const { id } = req
+  req.need_push = true
+
+  if (req.hasOwnProperty('pid')) {
+    let folder = await folderCtr.getById({ id: req.pid })
+    req.remote_pid = folder ? folder.remote_id : '0'
+  }
 
   return new Promise((resolve, reject) => {
     Note.findOne({ _id: id })
@@ -118,7 +135,7 @@ function update (req) {
         { _id: id },
         { $set: req },
         { multi: true },
-        (err, newNote) => {
+        (err, num, newNote) => {
           console.log('update-folder-111', newNote)
           resolve(newNote)
         }
@@ -127,30 +144,92 @@ function update (req) {
   })
 }
 
+function updateByQuery (req) {
+  const { query, data } = req
+  data.need_push = true
+  console.log('update-note-query', query, data)
+
+  return new Promise((resolve, reject) => {
+    Note.update(
+      query,
+      { $set: data },
+      { multi: true },
+      (err, num, newNote) => {
+        console.log('update-note-by-query-111', newNote)
+        resolve(newNote)
+      }
+    )
+  })
+}
+
+function trashAll (req) {
+  const { trash } = req
+  console.log('trashAll', req)
+
+  return new Promise((resolve, reject) => {
+    if (['NORMAL', 'TRASH', 'DELETED'].indexOf(trash) === -1) {
+      reject(`trash value ${trash} illegal`)
+    }
+    Note.update(
+      {},
+      { $set: {
+        trash: trash,
+        need_push: true
+      }},
+      { multi: true },
+      (err, num, notes) => {
+        if (err) reject(err)
+        console.log('trashAll-res', num, notes)
+        resolve(notes)
+      }
+    )
+  })
+}
+
 // get
 function getAll () {
   return new Promise((resolve, reject) => {
-    Note.find({}).exec((err, notes) => {
+    Note.find({ trash: 'NORMAL' }, (err, notes) => {
+      resolve(notes)
+    })
+  })
+}
+
+function getAllByQuery (req) {
+  const { query } = req
+  console.log('getAllByQuery', req, query)
+
+  return new Promise((resolve, reject) => {
+    Note.find(query, (err, notes) => {
       resolve(notes)
     })
   })
 }
 
 function getAllByPid (req) {
-  const { pid } = req
-  console.log('getAllByPid', pid, req)
-  return new Promise((resolve, reject) => {
-    Note.find({ pid: pid }).exec((err, notes) => {
-      resolve(notes)
+  const { pid, remote_pid } = req
+  console.log('getAllByPid', pid, remote_pid, req)
+
+  if (remote_pid) {
+    return new Promise((resolve, reject) => {
+      Note.find({ remote_pid: remote_pid }, (err, notes) => {
+        resolve(notes)
+      })
     })
-  })
+  } else {
+    return new Promise((resolve, reject) => {
+      Note.find({ pid: pid }, (err, notes) => {
+        resolve(notes)
+      })
+    })
+  }
 }
 
 function getById (req) {
   const { id } = req
 
   return new Promise((resolve, reject) => {
-    Note.findOne({ _id: id }).exec((err, note) => {
+    Note.findOne({ _id: id }, (err, note) => {
       resolve(note)
     })
   })
@@ -158,7 +237,7 @@ function getById (req) {
 
 function getTrash () {
   return new Promise((resolve, reject) => {
-    Note.find({ trash: 'TRASH' }).exec((err, notes) => {
+    Note.find({ trash: 'TRASH' }, (err, notes) => {
       resolve(notes)
     })
   })
@@ -171,7 +250,10 @@ export default {
   removeAll,
   removeById,
   update,
+  updateByQuery,
+  trashAll,
   getAll,
+  getAllByQuery,
   getAllByPid,
   getById,
   getTrash

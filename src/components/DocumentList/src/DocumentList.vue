@@ -190,58 +190,30 @@ export default {
       this.isListLoading = true
       this.selectFile(-1)
       let localFiles = [[], []]
-      console.log('000000')
       if (val.type === 'latest') {
-        console.log('111111')
         ipcRenderer.send('fetch-local-data', {
-          name: ['getAllLocalFolder', 'getAllLocalNote'],
+          tasks: ['getAllLocalFolder', 'getAllLocalNote'],
           from: 'DocumentList'
         })
-        // localFiles = await Promise.all([
-        //   getAllLocalFolder(),
-        //   getAllLocalNote()
-        // ])
-        // this.handleDataFetched(localFiles)
       } else if (val.type === 'folder') {
-        // if (val.id === undefined) {
-        //   ipcRenderer.send('fetch-local-data', {
-        //     name: ['getLocalFolderByPid', 'getLocalNoteByPid'],
-        //     params: [{ pid: '0' }, { pid: '0' }],
-        //     from: 'DocumentList',
-        //   })
-        //   // localFiles = await Promise.all([
-        //   //   getLocalFolderByPid({
-        //   //     pid: '0'
-        //   //   }),
-        //   //   getLocalNoteByPid({
-        //   //     pid: '0'
-        //   //   }
-        //   // )])
-        // } else {
-          ipcRenderer.send('fetch-local-data', {
-            name: ['getLocalFolderByPid', 'getLocalNoteByPid'],
-            params: [{ pid: val._id || val.id || '0' }, { pid: val._id || val.id || '0' }],
-            from: 'DocumentList',
-          })
-          // localFiles = await Promise.all([
-          //   getLocalFolderByPid({
-          //     pid: val._id
-          //   }),
-          //   getLocalNoteByPid({
-          //     pid: val._id
-          //   }
-          // )])
-        // }
+        ipcRenderer.send('fetch-local-data', {
+          tasks: ['getLocalFolderByPid', 'getLocalNoteByPid'],
+          params: [{
+            pid: val._id || val.id || '0',
+            remote_pid: val.remote_id
+          },
+          {
+            pid: val._id || val.id || '0',
+            remote_pid: val.remote_id
+          }],
+          from: 'DocumentList',
+        })
       } else if (val.type === 'tag') {
       } else if (val.type === 'bin') {
         ipcRenderer.send('fetch-local-data', {
-          name: ['getLocalTrashFolder', 'getLocalTrashNote'],
+          tasks: ['getLocalTrashFolder', 'getLocalTrashNote'],
           from: 'DocumentList',
         })
-        // localFiles = await Promise.all([
-        //   getLocalTrashFolder(),
-        //   getLocalTrashNote()
-        // ])
       }
     },
 
@@ -287,9 +259,13 @@ export default {
   created () {
     ipcRenderer.on('fetch-local-data-response', (event, arg) => {
       if (arg.from === 'DocumentList') {
-        let localFiles = arg.res
-        console.log('fetch-local-data-response', event, localFiles)
-        this.handleDataFetched(localFiles)
+        console.log('fetch-local-data-response', event, arg)
+        if (arg.tasks.indexOf('addLocalNote') > -1) {
+          return
+        } else {
+          let localFiles = arg.res
+          this.handleDataFetched(localFiles)
+        }
       }
     })
   },
@@ -304,6 +280,7 @@ export default {
       'STICK_TOP_FILE',
       'CANCEL_STICK_TOP_FILE',
       'SET_CURRENT_FILE',
+      'UPDATE_CURRENT_FILE',
       'SET_VIEW_FILE_LIST_TYPE',
       'SET_VIEW_FILE_SORT_TYPE',
       'SET_VIEW_FILE_SORT_ORDER',
@@ -313,16 +290,6 @@ export default {
     handleDataFetched (localFiles) {
       this.folderList = localFiles[0]
       this.noteList = localFiles[1]
-      const len = this.noteList.length
-      if (len > 1000) {
-        let arr = this.noteList.map(item => item._id)
-          .splice(0, len - 1000)
-
-        console.log('arr', arr)
-        arr.forEach(id => {
-          removeLocalNote({ id: id })
-        })
-      }
       this.list = _.flatten(localFiles)
       this.stickTopFiles = []
       this.updateFileList()

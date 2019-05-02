@@ -19,6 +19,14 @@ const mutations = {
 
   SET_CURRENT_FILE (state, file) {
     state.current_file = file
+  },
+
+  UPDATE_CURRENT_FILE (state, params) {
+    Object.keys(params).forEach(key => {
+      if (state.current_file.hasOwnProperty(key)) {
+        state.current_file[key] = params[key]
+      }
+    })
   }
 }
 
@@ -33,6 +41,10 @@ const actions = {
 
   SET_CURRENT_FILE ({ commit }, file) {
     commit('SET_CURRENT_FILE', file)
+  },
+
+  UPDATE_CURRENT_FILE ({ commit }, params) {
+    commit('UPDATE_CURRENT_FILE', params)
   }
 }
 

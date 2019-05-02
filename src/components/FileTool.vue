@@ -59,10 +59,7 @@ export default {
     //   this.checkIsEditorFocused()
     //   console.log('isEditorFocused', this.isEditorFocused)
     //   if(this.isEditorFocused) return
-    //   this.pushData().catch(err => {
-    //     this.$Message.error('同步失败，请重新登录')
-    //     clearInterval(asyncItv)
-    //   })
+    //   this.asyncData()
     // }, 5000)
   },
 
@@ -93,17 +90,9 @@ export default {
     },
 
     asyncData () {
-      return new Promise((resolve, reject) => {
-        this.pushData().then(pushResp => {
-          console.log('push-resp', pushResp)
-          this.pullData().then(pullResp => {
-            resolve()
-          }).catch(err => {
-            reject(err)
-          })
-        }).catch(err => {
-          reject(err)
-        })
+      this.pushData().catch(err => {
+        this.$Message.error('同步失败，请重新登录')
+        // clearInterval(asyncItv)
       })
     },
 

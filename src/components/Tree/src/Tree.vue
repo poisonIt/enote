@@ -193,7 +193,6 @@ export default {
   // },
 
   created () {
-    console.log('created', this.model)
     this.model.instance = this
     this.id = this.model.data ? this.model.id : '0'
     this.$on('select', (params) => {
@@ -272,7 +271,6 @@ export default {
     },
 
     toggle () {
-      console.log('toggle')
       if (this.isFolder) {
         this.expanded = !this.expanded
       }
@@ -323,6 +321,7 @@ export default {
       const name = isLeaf ? this.defaultLeafNodeName : this.defaultTreeNodeName
       this.expanded = true
       var node = new TreeNode({
+        id: data.id,
         name,
         isLeaf,
         editable,

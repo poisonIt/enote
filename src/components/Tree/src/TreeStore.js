@@ -1,6 +1,7 @@
 import TreeNode from './TreeNode'
 
 function TreeStore (opts) {
+  this.map = {}
   this.root = new TreeNode({ name: 'root', isLeaf: false, id: 0 }, this)
   this.initNode(this.root, opts)
   this.currentNode = null
@@ -23,6 +24,11 @@ TreeStore.prototype.setCurrentNode = function (node, root) {
   if (this.currentNode === node) return
   this.currentNode = node
   root.$emit('set-current', node)
+}
+
+TreeStore.prototype.getNodeById = function (id) {
+  console.log('getNodeById', id, this.map)
+  return this.map[id]
 }
 
 export default TreeStore

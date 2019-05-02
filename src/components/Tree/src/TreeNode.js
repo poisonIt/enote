@@ -1,10 +1,11 @@
 const TreeNode = function (opts, store) {
   const { id, isLeaf } = opts
-  this.id = (typeof id === 'undefined') ? new Date().valueOf() : id
+  this.id = opts.id || new Date().valueOf()
   this.parent = null
   this.children = null
   this.isLeaf = !!isLeaf
   this.store = store
+  this.store.map[opts.id] = this
 
   // other params
   for (var k in opts) {
@@ -46,6 +47,7 @@ TreeNode.prototype.remove = function () {
   const parent = this.parent
   const index = parent.findChildIndex(this)
   parent.children.splice(index, 1)
+  // delete this.store.map[this.id]
 }
 
 // remove child
@@ -53,6 +55,7 @@ TreeNode.prototype._removeChild = function (child) {
   for (var i = 0, len = this.children.length; i < len; i++) {
     if (this.children[i] === child) {
       this.children.splice(i, 1)
+      // delete this.store.map[child.id]
       break
     }
   }
@@ -132,6 +135,11 @@ TreeNode.prototype.insertAfter = function (target) {
 
   const pos = target.parent.findChildIndex(target)
   target.parent.children.splice(pos + 1, 0, this)
+}
+
+TreeNode.prototype.getDepth = function () {
+  if (!this.parent) return 0
+  return this.parent.getDepth() + 1
 }
 
 export default TreeNode

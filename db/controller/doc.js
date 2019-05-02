@@ -58,7 +58,7 @@ function removeAll () {
   return new Promise((resolve, reject) => {
     Doc.find({}).exec((err, docs) => {
       docs.forEach(doc => {
-        Doc.remove()
+        doc.remove()
       })
       resolve(docs.length)
     })
@@ -99,7 +99,7 @@ function update (req) {
         { _id: id },
         { $set: req },
         { multi: true },
-        (err, newDoc) => {
+        (err, num, newDoc) => {
           console.log('update-folder-111', newDoc)
           resolve(newDoc)
         }

@@ -1,6 +1,7 @@
 import { getValid } from '../tools'
 import docModel from '../models/doc'
 import { LinvoDB } from '../index'
+import noteCtr from './note'
 
 let Doc = {}
 
@@ -101,7 +102,12 @@ function update (req) {
         { multi: true },
         (err, num, newDoc) => {
           console.log('update-folder-111', newDoc)
-          resolve(newDoc)
+          noteCtr.update({
+            id: newDoc.note_id,
+            need_push: true
+          }).then(note => {
+            resolve(newDoc)
+          })
         }
       )
     })

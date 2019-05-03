@@ -388,9 +388,13 @@ export default {
       console.log('handleNodeDrop', node, oldParent, node.id, oldParent.id)
       if (node.pid !== oldParent.id) {
         console.log('move')
-        updateLocalFolder({
-          id: node.id,
-          pid: node.pid
+        ipcRenderer.send('fetch-local-data', {
+          tasks: ['updateLocalFolder'],
+          params: [{
+            id: node.data._id || node.data.id || node.id,
+            pid: node.pid
+          }],
+          from: 'NavBar'
         })
       }
     },

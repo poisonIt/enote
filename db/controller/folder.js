@@ -62,15 +62,19 @@ function saveAll (req) {
 
 // add
 function add (req) {
-  // console.log('add-folder', req)
   let data = folderModel(req)
-
+  
   return new Promise((resolve, reject) => {
-    Folder.insert(data, function (err, folders) {
-      if (err) {
-        reject(err)
+    getById({ id: req.pid }).then(pFolder => {
+      if (pFolder && pFolder.remote_id) {
+        data.remote_pid = pFolder.remote_id
       }
-      resolve(folders)
+      Folder.insert(data, function (err, folders) {
+        if (err) {
+          reject(err)
+        }
+        resolve(folders)
+      })
     })
   })
 }
@@ -99,11 +103,16 @@ function removeById (req) {
 }
 
 // update
-function update (req) {
+async function update (req) {
   const { id } = req
 
   if (!req.hasOwnProperty('need_push')) {
     req.need_push = true
+  }
+
+  if (req.hasOwnProperty('pid')) {
+    let folder = await getById({ id: req.pid })
+    req.remote_pid = folder ? folder.remote_id : '0'
   }
 
   return new Promise((resolve, reject) => {

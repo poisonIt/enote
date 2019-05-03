@@ -1,4 +1,5 @@
-import pReduce from 'p-reduce'
+// import pReduce from 'p-reduce'
+import { ipcRenderer } from 'electron'
 import { mapGetters, mapActions } from 'vuex'
 import { pushNotebook, pushNote, createTag, deleteTag, uploadFile } from '@/service'
 import LocalDAO from '../../../db/api'
@@ -20,6 +21,10 @@ export default {
       tagsNeedPush: 'GET_TAGS_NEED_PUSH',
       filesNeedPush: 'GET_FILES_NEED_PUSH'
     })
+  },
+
+  created () {
+    this.hookMsgHandler()
   },
 
   mounted () {
@@ -247,102 +252,128 @@ export default {
       return [fRes, nRes]
     },
 
-    async pushFolders () {
-      console.log('pushFolders-111111')
-      let fNeedPush = await LocalDAO.folder.getAllByQuery({
-        query: {
-          need_push: true
+    async hookMsgHandler () {
+      ipcRenderer.on('fetch-local-data-response', (event, arg) => {
+        if (arg.from === 'pushFolders') {
+          if (arg.tasks.indexOf('getAllLocalFolderByQuery') > -1) {
+            console.log('pushFolders', arg.res)
+            this.runPushFolders(arg.res[0]).then(() => {
+              console.log('runPushFolders-res')
+              this.pushNotes()
+            })
+          }
+        }
+        if (arg.from === 'pushNotes') {
+          if (arg.tasks.indexOf('getAllLocalNoteByQuery') > -1) {
+            console.log('pushNotes', arg.res)
+            this.runPushNotes(arg.res[0])
+          }
         }
       })
-      let { fDepthed, fSorted } = this.getFoldersPrepared(fNeedPush)
-      
-      let fDepthedTransed = fDepthed.map((files, index) => {
-        return files.map(file => {
-          return this.tranData(file)
-        })
+    },
+
+    pushFolders () {
+      ipcRenderer.send('fetch-local-data', {
+        tasks: ['getAllLocalFolderByQuery'],
+        params: [{ query: { need_push: true } }],
+        from: 'pushFolders'
       })
+    },
 
-      console.log('fNeedPush', fNeedPush)
-      console.log('fDepthed', fDepthed)
-      console.log('fSorted', fSorted)
-      console.log('fDepthedTransed', fDepthedTransed)
-      let taskCol = 0
-
-      function runTask () {
-        console.log('runTask', taskCol)
-        if (taskCol >= fDepthedTransed.length) return
-        pushNotebook(fDepthedTransed[taskCol]).then(resp => {
-          console.log('222222', taskCol, fDepthedTransed[taskCol])
-          if (resp.data.returnCode === 200) {
-            let fileResolved = resp.data.body
-            console.log('fileResolved', fileResolved)
-            let saveFolderTasks = fileResolved.map((file, idx) => {
-              return LocalDAO.folder.update({
-                id: fDepthed[taskCol][idx]._id,
-                remote_id: file.noteBookId,
-                remote_pid: file.parentId,
-                seq: file.seq,
-                title: file.title,
-                trash: file.trash,
-                need_push: false
-              })
-            })
-
-            Promise.all(saveFolderTasks).then(() => {
-              if (fDepthedTransed[taskCol + 1]) {
-                fDepthedTransed[taskCol + 1].forEach(file => {
-                  let pFileIdx = _.findIndex(fDepthed[taskCol], { _id: file.parentId })
-                  if (pFileIdx > -1) {
-                    file.parentId = fileResolved[pFileIdx].noteBookId
-                  }
-                  console.log('fileResolved-111', file, pFileIdx, file.parentId)
-                })
-              }
-              taskCol++
-              runTask()
-            })
-
-          }
+    pushNotes () {
+      console.log('pushNotes')
+      ipcRenderer.send('fetch-local-data', {
+        tasks: ['getAllLocalNoteByQuery'],
+        params: [{ query: { need_push: true }, with_doc: true }],
+        from: 'pushNotes'
+      })
+    },
+    
+    async runPushFolders (fNeedPush) {
+      return new Promise ((resolve, reject) => {
+        let { fDepthed, fSorted } = this.getFoldersPrepared(fNeedPush)
+        let fDepthedTransed = fDepthed.map((files, index) => {
+          return files.map(file => {
+            return this.tranData(file)
+          })
         })
+    
+        let taskCol = 0
+        function runTask () {
+          console.log('runTask', taskCol, fDepthedTransed)
+          if (taskCol >= fDepthedTransed.length) {
+            resolve()
+            return
+          }
+          pushNotebook(fDepthedTransed[taskCol]).then(resp => {
+            console.log('222222', taskCol, fDepthedTransed[taskCol])
+            if (resp.data.returnCode === 200) {
+              let fileResolved = resp.data.body
+              console.log('fileResolved', fileResolved)
+              let saveFolderTasks = fileResolved.map((file, idx) => {
+                return LocalDAO.folder.update({
+                  id: fDepthed[taskCol][idx]._id,
+                  remote_id: file.noteBookId,
+                  remote_pid: file.parentId,
+                  need_push: false
+                })
+              })
+    
+              Promise.all(saveFolderTasks).then(() => {
+                if (fDepthedTransed[taskCol + 1]) {
+                  fDepthedTransed[taskCol + 1].forEach(file => {
+                    let pFileIdx = _.findIndex(fDepthed[taskCol], { _id: file.parentId })
+                    if (pFileIdx > -1) {
+                      file.parentId = fileResolved[pFileIdx].noteBookId
+                    }
+                    console.log('fileResolved-111', file, pFileIdx, file.parentId)
+                  })
+                }
+                taskCol++
+                runTask()
+              })
+            }
+          }).catch(err => {
+            reject(err)
+          })
+        }
+    
+        runTask()
+      })
+    },
+
+    async runPushNotes (nNeedPush) {
+      let nTransed = nNeedPush.map(note => {
+        return this.tranData(note)
+      })
+      console.log('nTransed', nTransed)
+
+      let resp = await pushNote(nTransed)
+
+      if (resp.data.returnCode === 200) {
+        let noteResolved = resp.data.body
+
+        let saveNoteTasks = noteResolved.map((file, index) => {
+          return LocalDAO.note.update({
+            id: nNeedPush[index]._id,
+            remote_id: file.noteId,
+            need_push: false
+          })
+        })
+
+        Promise.all(saveNoteTasks).then(res => {
+          console.log('saveNoteTasks', res)
+          return
+        })
+      } else {
+        this.SET_IS_SYNCING(false)
+        return
       }
-
-      runTask()
-
-      // let fPromises = fDepthedTransed.map((files, index) => {
-      //   return new Promise ((resolve, reject) => {
-      //     pushNotebook(fDepthedTransed[index]).then(resp => {
-      //       console.log('222222', index, fDepthedTransed[index])
-      //       if (resp.data.returnCode === 200) {
-      //         let fileResolved = resp.data.body
-      //         console.log('fileResolved', fileResolved)
-      //         if (fDepthedTransed[index + 1]) {
-      //           fDepthedTransed[index + 1].forEach(file => {
-      //             let pFileIdx = _.findIndex(fDepthed[index], { _id: file.parentId })
-      //             if (pFileIdx > -1) {
-      //               file.parentId = fileResolved[pFileIdx].noteBookId
-      //             }
-      //             console.log('fileResolved-111', file, pFileIdx, file.parentId)
-      //           })
-      //         }
-      //         resolve(resp.data.body)
-      //       } else {
-      //         this.SET_IS_SYNCING(false)
-      //         reject(resp.data.returnMsg)
-      //       }
-      //     })
-      //   })
-      // })
-      // let fRes = await pReduce(fPromises, async (total, res) => {
-      //   if (total === 0) {
-      //     total = []
-      //   }
-      //   console.log('fPromises-res', res)
-      //   return [...total, ...res]
-      // }, 0)
     },
 
     async pushData () {
-      return await this.pushFolders()
+      this.pushFolders()
+      // await this.pushNote()
       return
       // folder
       let fNeedPush = await LocalDAO.folder.getAllByQuery({

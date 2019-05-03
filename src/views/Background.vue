@@ -83,6 +83,7 @@ export default {
       let tid = id
       Promise.all(tasks).then(res => {
         if (tid === taskId) {
+          console.log('fetch-local-data-response', res)
           ipcRenderer.send('fetch-local-data-response', {
             res: res,
             from: arg.from,

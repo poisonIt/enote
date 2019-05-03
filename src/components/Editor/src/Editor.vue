@@ -50,20 +50,10 @@ export default {
         this.showMask = true
         if (this.editor) {
           // 切换选中笔记，保存上一个笔记修改内容
-          if (this.editor.getData() !== this.cachedDoc.content) {
+          let editorData = this.editor.getData()
+          if (editorData !== this.cachedDoc.content) {
             console.log('0000000')
-            ipcRenderer.send('fetch-local-data', {
-              tasks: ['updateLocalDoc'],
-              params: [{
-                id: this.cachedDoc._id,
-                content: this.editor.getData()
-              }],
-              from: 'Editor'
-            })
-            // updateLocalDoc({
-            //   id: this.cachedDoc._id,
-            //   content: this.editor.getData()
-            // })
+            this.saveData(this.cachedDoc._id, editorData)
           }
         }
         ipcRenderer.send('fetch-local-data', {
@@ -132,10 +122,7 @@ export default {
                 let editorData = editor.getData()
                 if (_self.currentDoc._id === _self.cachedDoc._id
                   && editorData !== _self.cachedDoc.content) {
-                  updateLocalDoc({
-                    id: _self.currentDoc._id,
-                    content: editorData
-                  })
+                  _self.saveData(_self.currentDoc._id, editorData)
                   _self.cachedDoc.content = editorData
                 }
               }
@@ -168,6 +155,17 @@ export default {
       let space = this.viewType === 'expanded' ? 540 : 390
       console.log('handleResize', space)
       document.getElementsByClassName('ck-content')[0].style.width = document.body.clientWidth - space + 'px'
+    },
+
+    saveData (id, content) {
+      ipcRenderer.send('fetch-local-data', {
+        tasks: ['updateLocalDoc'],
+        params: [{
+          id: id,
+          content: content,
+        }],
+        from: 'Editor'
+      })
     }
   }
 }

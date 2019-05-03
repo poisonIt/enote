@@ -69,7 +69,7 @@ async function add (req) {
   console.log('add-note', req)
   let data = noteModel(req)
 
-  if (req.hasOwnProperty('pid')) {
+  if (req.hasOwnProperty('pid') && !req.hasOwnProperty('remote_pid')) {
     let folder = await folderCtr.getById({ id: req.pid })
     data.remote_pid = folder ? folder.remote_id : '0'
     console.log('add-note-0000', folder, data)
@@ -121,7 +121,10 @@ function removeById (req) {
 // update
 async function update (req) {
   const { id } = req
-  req.need_push = true
+
+  if (!req.hasOwnProperty('need_push')) {
+    req.need_push = true
+  }
 
   if (req.hasOwnProperty('pid')) {
     let folder = await folderCtr.getById({ id: req.pid })
@@ -196,12 +199,26 @@ function getAll () {
 }
 
 function getAllByQuery (req) {
-  const { query } = req
-  console.log('getAllByQuery', req, query)
+  const { query, with_doc } = req
+  console.log('getAllByQuery', req, query, with_doc)
 
   return new Promise((resolve, reject) => {
     Note.find(query, (err, notes) => {
-      resolve(notes)
+      console.log('getAllByQuery-notes', notes)
+      if (with_doc) {
+        let p = notes.map(note => {
+          return docCtr.getByNoteId({ note_id: note._id })
+        })
+        Promise.all(p).then(docs => {
+          console.log('docs', docs)
+          notes.forEach((note, index) => {
+            note.content = docs[index].content
+          })
+          resolve(notes)
+        })
+      } else {
+        resolve(notes)
+      }
     })
   })
 }

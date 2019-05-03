@@ -18,6 +18,10 @@ export function getAllLocalFolder () {
   return LocalDAO.folder.getAll()
 }
 
+export function getAllLocalFolderByQuery (params) {
+  return LocalDAO.folder.getAllByQuery(params)
+}
+
 export function getLocalFolderByPid (params) {
   return LocalDAO.folder.getAllByPid(params)
 }
@@ -37,6 +41,10 @@ export function updateLocalFolder (params) {
 // note
 export function getAllLocalNote () {
   return LocalDAO.note.getAll()
+}
+
+export function getAllLocalNoteByQuery (params) {
+  return LocalDAO.note.getAllByQuery(params)
 }
 
 export function getLocalNoteByPid (params) {

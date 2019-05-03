@@ -188,13 +188,16 @@ function createLoginWindow () {
 
   loginWin.on('closed', () => {
     loginWin = null
+    if (!win) {
+      app.quit()
+    }
   })
 }
 
 function createBackgroundWindow () {
   backWin = new BrowserWindow({
     id: 'background',
-    // show: false
+    show: isDevelopment
   })
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
@@ -208,6 +211,9 @@ function createBackgroundWindow () {
 
   backWin.on('closed', () => {
     backWin = null
+    win && win.close()
+    loginWin && loginWin.close()
+    youdaoWin && youdaoWin.close()
   })
 }
 
@@ -218,9 +224,9 @@ function createHomeWindow () {
     width: isDevelopment ? 1366 : 960,
     height: 640,
     backgroundColor: '#fcfbf7',
-    show: false,
+    // show: false,
     // frame: false,
-    // titleBarStyle: 'hidden',
+    titleBarStyle: isDevelopment ? 'default' : 'hidden',
     icon: path.join(__static, 'icon.png'),
     webPreferences: {
       webSecurity: false
@@ -241,6 +247,9 @@ function createHomeWindow () {
 
   win.on('closed', () => {
     win = null
+    if (!isDevelopment) {
+      backWin && backWin.close()
+    }
   })
 }
 
@@ -289,7 +298,7 @@ ipcMain.on('home-window-ready', (event) => {
 
 ipcMain.on('show-home-window', (event, arg) => {
   win && win.show()
-  // loginWin && loginWin.close()
+  loginWin && loginWin.close()
 })
 
 ipcMain.on('create-youdao-window', (event, arg) => {
@@ -342,8 +351,8 @@ app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
 
-  if (win === null) {
-    createLoginWindow()
+  if (backWin === null) {
+    createBackgroundWindow()
   }
 })
 

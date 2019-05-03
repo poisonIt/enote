@@ -1,5 +1,5 @@
 <template>
-  <div class='tn'>
+  <div class='tn' v-if="!model.hidden">
     <div v-if="model.name !== 'root'">
       <div class="tn-border tn-up" :class="{'tn-active': isDragEnterUp}"
         @drop="dropUp"
@@ -20,7 +20,7 @@
         @click.stop='click'
         @dblclick.prevent.stop="toggle">
         <div class="tn-mask" :class="{ current: isCurrent }"></div>
-        <span class="tn-caret tn-is-small" :class="{ lucency: !model.children || model.children.length === 0 }">
+        <span class="tn-caret tn-is-small" :class="{ lucency: !model.children || model.children.filter(item => !item.hidden).length === 0 }">
           <i class="tn-icon" :class="caretClass" @click.prevent.stop="toggle"></i>
         </span>
 
@@ -272,6 +272,10 @@ export default {
 
     toggle () {
       if (this.isFolder) {
+        if (this.model.children.filter(item => !item.hidden).length === 0) {
+          this.expanded = true
+          return
+        }
         this.expanded = !this.expanded
       }
     },
@@ -319,6 +323,9 @@ export default {
 
     addChild (data, editable, isLeaf) {
       const name = isLeaf ? this.defaultLeafNodeName : this.defaultTreeNodeName
+      if (data.name) {
+        name = data.name
+      }
       this.expanded = true
       var node = new TreeNode({
         id: data.id,

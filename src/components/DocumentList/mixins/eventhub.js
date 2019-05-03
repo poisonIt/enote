@@ -29,9 +29,9 @@ export default {
       }
     },
 
-    clickFolderHub (id) {
-      this.$hub.dispatchHub('clickFolder', this, id)
-    },
+    // clickFolderHub (id) {
+    //   this.$hub.dispatchHub('clickFolder', this, id)
+    // },
 
     navUpHub () {
       this.$hub.dispatchHub('navUp', this)

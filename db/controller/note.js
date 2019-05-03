@@ -108,12 +108,31 @@ function removeById (req) {
       if (note) {
         console.log('removeById', id, note)
         note.remove()
-        doc.removeByNoteId({ note_id: id }).then(() => {
+        docCtr.removeByNoteId({ note_id: id }).then(() => {
           resolve()
         })
       } else {
         reject()
       }
+    })
+  })
+}
+
+function removeAllDeleted () {
+  console.log('removeAllDeleted')
+  return new Promise((resolve, reject) => {
+    Note.find({ trash: 'DELETED' }, (err, notes) => {
+      let p = notes.map(note => {
+        return new Promise((resolve, reject) => {
+          docCtr.removeByNoteId({ note_id: note._id }).then(() => {
+            note.remove()
+          })
+        })
+      })
+      Promise.all(p).then(() => {
+        console.log('removeAllDeleted-res', p)
+        resolve(p.length)
+      })
     })
   })
 }
@@ -134,13 +153,28 @@ async function update (req) {
   return new Promise((resolve, reject) => {
     Note.findOne({ _id: id })
     .exec((err, note) => {
+      if (!note) {
+        resolve()
+        return
+      }
+      let old_trash = note.trash
       Note.update(
         { _id: id },
         { $set: req },
         { multi: true },
         (err, num, newNote) => {
-          console.log('update-folder-111', newNote)
-          resolve(newNote)
+          if (req.trash === 'NORMAL' && old_trash !== newNote.trash) {
+            console.log('update-p', newNote)
+            folderCtr.update({
+              id: newNote.pid,
+              trash: 'NORMAL'
+            }).then(() => {
+              resolve(newNote)
+            })
+          } else {
+            console.log('update-folder-111', newNote)
+            resolve(newNote)
+          }
         }
       )
     })
@@ -153,15 +187,20 @@ function updateByQuery (req) {
   console.log('update-note-query', query, data)
 
   return new Promise((resolve, reject) => {
-    Note.update(
-      query,
-      { $set: data },
-      { multi: true },
-      (err, num, newNote) => {
-        console.log('update-note-by-query-111', newNote)
-        resolve(newNote)
-      }
-    )
+    Note.find(query, (err, notes) => {
+      let p = notes.map(note => {
+        let r = {}
+        for (let i in data) {
+          r[i] = data[i]
+        }
+        r.id = note._id
+        return update(r)
+      })
+      Promise.all(p).then(res => {
+        console.log('update-note-by-query-111', res)
+        resolve(res)
+      })
+    })
   })
 }
 
@@ -192,7 +231,7 @@ function trashAll (req) {
 // get
 function getAll () {
   return new Promise((resolve, reject) => {
-    Note.find({ trash: 'NORMAL' }, (err, notes) => {
+    Note.find({}, (err, notes) => {
       resolve(notes)
     })
   })
@@ -227,19 +266,38 @@ function getAllByPid (req) {
   const { pid, remote_pid } = req
   console.log('getAllByPid', pid, remote_pid, req)
 
-  if (remote_pid) {
-    return new Promise((resolve, reject) => {
-      Note.find({ remote_pid: remote_pid }, (err, notes) => {
-        resolve(notes)
-      })
+  return new Promise((resolve, reject) => {
+    folderCtr.getById({ id: pid }).then(pFolder => {
+      let folder_title = pFolder ? pFolder.title : '我的文件夹'
+      if (remote_pid) {
+        Note.find({ remote_pid: remote_pid }, (err, notes) => {
+          if (Object.prototype.toString.call(notes) === `[object Array]`) {
+            notes.forEach(note => {
+              note.folder_title = folder_title
+            })
+          } else {
+            if (notes) {
+              notes.folder_title = folder_title
+            }
+          }
+          resolve(notes)
+        })
+      } else {
+        Note.find({ pid: pid }, (err, notes) => {
+          if (Object.prototype.toString.call(notes) === `[object Array]`) {
+            notes.forEach(note => {
+              note.folder_title = folder_title
+            })
+          } else {
+            if (notes) {
+              notes.folder_title = folder_title
+            }
+          }
+          resolve(notes)
+        })
+      }
     })
-  } else {
-    return new Promise((resolve, reject) => {
-      Note.find({ pid: pid }, (err, notes) => {
-        resolve(notes)
-      })
-    })
-  }
+  })
 }
 
 function getById (req) {
@@ -266,6 +324,7 @@ export default {
   add,
   removeAll,
   removeById,
+  removeAllDeleted,
   update,
   updateByQuery,
   trashAll,

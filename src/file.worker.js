@@ -27,6 +27,7 @@ self.addEventListener('message', (e) => {
         remote_pid: item.remote_pid,
         name: item.title,
         data: item,
+        hidden: item.trash !== 'NORMAL',
         children: []
       }
     })
@@ -52,6 +53,7 @@ function getChildren (cur, arr) {
       remote_pid: item.remote_pid,
       name: item.title,
       data: item,
+      hidden: item.trash !== 'NORMAL',
       children: []
     }
   })

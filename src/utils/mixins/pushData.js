@@ -291,6 +291,10 @@ export default {
     
     async runPushFolders (fNeedPush) {
       return new Promise ((resolve, reject) => {
+        if (fNeedPush.length === 0) {
+          resolve()
+          return
+        }
         let { fDepthed, fSorted } = this.getFoldersPrepared(fNeedPush)
         let fDepthedTransed = fDepthed.map((files, index) => {
           return files.map(file => {
@@ -302,40 +306,43 @@ export default {
         function runTask () {
           console.log('runTask', taskCol, fDepthedTransed)
           if (taskCol >= fDepthedTransed.length) {
-            resolve()
-            return
-          }
-          pushNotebook(fDepthedTransed[taskCol]).then(resp => {
-            console.log('222222', taskCol, fDepthedTransed[taskCol])
-            if (resp.data.returnCode === 200) {
-              let fileResolved = resp.data.body
-              console.log('fileResolved', fileResolved)
-              let saveFolderTasks = fileResolved.map((file, idx) => {
-                return LocalDAO.folder.update({
-                  id: fDepthed[taskCol][idx]._id,
-                  remote_id: file.noteBookId,
-                  remote_pid: file.parentId,
-                  need_push: false
-                })
-              })
-    
-              Promise.all(saveFolderTasks).then(() => {
-                if (fDepthedTransed[taskCol + 1]) {
-                  fDepthedTransed[taskCol + 1].forEach(file => {
-                    let pFileIdx = _.findIndex(fDepthed[taskCol], { _id: file.parentId })
-                    if (pFileIdx > -1) {
-                      file.parentId = fileResolved[pFileIdx].noteBookId
-                    }
-                    console.log('fileResolved-111', file, pFileIdx, file.parentId)
+            LocalDAO.folder.removeAllDeleted().then(() => {
+              resolve()
+              return
+            })
+          } else {
+            pushNotebook(fDepthedTransed[taskCol]).then(resp => {
+              console.log('222222', taskCol, fDepthedTransed[taskCol])
+              if (resp.data.returnCode === 200) {
+                let fileResolved = resp.data.body
+                console.log('fileResolved', fileResolved)
+                let saveFolderTasks = fileResolved.map((file, idx) => {
+                  return LocalDAO.folder.update({
+                    id: fDepthed[taskCol][idx]._id,
+                    remote_id: file.noteBookId,
+                    remote_pid: file.parentId,
+                    need_push: false
                   })
-                }
-                taskCol++
-                runTask()
-              })
-            }
-          }).catch(err => {
-            reject(err)
-          })
+                })
+      
+                Promise.all(saveFolderTasks).then(() => {
+                  if (fDepthedTransed[taskCol + 1]) {
+                    fDepthedTransed[taskCol + 1].forEach(file => {
+                      let pFileIdx = _.findIndex(fDepthed[taskCol], { _id: file.parentId })
+                      if (pFileIdx > -1) {
+                        file.parentId = fileResolved[pFileIdx].noteBookId
+                      }
+                      console.log('fileResolved-111', file, pFileIdx, file.parentId)
+                    })
+                  }
+                  taskCol++
+                  runTask()
+                })
+              }
+            }).catch(err => {
+              reject(err)
+            })
+          }
         }
     
         runTask()
@@ -343,6 +350,9 @@ export default {
     },
 
     async runPushNotes (nNeedPush) {
+      if (nNeedPush.length === 0) {
+        return
+      }
       let nTransed = nNeedPush.map(note => {
         return this.tranData(note)
       })
@@ -363,7 +373,9 @@ export default {
 
         Promise.all(saveNoteTasks).then(res => {
           console.log('saveNoteTasks', res)
-          return
+          LocalDAO.note.removeAllDeleted().then(() => {
+            return
+          })
         })
       } else {
         this.SET_IS_SYNCING(false)
@@ -444,8 +456,8 @@ export default {
       let folderMap = this.$root.$navTree.model.store.map
 
       fNeedPush.forEach(folder => {
-        let depth = folderMap[folder._id].getDepth()
-        folder.depth = folderMap[folder._id].getDepth()
+        let depth = folderMap[folder._id] ? folderMap[folder._id].getDepth() : 0
+        folder.depth = depth
       })
 
       fSorted = fNeedPush.sort((a, b) => a.depth - b.depth)
@@ -463,7 +475,7 @@ export default {
         }
       }
       return {
-        fDepthed: fDepthed,
+        fDepthed: fDepthed.filter(arr => arr.length > 0),
         fSorted: fSorted
       }
     },

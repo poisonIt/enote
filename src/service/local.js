@@ -79,3 +79,48 @@ export function getLocalDoc (params) {
 export function updateLocalDoc (params) {
   return LocalDAO.doc.update(params)
 }
+
+// bin
+export function deleteAllTrash () {
+  return new Promise((resolve, reject) => {
+    LocalDAO.folder.updateByQuery({
+      query: { trash: 'TRASH' },
+      data: { trash: 'DELETED' }
+    }).then(() => {
+      LocalDAO.note.updateByQuery({
+        query: { trash: 'TRASH' },
+        data: { trash: 'DELETED' }
+      }).then(() => {
+        resolve()
+      })
+    })
+  })
+}
+
+export function resumeAllTrash () {
+  return new Promise((resolve, reject) => {
+    LocalDAO.folder.updateByQuery({
+      query: { trash: 'TRASH' },
+      data: { trash: 'NORMAL' }
+    }).then((folders) => {
+      LocalDAO.note.updateByQuery({
+        query: { trash: 'TRASH' },
+        data: { trash: 'NORMAL' }
+      }).then((notes) => {
+        if (!folders) {
+          folders = []
+        }
+        if (Object.prototype.toString.call(folders) !== `[object Array]`) {
+          folders = [folders]
+        }
+        if (!notes) {
+          notes = []
+        }
+        if (Object.prototype.toString.call(notes) !== `[object Array]`) {
+          notes = [notes]
+        }
+        resolve(folders.concat(notes))
+      })
+    })
+  })
+}

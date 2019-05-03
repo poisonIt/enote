@@ -1,18 +1,18 @@
-const recycleMenu = [
+const binMenu = [
   {
     label: '清空回收站',
     eventListener: {
       eventName: 'click',
-      callbackName: 'handleClearRecycle'
+      callbackName: 'handleClearBin'
     }
   },
   {
     label: '全部恢复',
     eventListener: {
       eventName: 'click',
-      callbackName: 'handleResumeRecycle'
+      callbackName: 'handleResumeBin'
     }
   }
 ]
 
-export default recycleMenu
+export default binMenu

@@ -38,7 +38,7 @@ export default [
     label: '删除笔记',
     eventListener: {
       eventName: 'click',
-      callbackName: 'handleDelete'
+      callbackName: 'handleRemove'
     }
   },
   {

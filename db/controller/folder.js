@@ -102,8 +102,27 @@ function removeById (req) {
   })
 }
 
+function removeAllDeleted () {
+  console.log('removeAllDeleted')
+  return new Promise((resolve, reject) => {
+    Folder.find({ trash: 'DELETED' }, (err, folders) => {
+      let p = folders.map(folder => {
+        return new Promise((resolve, reject) => {
+          folder.remove()
+          resolve()
+        })
+      })
+      Promise.all(p).then(() => {
+        console.log('removeAllDeleted-res', p)
+        resolve(p.length)
+      })
+    })
+  })
+}
+
 // update
 async function update (req) {
+  console.log('update', req)
   const { id } = req
 
   if (!req.hasOwnProperty('need_push')) {
@@ -118,24 +137,44 @@ async function update (req) {
   return new Promise((resolve, reject) => {
     Folder.findOne({ _id: id })
     .exec((err, folder) => {
+      if (!folder) {
+        updateByQuery({
+          query: { remote_id: id },
+          data: req
+        }).then((res) => {
+          resolve(res)
+        })
+        return
+      }
       let old_remote_id = folder.remote_id
-      console.log('update-000-000', req, folder, old_remote_id)
+      let old_trash = folder.trash
       
       Folder.update(
         { _id: id },
         { $set: req},
         { multi: true },
         (err, num, newFolder) => {
-          console.log('update-folder-111', newFolder)
+          let childData = {}
+          if (req.trash === 'DELETED') {
+            childData.trash = 'DELETED'
+          }
+          if (req.trash === 'NORMAL' && old_trash !== newFolder.trash) {
+            update({
+              id: newFolder.pid,
+              trash: 'NORMAL'
+            })
+          }
           if (newFolder.remote_id !== old_remote_id) {
-            console.log('update-folder-222', newFolder)
+            childData.remote_pid = newFolder.remote_id
+          }
+          if (childData !== {}) {
             updateByQuery({
               query: { pid: newFolder._id },
-              data: { remote_pid: newFolder.remote_id }
+              data: childData
             }).then(() => {
               noteCtr.updateByQuery({
                 query: { pid: newFolder._id },
-                data: { remote_pid: newFolder.remote_id }
+                data: childData
               }).then(() => {
                 resolve(newFolder)
               })
@@ -155,15 +194,20 @@ function updateByQuery (req) {
   console.log('updateByQuery', query ,data)
 
   return new Promise((resolve, reject) => {
-    Folder.update(
-      query,
-      { $set: data },
-      { multi: true },
-      (err, num, newFolder) => {
-        console.log('update-folder-by-query-111', newFolder)
-        resolve(newFolder)
-      }
-    )
+    Folder.find(query, (err, folders) => {
+      let p = folders.map(folder => {
+        let r = {}
+        for (let i in data) {
+          r[i] = data[i]
+        }
+        r.id = folder._id
+        return update(r)
+      })
+      Promise.all(p).then(res => {
+        console.log('update-folder-by-query-111', res)
+        resolve(res)
+      })
+    })
   })
 }
 
@@ -171,7 +215,7 @@ function updateByQuery (req) {
 function getAll () {
   console.log('getAll-folder')
   return new Promise((resolve, reject) => {
-    Folder.find({ trash: 'NORMAL' }, (err, folders) => {
+    Folder.find({}, (err, folders) => {
       resolve(folders)
     })
   })
@@ -192,20 +236,38 @@ function getAllByPid (req) {
   const { pid, remote_pid } = req
   console.log('getAllByPid', pid)
 
-  if (remote_pid) {
-    return new Promise((resolve, reject) => {
-      Folder.find({ remote_pid: remote_pid }, (err, folders) => {
-        resolve(folders)
-      })
+  return new Promise((resolve, reject) => {
+    getById({ id: pid }).then(pFolder => {
+      let folder_title = pFolder ? pFolder.title : '我的文件夹'
+      if (remote_pid) {
+        Folder.find({ remote_pid: remote_pid }, (err, folders) => {
+          if (Object.prototype.toString.call(folders) === `[object Array]`) {
+            folders.forEach(folder => {
+              folder.folder_title = folder_title
+            })
+          } else {
+            if (folders) {
+              folders.folder_title = folder_title
+            }
+          }
+          resolve(folders)
+        })
+      } else {
+        Folder.find({ pid: pid }, (err, folders) => {
+          if (Object.prototype.toString.call(folders) === `[object Array]`) {
+            folders.forEach(folder => {
+              folder.folder_title = folder_title
+            })
+          } else {
+            if (folders) {
+              folders.folder_title = folder_title
+            }
+          }
+          resolve(folders)
+        })
+      }
     })
-  } else {
-    return new Promise((resolve, reject) => {
-      Folder.find({ pid: pid }, (err, folders) => {
-        resolve(folders)
-      })
-    })
-  }
-
+  })
 }
 
 function getById (req) {
@@ -232,7 +294,9 @@ export default {
   add,
   removeAll,
   removeById,
+  removeAllDeleted,
   update,
+  updateByQuery,
   getAll,
   getAllByQuery,
   getAllByPid,

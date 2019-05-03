@@ -66,7 +66,7 @@ import {
   folderMenu,
   rootFolderMenu,
   resourceMenu,
-  recycleMenu,
+  binMenu,
   tagMenu
 } from '../Menu'
 import { GenNonDuplicateID } from '@/utils/utils'
@@ -162,36 +162,12 @@ export default {
         rootFolderMenu,
         [...folderMenu, ...resourceMenu[0]],
         [...folderMenu, ...resourceMenu[1]],
-        recycleMenu,
+        binMenu,
         tagMenu
       ],
       nodeInput: '',
       folderIndex: 1,
       selectedTags: [],
-      nav: [
-        {
-          title: '最新文档',
-          link: 'latest',
-          type: 'docs'
-        },
-        {
-          title: '我的文件夹',
-          link: 'folders',
-          type: 'folder',
-          children: []
-        },
-        {
-          title: '标签',
-          link: 'tags',
-          type: 'tag',
-          children: []
-        },
-        {
-          title: '回收站',
-          link: 'recycle',
-          type: 'recycle'
-        }
-      ],
       folderTree: new TreeStore([rootFolder])
     }
   },
@@ -242,7 +218,7 @@ export default {
     }
 
     ipcRenderer.on('fetch-local-data-response', (event, arg) => {
-      if (arg.from === 'NavBar') {
+      if (arg.from[0] === 'NavBar') {
         console.log('fetch-local-data-response', arg)
         if (arg.tasks.indexOf('getAllLocalFolder') > -1) {
           let res = arg.res[arg.tasks.indexOf('getAllLocalFolder')]
@@ -259,15 +235,49 @@ export default {
           let res = arg.res[arg.tasks.indexOf('addLocalNote')]
           this.$hub.dispatchHub('addFile', this, res)
         }
+        if (arg.tasks.indexOf('updateLocalFolder') > -1) {
+          if (arg.from[1] === 'delete') {
+            this.popupedNode.model.hidden = true
+            this.setCurrentFolder('bin')
+          }
+        }
+        if (arg.tasks.indexOf('deleteAllTrash') > -1) {
+          if (arg.from[1] === 'clearBin') {
+            this.setCurrentFolder('bin')
+            ipcRenderer.send('fetch-local-data', {
+              tasks: ['getLocalTrashFolder', 'getLocalTrashNote'],
+              from: 'DocumentList',
+            })
+            if (arg.res[arg.tasks.indexOf('deleteAllTrash')]) {
+              let nodes = arg.res[arg.tasks.indexOf('deleteAllTrash')]
+                .filter(item => item.type === 'folder')
+              let map = this.$refs.tree.model.store.map
+              nodes.forEach(node => {
+                map[node._id].remove()
+              })
+            }
+          }
+        }
+        if (arg.tasks.indexOf('resumeAllTrash') > -1) {
+          if (arg.from[1] === 'resumeBin') {
+            this.setCurrentFolder('bin')
+            ipcRenderer.send('fetch-local-data', {
+              tasks: ['getLocalTrashFolder', 'getLocalTrashNote'],
+              from: 'DocumentList',
+            })
+            let nodes = arg.res[arg.tasks.indexOf('resumeAllTrash')]
+              .filter(item => item.type === 'folder')
+            console.log('resumeBin', nodes)
+            let map = this.$refs.tree.model.store.map
+            nodes.forEach(node => {
+              map[node._id].hidden = false
+            })
+          }
+        }
       }
     })
 
     ipcRenderer.send('home-window-ready')
-
-    // ipcRenderer.send('fetch-local-data', {
-    //   tasks: ['getAllLocalFolder'],
-    //   from: 'NavBar'
-    // })
   },
 
   methods: {
@@ -335,7 +345,7 @@ export default {
           pid: nodeData.id || nodeData._id || '0',
           isTemp: isTemp
         }],
-        from: 'NavBar'
+        from: ['NavBar']
       })
     },
 
@@ -348,7 +358,7 @@ export default {
       ipcRenderer.send('fetch-local-data', {
         tasks: ['addLocalFolder'],
         params: [{ pid: nodeData.id || nodeData._id || '0' }],
-        from: 'NavBar'
+        from: ['NavBar']
       })
     },
 
@@ -376,7 +386,7 @@ export default {
           id: node.data._id || node.data.id || node.id,
           title: node.name
         }],
-        from: 'NavBar'
+        from: ['NavBar']
       })
     },
 
@@ -394,7 +404,7 @@ export default {
             id: node.data._id || node.data.id || node.id,
             pid: node.pid
           }],
-          from: 'NavBar'
+          from: ['NavBar']
         })
       }
     },
@@ -412,32 +422,33 @@ export default {
       this.popupedNode.instance.insertChild(duplicateData)
     },
 
-    clickRecycleNode () {
-      this.$nextTick(() => {
-        let recycleNode = this.$refs.tree.store.root.childNodes[3]
-        this.handleItemClick(recycleNode)
-      })
-    },
-
     handleDelete () {
       console.log('handleDelete', this.popupedNode)
-      updateLocalFolder({
-        id: this.popupedNode.model.id,
-        trash: 'TRASH'
-      }).then(res => {
-        this.popupedNode.model.remove()
-        this.setCurrentFolder('bin')
+      let node = this.popupedNode.model
+      ipcRenderer.send('fetch-local-data', {
+        tasks: ['updateLocalFolder'],
+        params: [{
+          id: node.data._id || node.data.id || node.id,
+          trash: 'TRASH'
+        }],
+        from: ['NavBar', 'delete']
       })
     },
 
-    handleClearRecycle () {
-      this.CLEAR_ALL_RECYCLE()
-      this.clickRecycleNode()
+    handleClearBin () {
+      console.log('clearBin')
+      ipcRenderer.send('fetch-local-data', {
+        tasks: ['deleteAllTrash'],
+        from: ['NavBar', 'clearBin']
+      })
     },
 
-    handleResumeRecycle () {
-      this.RESUME_ALL_RECYCLE()
-      this.clickRecycleNode()
+    handleResumeBin () {
+      console.log('handleResumeBin')
+      ipcRenderer.send('fetch-local-data', {
+        tasks: ['resumeAllTrash'],
+        from: ['NavBar', 'resumeBin']
+      })
     },
 
     handleDeleteTag () {

@@ -43,7 +43,7 @@ export default [
     label: '删除',
     eventListener: {
       eventName: 'click',
-      callbackName: 'handleDelete'
+      callbackName: 'handleRemove'
     }
   }
 ]

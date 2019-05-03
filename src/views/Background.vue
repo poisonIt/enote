@@ -52,7 +52,7 @@ export default {
         ipcRenderer.send('fetch-local-data', {
           tasks: ['getAllLocalFolder'],
           res: folderDataCache,
-          from: 'NavBar'
+          from: ['NavBar']
         })
         folderDataCache = []
       })

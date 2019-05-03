@@ -6,7 +6,10 @@ export default {
     this.$hub.hookHub('setCurrentFolder', 'DocumentList', (id) => this.setCurrentFolder(id))
     this.$hub.hookHub('navUp', 'DocumentList', () => this.handleNavUp())
     this.$hub.hookHub('newFolder', 'FileTool', () => this.handleNewFolder(true))
-    this.$hub.hookHub('goRecycle', 'FileCard', () => this.clickRecycleNode())
+    // this.$hub.hookHub('goBin', 'FileCard', () => this.setCurrentFolder('bin'))
+    this.$hub.hookHub('deleteNavNode', 'DocumentList', (id) => {
+      this.$refs.tree.model.store.map[id].hidden = true
+    })
     this.$hub.hookHub('updateFile', 'FileCard', (params) => this.handleFolderUpdate(params))
     this.$hub.hookHub('updateFile', 'FileHandler', (params) => this.handleFolderUpdate(params))
     this.$hub.hookHub('updateFile', 'FileHandler', (params) => this.handleFolderUpdate(params))

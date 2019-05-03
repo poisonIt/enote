@@ -2,6 +2,7 @@
   <div class="file-card"
     :class="{ mini : mini, selected : selected }"
     @click="handleClick"
+    @dblclick="handleDbClick"
     @contextmenu="handleContextmenu">
     <div class="header">
       <div class="icon" :class="type"></div>
@@ -191,6 +192,10 @@ export default {
       this.$emit('handleClick', this)
     },
 
+    handleDbClick () {
+      this.$emit('dblclick', this)
+    },
+
     handleClickTitle () {
       if (this.type === 'folder') {
         this.dispatch('FileCardGroup', 'item-title-click', this)
@@ -268,7 +273,8 @@ export default {
     span.highlight
       background-color yellow
     &.folder:hover
-      text-decoration underline
+      span
+        text-decoration underline
     input
       border none
       background-color transparent

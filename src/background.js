@@ -298,7 +298,7 @@ ipcMain.on('home-window-ready', (event) => {
 
 ipcMain.on('show-home-window', (event, arg) => {
   win && win.show()
-  loginWin && loginWin.close()
+  // loginWin && loginWin.close()
 })
 
 ipcMain.on('create-youdao-window', (event, arg) => {

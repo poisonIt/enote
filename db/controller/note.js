@@ -318,6 +318,17 @@ function getTrash () {
   })
 }
 
+function getByTags (req) {
+  const { tags } = req
+  console.log('getByTags', req)
+
+  return new Promise((resolve, reject) => {
+    Note.find({ tags: { $in: tags } }, (err, notes) => {
+      resolve(notes)
+    })
+  })
+}
+
 export default {
   createCollection,
   saveAll,
@@ -332,5 +343,6 @@ export default {
   getAllByQuery,
   getAllByPid,
   getById,
-  getTrash
+  getTrash,
+  getByTags
 }

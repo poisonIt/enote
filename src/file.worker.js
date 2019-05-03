@@ -2,8 +2,10 @@ self.addEventListener('message', (e) => {
   var command = e.data[0]
   console.log('message', command)
   if (command === 'calcLocalData') {
-    let folderFiles = e.data[1]
+    let folderFiles = e.data[1][0]
+    let tags = e.data[1][1]
 
+    // calcFolder
     let rootFolder = {
       name: '我的文件夹',
       id: '0',
@@ -38,7 +40,32 @@ self.addEventListener('message', (e) => {
     rootFolder.children = rootChildren
     // let folderTree = new TreeStore([latestNav, rootFolder, tagNav, binNav])
 
-    self.postMessage([command, rootFolder])
+    // calcTag
+    let tagNav = {
+      name: '标签',
+      id: 'tag',
+      pid: null,
+      dragDisabled: true,
+      addTreeNodeDisabled: true,
+      addLeafNodeDisabled: true,
+      editNodeDisabled: true,
+      delNodeDisabled: true,
+      children: tags.map(tag => {
+        tag.type = 'select'
+        tag.isSelected = false
+        tag.data = {
+          type: 'select',
+          name: tag.name,
+          _id: tag._id,
+          remote_id: tag.remote_id
+        }
+        return tag
+      }),
+      data: {
+        type: 'tag'
+      }
+    }
+    self.postMessage([command, rootFolder, tagNav])
   } else {
     self.postMessage('Unknown command')
   }

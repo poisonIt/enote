@@ -10,6 +10,7 @@ import { createCollection } from '../../db'
 
 let taskId = 0
 let folderDataCache = []
+let tagDataCache = []
 
 export default {
   name: 'Background',
@@ -43,18 +44,23 @@ export default {
         createCollection('folder', dbPath + '/' + user)
         createCollection('note', dbPath + '/' + user)
         createCollection('doc', dbPath + '/' + user)
+        createCollection('tag', dbPath + '/' + user)
 
         LocalService.getAllLocalFolder().then(res => {
           folderDataCache = res
         })
+        LocalService.getAllLocalTag().then(res => {
+          tagDataCache = res
+        })
       })
       ipcRenderer.on('home-window-ready', (event) => {
-        ipcRenderer.send('fetch-local-data', {
-          tasks: ['getAllLocalFolder'],
-          res: folderDataCache,
+        ipcRenderer.send('fetch-local-data-response', {
+          tasks: ['getAllLocalFolder', 'getAllLocalTag'],
+          res: [folderDataCache, tagDataCache],
           from: ['NavBar']
         })
         folderDataCache = []
+        tagDataCache = []
       })
       ipcRenderer.on('fetch-user-data', (event, arg) => {
         console.log('fetch-user-data', arg, this.user)

@@ -114,6 +114,7 @@ export default {
       createCollection('folder', dbPath + '/' + userId)
       createCollection('note', dbPath + '/' + userId)
       createCollection('doc', dbPath + '/' + userId)
+      createCollection('tag', dbPath + '/' + userId)
       this.handleFetch()
     },
 

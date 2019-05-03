@@ -33,8 +33,8 @@
             <li class="all-tag-list-item"
               v-for="(item, index) in allTags"
               :key="index">
-                <div style="width: 100%;height: 100%;"
-                  @click="toggleAllTagChecked(item)">
+                <div style="width: 100%;height: 100%;">
+                  <div class="item-click-mask" @click="toggleAllTagChecked(item, $event)"></div>
                   <input type="checkbox" v-model="item.checked">
                   {{ item.name }}
                 </div>
@@ -47,6 +47,7 @@
 </template>
 
 <script>
+import { ipcRenderer } from 'electron'
 import { mapGetters, mapActions } from 'vuex'
 import LocalDAO from '../../db/api'
 
@@ -55,9 +56,10 @@ export default {
 
   data () {
     return {
-      // allTags: [],
+      allTags: [],
       // tags: [],
       currentTags: [],
+      currentTagIds: [],
       addTagName: '',
       isListShowed: false,
       containerWidth: '0px',
@@ -69,9 +71,7 @@ export default {
     ...mapGetters({
       isShowed: 'GET_SHOW_TAG_HANDLER',
       currentFile: 'GET_CURRENT_FILE',
-      viewType: 'GET_VIEW_TYPE',
-      allTagsArr: 'GET_ALL_TAGS',
-      allTagsMap: 'GET_TAGS_MAP'
+      viewType: 'GET_VIEW_TYPE'
     }),
 
     // tags () {
@@ -89,61 +89,32 @@ export default {
 
     currentFile: {
       handler: function (val) {
-        if (!val || val.id !== this.currentFileIdCached) {
+        if (!val || val._id !== this.currentFileIdCached) {
           this.TOGGLE_SHOW_TAG_HANDLER(false)
         }
         if (val && val.tags) {
-          console.log('tag- ', val.tags)
           this.currentTags = []
-          val.tags.forEach(tagId => {
-            let tag = this.allTagsMap[tagId]
-            console.log('allTagsMap', this.allTagsMap)
-            // if (!tag) {
-            //   let idx = val.tags.indexOf(tagId)
-            //   this.REMOVE_FILE_TAG({
-            //     fileId: this.currentFile.id,
-            //     tagId: tagId
-            //   })
-            // } else {
-              this.currentTags.push(tag)
-            // }
-          })
-          this.currentFileIdCached = val.id
+          // this.currentTags = this.allTags
+            // .filter(item => this.currentFile.tags.indexOf(item._id) > -1)
+          // console.log('tag- ', val.tags)
+          // this.currentTags = []
+          // val.tags.forEach(tagId => {
+          //   let tag = this.allTagsMap[tagId]
+          //   console.log('allTagsMap', this.allTagsMap)
+          //   // if (!tag) {
+          //   //   let idx = val.tags.indexOf(tagId)
+          //   //   this.REMOVE_FILE_TAG({
+          //   //     fileId: this.currentFile.id,
+          //   //     tagId: tagId
+          //   //   })
+          //   // } else {
+          //     this.currentTags.push(tag)
+          //   // }
+          // })
+          this.currentFileIdCached = val._id
         }
       },
       deep: true
-    },
-
-    allTagsMap (val) {
-      if (this.currentFile && this.currentFile.tags) {
-        this.currentTags = []
-        this.currentFile.tags.forEach(tagId => {
-          let tag = val[tagId]
-          if (!tag) {
-            this.REMOVE_FILE_TAG({
-              fileId: this.currentFile.id,
-              tagId: tagId
-            })
-          } else {
-            this.currentTags.push(tag)
-          }
-        })
-      }
-    },
-
-    allTagsArr (val) {
-      console.log('watch-allTagsArr', val)
-      this.allTags = []
-      val.forEach(item => {
-        let tag = {
-          _id: item._id,
-          name: item.name,
-          file_ids: item.file_ids,
-          remote_id: item.remote_id,
-          checked: !!item.checked
-        }
-        this.allTags.push(tag)
-      })
     },
 
     currentTags (val) {
@@ -153,8 +124,50 @@ export default {
     isShowed (val) {
       if (val) {
         this.handleResize(true)
+        ipcRenderer.send('fetch-local-data', {
+          tasks: ['getAllLocalTag'],
+          from: 'TagHandler',
+        })
       }
+    },
+
+    isListShowed (val) {
+      // if (val) {
+      //   ipcRenderer.send('fetch-local-data', {
+      //     tasks: ['getAllLocalTag'],
+      //     from: 'TagHandler',
+      //   })
+      // }
     }
+  },
+
+  created () {
+    ipcRenderer.on('fetch-local-data-response', (event, arg) => {
+      if (arg.from === 'TagHandler') {
+        if (arg.tasks[0] === 'getAllLocalTag') {
+          this.allTags = arg.res[0]
+          this.allTags.forEach(item => {
+            item.checked = this.currentFile.tags.indexOf(item._id) > -1
+          })
+          ipcRenderer.send('fetch-local-data', {
+            tasks: ['getLocalNoteById'],
+            params: [{ id: this.currentFile._id }],
+            from: 'TagHandler',
+          })
+        }
+        if (arg.tasks[0] === 'getLocalNoteById') {
+          this.currentTags = this.allTags
+            .filter(item => arg.res[0].tags.indexOf(item._id) > -1)
+        }
+      }
+      if (arg.from[0] === 'TagHandler') {
+        if (arg.from[1] === 'toggleTagChecked') {
+          console.log('toggleTagChecked-res', arg.res)
+          this.currentTags = this.allTags
+            .filter(item => arg.res[0].tags.indexOf(item._id) > -1)
+        }
+      }
+    })
   },
 
   mounted () {
@@ -235,26 +248,46 @@ export default {
       // let allTags = await LocalDAO.tag.getAll()
       console.log('getTags', this.allTags)
       // this.allTags = res
-      this.allTags.forEach(item => {
-        item.checked = this.currentFile.tags.indexOf(item._id) > -1
-      })
+      
       // this.allTagsChecked = this.allTags.filter(item => item.checked).map(item => {
       //   return item._id
       // })
     },
 
-    toggleAllTagChecked (tag) {
-      console.log('toggleAllTagChecked', tag)
-      if (!tag.checked) {
-        this.ADD_FILE_TAG({
-          id: this.currentFile.id,
-          tag: tag.name
-        })
-        tag.checked = true
-      } else {
-        this.deleteTag(tag)
-        tag.checked = false
-      }
+    toggleAllTagChecked (tag, $event) {
+      let inputNode = $event.target.parentNode.childNodes[1]
+      inputNode.click()
+      // if ($event.target.localName !== 'input') {
+        // $event.target.firstChild.click()
+        // tag.checked = !tag.checked
+      // }
+      console.log('toggleAllTagChecked', $event, tag, this.allTags)
+      ipcRenderer.send('fetch-local-data', {
+        tasks: ['updateLocalNote'],
+        params: [{
+          id: this.currentFile._id,
+          tags: this.allTags.filter(item => item.checked).map(item => item._id)
+        }],
+        from: ['TagHandler', 'toggleTagChecked']
+      })
+      // if (!tag.checked) {
+      //   ipcRenderer.send('fetch-local-data', {
+      //     tasks: ['updateLocalNote'],
+      //     params: [{
+      //       id: this.currentFile._id,
+      //       tags: true
+      //     }],
+      //     from: ['DocumentList', 'stickTop', this.popupedFile.file_id]
+      //   })
+      //   // this.ADD_FILE_TAG({
+      //   //   id: this.currentFile.id,
+      //   //   tag: tag.name
+      //   // })
+      //   tag.checked = true
+      // } else {
+      //   this.deleteTag(tag)
+      //   tag.checked = false
+      // }
     }
   }
 }
@@ -400,12 +433,19 @@ export default {
     max-height 70vh
     overflow-y scroll
   .all-tag-list-item
+    position relative
     font-size 12px
     line-height 32px
     display flex
     align-items center
+    .item-click-mask
+      width 100%
+      height 100%
+      position absolute
+      z-index 1
     input
       margin-right 10px
+      z-index 0
 
 .input-checkbox
   position relative

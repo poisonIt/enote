@@ -43,6 +43,10 @@ export function getAllLocalNote () {
   return LocalDAO.note.getAll()
 }
 
+export function getLocalNoteById (params) {
+  return LocalDAO.note.getById(params)
+}
+
 export function getAllLocalNoteByQuery (params) {
   return LocalDAO.note.getAllByQuery(params)
 }
@@ -65,6 +69,10 @@ export function updateLocalNote (params) {
 
 export function removeLocalNote (params) {
   return LocalDAO.note.removeById(params)
+}
+
+export function getLocalTagNote (params) {
+  return LocalDAO.note.getByTags(params)
 }
 
 // doc
@@ -123,4 +131,9 @@ export function resumeAllTrash () {
       })
     })
   })
+}
+
+// tag
+export function getAllLocalTag () {
+  return LocalDAO.tag.getAll()
 }

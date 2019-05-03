@@ -26,12 +26,14 @@
 
         <span v-if="model.isLeaf">
           <slot name="leafNodeIcon">
-            <i class="tn-icon tn-menu-icon tn-icon-file"></i>
+            <i class="tn-icon tn-menu-icon tn-icon-file"
+              v-if="model.type !== 'select'"></i>
           </slot>
         </span>
         <span v-else>
           <slot name="treeNodeIcon">
             <i class="tn-icon tn-menu-icon"
+              v-if="model.type !== 'select'"
               :class="[itemIconClass, { current: isCurrent }, { expanded: expanded }]"></i>
           </slot>
         </span>
@@ -40,6 +42,9 @@
           {{model.name}}
         </div>
         <input v-else class="tn-input" type="text" ref="nodeInput" :value="model.name" @input="updateName" @blur="blur">
+        <div class="select-icon"
+          :class="{ fill: model.isSelected }"
+          v-if="model.type === 'select'"></div>
         <div class="tn-operation" v-show="isHover">
           <span title="add tree node" @click.stop.prevent="addChild({}, false, false)" v-if="!model.isLeaf && !model.addTreeNodeDisabled">
             <slot name="addTreeNode">
@@ -317,7 +322,13 @@ export default {
 
     click () {
       var root = this.getRootNode()
+      console.log(this, root, this === root)
+      if (this === root) return
       this.model.store.setCurrentNode(this.model, root)
+      if (this.model.type === 'select') {
+        this.model.isSelected = !this.model.isSelected
+        root.$emit('select', this.model)
+      }
       root.$emit('click', this.model)
     },
 
@@ -482,6 +493,20 @@ export default {
   .tn-caret
     // margin-left -1rem
     // margin-right 10px
+  .select-icon
+    width 17px
+    height 17px
+    flex none
+    margin-right 20px
+    border-radius 50%
+    border 1px solid #DDAF59
+    &.fill
+      border none
+      background-image url('../../../assets/images/icon_selected_fill.png')
+      background-repeat no-repeat
+      background-size 108%
+      background-position center
+    z-index 1
   .tn-operation
     margin-left 2rem
     letter-spacing 1px

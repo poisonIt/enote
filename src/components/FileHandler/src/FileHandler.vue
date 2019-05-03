@@ -15,6 +15,7 @@
     </div>
     <div class="handler">
       <div class="handler-item"
+        :class="{ hidden: isHandlerHidden(item) }"
         v-for="(item, index) in handlers"
         :key="index"
         :data="'FileHandler-' + item"
@@ -210,6 +211,14 @@ export default {
       }
     },
 
+    isHandlerHidden (item) {
+      if (item === 'fetch') {
+        return false
+      } else if (this.currentFile.type === 'folder') {
+        return true
+      }
+    },
+
     iconClassComputed (key) {
       return 'icon-' + key
     },
@@ -328,6 +337,9 @@ export default {
 .hide
   opacity 0
 
+.hidden
+  display none
+
 .handler
   // width 40%
   display flex
@@ -366,7 +378,7 @@ export default {
   color #333
   line-height 24px
   font-weight 600
-  z-index 9999
+  z-index 99999
   .item
     padding 0 10px
 

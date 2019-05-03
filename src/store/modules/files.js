@@ -5,7 +5,8 @@ import { getLocalNoteByPid } from '@/service/local'
 const state = {
   search_keyword: '',
   current_nav: null,
-  current_file: null
+  current_file: null,
+  selected_tags: []
 }
 
 const mutations = {
@@ -27,6 +28,18 @@ const mutations = {
         state.current_file[key] = params[key]
       }
     })
+  },
+
+  TOGGLE_SELECTED_TAG (state, params) {
+    let { id } = params
+    let idx = state.selected_tags.indexOf(id)
+
+    if (idx > -1) {
+      state.selected_tags.splice(idx, 1)
+    } else {
+      state.selected_tags.push(id)
+    }
+    console.log('TOGGLE_SELECTED_TAG', id, state.selected_tags)
   }
 }
 
@@ -45,6 +58,10 @@ const actions = {
 
   UPDATE_CURRENT_FILE ({ commit }, params) {
     commit('UPDATE_CURRENT_FILE', params)
+  },
+
+  TOGGLE_SELECTED_TAG ({ commit }, params) {
+    commit('TOGGLE_SELECTED_TAG', params)
   }
 }
 
@@ -59,6 +76,10 @@ const getters = {
 
   GET_CURRENT_FILE (state) {
     return state.current_file
+  },
+
+  GET_SELECTED_TAGS (state) {
+    return state.selected_tags
   }
 }
 

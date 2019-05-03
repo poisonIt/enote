@@ -29,15 +29,14 @@ export default {
       let pullResp = await Promise.all([
         pullNotebooks(),
         pullNote(),
-        // pullTags()
+        pullTags()
       ])
       console.log('runPullTasks', pullResp)
 
       await LocalDAO.folder.removeAll()
       await LocalDAO.note.removeAll()
       await LocalDAO.doc.removeAll()
-      // await LocalDAO.tag.removeAll()
-      // await LocalDAO.files.removeAll()
+      await LocalDAO.tag.removeAll()
       console.log('runPullTasks-1111')
 
       if (pullResp[0].data.returnMsg !== 'success') {
@@ -52,11 +51,11 @@ export default {
         return
       }
 
-      // if (pullResp[2].data.returnMsg !== 'success') {
-      //   // alert(`获取标签：${pullResp[3].data.returnMsg}`)
-      //   this.isLoading = false
-      //   return
-      // }
+      if (pullResp[2].data.returnMsg !== 'success') {
+        // alert(`获取标签：${pullResp[3].data.returnMsg}`)
+        this.isLoading = false
+        return
+      }
 
       let dataBody = pullResp[0].data.body
       const saveNoteBooksTask = dataBody
@@ -67,18 +66,16 @@ export default {
           return LocalDAO.note.add(this.transNoteData(item)
         )})
 
-      // const saveTagTask = (pullResp[2].data.body || [])
-      //   .map(item => LocalDAO.tag.add(this.transTagData(item)))
+      const saveTagTask = (pullResp[2].data.body || [])
+        .map(item => LocalDAO.tag.add(this.transTagData(item)))
 
-      // let saveLocalRes = await Promise.all([...saveNoteBooksTask, ...saveNoteTask, ...saveTagTask])
-      let saveLocalRes = await Promise.all([...saveNoteBooksTask, ...saveNoteTask])
+      let saveLocalRes = await Promise.all([...saveNoteBooksTask, ...saveNoteTask, ...saveTagTask])
       console.log('saveLocalRes', saveLocalRes)
 
       return saveLocalRes
     },
 
     transNoteBookData (obj) {
-      console.log('transNoteBookData', obj.noteBookId, obj.title, obj)
       return {
         type: 'folder',
         remote_id: obj.noteBookId,
@@ -94,7 +91,6 @@ export default {
     },
 
     transNoteData (obj) {
-      console.log('transNoteData', obj.noteId, obj.title, obj)
       return {
         type: 'note',
         remote_id: obj.noteId,

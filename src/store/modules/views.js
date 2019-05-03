@@ -44,10 +44,6 @@ const mutations = {
     state.view_file_type = type
   },
 
-  SET_SELECTED_TAGS (state, tags) {
-    state.selected_tags = tags
-  },
-
   SET_EDITOR_CONTENT (state, content) {
     state.editor_content = content
   },
@@ -131,10 +127,6 @@ const actions = {
     commit('SET_VIEW_FILE_TYPE', type)
   },
 
-  SET_SELECTED_TAGS ({ commit }, tags) {
-    commit('SET_SELECTED_TAGS', tags)
-  },
-
   SET_EDITOR_CONTENT ({ commit }, content) {
     commit('SET_EDITOR_CONTENT', content)
   },
@@ -215,10 +207,6 @@ const getters = {
 
   GET_VIEW_FILE_TYPE (state) {
     return state.view_file_type
-  },
-
-  GET_SELECTED_TAGS (state) {
-    return state.selected_tags
   },
 
   GET_MOVE_FILE (state) {

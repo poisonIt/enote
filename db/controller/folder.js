@@ -158,12 +158,6 @@ async function update (req) {
           if (req.trash === 'DELETED') {
             childData.trash = 'DELETED'
           }
-          if (req.trash === 'NORMAL' && old_trash !== newFolder.trash) {
-            update({
-              id: newFolder.pid,
-              trash: 'NORMAL'
-            })
-          }
           if (newFolder.remote_id !== old_remote_id) {
             childData.remote_pid = newFolder.remote_id
           }
@@ -176,7 +170,17 @@ async function update (req) {
                 query: { pid: newFolder._id },
                 data: childData
               }).then(() => {
-                resolve(newFolder)
+                if (req.trash === 'NORMAL' && old_trash !== newFolder.trash) {
+                  console.log('update-p', newFolder)
+                  update({
+                    id: newFolder.pid,
+                    trash: 'NORMAL'
+                  }).then(() => {
+                    resolve(newFolder)
+                  })
+                } else {
+                  resolve(newFolder)
+                }
               })
             })
           } else {

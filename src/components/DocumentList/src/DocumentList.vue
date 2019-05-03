@@ -67,12 +67,11 @@
 
 <script>
 import { ipcRenderer } from 'electron'
-// import { clone, intersection } from 'lodash'
 import * as _ from 'lodash'
 import dayjs from 'dayjs'
 import mixins from '../mixins'
-// import { readFile } from '@/utils/file'
 import { mapGetters, mapState, mapActions } from 'vuex'
+
 import SearchBar from '@/components/SearchBar'
 import Loading from '@/components/Loading'
 import { FileCard, FileCardGroup } from '@/components/FileCard'
@@ -84,18 +83,6 @@ import {
   fileInfoMenu,
   binMenu
 } from '../Menu'
-import LocalDAO from '@/../db/api'
-import {
-  getAllLocalFolder,
-  getAllLocalNote,
-  getLocalFolderByPid,
-  getLocalNoteByPid,
-  getLocalTrashFolder,
-  getLocalTrashNote,
-  addLocalNote,
-  removeLocalNote,
-  updateLocalNote
-} from'@/service/local'
 
 export default {
   name: 'DocumentList',
@@ -112,6 +99,8 @@ export default {
   data () {
     return {
       selectedIdCache: null,
+      trashFileCache: [],
+      navNeedUpdate: false,
       isListLoading: true,
       isFirstSelect: true,
       list: [],
@@ -175,7 +164,6 @@ export default {
       views: state => state.views
     }),
     ...mapGetters({
-      contentCache: 'GET_EDITOR_CONTENT_CACHE',
       viewFileType: 'GET_VIEW_FILE_TYPE',
       currentNav: 'GET_CURRENT_NAV',
       currentFile: 'GET_CURRENT_FILE',
@@ -190,12 +178,22 @@ export default {
 
   watch: {
     async currentNav (val) {
+      console.log('currentNav', val)
       this.refreshList()
     },
 
     selectedTags (val) {
+      console.log('watch-selectedTags', val)
+      if (this.currentNav.type === 'tag' || this.currentNav.type === 'select') {
+        console.log('watch-selectedTags-1111', val)
+        ipcRenderer.send('fetch-local-data', {
+          tasks: ['getLocalTagNote'],
+          params: [{ tags: val }],
+          from: 'DocumentList',
+        })
+        return
+      }
       return
-      console.log('watch-selectedTags', val, this.tagsMap)
       this.list = this.allFileArr.filter(item => item.trash === 'NORMAL')
       if (val.length > 0) {
         let arr = []
@@ -239,7 +237,13 @@ export default {
         if (arg.tasks.indexOf('addLocalNote') > -1) {
           return
         } else {
-          let localFiles = arg.res
+          let localFiles = []
+          if (arg.tasks[0] === 'getLocalTagNote') {
+            localFiles = [[], arg.res[0]]
+          } else {
+            localFiles = arg.res
+          }
+          console.log('localFiles', localFiles)
           this.handleDataFetched(localFiles)
         }
       }
@@ -261,16 +265,9 @@ export default {
               this.refreshList()
             }
             if (arg.from[1] === 'resume') {
-              // resume nav node
-              if (arg.tasks[0] === 'updateLocalFolder') {
-                let node = arg.res[0]
-                let folderMap = this.$root.$navTree.model.store.map
-                folderMap[node._id].hidden = false
-              }
               this.refreshList()
             }
             if (arg.from[1] === 'delete') {
-              // refresh
               this.refreshList()
             }
           }
@@ -281,13 +278,6 @@ export default {
 
   methods: {
     ...mapActions([
-      'SAVE_DOC',
-      'SET_EDITOR_CONTENT',
-      'SET_EDITOR_CONTENT_CACHE',
-      'EDIT_FILE',
-      'EDIT_DOC',
-      'STICK_TOP_FILE',
-      'CANCEL_STICK_TOP_FILE',
       'SET_CURRENT_FILE',
       'UPDATE_CURRENT_FILE',
       'SET_VIEW_FILE_LIST_TYPE',
@@ -298,7 +288,6 @@ export default {
 
     refreshList () {
       let nav = this.currentNav
-      console.log('refreshList-nav', nav)
       this.isListLoading = true
       this.selectFile(-1)
       let localFiles = [[], []]
@@ -321,6 +310,13 @@ export default {
           from: 'DocumentList',
         })
       } else if (nav.type === 'tag') {
+        ipcRenderer.send('fetch-local-data', {
+          tasks: ['getLocalTagNote'],
+          params: [
+            { tags: this.selectedTags}
+          ],
+          from: 'DocumentList',
+        })
       } else if (nav.type === 'bin') {
         ipcRenderer.send('fetch-local-data', {
           tasks: ['getLocalTrashFolder', 'getLocalTrashNote'],
@@ -351,6 +347,19 @@ export default {
       idx = (idx === -1 ? 0 : idx)
       this.selectFile(this.list.length > 0 ? idx : -1)
       this.isListLoading = false
+      
+      if (this.navNeedUpdate) {
+        let fileListIds = this.fileList.map(file => file._id)
+        let resumedFileIds = _.difference(this.trashFileCache, fileListIds)
+        let folderMap = this.$root.$navTree.model.store.map
+        resumedFileIds.forEach(id => {
+          let node = folderMap[id]
+          if (node) {
+            node.hidden = false
+          }
+        })
+        this.navNeedUpdate = false
+      }
     },
 
     selectFile (index) {
@@ -361,10 +370,8 @@ export default {
     },
 
     handleFileTitleClick (index) {
-      console.log('handleFileTitleClick', index)
       let file = this.fileList[index]
       this.handleDbClick(file)
-      // this.clickFolderHub(file.id)
     },
 
     handleBack () {
@@ -422,7 +429,6 @@ export default {
     },
 
     handleDbClick (file) {
-      console.log('handleDbClick', file)
       if (file.type === 'folder') {
         this.$root.$navTree.select(file._id)
       }
@@ -489,6 +495,8 @@ export default {
 
     handleResume () {
       console.log('handleResume', this.popupedFile)
+      this.trashFileCache = this.fileList.map(file => file._id)
+      this.navNeedUpdate = true
       let taskName = this.popupedFile.type === 'folder' ? 'updateLocalFolder' : 'updateLocalNote'
       ipcRenderer.send('fetch-local-data', {
         tasks: [taskName],

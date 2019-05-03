@@ -1,23 +1,18 @@
 <template>
   <div id="navbar" ref="navbar">
-    <!-- <div class="nav-item nav-latest" @click="handleClickNavItem('latest')">最新文档</div>
-    <div class="nav-item nav-share" @click="handleClickNavItem('share')">与我分享</div> -->
-    <!-- <div class="folder-tree"> -->
-      <Tree
-        ref="tree"
-        :model="folderTree"
-        default-tree-node-name="新建文件夹"
-        v-bind:default-expanded="true"
-        :flat-ids="['0', 'latest', 'share', 'tag', 'bin']"
-        @contextmenu="handleContextmenu"
-        @add-node="handleAddNode"
-        @set-current="handleSetCurrentFolder"
-        @change-name-blur="handleChangeNodeName"
-        @drop="handleNodeDrop">
-      </Tree>
-    <!-- </div> -->
-    <!-- <div class="nav-item nav-tag" @click="handleClickNavItem('tag')">标签</div>
-    <div class="nav-item nav-bin" @click="handleClickNavItem('bin')">回收站</div> -->
+    <Tree
+      ref="tree"
+      :model="folderTree"
+      default-tree-node-name="新建文件夹"
+      v-bind:default-expanded="true"
+      :flat-ids="['0', 'latest', 'share', 'tag', 'bin']"
+      @contextmenu="handleContextmenu"
+      @add-node="handleAddNode"
+      @set-current="handleSetCurrentFolder"
+      @select="handleSelect"
+      @change-name-blur="handleChangeNodeName"
+      @drop="handleNodeDrop">
+    </Tree>
     <div class="nav-mini" v-show="viewType === 'unexpanded'">
       <div class="icon icon-latest"
         :class="{
@@ -167,7 +162,7 @@ export default {
       ],
       nodeInput: '',
       folderIndex: 1,
-      selectedTags: [],
+      // selectedTags: [],
       folderTree: new TreeStore([rootFolder])
     }
   },
@@ -177,7 +172,7 @@ export default {
       isDBReady: 'GET_DB_READY',
       viewType: 'GET_VIEW_TYPE',
       viewFileType: 'GET_VIEW_FILE_TYPE',
-      allTags: 'GET_ALL_TAGS'
+      // allTags: 'GET_ALL_TAGS'
     })
   },
 
@@ -186,15 +181,15 @@ export default {
       console.log('watch-isDBReady', val)
     },
 
-    allTags (val) {
-      console.log('allTags', val)
-      this.updateTags(val)
-    },
+    // allTags (val) {
+    //   console.log('allTags', val)
+    //   this.updateTags(val)
+    // },
 
-    selectedTags (val) {
-      this.SET_VIEW_NAME(val.map(item => item.data.title).join('、'))
-      this.SET_SELECTED_TAGS(val.map(item => item.data.id))
-    }
+    // selectedTags (val) {
+      // this.SET_VIEW_NAME(val.map(item => item.data.title).join('、'))
+      // this.SET_SELECTED_TAGS(val.map(item => item.data.id))
+    // }
   },
 
   mounted () {
@@ -206,8 +201,9 @@ export default {
       if (e.data !== 'Unknown command') {
         if (e.data[0] === 'calcLocalData') {
           let newRootFolder = e.data[1]
+          let newTagNav = e.data[2]
           // _self.folderTree = new TreeStore([newRootFolder])
-          _self.folderTree = new TreeStore([latestNav, newRootFolder, tagNav, binNav])
+          _self.folderTree = new TreeStore([latestNav, newRootFolder, newTagNav, binNav])
           _self.$nextTick(() => {
             _self.$refs.tree.$children[0].click()
             _self.SET_IS_HOME_READY(true)
@@ -220,10 +216,11 @@ export default {
     ipcRenderer.on('fetch-local-data-response', (event, arg) => {
       if (arg.from[0] === 'NavBar') {
         console.log('fetch-local-data-response', arg)
-        if (arg.tasks.indexOf('getAllLocalFolder') > -1) {
-          let res = arg.res[arg.tasks.indexOf('getAllLocalFolder')]
-          this.$worker.postMessage(['calcLocalData', res])
+        if (arg.tasks = ['getAllLocalFolder', 'getAllLocalTag']) {
+          // let res = arg.res[arg.tasks.indexOf('getAllLocalFolder')]
+          this.$worker.postMessage(['calcLocalData', arg.res])
         }
+
         if (arg.tasks.indexOf('addLocalFolder') > -1) {
           let res = arg.res[arg.tasks.indexOf('addLocalFolder')]
           this.popupedNode.addChild({
@@ -231,16 +228,19 @@ export default {
             type: 'folder'
           }, true)
         }
+
         if (arg.tasks.indexOf('addLocalNote') > -1) {
           let res = arg.res[arg.tasks.indexOf('addLocalNote')]
           this.$hub.dispatchHub('addFile', this, res)
         }
+
         if (arg.tasks.indexOf('updateLocalFolder') > -1) {
           if (arg.from[1] === 'delete') {
             this.popupedNode.model.hidden = true
             this.setCurrentFolder('bin')
           }
         }
+
         if (arg.tasks.indexOf('deleteAllTrash') > -1) {
           if (arg.from[1] === 'clearBin') {
             this.setCurrentFolder('bin')
@@ -258,6 +258,7 @@ export default {
             }
           }
         }
+
         if (arg.tasks.indexOf('resumeAllTrash') > -1) {
           if (arg.from[1] === 'resumeBin') {
             this.setCurrentFolder('bin')
@@ -282,30 +283,24 @@ export default {
 
   methods: {
     ...mapActions([
-      'ADD_FILE',
-      'APPEND_FILE',
-      'MOVE_FILE',
-      'DELETE_TAG',
-      'CLEAR_ALL_RECYCLE',
-      'RESUME_ALL_RECYCLE',
+      'TOGGLE_SELECTED_TAG',
       'SET_VIEW_NAME',
       'SET_VIEW_FILE_TYPE',
-      'SET_CURRENT_FOLDER',
-      'TOGGLE_SHOW_MOVE_PANEL',
-      'SET_TAGS_FROM_LOCAL',
-      'SET_SELECTED_TAGS',
       'SET_CURRENT_NAV',
-      'ADD_FILE',
-      'SET_IS_HOME_READY'
+      'SET_IS_HOME_READY',
+      'TOGGLE_SHOW_MOVE_PANEL'
     ]),
 
-    // handleClickNavItem (navName) {
-    //   this.setCurrentFolder(null)
-    // },
-
     handleSetCurrentFolder (node) {
-      console.log('handleSetCurrentFolder', node, node.data.type, node.getDepth())
+      console.log('handleSetCurrentFolder', node)
       this.SET_CURRENT_NAV(node.data)
+    },
+
+    handleSelect (node) {
+      console.log('handleSelect', node)
+      this.TOGGLE_SELECTED_TAG({
+        id: node.data._id
+      })
     },
 
     setCurrentFolder (id) {
@@ -482,20 +477,20 @@ export default {
       }
     },
 
-    updateTags (allTags) {
-      console.log('allTags', allTags)
-      this.$set(
-        this.nav[2],
-        'children',
-        allTags.map(item => {
-          return {
-            id: item._id,
-            title: item.name,
-            type: 'select'
-          }
-        })
-      )
-    }
+    // updateTags (allTags) {
+    //   console.log('allTags', allTags)
+    //   this.$set(
+    //     this.nav[2],
+    //     'children',
+    //     allTags.map(item => {
+    //       return {
+    //         id: item._id,
+    //         title: item.name,
+    //         type: 'select'
+    //       }
+    //     })
+    //   )
+    // }
   }
 }
 </script>

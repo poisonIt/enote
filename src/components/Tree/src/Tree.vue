@@ -333,6 +333,18 @@ export default {
     },
 
     addChild (data, editable, isLeaf) {
+      console.log('addChild', data)
+      if (data.type === 'select') {
+        var node = new TreeNode({
+          id: data.data._id,
+          name: data.data.name,
+          type: 'select',
+          data: data.data,
+          isSelected: false
+        }, this.model.store)
+        this.model.addChildren(node, true)
+        return
+      }
       const name = isLeaf ? this.defaultLeafNodeName : this.defaultTreeNodeName
       if (data.name) {
         name = data.name

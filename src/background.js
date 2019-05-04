@@ -308,11 +308,14 @@ ipcMain.on('create-youdao-window', (event, arg) => {
 })
 
 ipcMain.on('userDB-ready', (event, arg) => {
-  if (!loginWin) {
-    createLoginWindow()
-  }
-
-  // event.sender.send('db-loaded')
+  getAppConf(app.getAppPath('userData')).then(appConf => {
+    if (appConf.user && appConf.user !== '') {
+      backWin.webContents.send('login-ready')
+      createHomeWindow()
+    } else {
+      !loginWin && createLoginWindow()
+    }
+  })
 })
 
 ipcMain.on('login-ready', (event) => {

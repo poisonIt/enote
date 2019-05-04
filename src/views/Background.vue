@@ -46,21 +46,25 @@ export default {
         createCollection('doc', dbPath + '/' + user)
         createCollection('tag', dbPath + '/' + user)
 
-        LocalService.getAllLocalFolder().then(res => {
-          folderDataCache = res
-        })
-        LocalService.getAllLocalTag().then(res => {
-          tagDataCache = res
-        })
+        // LocalService.getAllLocalFolder().then(res => {
+        //   folderDataCache = res
+        // })
+        // LocalService.getAllLocalTag().then(res => {
+        //   tagDataCache = res
+        // })
       })
       ipcRenderer.on('home-window-ready', (event) => {
-        ipcRenderer.send('fetch-local-data-response', {
-          tasks: ['getAllLocalFolder', 'getAllLocalTag'],
-          res: [folderDataCache, tagDataCache],
-          from: ['NavBar']
+        console.log('home-window-ready', folderDataCache, tagDataCache)
+        LocalService.getAllLocalFolder().then(res1 => {
+          LocalService.getAllLocalTag().then(res2 => {
+            console.log('fetch-local-data-response', res1, res2, ['getAllLocalFolder', 'getAllLocalTag'])
+            ipcRenderer.send('fetch-local-data-response', {
+              tasks: ['getAllLocalFolder', 'getAllLocalTag'],
+              res: [res1, res2],
+              from: ['NavBar']
+            })
+          })
         })
-        folderDataCache = []
-        tagDataCache = []
       })
       ipcRenderer.on('fetch-user-data', (event, arg) => {
         console.log('fetch-user-data', arg, this.user)
@@ -89,7 +93,7 @@ export default {
       let tid = id
       Promise.all(tasks).then(res => {
         if (tid === taskId) {
-          console.log('fetch-local-data-response', res)
+          console.log('fetch-local-data-response', res, arg)
           ipcRenderer.send('fetch-local-data-response', {
             res: res,
             from: arg.from,

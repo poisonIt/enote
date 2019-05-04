@@ -23,11 +23,16 @@ const mutations = {
   },
 
   UPDATE_CURRENT_FILE (state, params) {
+    let fileCopy = {}
+    Object.keys(state.current_file).forEach(key => {
+      fileCopy[key] = state.current_file[key]
+    })
     Object.keys(params).forEach(key => {
-      if (state.current_file.hasOwnProperty(key)) {
-        state.current_file[key] = params[key]
+      if (fileCopy.hasOwnProperty(key)) {
+        fileCopy[key] = params[key]
       }
     })
+    state.current_file = fileCopy
   },
 
   TOGGLE_SELECTED_TAG (state, params) {

@@ -172,6 +172,7 @@ export default {
       isDBReady: 'GET_DB_READY',
       viewType: 'GET_VIEW_TYPE',
       viewFileType: 'GET_VIEW_FILE_TYPE',
+      currentFile: 'GET_CURRENT_FILE',
       // allTags: 'GET_ALL_TAGS'
     })
   },
@@ -216,7 +217,7 @@ export default {
     ipcRenderer.on('fetch-local-data-response', (event, arg) => {
       if (arg.from[0] === 'NavBar') {
         console.log('fetch-local-data-response', arg)
-        if (arg.tasks = ['getAllLocalFolder', 'getAllLocalTag']) {
+        if (arg.tasks[0] === 'getAllLocalFolder' && arg.tasks[1] === 'getAllLocalTag') {
           // let res = arg.res[arg.tasks.indexOf('getAllLocalFolder')]
           this.$worker.postMessage(['calcLocalData', arg.res])
         }
@@ -238,6 +239,15 @@ export default {
           if (arg.from[1] === 'delete') {
             this.popupedNode.model.hidden = true
             this.setCurrentFolder('bin')
+          }
+          if (arg.from[1] === 'rename') {
+            console.log('renameListFile', this.popupedNode.model, this.$refs.tree)
+            if (this.popupedNode.model.parent === this.$refs.tree.model.store.currentNode) {
+              this.$hub.dispatchHub('renameListFile', this, {
+                id: this.popupedNode.model.data._id,
+                title: this.popupedNode.model.name
+              })
+            }
           }
         }
 
@@ -309,7 +319,7 @@ export default {
 
     handleContextmenu (nodeInstance) {
       this.popupedNode = nodeInstance
-      nodeInstance.click()
+      // nodeInstance.click()
       const d = nodeInstance.model
       console.log('handleContextmenu-11', nodeInstance, nodeInstance.model)
       if (d.data.type === 'folder') {
@@ -332,12 +342,12 @@ export default {
     },
 
     handleNewNote (isTemp) {
-      let nodeData = this.popupedNode.model.data
+      let currentNode = this.$refs.tree.model.store.currentNode
       ipcRenderer.send('fetch-local-data', {
         tasks: ['addLocalNote'],
         params: [{
           title: '无标题笔记',
-          pid: nodeData.id || nodeData._id || '0',
+          pid: currentNode.id || currentNode._id || currentNode.data._id || '0',
           isTemp: isTemp
         }],
         from: ['NavBar']
@@ -358,6 +368,21 @@ export default {
     },
 
     handleAddNode (node) {
+    },
+
+    handleAddTagNode (tagData) {
+      let tagRootNode = this.$refs.tree.model.store.root.children[2]
+      let tag = {}
+      tag.type = 'select'
+      tag.isSelected = false
+      tag.data = {
+        type: 'select',
+        name: tagData.name,
+        _id: tagData._id,
+        remote_id: tagData.remote_id
+      }
+      console.log('handleAddTagNode-tag', tag)
+      tagRootNode.instance.addChild(tag)
     },
 
     handleInsertChildNode (childNode) {
@@ -381,7 +406,7 @@ export default {
           id: node.data._id || node.data.id || node.id,
           title: node.name
         }],
-        from: ['NavBar']
+        from: ['NavBar', 'rename']
       })
     },
 

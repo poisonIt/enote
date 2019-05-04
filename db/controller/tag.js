@@ -35,12 +35,19 @@ function saveAll (req) {
 
 // add
 function add (req) {
+  const { name } = req
   console.log('add-tag', req)
   let data = tagModel(req)
 
   return new Promise((resolve, reject) => {
-    Tag.insert(data, (err, tags) => {
-      resolve(tags)
+    Tag.findOne({ name: name }).exec((err, tag) => {
+      if (tag) {
+        resolve(tag)
+      } else {
+        Tag.insert(data, (err, tags) => {
+          resolve(tags)
+        })
+      }
     })
   })
 }

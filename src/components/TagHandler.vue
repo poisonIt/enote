@@ -13,7 +13,7 @@
         v-for="(item, index) in currentTags"
         :key="index">
         {{ item.name }}
-        <span class="del-tag" @click="deleteTag(item)"></span>
+        <span class="del-tag" @click="removeTag(item)"></span>
       </div>
     </div>
     <div class="add-input" ref="addInput">
@@ -60,8 +60,13 @@ export default {
       // tags: [],
       currentTags: [],
       currentTagIds: [],
+      currentFileCopy: {
+        _id: null,
+        tags: []
+      },
       addTagName: '',
       isListShowed: false,
+      shouldUpdateTagNav: true,
       containerWidth: '0px',
       tagListWidth: ''
     }
@@ -71,6 +76,8 @@ export default {
     ...mapGetters({
       isShowed: 'GET_SHOW_TAG_HANDLER',
       currentFile: 'GET_CURRENT_FILE',
+      currentNav: 'GET_CURRENT_NAV',
+      selectedTags: 'GET_SELECTED_TAGS',
       viewType: 'GET_VIEW_TYPE'
     }),
 
@@ -94,8 +101,12 @@ export default {
         }
         if (val && val.tags) {
           this.currentTags = []
-          // this.currentTags = this.allTags
-            // .filter(item => this.currentFile.tags.indexOf(item._id) > -1)
+          this.currentFileCopy = {
+            _id: val._id,
+            tags: [...val.tags]
+          }
+          this.currentTags = this.allTags
+            .filter(item => this.currentFile.tags.indexOf(item._id) > -1)
           // console.log('tag- ', val.tags)
           // this.currentTags = []
           // val.tags.forEach(tagId => {
@@ -124,10 +135,7 @@ export default {
     isShowed (val) {
       if (val) {
         this.handleResize(true)
-        ipcRenderer.send('fetch-local-data', {
-          tasks: ['getAllLocalTag'],
-          from: 'TagHandler',
-        })
+        this.fetchAllTag()
       }
     },
 
@@ -147,7 +155,7 @@ export default {
         if (arg.tasks[0] === 'getAllLocalTag') {
           this.allTags = arg.res[0]
           this.allTags.forEach(item => {
-            item.checked = this.currentFile.tags.indexOf(item._id) > -1
+            item.checked = this.currentFileCopy.tags.indexOf(item._id) > -1
           })
           ipcRenderer.send('fetch-local-data', {
             tasks: ['getLocalNoteById'],
@@ -165,6 +173,31 @@ export default {
           console.log('toggleTagChecked-res', arg.res)
           this.currentTags = this.allTags
             .filter(item => arg.res[0].tags.indexOf(item._id) > -1)
+          this.currentFileCopy.tags = this.currentTags.map(item => item._id)
+        }
+        if (arg.from[1] === 'addTag') {
+          console.log('addTag-res', arg.res)
+          this.addTagName = ''
+          let newTag = arg.res[0]
+          console.log('currentFileCopy', this.currentFileCopy)
+          this.currentFileCopy.tags.push(newTag._id)
+          this.fetchAllTag()
+          if (this.shouldUpdateTagNav) {
+            this.$hub.dispatchHub('addTagNode', this, newTag)
+          }
+        }
+        if (arg.from[1] === 'removeTag') {
+          console.log('removeTag-res', arg.res)
+          let newNote = arg.res[0]
+          this.currentFileCopy.tags = [...newNote.tags]
+          this.fetchAllTag()
+          if (this.currentNav.type === 'select' || this.currentNav.type === 'tag') {
+            ipcRenderer.send('fetch-local-data', {
+              tasks: ['getLocalTagNote'],
+              params: [{ tags: this.selectedTags }],
+              from: 'DocumentList',
+            })
+          }
         }
       }
     })
@@ -204,25 +237,60 @@ export default {
       if (this.addTagName === '') {
         return
       }
+      if (_.findIndex(this.allTags, { name: this.addTagName }) > -1) {
+        this.shouldUpdateTagNav = false
+      } else {
+        this.shouldUpdateTagNav = true
+      }
+      this.isListShowed = false
       console.log('handleInputBlur', this.addTagName)
-      this.ADD_FILE_TAG({
-        id: this.currentFile.id,
-        tag: this.addTagName
-      }).then(() => {
-        this.addTagName = ''
-        // this.updateCurrentFileTag()
+      // add tag
+      ipcRenderer.send('fetch-local-data', {
+        tasks: ['addLocalTag'],
+        params: [{
+          note_ids: [this.currentFile._id],
+          name: this.addTagName
+        }],
+        from: ['TagHandler', 'addTag']
+      })
+
+      // this.ADD_FILE_TAG({
+      //   id: this.currentFile.id,
+      //   tag: this.addTagName
+      // }).then(() => {
+      //   this.addTagName = ''
+      //   // this.updateCurrentFileTag()
+      // })
+    },
+
+    fetchAllTag () {
+      ipcRenderer.send('fetch-local-data', {
+        tasks: ['getAllLocalTag'],
+        from: 'TagHandler',
       })
     },
 
-    deleteTag (tag) {
-      console.log('deleteTag', tag)
-      this.REMOVE_FILE_TAG({
-        fileId: this.currentFile.id,
-        tagId: tag._id
+    removeTag (tag) {
+      let tags = [...this.currentFileCopy.tags]
+      console.log('removeTag-0000', tag, tags)
+      tags.splice(tags.indexOf(tag._id), 1)
+      console.log('remoteTag-1111', tags)
+
+      ipcRenderer.send('fetch-local-data', {
+        tasks: ['updateLocalNote'],
+        params: [{
+          id: this.currentFile._id,
+          tags: tags
+        }],
+        from: ['TagHandler', 'removeTag'],
       })
-      this.currentTags.forEach(item => {
-        item.checked = this.currentFile.tags.indexOf(item._id) > -1
-      })
+      // this.REMOVE_FILE_TAG({
+      //   fileId: this.currentFile.id,
+      //   tagId: tag._id
+      // })
+      // this.currentTags.forEach(item => {
+      //   item.checked = this.currentFileCopy.tags.indexOf(item._id) > -1
+      // })
       // LocalDAO.tag.removeFile({
       //   fileId: this.currentFile.id,
       //   tagId: tag._id
@@ -285,7 +353,7 @@ export default {
       //   // })
       //   tag.checked = true
       // } else {
-      //   this.deleteTag(tag)
+      //   this.removeTag(tag)
       //   tag.checked = false
       // }
     }

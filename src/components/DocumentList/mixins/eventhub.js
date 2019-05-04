@@ -3,15 +3,22 @@ import * as _ from 'lodash'
 export default {
   created () {
     this.$hub.hookHub('addFile', 'NavBar', (file) => this.handleFileAdded(file))
+    this.$hub.hookHub('renameListFile', 'NavBar', (file) => this.handleFileRename(file))
     this.$hub.hookHub('updateFile', 'FileCard', (params) => this.handleFileUpdate(params))
     this.$hub.hookHub('updateFile', 'FileHandler', (params) => this.handleFileUpdate(params))
   },
 
   methods: {
     handleFileAdded (file) {
-      console.log('handleFileAdded', file)
       this.fileList.unshift(file)
       this.selectFile(0)
+    },
+
+    handleFileRename (file) {
+      let f = _.find(this.fileList, { _id: file.id })
+      if (f) {
+        f.title = file.title
+      }
     },
 
     handleFileUpdate (params) {

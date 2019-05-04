@@ -51,6 +51,7 @@ self.addEventListener('message', (e) => {
       editNodeDisabled: true,
       delNodeDisabled: true,
       children: tags.map(tag => {
+        tag.id = tag._id
         tag.type = 'select'
         tag.isSelected = false
         tag.data = {

@@ -1,3 +1,4 @@
+import * as _ from 'lodash'
 import { getValid } from '../tools'
 import noteModel from '../models/note'
 import folderCtr from './folder'
@@ -228,6 +229,33 @@ function trashAll (req) {
   })
 }
 
+function addTag (req) {
+  const { id, tags } = req
+  console.log('addTag', req)
+
+  return new Promise((resolve, reject) => {
+    Note.findOne({ _id: id }, (err, note) => {
+      if (err) reject(err)
+      if (!note) reject(`note ${id} not exist`)
+      console.log('oldTags', note, note.tags, tags)
+      let newTags = _.union(note.tags, tags)
+      console.log('newTags', newTags)
+      Note.update(
+        { _id: id },
+        { $set: {
+          tags: newTags,
+          need_push: true 
+        }},
+        { multi: true },
+        (err, num, newNote) => {
+          console.log('update-folder-111', newNote)
+          resolve(newNote)
+        }
+      )
+    })
+  })
+}
+
 // get
 function getAll () {
   return new Promise((resolve, reject) => {
@@ -320,10 +348,12 @@ function getTrash () {
 
 function getByTags (req) {
   const { tags } = req
-  console.log('getByTags', req)
 
   return new Promise((resolve, reject) => {
-    Note.find({ tags: { $in: tags } }, (err, notes) => {
+    Note.find({}).filter(x => {
+      return _.intersection(x.tags, tags).length === tags.length
+    }).exec((err, notes) => {
+      if (err) reject(err)
       resolve(notes)
     })
   })
@@ -339,6 +369,7 @@ export default {
   update,
   updateByQuery,
   trashAll,
+  addTag,
   getAll,
   getAllByQuery,
   getAllByPid,

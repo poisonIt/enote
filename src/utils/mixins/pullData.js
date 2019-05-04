@@ -6,6 +6,8 @@ import {
 import LocalDAO from '../../../db/api'
 import { mapActions } from 'vuex'
 
+let allTagLocalMap = {}
+
 export default {
   data () {
     return {
@@ -58,18 +60,25 @@ export default {
       }
 
       let dataBody = pullResp[0].data.body
+
+      const saveTagTask = (pullResp[2].data.body || [])
+        .map(item => LocalDAO.tag.add(this.transTagData(item)))
+
+      let tagResp = await Promise.all(saveTagTask)
+      allTagLocalMap = {}
+      tagResp.forEach(item => {
+        allTagLocalMap[item.remote_id] = item._id
+      })
+
       const saveNoteBooksTask = dataBody
-        .map(item => LocalDAO.folder.add(this.transNoteBookData(item)))
+      .map(item => LocalDAO.folder.add(this.transNoteBookData(item)))
 
       const saveNoteTask = pullResp[1].data.body
         .map(item => {
           return LocalDAO.note.add(this.transNoteData(item)
         )})
 
-      const saveTagTask = (pullResp[2].data.body || [])
-        .map(item => LocalDAO.tag.add(this.transTagData(item)))
-
-      let saveLocalRes = await Promise.all([...saveNoteBooksTask, ...saveNoteTask, ...saveTagTask])
+      let saveLocalRes = await Promise.all([...saveNoteBooksTask, ...saveNoteTask])
       console.log('saveLocalRes', saveLocalRes)
 
       return saveLocalRes
@@ -102,7 +111,7 @@ export default {
         trash: obj.trash,
         file_size: obj.size,
         content: obj.noteContent,
-        tags: obj.tagId ? obj.tagId.filter(item => item) : [],
+        tags: obj.tagId ? obj.tagId.map(item => allTagLocalMap[item]) : [],
         need_push: false,
         top: obj.top
       }
@@ -111,7 +120,8 @@ export default {
     transTagData (obj) {
       return {
         name: obj.tagName,
-        remote_id: obj.tagId
+        remote_id: obj.tagId,
+        need_push: false
       }
     }
   }

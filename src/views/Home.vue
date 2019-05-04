@@ -54,7 +54,7 @@ import { mapActions, mapGetters } from 'vuex'
 import User from '@/components/User'
 import Move from '@/components/Move'
 import NavBar from '@/components/NavBar'
-import FileTool from '@/components/FileTool'
+import FileTool from '../components/FileTool'
 import PageLayout from '@/components/PageLayout.vue'
 import DocumentList from '@/components/DocumentList'
 import FileHandler from '@/components/FileHandler'
@@ -288,6 +288,7 @@ export default {
       createCollection('folder', dbPath + '/' + user)
       createCollection('note', dbPath + '/' + user)
       createCollection('doc', dbPath + '/' + user)
+      createCollection('tag', dbPath + '/' + user)
       ipcRenderer.send('fetch-user-data', {
         from: 'Home'
       })

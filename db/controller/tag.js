@@ -8,6 +8,10 @@ function createCollection (path) {
   LinvoDB.dbPath = path
 
   Tag = new LinvoDB('tag', {
+    type: {
+      type: String,
+      default: 'tag'
+    },
     name: {
       type: String,
       default: '未命名标签'
@@ -20,7 +24,13 @@ function createCollection (path) {
       default: 'NORMAL'
     }
   })
+
+  Tag.ensureIndex({
+    fieldName: 'name',
+    unique: true
+  })
 }
+
 
 // save
 function saveAll (req) {
@@ -45,6 +55,7 @@ function add (req) {
         resolve(tag)
       } else {
         Tag.insert(data, (err, tags) => {
+          console.log('add-tag', tags)
           resolve(tags)
         })
       }
@@ -69,18 +80,7 @@ function removeById (req) {
 
   return new Promise((resolve, reject) => {
     Tag.findOne({ _id: id }).exec((err, tag) => {
-      Tag.remove()
-      resolve()
-    })
-  })
-}
-
-function removeByNoteId (req) {
-  const { note_id } = req
-
-  return new Promise((resolve, reject) => {
-    Tag.findOne({ note_id: note_id }).exec((err, tag) => {
-      Tag.remove()
+      tag.remove()
       resolve()
     })
   })
@@ -91,7 +91,12 @@ function update (req) {
   const { id } = req
   console.log('update-tag', req)
 
+  if (!req.hasOwnProperty('need_push')) {
+    req.need_push = true
+  }
+
   return new Promise((resolve, reject) => {
+    console.log('update-111', Tag)
     Tag.findOne({ _id: id })
     .exec((err, tag) => {
       Tag.update(
@@ -99,15 +104,38 @@ function update (req) {
         { $set: req },
         { multi: true },
         (err, num, newTag) => {
-          console.log('update-folder-111', newTag)
-          noteCtr.update({
-            id: newTag.note_id,
-            need_push: true
-          }).then(note => {
+          if (err) {
+            console.log('err', err)
+          }
+          console.log('update-tag-111', newTag)
+          if (!newTag) {
+            resolve(tag)
+          } else {
             resolve(newTag)
-          })
+          }
         }
       )
+    })
+  })
+}
+
+function updateMulti (req) {
+  const { ids } = req
+
+  let d = {}
+  Object.keys(req).forEach(key => {
+    if (key !== 'ids') {
+      d[key] = req[key]
+    }
+  })
+
+  return new Promise((resolve, reject) => {
+    let p = ids.map(id => {
+      d.id = id
+      return update(d)
+    })
+    Promise.all(p).then(res => {
+      resolve(res)
     })
   })
 }
@@ -116,17 +144,20 @@ function update (req) {
 function getAll () {
   return new Promise((resolve, reject) => {
     Tag.find({}).exec((err, tags) => {
+      console.log('getAll-tags', tags)
       resolve(tags)
     })
   })
 }
 
-function getByNoteId (req) {
-  const { note_id } = req
-  console.log('getByNoteId', note_id, req)
+function getAllByQuery (req) {
+  const { query } = req
+  console.log('getAllByQuery', req, query)
+
   return new Promise((resolve, reject) => {
-    Tag.findOne({ note_id: note_id }).exec((err, tag) => {
-      resolve(tag)
+    Tag.find(query, (err, tags) => {
+      console.log('getAllByQuery-tags', tags)
+      resolve(tags)
     })
   })
 }
@@ -155,10 +186,10 @@ export default {
   add,
   removeAll,
   removeById,
-  removeByNoteId,
   update,
+  updateMulti,
   getAll,
-  getByNoteId,
   getById,
+  getAllByQuery,
   getTrash
 }

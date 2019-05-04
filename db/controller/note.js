@@ -205,6 +205,38 @@ function updateByQuery (req) {
   })
 }
 
+function updateRemoteTagIds (req) {
+  const { tags } = req
+  let tagArr = tags.map(item => item.tag_id)
+  let tagMap = {}
+  tags.forEach(item => {
+    tagMap[item.tag_id] = item.remote_id
+  })
+  console.log('updateRemoteTagIds', req, tagArr, tagMap)
+
+  return new Promise((resolve, reject) => {
+    Note.find({}).filter(x => {
+      return _.intersection(x.tags, tagArr).length > 0
+    }).exec((err, notes) => {
+      if (err) reject(err)
+      let p = notes.map(note => {
+        let itc = _.intersection(note.tags, tagArr)
+        let newTags = _.pullAll(note.tags, itc)
+        let remoteItc = itc.map(item => tagMap[item])
+        newTags = _.concat(newTags, remoteItc)
+        console.log('updateRemoteTagIds-11111', note.tags, itc, newTags, remoteItc, newTags)
+        return update({
+          id: note._id,
+          tags: newTags
+        })
+      })
+      Promise.all(p).then(res => {
+        resolve(res)
+      })
+    })
+  })
+}
+
 function trashAll (req) {
   const { trash } = req
   console.log('trashAll', req)
@@ -368,6 +400,7 @@ export default {
   removeAllDeleted,
   update,
   updateByQuery,
+  updateRemoteTagIds,
   trashAll,
   addTag,
   getAll,

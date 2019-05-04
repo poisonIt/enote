@@ -5,7 +5,7 @@
         <div class="icon-new"></div>
         <span>新建</span>
       </div>
-      <div class="item sync" @click="asyncData">
+      <div class="item sync" @click="asyncData(0)">
         <div class="icon-sync infinite rotate" :class="{ animated: isSyncing }"></div>
         <span>同步</span>
       </div>
@@ -23,13 +23,12 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import pullData from '@/utils/mixins/pullData'
-import pushData from '@/utils/mixins/pushData'
+import mixins from '../mixins'
 
 export default {
   name: 'FileTool',
 
-  mixins: [ pullData, pushData ],
+  mixins: mixins,
 
   data () {
     return {
@@ -89,11 +88,17 @@ export default {
       }
     },
 
-    asyncData () {
-      this.pushData().catch(err => {
-        this.$Message.error('同步失败，请重新登录')
-        // clearInterval(asyncItv)
-      })
+    asyncData (delay, isAuto) {
+      if (!delay) {
+        delay = 1000
+      }
+      if (isAuto) return
+      setTimeout(() => {
+        this.pushData().catch(err => {
+          this.$Message.error('同步失败，请重新登录')
+          // clearInterval(asyncItv)
+        })
+      }, delay)
     },
 
     checkIsEditorFocused () {
@@ -170,9 +175,9 @@ export default {
   background-position center
 
 .icon-new
-  background-image url(../assets/images/lanhu/new@2x.png)
+  background-image url(../../../assets/images/lanhu/new@2x.png)
 .icon-sync
-  background-image url(../assets/images/lanhu/sync@2x.png)
+  background-image url(../../../assets/images/lanhu/sync@2x.png)
 
 .expand
   position relative
@@ -196,7 +201,7 @@ export default {
   height 26px
 
 .button-sync
-  background-image url(../assets/images/lanhu/sync@2x.png)
+  background-image url(../../../assets/images/lanhu/sync@2x.png)
   background-repeat no-repeat
   background-size contain
   background-position center

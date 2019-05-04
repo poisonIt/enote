@@ -272,6 +272,7 @@ export default {
             }
           }
         }
+        this.$hub.dispatchHub('pushData', this)
       }
     })
   },

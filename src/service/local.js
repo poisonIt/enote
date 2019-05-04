@@ -67,6 +67,10 @@ export function updateLocalNote (params) {
   return LocalDAO.note.update(params)
 }
 
+export function updateRemoteTagIds (params) {
+  return LocalDAO.note.updateRemoteTagIds(params)
+}
+
 export function removeLocalNote (params) {
   return LocalDAO.note.removeById(params)
 }
@@ -138,6 +142,10 @@ export function getAllLocalTag () {
   return LocalDAO.tag.getAll()
 }
 
+export function getAllLocalTagByQuery (params) {
+  return LocalDAO.tag.getAllByQuery(params)
+}
+
 export function addLocalTag (params) {
   let { note_ids } = params
 
@@ -159,4 +167,12 @@ export function addLocalTag (params) {
       }
     })
   })
+}
+
+export function updateLocalTag (params) {
+  return LocalDAO.tag.update(params)
+}
+
+export function updateMultiLocalTag (params) {
+  return LocalDAO.tag.updateMulti(params)
 }

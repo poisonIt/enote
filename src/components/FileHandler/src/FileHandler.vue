@@ -188,6 +188,7 @@ export default {
         id: this.currentFile._id,
         name: this.titleValue
       })
+      this.$hub.dispatchHub('pushData', this)
     },
 
     handleResize () {

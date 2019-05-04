@@ -1,34 +1,22 @@
 // import pReduce from 'p-reduce'
 import { ipcRenderer } from 'electron'
 import { mapGetters, mapActions } from 'vuex'
-import { pushNotebook, pushNote, createTag, deleteTag, uploadFile } from '@/service'
+import { pushNotebook, pushNote, createTag, modifyTag, deleteTag, uploadFile } from '@/service'
 import LocalDAO from '../../../db/api'
 import { readFileSync, createReadStream, unlinkSync } from 'fs'
 
 const mimes = ['image/png', 'image/gif','image/jpeg']
+let allTagRemoteMap = {}
 
 export default {
-  data () {
-    return {
-    }
-  },
-
   computed: {
     ...mapGetters({
-      // allFileMap: 'GET_FILES',
-      allTagMap: 'GET_TAGS_MAP',
-      isSyncing: 'GET_IS_SYNCING',
-      tagsNeedPush: 'GET_TAGS_NEED_PUSH',
-      filesNeedPush: 'GET_FILES_NEED_PUSH'
+      isSyncing: 'GET_IS_SYNCING'
     })
   },
 
   created () {
     this.hookMsgHandler()
-  },
-
-  mounted () {
-    console.log('mounted-11111111', this.$root)
   },
 
   methods: {
@@ -38,8 +26,6 @@ export default {
     ]),
 
     tranData (file) {
-      // let parentFolder = this.allFileMap[file.parent_folder]
-
       if (file.type === 'folder') {
         return {
           noteBookId: file.remote_id || file.id,
@@ -57,11 +43,12 @@ export default {
           title: file.title,
           trash: file.trash,
           top: file.top,
-          tagId: [],
-          // tagId: file.tags.map(tagId => {
-          //   let tag = this.allTagMap[tagId]
-          //   return tag ? tag.remote_id : undefined
-          // }).filter(tag => tag)
+          tagId: file.tags.map(item => allTagRemoteMap[item])
+        }
+      } else if (file.type === 'tag') {
+        return {
+          tagsId: file.remote_id,
+          tagsName: file.name
         }
       }
     },
@@ -155,105 +142,16 @@ export default {
       }
     },
 
-    async runPushTasks (fDepthed, fSorted, nNeedPush) {
-      console.log('runPushTasks', fDepthed, fSorted, nNeedPush)
-      let tagTrashPromises = null
-      // if (tagsNeedDelete.length > 0) {
-      //   tagTrashPromises = this.createPromise({
-      //     tags: tagsNeedDelete.map(item => item.remote_id)
-      //   }, 'deleteTag')
-      // }
-
-      // let tagPromises = null
-      // if (this.tagsNeedPush.length > 0) {
-      //   tagPromises = this.createPromise({
-      //     tags: this.tagsNeedPush.map(item => item.name)
-      //   }, 'tag')
-      // }
-
-      let fPromises = fDepthed.map(files => {
-        let data = files.map(file => {
-          return this.tranData(file)
-        })
-        return this.createPromise(data, 'folder', files)
-      })
-
-      let nPromises = this.createPromise(
-        nNeedPush.map(file => {
-          return this.tranData(file)
-        })
-      , 'doc')
-
-      // let deleteTagRes = []
-      // if (tagTrashPromises) {
-      //   deleteTagRes = await tagTrashPromises
-      // }
-
-      // let tagRes = []
-      // if (tagPromises) {
-      //   tagRes = await tagPromises
-      // }
-
-      // await Promise.all(tagsNeedDelete.map(tag => {
-      //   return LocalDAO.tag.removeById({
-      //     id: tag._id
-      //   })
-      // }))
-
-      // this.tagsNeedPush.forEach((item, index) =>{
-      //   this.UPDATE_TAG({
-      //     id: item._id,
-      //     data: {
-      //       remote_id: tagRes[index].tagId
-      //     }
-      //   })
-      // })
-
-      // push folder
-      let fRes = await pReduce(fPromises, async (total, res) => {
-        if (total === 0) {
-          total = []
-        }
-        console.log('fPromises-res', res)
-        return [...total, ...res]
-      }, 0)
-
-      console.log('fRes', fRes)
-
-      // fSorted.forEach((item, index) => {
-        // this.SET_FILE_PUSH_FINISHED({
-        //   id: item.id,
-        //   remote_id: noteBookRes[index].noteBookId
-        // })
-      // })
-
-      // push note
-      let nRes = await nPromises
-
-      console.log('nRes', nRes)
-      
-      // nNeedPush.forEach((item, index) => {
-        // this.SET_FILE_PUSH_FINISHED({
-        //   id: item.id,
-        //   remote_id: nRes[index].noteId
-        // })
-      // })
-
-      // let deleteFilePromise = this.filesNeedPush.filter(file => file.trash === 'DELETE')
-      //   .map(file => {
-      //     return LocalDAO.files.removeById({
-      //       id: file.id
-      //     })
-      //   })
-
-      // await Promise.all(deleteFilePromise)
-
-      this.SET_IS_SYNCING(false)
-      return [fRes, nRes]
-    },
-
     async hookMsgHandler () {
       ipcRenderer.on('fetch-local-data-response', (event, arg) => {
+        if (arg.from === 'pushTags') {
+          if (arg.tasks.indexOf('getAllLocalTag') > -1) {
+            console.log('pushTags-allTags', arg.res)
+            this.runPushTags(arg.res[0]).then(() => {
+              this.pushFolders()
+            })
+          }
+        }
         if (arg.from === 'pushFolders') {
           if (arg.tasks.indexOf('getAllLocalFolderByQuery') > -1) {
             console.log('pushFolders', arg.res)
@@ -272,6 +170,13 @@ export default {
       })
     },
 
+    pushTags () {
+      ipcRenderer.send('fetch-local-data', {
+        tasks: ['getAllLocalTag'],
+        from: 'pushTags'
+      })
+    },
+
     pushFolders () {
       ipcRenderer.send('fetch-local-data', {
         tasks: ['getAllLocalFolderByQuery'],
@@ -286,6 +191,86 @@ export default {
         tasks: ['getAllLocalNoteByQuery'],
         params: [{ query: { need_push: true }, with_doc: true }],
         from: 'pushNotes'
+      })
+    },
+
+    async runPushTags (allTags) {
+      allTagRemoteMap = {}
+      allTags.forEach(item => {
+        allTagRemoteMap[item._id] = item.remote_id
+      })
+
+      let tNeedPush = allTags.filter(item => item.need_push)
+      if (tNeedPush.length === 0) {
+        return new Promise((resolve, reject) => {
+          resolve()
+        })
+      }
+
+      // modify tag
+      let tModify = tNeedPush.filter(tag => tag.remote_id)
+      let tModifyData = tModify.map(tag => this.tranData(tag))
+      let modifyP = tModifyData.map(item => {
+        return modifyTag(item)
+      })
+      let modifyResp = await Promise.all(modifyP)
+
+      ipcRenderer.send('fetch-local-data', {
+        tasks: ['updateMultiLocalTag'],
+        params: [{
+          ids: tModify.map(item => item._id),
+          need_push: false
+        }],
+        from: 'pushFolders'
+      })
+
+      // let saveModifyTask = modifyResp.map((tag, idx) => {
+      //   return LocalDAO.tag.update({
+      //     id: tModify[idx]._id,
+      //     need_push: false
+      //   })
+      // })
+      // await Promise.all(saveModifyTask)
+
+      // create tag
+      let tCreate = tNeedPush.filter(tag => !tag.remote_id)
+      if (tCreate.length === 0) {
+        return new Promise((resolve, reject) => {
+          resolve()
+        })
+      }
+      let tCreateData = tCreate.map(tag => tag.name)
+      let createResp = await createTag({
+        tags: tCreateData
+      })
+      console.log('createResp', createResp)
+      
+      let saveCreateTask = createResp.data.body.map((tag, idx) => {
+        allTagRemoteMap[tCreate[idx]._id] = tag.tagId
+      console.log('allTagRemoteMap-1111', allTagRemoteMap, tCreate[idx]._id, tag.tagId)
+        return LocalDAO.tag.update({
+          id: tCreate[idx]._id,
+          remote_id: tag.tagId,
+          need_push: false
+        })
+      })
+      await Promise.all(saveCreateTask)
+      console.log('allTagRemoteMap-2222', allTagRemoteMap)
+
+      // // update note tag ids to remote_id
+      // createResp.forEach((tag, idx) => {
+      //   allTagRemoteMap[tag._id] = item.remote_id
+      // })
+      // console.log('tagR', tagR)
+      // let saveUpdateTask = createResp.map((tag, idx) => {
+      //   return LocalDAO.note.updateRemoteTagIds({
+      //     tags: tagR
+      //   })
+      // })
+      // await Promise.all(saveUpdateTask)
+
+      return new Promise((resolve, reject) => {
+        resolve()
       })
     },
     
@@ -384,70 +369,7 @@ export default {
     },
 
     async pushData () {
-      this.pushFolders()
-      // await this.pushNote()
-      return
-      // folder
-      let fNeedPush = await LocalDAO.folder.getAllByQuery({
-        query: {
-          need_push: true
-        }
-      })
-      let { fDepthed, fSorted } = this.getFoldersPrepared(fNeedPush)
-
-      // note
-      let nNeedPush = await LocalDAO.note.getAllByQuery({
-        query: {
-          need_push: true
-        }
-      })
-      console.log('fNeedPush', fNeedPush)
-      console.log('fDepthed', fDepthed)
-      console.log('fSorted', fSorted)
-      console.log('nNeedPush', nNeedPush)
-      let resp = this.runPushTasks(fDepthed, fSorted, nNeedPush)
-      return resp
-      // return new Promise((resolve, reject) => {
-      //   resolve()
-      //   return
-      //   LocalDAO.tag.getAllTrash().then(trashTagResp => {
-      //     let tagsNeedDelete = trashTagResp.filter(item => item.remote_id)
-      //     // tagsNeedDelete = []
-      //     if (this.filesNeedPush.length + tagsNeedDelete.length === 0) {
-      //       console.log('no-file-need-push')
-      //       resolve()
-      //       return
-      //     }
-      //     let fNeedPush = this.filesNeedPush
-      //       .filter(item => item.type === 'folder')
-      //       .sort((a, b) => a.depth - b.depth)
-    
-      //     let fDepthed = []
-    
-      //     let docsNeedPush = this.filesNeedPush
-      //       .filter(item => item.type === 'doc')
-      //     // if (fNeedPush.length + docsNeedPush.length === 0) {
-      //     //   console.log('pushData', fNeedPush.length, docsNeedPush.length)
-      //     //   resolve()
-      //     // }
-      //     console.log('syncData', fNeedPush, docsNeedPush)
-      //     this.SET_IS_SYNCING(true)
-      //     if (fNeedPush.length > 0) {
-      //       let minDepth = fNeedPush[0].depth
-      //       let maxDepth = fNeedPush[fNeedPush.length - 1].depth
-      
-      //       for (let i = minDepth; i <= maxDepth; i++) {
-      //         let arr = fNeedPush.filter(item => item.depth === i)
-      //         if (arr.length > 0) {
-      //           fDepthed.push(arr)
-      //         }
-      //       }
-      //     }
-    
-      //     let resps = this.runPushTasks(tagsNeedDelete, fDepthed, fNeedPush, docsNeedPush)
-      //     resolve(resps)
-      //   })
-      // })
+      this.pushTags()
     },
 
     getFoldersPrepared (fNeedPush) {

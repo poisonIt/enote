@@ -215,6 +215,17 @@ function updateByQuery (req) {
   })
 }
 
+function updateMulti (reqs) {
+  return new Promise((resolve, reject) => {
+    let p = reqs.map(req => {
+      return update(req)
+    })
+    Promise.all(p).then(res => {
+      resolve(res)
+    })
+  })
+}
+
 // get
 function getAll () {
   console.log('getAll-folder')
@@ -301,6 +312,7 @@ export default {
   removeAllDeleted,
   update,
   updateByQuery,
+  updateMulti,
   getAll,
   getAllByQuery,
   getAllByPid,

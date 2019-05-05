@@ -5,7 +5,7 @@
         <div class="icon-new"></div>
         <span>新建</span>
       </div>
-      <div class="item sync" @click="asyncData(0)">
+      <div class="item sync" @click="syncData(0)">
         <div class="icon-sync infinite rotate" :class="{ animated: isSyncing }"></div>
         <span>同步</span>
       </div>
@@ -54,12 +54,12 @@ export default {
   },
 
   mounted () {
-    // let asyncItv = setInterval(() => {
-    //   this.checkIsEditorFocused()
-    //   console.log('isEditorFocused', this.isEditorFocused)
-    //   if(this.isEditorFocused) return
-    //   this.asyncData()
-    // }, 5000)
+    let asyncItv = setInterval(() => {
+      this.checkIsEditorFocused()
+      console.log('isEditorFocused', this.isEditorFocused)
+      if(this.isEditorFocused || this.isSyncing) return
+      this.syncData()
+    }, 5000)
   },
 
   methods: {
@@ -88,13 +88,14 @@ export default {
       }
     },
 
-    asyncData (delay, isAuto) {
+    syncData (delay, isAuto) {
       if (!delay) {
         delay = 1000
       }
-      if (isAuto) return
+      // if (isAuto) return
       setTimeout(() => {
-        this.pushData().catch(err => {
+        this.pushData()
+        .catch(err => {
           this.$Message.error('同步失败，请重新登录')
           // clearInterval(asyncItv)
         })

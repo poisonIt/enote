@@ -119,20 +119,10 @@ function update (req) {
   })
 }
 
-function updateMulti (req) {
-  const { ids } = req
-
-  let d = {}
-  Object.keys(req).forEach(key => {
-    if (key !== 'ids') {
-      d[key] = req[key]
-    }
-  })
-
+function updateMulti (reqs) {
   return new Promise((resolve, reject) => {
-    let p = ids.map(id => {
-      d.id = id
-      return update(d)
+    let p = reqs.map(req => {
+      return update(req)
     })
     Promise.all(p).then(res => {
       resolve(res)

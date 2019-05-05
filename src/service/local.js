@@ -38,6 +38,14 @@ export function updateLocalFolder (params) {
   return LocalDAO.folder.update(params)
 }
 
+export function updateMultiLocalFolder (params) {
+  return LocalDAO.folder.updateMulti(params)
+}
+
+export function removeAllDeletedFolder () {
+  return LocalDAO.folder.removeAllDeleted()
+}
+
 // note
 export function getAllLocalNote () {
   return LocalDAO.note.getAll()
@@ -67,12 +75,20 @@ export function updateLocalNote (params) {
   return LocalDAO.note.update(params)
 }
 
+export function updateMultiLocalNote (params) {
+  return LocalDAO.note.updateMulti(params)
+}
+
 export function updateRemoteTagIds (params) {
   return LocalDAO.note.updateRemoteTagIds(params)
 }
 
 export function removeLocalNote (params) {
   return LocalDAO.note.removeById(params)
+}
+
+export function removeAllDeletedNote () {
+  return LocalDAO.note.removeAllDeleted()
 }
 
 export function getLocalTagNote (params) {

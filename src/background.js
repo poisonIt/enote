@@ -198,6 +198,7 @@ function createBackgroundWindow () {
   backWin = new BrowserWindow({
     id: 'background',
     show: isDevelopment
+    // show: false
   })
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
@@ -308,14 +309,15 @@ ipcMain.on('create-youdao-window', (event, arg) => {
 })
 
 ipcMain.on('userDB-ready', (event, arg) => {
-  getAppConf(app.getAppPath('userData')).then(appConf => {
-    if (appConf.user && appConf.user !== '') {
-      backWin.webContents.send('login-ready')
-      createHomeWindow()
-    } else {
-      !loginWin && createLoginWindow()
-    }
-  })
+  // getAppConf(app.getAppPath('userData')).then(appConf => {
+  //   if (appConf.user && appConf.user !== '') {
+  //     backWin.webContents.send('login-ready')
+  //     createHomeWindow()
+  //   } else {
+  //     !loginWin && createLoginWindow()
+  //   }
+  // })
+  !loginWin && createLoginWindow()
 })
 
 ipcMain.on('login-ready', (event) => {

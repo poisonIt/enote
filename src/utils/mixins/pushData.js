@@ -162,9 +162,14 @@ export default {
           }
         }
         if (arg.from === 'pushNotes') {
+          console.log('pushNotes-res', arg)
           if (arg.tasks.indexOf('getAllLocalNoteByQuery') > -1) {
             console.log('pushNotes', arg.res)
             this.runPushNotes(arg.res[0])
+          }
+          if (arg.tasks[0] === 'updateMultiLocalNote' &&
+            arg.tasks[1] === 'removeAllDeletedNote') {
+            this.SET_IS_SYNCING(false)
           }
         }
       })
@@ -217,10 +222,12 @@ export default {
 
       ipcRenderer.send('fetch-local-data', {
         tasks: ['updateMultiLocalTag'],
-        params: [{
-          ids: tModify.map(item => item._id),
-          need_push: false
-        }],
+        params: [tModify.map(item => {
+          return {
+            id: item._id,
+            need_push: false
+          }
+        })],
         from: 'pushFolders'
       })
 
@@ -245,29 +252,20 @@ export default {
       })
       console.log('createResp', createResp)
       
-      let saveCreateTask = createResp.data.body.map((tag, idx) => {
+      // // update note tag ids to remote_id
+      let saveCreateData = createResp.data.body.map((tag, idx) => {
         allTagRemoteMap[tCreate[idx]._id] = tag.tagId
-      console.log('allTagRemoteMap-1111', allTagRemoteMap, tCreate[idx]._id, tag.tagId)
-        return LocalDAO.tag.update({
+        return {
           id: tCreate[idx]._id,
           remote_id: tag.tagId,
           need_push: false
-        })
+        }
       })
-      await Promise.all(saveCreateTask)
-      console.log('allTagRemoteMap-2222', allTagRemoteMap)
-
-      // // update note tag ids to remote_id
-      // createResp.forEach((tag, idx) => {
-      //   allTagRemoteMap[tag._id] = item.remote_id
-      // })
-      // console.log('tagR', tagR)
-      // let saveUpdateTask = createResp.map((tag, idx) => {
-      //   return LocalDAO.note.updateRemoteTagIds({
-      //     tags: tagR
-      //   })
-      // })
-      // await Promise.all(saveUpdateTask)
+      ipcRenderer.send('fetch-local-data', {
+        tasks: ['updateMultiLocalTag'],
+        params: [saveCreateData],
+        from: 'pushFolders'
+      })
 
       return new Promise((resolve, reject) => {
         resolve()
@@ -277,6 +275,7 @@ export default {
     async runPushFolders (fNeedPush) {
       return new Promise ((resolve, reject) => {
         if (fNeedPush.length === 0) {
+          this.SET_IS_SYNCING(false)
           resolve()
           return
         }
@@ -291,38 +290,44 @@ export default {
         function runTask () {
           console.log('runTask', taskCol, fDepthedTransed)
           if (taskCol >= fDepthedTransed.length) {
-            LocalDAO.folder.removeAllDeleted().then(() => {
-              resolve()
-              return
+            console.log('runTask-1111')
+            ipcRenderer.send('fetch-local-data', {
+              tasks: ['removeAllDeletedFolder'],
+              from: 'pushFolders'
             })
+            resolve()
+            return
           } else {
             pushNotebook(fDepthedTransed[taskCol]).then(resp => {
               console.log('222222', taskCol, fDepthedTransed[taskCol])
               if (resp.data.returnCode === 200) {
                 let fileResolved = resp.data.body
                 console.log('fileResolved', fileResolved)
-                let saveFolderTasks = fileResolved.map((file, idx) => {
-                  return LocalDAO.folder.update({
+                let saveFolderData = fileResolved.map((file, idx) => {
+                  return {
                     id: fDepthed[taskCol][idx]._id,
                     remote_id: file.noteBookId,
                     remote_pid: file.parentId,
                     need_push: false
-                  })
+                  }
+                })
+                ipcRenderer.send('fetch-local-data', {
+                  tasks: ['updateMultiLocalFolder'],
+                  params: [saveFolderData],
+                  from: 'pushFolders'
                 })
       
-                Promise.all(saveFolderTasks).then(() => {
-                  if (fDepthedTransed[taskCol + 1]) {
-                    fDepthedTransed[taskCol + 1].forEach(file => {
-                      let pFileIdx = _.findIndex(fDepthed[taskCol], { _id: file.parentId })
-                      if (pFileIdx > -1) {
-                        file.parentId = fileResolved[pFileIdx].noteBookId
-                      }
-                      console.log('fileResolved-111', file, pFileIdx, file.parentId)
-                    })
-                  }
-                  taskCol++
-                  runTask()
-                })
+                if (fDepthedTransed[taskCol + 1]) {
+                  fDepthedTransed[taskCol + 1].forEach(file => {
+                    let pFileIdx = _.findIndex(fDepthed[taskCol], { _id: file.parentId })
+                    if (pFileIdx > -1) {
+                      file.parentId = fileResolved[pFileIdx].noteBookId
+                    }
+                    console.log('fileResolved-111', file, pFileIdx, file.parentId)
+                  })
+                }
+                taskCol++
+                runTask()
               }
             }).catch(err => {
               reject(err)
@@ -336,6 +341,7 @@ export default {
 
     async runPushNotes (nNeedPush) {
       if (nNeedPush.length === 0) {
+        this.SET_IS_SYNCING(false)
         return
       }
       let nTransed = nNeedPush.map(note => {
@@ -348,27 +354,25 @@ export default {
       if (resp.data.returnCode === 200) {
         let noteResolved = resp.data.body
 
-        let saveNoteTasks = noteResolved.map((file, index) => {
-          return LocalDAO.note.update({
+        let saveNoteData = noteResolved.map((file, index) => {
+          return {
             id: nNeedPush[index]._id,
             remote_id: file.noteId,
             need_push: false
-          })
+          }
         })
-
-        Promise.all(saveNoteTasks).then(res => {
-          console.log('saveNoteTasks', res)
-          LocalDAO.note.removeAllDeleted().then(() => {
-            return
-          })
+        console.log('saveNoteData', saveNoteData)
+        ipcRenderer.send('fetch-local-data', {
+          tasks: ['updateMultiLocalNote', 'removeAllDeletedNote'],
+          params: [saveNoteData],
+          queue: true,
+          from: 'pushNotes'
         })
-      } else {
-        this.SET_IS_SYNCING(false)
-        return
       }
     },
 
     async pushData () {
+      this.SET_IS_SYNCING(true)
       this.pushTags()
     },
 

@@ -91,16 +91,31 @@ export default {
 
     execPromise (id, tasks, arg) {
       let tid = id
-      Promise.all(tasks).then(res => {
-        if (tid === taskId) {
-          console.log('fetch-local-data-response', res, arg)
-          ipcRenderer.send('fetch-local-data-response', {
-            res: res,
-            from: arg.from,
-            tasks: arg.tasks
+      if (arg.queue) {
+        console.log('queue', arg, tasks)
+        LocalService[arg.tasks[0]](arg.params[0]).then((res0) => {
+          LocalService[arg.tasks[1]](arg.params[1]).then((res1) => {
+            console.log('fetch-local-data-response-queue', res0, res1, arg)
+            ipcRenderer.send('fetch-local-data-response', {
+              res: [res0, res1],
+              from: arg.from,
+              queue: true,
+              tasks: arg.tasks
+            })
           })
-        }
-      })
+        })
+      } else {
+        Promise.all(tasks).then(res => {
+          if (tid === taskId) {
+            console.log('fetch-local-data-response', res, arg)
+            ipcRenderer.send('fetch-local-data-response', {
+              res: res,
+              from: arg.from,
+              tasks: arg.tasks
+            })
+          }
+        })
+      }
     }
   }
 }

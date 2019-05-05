@@ -205,6 +205,18 @@ function updateByQuery (req) {
   })
 }
 
+
+function updateMulti (reqs) {
+  return new Promise((resolve, reject) => {
+    let p = reqs.map(req => {
+      return update(req)
+    })
+    Promise.all(p).then(res => {
+      resolve(res)
+    })
+  })
+}
+
 function updateRemoteTagIds (req) {
   const { tags } = req
   let tagArr = tags.map(item => item.tag_id)
@@ -400,6 +412,7 @@ export default {
   removeAllDeleted,
   update,
   updateByQuery,
+  updateMulti,
   updateRemoteTagIds,
   trashAll,
   addTag,

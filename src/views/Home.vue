@@ -1,9 +1,11 @@
 <template>
   <div class="home">
-    <button style="position: fixed;top: 10px;left: 20px;z-index: 9999999;" @click="hideBackground">hideBackground</button>
-    <button style="position: fixed;top: 50px;left: 20px;z-index: 9999999;" @click="showBackground">showBackground</button>
-    <button style="position: fixed;top: 30px;left: 20px;z-index: 9999999;" @click="deleteAll">deleteAll</button>
-    <button style="position: fixed;top: 30px;left: 160px;z-index: 9999999;" @click="goLogin">goLogin!</button>
+    <div v-if="isDev">
+      <button style="position: fixed;top: 10px;left: 20px;z-index: 9999999;" @click="hideBackground">hideBackground</button>
+      <button style="position: fixed;top: 50px;left: 20px;z-index: 9999999;" @click="showBackground">showBackground</button>
+      <button style="position: fixed;top: 30px;left: 20px;z-index: 9999999;" @click="deleteAll">deleteAll</button>
+      <button style="position: fixed;top: 30px;left: 160px;z-index: 9999999;" @click="goLogin">goLogin!</button>
+    </div>
     <PageLayout>
       <div slot="left">
         <div id="nav">
@@ -73,6 +75,8 @@ import LocalDAO from '../../db/api'
 import { getLocalUserById } from '@/service/local'
 import { getAppConf, saveAppConf } from '@/tools/appConf'
 
+const isDevelopment = process.env.NODE_ENV !== 'production'
+
 export default {
   name: 'home',
 
@@ -96,6 +100,7 @@ export default {
 
   data () {
     return {
+      isDev: isDevelopment,
       isSyncPanelShowed: false,
       isFrdPanelShowed: false,
       syncProgress: 0,

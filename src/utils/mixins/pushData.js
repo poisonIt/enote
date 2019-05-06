@@ -3,7 +3,7 @@ import { ipcRenderer } from 'electron'
 import { mapGetters, mapActions } from 'vuex'
 import { pushNotebook, pushNote, createTag, modifyTag, deleteTag, uploadFile } from '@/service'
 import LocalDAO from '../../../db/api'
-import { readFileSync, createReadStream, unlinkSync } from 'fs'
+import { readFileSync, createReadStream } from 'fs'
 
 const mimes = ['image/png', 'image/gif','image/jpeg']
 let allTagRemoteMap = {}
@@ -35,7 +35,6 @@ export default {
           trash: file.trash
         }
       } else if (file.type === 'note') {
-        console.log('doc-push', file)
         return {
           noteBookId: file.remote_pid || file.pid,
           noteContent: file.content || '',
@@ -54,68 +53,13 @@ export default {
     },
 
     createPromise (data, type, rawData) {
-      if (type === 'folder') {
-        return new Promise ((resolve, reject) => {
-          pushNotebook(data).then(resp => {
-            if (resp.data.returnCode === 200) {
-              let dataResp = resp.data.body
-              let updateRIDPromises = rawData.map((file, index) => {
-                if (!file.remote_id) {
-                  return LocalDAO.folder.update({
-                    id: file._id,
-                    remote_id: dataResp[index].noteBookId
-                  })
-                } else {
-                  return false
-                }
-              }).filter(p => p)
-
-              Promise.all(updateRIDPromises).then(() => {
-                resolve(resp.data.body)
-              })
-            } else {
-              this.SET_IS_SYNCING(false)
-              reject(resp.data.returnMsg)
-            }
-          })
-        })
-      } else if (type === 'note') {
-        return new Promise ((resolve, reject) => {
-          pushNote(data).then(resp => {
-            if (resp.data.returnCode === 200) {
-              resolve(resp.data.body)
-            } else {
-              this.SET_IS_SYNCING(false)
-              reject(resp.data.returnMsg)
-            }
-          })
-        })
-      } else if (type === 'tag') {
-        return new Promise((resolve, reject) => {
-          createTag(data).then(resp => {
-            if (resp.data.returnCode === 200) {
-              resolve(resp.data.body)
-            } else {
-              this.SET_IS_SYNCING(false)
-              reject(resp.data.returnMsg)
-            }
-          })
-        })
-      } else if (type === 'deleteTag') {
-        return new Promise((resolve, reject) => {
-          console.log('deleteTag-data', data)
-          deleteTag(data).then(resp => {
-            if (resp.data.returnCode === 200) {
-              resolve(resp.data.body)
-            } else {
-              this.SET_IS_SYNCING(false)
-              reject(resp.data.returnMsg)
-            }
-          })
-        })
-      } else if (type === 'img') {
+      if (type === 'img') {
         return new Promise((resolve, reject) => {
           uploadFile(data.file).then(resp => {
+            // ipcRenderer.send('fetch-local-data', {
+            //   tasks: ['getAllLocalImage'],
+            //   from: 'pushImgs'
+            // })
             LocalDAO.files.getById({
               id: data.img.doc_id
             }).then(doc => {
@@ -144,6 +88,18 @@ export default {
 
     async hookMsgHandler () {
       ipcRenderer.on('fetch-local-data-response', (event, arg) => {
+        if (arg.from === 'pushImgs') {
+          console.log('pushImgs-res', arg)
+          if (arg.tasks.indexOf('getAllLocalImage') > -1) {
+            console.log('pushImgs', arg.res)
+            this.SET_IS_SYNCING(false)
+            this.runPushImgs(arg.res[0]).catch(err => this.pushTags())
+          }
+          if (arg.tasks.indexOf('updateLocalDocImg') > -1) {
+            console.log('updateLocalDocImg-res', arg.res)
+            this.pushTags()
+          }
+        }
         if (arg.from === 'pushTags') {
           if (arg.tasks.indexOf('getAllLocalTag') > -1) {
             console.log('pushTags-allTags', arg.res)
@@ -166,9 +122,11 @@ export default {
           if (arg.tasks.indexOf('getAllLocalNoteByQuery') > -1) {
             console.log('pushNotes', arg.res)
             this.runPushNotes(arg.res[0])
+            this.SET_IS_SYNCING(false)
           }
           if (arg.tasks[0] === 'updateMultiLocalNote' &&
             arg.tasks[1] === 'removeAllDeletedNote') {
+            this.$Message.success('同步成功')
             this.SET_IS_SYNCING(false)
           }
         }
@@ -196,6 +154,13 @@ export default {
         tasks: ['getAllLocalNoteByQuery'],
         params: [{ query: { need_push: true }, with_doc: true }],
         from: 'pushNotes'
+      })
+    },
+
+    pushImgs () {
+      ipcRenderer.send('fetch-local-data', {
+        tasks: ['getAllLocalImage'],
+        from: 'pushImgs'
       })
     },
 
@@ -328,6 +293,8 @@ export default {
                 }
                 taskCol++
                 runTask()
+              } else {
+                this.$Message.error(resp.data.returnMsg)
               }
             }).catch(err => {
               reject(err)
@@ -368,12 +335,86 @@ export default {
           queue: true,
           from: 'pushNotes'
         })
+      } else {
+        this.$Message.error(resp.data.returnMsg)
       }
+    },
+
+    async runPushImgs (iNeedPush) {
+      console.log('pushImgs-allImgs', iNeedPush)
+      if (iNeedPush.length === 0) {
+        this.pushTags()
+      }
+      let docsNeedSave = []
+      let imgResp = await Promise.all(
+        iNeedPush.filter(img => mimes.indexOf(img.mime) > -1 && img.path)
+      .map(img => {
+        let buffer = readFileSync(img.path.replace('file:///', ''))
+        let blob = new Blob([buffer])
+        let file = new window.File([blob], img.name, {type: img.mime})
+        return uploadFile(file).then(res => {
+          docsNeedSave.push({
+            note_id: img.note_id,
+            img: {
+              path: img.path,
+              id: img._id,
+              url: res.data.body[0].url
+            }
+          })
+        }).catch(err => {
+          return
+        })
+        // return this.createPromise({
+        //   img: img,
+        //   file: file
+        // }, 'img')
+      })).catch(err => {
+        return
+      })
+      console.log('imgResp', imgResp)
+      console.log('docsNeedSave', docsNeedSave)
+      ipcRenderer.send('fetch-local-data', {
+        tasks: ['updateLocalDocImg'],
+        params: [docsNeedSave],
+        from: 'pushImgs'
+      })
+
+      // allImgs.forEach(img => {
+      //   if (mimes.indexOf(img.mime) > -1 && img.path) {
+      //     console.log('img', img)
+      //     let buffer = readFileSync(img.path.replace('file:///', ''))
+      //     let blob = new Blob([buffer])
+      //     let file = new window.File([blob], img.name, {type: img.mime})
+          
+      //     uploadFile(file).then(resp => {
+      //       LocalDAO.files.getById({
+      //         id: img.doc_id
+      //       }).then(doc => {
+      //         let oldContent = doc.content
+      //         let newContent = doc.content.replace(new RegExp(img.path,'gm'), resp.data.body[0].url)
+      //         console.log('newContent', newContent)
+      //         LocalDAO.files.update({
+      //           id: img.doc_id,
+      //           data: {
+      //             content: newContent
+      //           }
+      //         }).then(() => {
+      //           LocalDAO.img.removeById({
+      //             id: img._id
+      //           }).then(() => {
+      //             unlinkSync(img.path.replace('file:///', ''))
+      //             resolve()
+      //           })
+      //         })
+      //       })
+      //     })
+      //   }
+      // })
     },
 
     async pushData () {
       this.SET_IS_SYNCING(true)
-      this.pushTags()
+      this.pushImgs()
     },
 
     getFoldersPrepared (fNeedPush) {
@@ -404,58 +445,6 @@ export default {
         fDepthed: fDepthed.filter(arr => arr.length > 0),
         fSorted: fSorted
       }
-    },
-
-    async pushImgs () {
-      return new Promise((resolve, reject) => {
-        LocalDAO.img.getAll().then(allImgs => {
-          console.log('pushImgs-allImgs', allImgs)
-          Promise.all(allImgs.filter(img => mimes.indexOf(img.mime) > -1 && img.path)
-          .map(img => {
-            let buffer = readFileSync(img.path.replace('file:///', ''))
-            let blob = new Blob([buffer])
-            let file = new window.File([blob], img.name, {type: img.mime})
-            return this.createPromise({
-              img: img,
-              file: file
-            }, 'img')
-          })).then(imgResp => {
-            console.log('imgResp', imgResp)
-            resolve(imgResp)
-          })
-          // allImgs.forEach(img => {
-          //   if (mimes.indexOf(img.mime) > -1 && img.path) {
-          //     console.log('img', img)
-          //     let buffer = readFileSync(img.path.replace('file:///', ''))
-          //     let blob = new Blob([buffer])
-          //     let file = new window.File([blob], img.name, {type: img.mime})
-              
-          //     uploadFile(file).then(resp => {
-          //       LocalDAO.files.getById({
-          //         id: img.doc_id
-          //       }).then(doc => {
-          //         let oldContent = doc.content
-          //         let newContent = doc.content.replace(new RegExp(img.path,'gm'), resp.data.body[0].url)
-          //         console.log('newContent', newContent)
-          //         LocalDAO.files.update({
-          //           id: img.doc_id,
-          //           data: {
-          //             content: newContent
-          //           }
-          //         }).then(() => {
-          //           LocalDAO.img.removeById({
-          //             id: img._id
-          //           }).then(() => {
-          //             unlinkSync(img.path.replace('file:///', ''))
-          //             resolve()
-          //           })
-          //         })
-          //       })
-          //     })
-          //   }
-          // })
-        })
-      })
     }
   }
 }

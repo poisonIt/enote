@@ -2,7 +2,7 @@ function imgModel (opts) {
   return {
     name: opts.name || '',
     path: opts.path || '',
-    doc_id: opts.doc_id || '',
+    note_id: opts.note_id || '',
     ext: opts.ext || '',
     mime: opts.mime || ''
   }

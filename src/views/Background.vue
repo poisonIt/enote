@@ -45,6 +45,7 @@ export default {
         createCollection('note', dbPath + '/' + user)
         createCollection('doc', dbPath + '/' + user)
         createCollection('tag', dbPath + '/' + user)
+        createCollection('img', dbPath + '/' + user)
 
         // LocalService.getAllLocalFolder().then(res => {
         //   folderDataCache = res

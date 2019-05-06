@@ -284,7 +284,8 @@ export default {
       'SET_VIEW_FILE_LIST_TYPE',
       'SET_VIEW_FILE_SORT_TYPE',
       'SET_VIEW_FILE_SORT_ORDER',
-      'TOGGLE_SHOW_MOVE_PANEL'
+      'TOGGLE_SHOW_MOVE_PANEL',
+      'TOGGLE_SHOW_SHARE_PANEL'
     ]),
 
     refreshList () {
@@ -492,6 +493,14 @@ export default {
         }],
         from: ['DocumentList', 'remove', this.popupedFile.file_id]
       })
+    },
+
+    handleShare () {
+      let idx = _.findIndex(this.fileList, { _id: this.popupedFile.file_id} )
+      console.log('handleShare', this.popupedFile, idx)
+      this.selectFile(idx)
+      this.TOGGLE_SHOW_SHARE_PANEL(true)
+      // this.$hub.dispatchHub('shareFile', this, this.popupedFile.file_id)
     },
 
     handleResume () {

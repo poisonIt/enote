@@ -108,6 +108,10 @@ export function updateLocalDoc (params) {
   return LocalDAO.doc.update(params)
 }
 
+export function updateLocalDocImg (params) {
+  return LocalDAO.doc.updateImg(params)
+}
+
 // bin
 export function deleteAllTrash () {
   return new Promise((resolve, reject) => {
@@ -193,11 +197,26 @@ export function updateMultiLocalTag (params) {
   return LocalDAO.tag.updateMulti(params)
 }
 
+// image
+export function getAllLocalImage () {
+  return LocalDAO.img.getAll()
+}
+
+export function addLocalImage (params) {
+  return LocalDAO.img.add(params)
+}
+
+export function removeLocalImageById (params) {
+  return LocalDAO.img.removeById(params)
+}
+
 // danger
 export function deleteAll (params) {
   return LocalDAO.folder.deleteAll().then(() => {
     LocalDAO.note.deleteAll().then(() => {
-      LocalDAO.doc.deleteAll()
+      LocalDAO.doc.deleteAll().then(() => {
+        LocalDAO.img.deleteAll()
+      })
     })
   })
 }

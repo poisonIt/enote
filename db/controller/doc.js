@@ -2,6 +2,7 @@ import { getValid } from '../tools'
 import docModel from '../models/doc'
 import { LinvoDB } from '../index'
 import noteCtr from './note'
+import imgCtr from './img'
 
 let Doc = {}
 
@@ -89,17 +90,19 @@ function removeByNoteId (req) {
 }
 
 function deleteAll () {
-  Doc.find({}).exec((err, docs) => {
-    let p = docs.map(doc => {
-      return update({
-        id: doc._id,
-        trash: 'DELETED'
+  return new Promise((resolve, reject) => {
+    Doc.find({}).exec((err, docs) => {
+      let p = docs.map(doc => {
+        return update({
+          id: doc._id,
+          trash: 'DELETED'
+        })
       })
-    })
-    Promise.all(p).then(() => {
-      // removeAll().then(() => {
-        resolve(docs.length)
-      // })
+      Promise.all(p).then(() => {
+        // removeAll().then(() => {
+          resolve(docs.length)
+        // })
+      })
     })
   })
 }
@@ -117,7 +120,7 @@ function update (req) {
         { $set: req },
         { multi: true },
         (err, num, newDoc) => {
-          console.log('update-folder-111', newDoc)
+          console.log('update-doc-111', newDoc)
           noteCtr.update({
             id: newDoc.note_id,
             need_push: true
@@ -126,6 +129,37 @@ function update (req) {
           })
         }
       )
+    })
+  })
+}
+
+function updateImg (reqs) {
+  console.log('updateImg', reqs)
+
+  return new Promise((resolve, reject) => {
+    let p = reqs.map((req, index) => {
+        return new Promise((resolve, reject) => {
+          Doc.findOne({ note_id: req.note_id }).exec((err, doc) => {
+          console.log('updateImg-1111', doc)
+          if (!doc) resolve()
+          let oldContent = doc.content
+          let newContent = oldContent.replace(new RegExp(req.img.path,'gm'), req.img.url)
+          let newReq = {
+            id: doc._id,
+            content: newContent
+          }
+          console.log('updateImg-222', newContent)
+          update(newReq).then((res) => {
+            console.log('updateImg-res', res)
+            imgCtr.removeById({ id: req.img.id }).then(() => {
+              resolve(res)
+            })
+          })
+        })
+      })
+    })
+    Promise.all(p).then((res) => {
+      resolve(res)
     })
   })
 }
@@ -176,6 +210,7 @@ export default {
   removeByNoteId,
   deleteAll,
   update,
+  updateImg,
   getAll,
   getByNoteId,
   getById,

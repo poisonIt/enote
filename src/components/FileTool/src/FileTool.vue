@@ -54,12 +54,12 @@ export default {
   },
 
   mounted () {
-    let asyncItv = setInterval(() => {
-      this.checkIsEditorFocused()
-      console.log('isEditorFocused', this.isEditorFocused)
-      if(this.isEditorFocused || this.isSyncing) return
-      this.syncData()
-    }, 5000)
+    // let asyncItv = setInterval(() => {
+    //   this.checkIsEditorFocused()
+    //   console.log('isEditorFocused', this.isEditorFocused)
+    //   if(this.isEditorFocused || this.isSyncing) return
+    //   this.syncData()
+    // }, 5000)
   },
 
   methods: {

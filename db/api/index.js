@@ -3,7 +3,7 @@ import folder from '../controller/folder'
 import note from '../controller/note'
 import doc from '../controller/doc'
 import tag from '../controller/tag'
-// import img from '../controllers/img'
+import img from '../controller/img'
 
 const LocalDAO = {
   user,
@@ -11,7 +11,7 @@ const LocalDAO = {
   note,
   doc,
   tag,
-  // img
+  img
 }
 
 export default LocalDAO

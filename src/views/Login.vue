@@ -133,6 +133,7 @@ export default {
     handleDataFinished () {
       ipcRenderer.send('login-ready')
       ipcRenderer.send('create-home-window')
+      this.$Message.success('登录成功')
     },
 
     async pullUserInfo (id_token, username, password) {

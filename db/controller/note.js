@@ -139,17 +139,19 @@ function removeAllDeleted () {
 }
 
 function deleteAll () {
-  Note.find({}).exec((err, notes) => {
-    let p = notes.map(note => {
-      return update({
-        id: note._id,
-        trash: 'DELETED'
+  return new Promise((resolve, reject) => {
+    Note.find({}).exec((err, notes) => {
+      let p = notes.map(note => {
+        return update({
+          id: note._id,
+          trash: 'DELETED'
+        })
       })
-    })
-    Promise.all(p).then(() => {
-      // removeAll().then(() => {
-        resolve(notes.length)
-      // })
+      Promise.all(p).then(() => {
+        // removeAll().then(() => {
+          resolve(notes.length)
+        // })
+      })
     })
   })
 }

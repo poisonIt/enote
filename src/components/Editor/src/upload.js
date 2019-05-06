@@ -3,7 +3,7 @@ import { copyFile, existsSync, mkdir } from 'fs'
 import { uploadFile } from '../../../service'
 import LocalDAO from '../../../../db/api'
 import { GenNonDuplicateID } from '@/utils/utils'
-const { remote } = require('electron')
+const { remote, ipcRenderer } = require('electron')
 const path = require('path')
 
 const appPath = remote.app.getAppPath('userData')
@@ -25,65 +25,41 @@ class MyUploadAdapter {
 
   // Starts the upload process.
   upload () {
-    console.log('upload', this.loader)
+    return this.loader.file
+    .then(file => new Promise((resolve, reject) => {
+      console.log('store-111', store, store.state.files.current_file._id)
+      const mimes = {
+        '.png': 'image/png',
+        '.gif': 'image/gif',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg'
+      }
 
-    // return uploadFile(this.loader.file)
-    return new Promise ((resolve, reject) => {
-      // uploadFile(this.loader.file).then(res => {
-      //   console.log('upload-1111', res)
-      //   if (res.data.returnCode === 200 && res.data.body[0]) {
-      //     resolve({
-      //       default: res.data.body[0].url
-      //     })
-      //   } else {
-      //     // console.log('store', store, store.state.files.current_file_id)
-      //     // resolve({
-      //     //   default: 'file:///' + this.loader.file.path
-      //     // })
-      //   }
-      // }).catch(err => {
-        console.log('store-111', store, store.state.files.current_file_id)
-        const mimes = {
-          '.png': 'image/png',
-          '.gif': 'image/gif',
-          '.jpg': 'image/jpeg',
-          '.jpeg': 'image/jpeg'
-        }
-
-        const ext = path.extname(this.loader.file.path)
-        const mime = mimes[ext]
-        const newFileName = GenNonDuplicateID(6) + ext
-        const dest = path.resolve(resourcePath, newFileName)
-        console.log('upload-111', ext, mime, newFileName, dest)
-
-        // let brief = {}
-        // for (let i in this.loader.file) {
-        //   // console.log(i, this.loader.file[i])
-        //   if (i === 'path') {
-        //     brief[i] = dest
-        //   } else if (i === 'name') {
-        //     brief[i] = newFileName
-        //   } else {
-        //     brief[i] = this.loader.file[i]
-        //   }
-        // }
-        console.log('store-222', this.loader.file.path, dest)
-        copyFile(this.loader.file.path, dest, (err) => {
-          if (err) throw err
-          console.log(`${this.loader.file.name} was copied to ${dest}`)
-          LocalDAO.img.add({
+      const ext = path.extname(file.path)
+      const mime = mimes[ext]
+      const newFileName = GenNonDuplicateID(6) + ext
+      const dest = path.resolve(resourcePath, newFileName)
+      console.log('upload-111', ext, mime, newFileName, dest)
+      console.log('store-222', file.path, dest)
+      copyFile(file.path, dest, (err) => {
+        if (err) throw err
+        console.log(`${file.name} was copied to ${dest}`)
+        ipcRenderer.send('fetch-local-data', {
+          tasks: ['addLocalImage'],
+          params: [{
             name: newFileName,
             path: `file:///${dest}`,
-            doc_id: store.state.files.current_file_id,
+            note_id: store.state.files.current_file._id,
             ext: ext,
             mime: mime
-          })
-          resolve({
-            default: `file:///${dest}`
-          })
+          }],
+          from: 'Editor',
         })
-      // })
-    })
+        resolve({
+          default: `file:///${dest}`
+        })
+      })
+    }))
   }
 
   // Aborts the upload process.

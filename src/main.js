@@ -69,19 +69,19 @@ axios.interceptors.request.use(config => {
   return Promise.reject(error)
 })
 
-axios.interceptors.response.use(data => {
-  store.state.loadState = false
-  if (data.data.returnCode === 200){
-    Message.success(data.data.returnMsg)
-    return data
-  } else {
-    Message.error(data.data.returnMsg)
-    return data
-  }
-}, error => {
-  Message.error(error)
-  return Promise.reject(error)
-})
+// axios.interceptors.response.use(data => {
+//   store.state.loadState = false
+//   if (data.data.returnCode === 200){
+//     Message.success(data.data.returnMsg)
+//     return data
+//   } else {
+//     Message.error(data.data.returnMsg)
+//     return data
+//   }
+// }, error => {
+//   Message.error(error)
+//   return Promise.reject(error)
+// })
 
 Vue.config.productionTip = false
 

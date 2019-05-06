@@ -121,17 +121,19 @@ function removeAllDeleted () {
 }
 
 function deleteAll () {
-  Folder.find({}).exec((err, folders) => {
-    let p = folders.map(folder => {
-      return update({
-        id: folder._id,
-        trash: 'DELETED'
+  return new Promise((resolve, reject) => {
+    Folder.find({}).exec((err, folders) => {
+      let p = folders.map(folder => {
+        return update({
+          id: folder._id,
+          trash: 'DELETED'
+        })
       })
-    })
-    Promise.all(p).then(() => {
-      // removeAll().then(() => {
-        resolve(folders.length)
-      // })
+      Promise.all(p).then(() => {
+        // removeAll().then(() => {
+          resolve(folders.length)
+        // })
+      })
     })
   })
 }

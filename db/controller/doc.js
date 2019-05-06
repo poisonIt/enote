@@ -88,6 +88,22 @@ function removeByNoteId (req) {
   })
 }
 
+function deleteAll () {
+  Doc.find({}).exec((err, docs) => {
+    let p = docs.map(doc => {
+      return update({
+        id: doc._id,
+        trash: 'DELETED'
+      })
+    })
+    Promise.all(p).then(() => {
+      // removeAll().then(() => {
+        resolve(docs.length)
+      // })
+    })
+  })
+}
+
 // update
 function update (req) {
   const { id } = req
@@ -158,6 +174,7 @@ export default {
   removeAll,
   removeById,
   removeByNoteId,
+  deleteAll,
   update,
   getAll,
   getByNoteId,

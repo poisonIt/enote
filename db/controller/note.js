@@ -138,6 +138,22 @@ function removeAllDeleted () {
   })
 }
 
+function deleteAll () {
+  Note.find({}).exec((err, notes) => {
+    let p = notes.map(note => {
+      return update({
+        id: note._id,
+        trash: 'DELETED'
+      })
+    })
+    Promise.all(p).then(() => {
+      // removeAll().then(() => {
+        resolve(notes.length)
+      // })
+    })
+  })
+}
+
 // update
 async function update (req) {
   const { id } = req
@@ -410,6 +426,7 @@ export default {
   removeAll,
   removeById,
   removeAllDeleted,
+  deleteAll,
   update,
   updateByQuery,
   updateMulti,

@@ -1,8 +1,9 @@
 <template>
   <div class="home">
-    <!-- <button style="position: fixed;top: 30px;left: 20px;z-index: 9999999;" @click="resetData">reset</button> -->
-    <!-- <button style="position: fixed;top: 30px;left: 80px;z-index: 9999999;" @click="removeTags">removeTags</button> -->
-    <!-- <button style="position: fixed;top: 30px;left: 160px;z-index: 9999999;" @click="goLogin">logout</button> -->
+    <button style="position: fixed;top: 10px;left: 20px;z-index: 9999999;" @click="hideBackground">hideBackground</button>
+    <button style="position: fixed;top: 50px;left: 20px;z-index: 9999999;" @click="showBackground">showBackground</button>
+    <button style="position: fixed;top: 30px;left: 20px;z-index: 9999999;" @click="deleteAll">deleteAll</button>
+    <button style="position: fixed;top: 30px;left: 160px;z-index: 9999999;" @click="goLogin">goLogin!</button>
     <PageLayout>
       <div slot="left">
         <div id="nav">
@@ -274,13 +275,25 @@ export default {
       LocalDAO.tag.removeAll()
     },
 
+    hideBackground () {
+      ipcRenderer.send('hideWindow', {
+        name: 'background'
+      })
+    },
+
+    showBackground () {
+      ipcRenderer.send('showWindow', {
+        name: 'background'
+      })
+    },
+
     goLogin () {
       saveAppConf(this.$remote.app.getAppPath('appData'), {
-        user: ''
+        user: null
       })
-      // ipcRenderer.send('changeWindow', {
-      //   name: 'login'
-      // })
+      ipcRenderer.send('changeWindow', {
+        name: 'login'
+      })
     },
 
     handleDBLoaded () {
@@ -293,6 +306,13 @@ export default {
         from: 'Home'
       })
       this.SET_DB_READY(true)
+    },
+
+    deleteAll () {
+      ipcRenderer.send('fetch-local-data', {
+        tasks: ['deleteAll'],
+        from: 'Home',
+      })
     }
   }
 }

@@ -197,8 +197,8 @@ function createLoginWindow () {
 function createBackgroundWindow () {
   backWin = new BrowserWindow({
     id: 'background',
-    // show: isDevelopment
-    show: false
+    show: isDevelopment
+    // show: false
   })
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
@@ -278,16 +278,28 @@ function createYoudaoAsyncWindow (event, url) {
   })
 }
 
-// ipcMain.on('changeWindow', (event, arg) => {
-//   if (arg.name === 'home') {
-//     loginWin && loginWin.close()
-//     createHomeWindow()
-//   }
-//   if (arg.name === 'login') {
-//     win && win.close()
-//     createLoginWindow()
-//   }
-// })
+ipcMain.on('changeWindow', (event, arg) => {
+  if (arg.name === 'home') {
+    loginWin && loginWin.close()
+    createHomeWindow()
+  }
+  if (arg.name === 'login') {
+    win && win.close()
+    createLoginWindow()
+  }
+})
+
+ipcMain.on('hideWindow', (event, arg) => {
+  if (arg.name === 'background') {
+    backWin && backWin.hide()
+  }
+})
+
+ipcMain.on('showWindow', (event, arg) => {
+  if (arg.name === 'background') {
+    backWin && backWin.show()
+  }
+})
 
 ipcMain.on('create-home-window', (event, arg) => {
   createHomeWindow()

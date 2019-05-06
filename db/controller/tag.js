@@ -86,6 +86,22 @@ function removeById (req) {
   })
 }
 
+function deleteAll () {
+  Tag.find({}).exec((err, tags) => {
+    let p = tags.map(tag => {
+      return update({
+        id: tag._id,
+        trash: 'DELETED'
+      })
+    })
+    Promise.all(p).then(() => {
+      // removeAll().then(() => {
+        resolve(tags.length)
+      // })
+    })
+  })
+}
+
 // update
 function update (req) {
   const { id } = req
@@ -176,6 +192,7 @@ export default {
   add,
   removeAll,
   removeById,
+  deleteAll,
   update,
   updateMulti,
   getAll,

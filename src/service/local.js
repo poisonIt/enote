@@ -192,3 +192,12 @@ export function updateLocalTag (params) {
 export function updateMultiLocalTag (params) {
   return LocalDAO.tag.updateMulti(params)
 }
+
+// danger
+export function deleteAll (params) {
+  return LocalDAO.folder.deleteAll().then(() => {
+    LocalDAO.note.deleteAll().then(() => {
+      LocalDAO.doc.deleteAll()
+    })
+  })
+}

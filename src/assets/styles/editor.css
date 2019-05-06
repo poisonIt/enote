@@ -28,6 +28,7 @@
   flex-direction: column;
   height: 100% !important;
   overflow: scroll !important;
+  font-size: 14px !important;
 }
 .ck-editor__top {
   width: 100%;
@@ -51,4 +52,13 @@
   border-top: 1px solid grey;
   box-shadow: none !important;
   padding-bottom: 60px !important;
+}
+li {
+  list-style: inside !important;
+}
+ul li {
+  list-style-type: disc !important;
+}
+ol li {
+  list-style-type: decimal !important;
 }

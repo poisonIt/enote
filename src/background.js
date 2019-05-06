@@ -197,8 +197,8 @@ function createLoginWindow () {
 function createBackgroundWindow () {
   backWin = new BrowserWindow({
     id: 'background',
-    show: isDevelopment
-    // show: false
+    // show: isDevelopment
+    show: false
   })
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
@@ -299,7 +299,7 @@ ipcMain.on('home-window-ready', (event) => {
 
 ipcMain.on('show-home-window', (event, arg) => {
   win && win.show()
-  // loginWin && loginWin.close()
+  loginWin && loginWin.close()
 })
 
 ipcMain.on('create-youdao-window', (event, arg) => {

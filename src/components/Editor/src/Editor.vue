@@ -9,10 +9,7 @@
 import { ipcRenderer } from 'electron'
 import { mapGetters, mapActions } from 'vuex'
 import mixins from '../mixins'
-import ClassicEditor from '@ckeditor/ckeditor5-build-classic'
 import uploadAdapter from './upload'
-import Autosave from '@ckeditor/ckeditor5-autosave/src/autosave'
-import '@ckeditor/ckeditor5-build-classic/build/translations/zh-cn'
 import '../../../assets/styles/editor.css'
 import { getLocalDoc, updateLocalDoc } from '@/service/local'
 
@@ -114,9 +111,11 @@ export default {
       } else {
         ClassicEditor
           .create(this.$refs.editor, {
-            language: 'zh-cn',
-            // toolbar: [ 'undo', 'redo', 'heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', 'highlight:yellowMarker', 'Image' ],
-            extraPlugins: [ uploadAdapter, Autosave ],
+            // language: 'zh-cn',
+            // toolbar: [ 'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor'],
+            // // toolbar: [ 'bulletedList' ],
+            // // toolbar: [ 'undo', 'redo', 'heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', 'highlight:yellowMarker', 'Image' ],
+            extraPlugins: [ uploadAdapter ],
             autosave: {
               save (editor) {
                 let editorData = editor.getData()

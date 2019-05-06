@@ -26,21 +26,7 @@
         <FolderComp style="height: 100%" v-show="currentFile && currentFile.type === 'folder'"></FolderComp>
       </div>
     </PageLayout>
-    <!-- <modal
-      width="400px"
-      height="464px"
-      transition-name="fade-in-down"
-      title="移动到文件夹"
-      @close="closeMovePanel"
-      :visible.sync="isMovePanelShowed">
-      <div style="padding: 10px 20px;">
-        <Move ref="move" @handleMove="handleFileMoved"></Move>
-      </div>
-      <div class="button-group" slot="footer">
-        <div class="button primary" @click="confirmMovePanel">保存</div>
-        <div class="button" @click="closeMovePanel">取消</div>
-      </div>
-    </modal> -->
+    <MovePanel></MovePanel>
     <UserPanel></UserPanel>
     <SharePanel></SharePanel>
     <ResearchPanel></ResearchPanel>
@@ -55,7 +41,6 @@ import { ipcRenderer } from 'electron'
 import { mapActions, mapGetters } from 'vuex'
 
 import User from '@/components/User'
-import Move from '@/components/Move'
 import NavBar from '@/components/NavBar'
 import FileTool from '../components/FileTool'
 import PageLayout from '@/components/PageLayout.vue'
@@ -65,6 +50,7 @@ import TagHandler from '@/components/TagHandler.vue'
 import Editor from '@/components/Editor'
 import FolderComp from '@/components/FolderComp.vue'
 // import ProgressBar from '@/components/ProgressBar'
+import MovePanel from '@/components/Panels/MovePanel'
 import UserPanel from '@/components/Panels/UserPanel'
 import SharePanel from '@/components/Panels/SharePanel'
 import ResearchPanel from '@/components/Panels/ResearchPanel'
@@ -82,7 +68,6 @@ export default {
 
   components: {
     User,
-    Move,
     NavBar,
     FileTool,
     PageLayout,
@@ -92,6 +77,7 @@ export default {
     Editor,
     FolderComp,
     // ProgressBar,
+    MovePanel,
     UserPanel,
     SharePanel,
     ResearchPanel,
@@ -146,7 +132,6 @@ export default {
       viewFileType: 'GET_VIEW_FILE_TYPE',
       viewType: 'GET_VIEW_TYPE',
       currentFile: 'GET_CURRENT_FILE',
-      isMovePanelShowed: 'GET_SHOW_MOVE_PANEL',
       isUserPanelShowed: 'GET_SHOW_USER_PANEL',
       isSharePanelShowed: 'GET_SHOW_SHARE_PANEL',
       userInfo: 'GET_USER_INFO',
@@ -191,29 +176,12 @@ export default {
       'SET_FILES_FROM_LOCAL',
       'SET_USER_INFO',
       'SET_TOKEN',
-      'TOGGLE_SHOW_MOVE_PANEL',
       'TOGGLE_SHOW_USER_PANEL',
       'TOGGLE_SHOW_SHARE_PANEL',
       'SET_FILE_PUSH_FINISHED',
       'SET_VIEW_TYPE',
       'SET_DB_READY'
     ]),
-
-    closeMovePanel () {
-      this.TOGGLE_SHOW_MOVE_PANEL()
-      this.$refs.move.init()
-    },
-
-    confirmMovePanel () {
-      this.$refs.move.handleMove()
-    },
-
-    handleFileMoved (id) {
-      setTimeout(() => {
-        this.$refs.navbar.setCurrentFolder(id)
-        this.closeMovePanel()
-      }, 300)
-    },
 
     // closeUserPanel () {
     //   this.TOGGLE_SHOW_USER_PANEL(false)

@@ -2,6 +2,7 @@
   <div id="navbar" ref="navbar">
     <Tree
       ref="tree"
+      :dark="true"
       :model="folderTree"
       default-tree-node-name="新建文件夹"
       v-bind:default-expanded="true"
@@ -173,6 +174,7 @@ export default {
       viewType: 'GET_VIEW_TYPE',
       viewFileType: 'GET_VIEW_FILE_TYPE',
       currentFile: 'GET_CURRENT_FILE',
+      duplicateFile: 'GET_DUPLICATE_FILE'
       // allTags: 'GET_ALL_TAGS'
     })
   },
@@ -462,7 +464,15 @@ export default {
     },
 
     handleMove () {
-      this.TOGGLE_SHOW_MOVE_PANEL(this.currentNode.data.id)
+      this.$hub.dispatchHub('showMovePanel', this, {
+        file: {
+          type: this.popupedNode.model.data.type,
+          id: this.popupedNode.model.id,
+          title: this.popupedNode.model.name
+        },
+        tree: this.$refs.tree.model.children[1]
+      })
+      // this.TOGGLE_SHOW_MOVE_PANEL(this.popupedNode.model.data._id)
     },
 
     handleDuplicate () {

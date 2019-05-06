@@ -248,27 +248,33 @@ export default {
         }
       }
       if (arg.from[0] === 'DocumentList') {
-        if (arg.from[2] === this.popupedFile.file_id) {
+        if (!this.popupedFile) {
           if (['updateLocalFolder', 'updateLocalNote'].indexOf(arg.tasks[0]) > -1) {
-            if (arg.from[1] === 'stickTop') {
-              this.selectedIdCache = this.popupedFile.file_id
-              this.refreshList()
-            }
-            if (arg.from[1] === 'cancelStickTop') {
-              this.selectedIdCache = this.popupedFile.file_id
-              this.refreshList()
-            }
-            if (arg.from[1] === 'remove') {
-              if (this.popupedFile.type === 'folder') {
-                this.$hub.dispatchHub('deleteNavNode', this, this.popupedFile.file_id)
+            // this.refreshList()
+          }
+        } else {
+          if (arg.from[2] === this.popupedFile.file_id) {
+            if (['updateLocalFolder', 'updateLocalNote'].indexOf(arg.tasks[0]) > -1) {
+              if (arg.from[1] === 'stickTop') {
+                this.selectedIdCache = this.popupedFile.file_id
+                this.refreshList()
               }
-              this.refreshList()
-            }
-            if (arg.from[1] === 'resume') {
-              this.refreshList()
-            }
-            if (arg.from[1] === 'delete') {
-              this.refreshList()
+              if (arg.from[1] === 'cancelStickTop') {
+                this.selectedIdCache = this.popupedFile.file_id
+                this.refreshList()
+              }
+              if (arg.from[1] === 'remove') {
+                if (this.popupedFile.type === 'folder') {
+                  this.$hub.dispatchHub('deleteNavNode', this, this.popupedFile.file_id)
+                }
+                this.refreshList()
+              }
+              if (arg.from[1] === 'resume') {
+                this.refreshList()
+              }
+              if (arg.from[1] === 'delete') {
+                this.refreshList()
+              }
             }
           }
         }
@@ -280,6 +286,7 @@ export default {
   methods: {
     ...mapActions([
       'SET_CURRENT_FILE',
+      'SET_DUPLICATE_FILE',
       'UPDATE_CURRENT_FILE',
       'SET_VIEW_FILE_LIST_TYPE',
       'SET_VIEW_FILE_SORT_TYPE',
@@ -368,7 +375,11 @@ export default {
       const file = this.fileList[index]
       console.log('selectFile', index, file)
       this.$refs.fileCardGroup.select(index) // visually select file
-      this.SET_CURRENT_FILE(file)
+      if (file) {
+        this.SET_CURRENT_FILE(this.copyFile(file))
+      } else {
+        this.SET_CURRENT_FILE(null)
+      }
     },
 
     handleFileTitleClick (index) {
@@ -474,12 +485,19 @@ export default {
     },
 
     handleMove () {
-      console.log('handleMove')
-      this.TOGGLE_SHOW_MOVE_PANEL(this.popupedFile.file_id)
+      this.$hub.dispatchHub('showMovePanel', this, {
+        file: {
+          type: this.popupedFile.type,
+          id: this.popupedFile.file_id,
+          title: this.popupedFile.title
+        },
+        tree: this.$root.$navTree.model.children[1]
+      })
     },
 
     handleDuplicate () {
       console.log('handleDuplicate')
+      this.SET_DUPLICATE_FILE(this.copyFile(this.popupedFile))
     },
 
     handleRemove () {
@@ -529,6 +547,23 @@ export default {
         }],
         from: ['DocumentList', 'delete', this.popupedFile.file_id]
       })
+    },
+
+    copyFile (file) {
+      return {
+        type: file.type,
+        title: file.title,
+        create_at: file.create_at,
+        folder_title: file.folder_title,
+        need_push: file.need_push,
+        pid: file.pid,
+        remote_id: file.remote_id,
+        remote_pid: file.remote_pid,
+        seq: file.seq,
+        trash: file.trash,
+        update_at: file.update_at,
+        _id: file._id
+      }
     }
   }
 }
@@ -634,5 +669,5 @@ export default {
   align-items center
   justify-content center
   background-color #fcfbf7
-  z-index 9999999
+  z-index 9999
 </style>

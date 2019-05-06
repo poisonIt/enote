@@ -9,6 +9,18 @@
         <span style="color: #828282">{{ path }}</span>
       </div>
       <div class="manager">
+        <Tree
+          ref="tree"
+          :model="folderTree"
+          default-tree-node-name="新建文件夹"
+          v-bind:default-expanded="true"
+          :mask-style="{
+            width: '359px',
+            left: '21px',
+            border: 'none'
+          }"
+          @set-current="handleSetCurrentFolder">
+        </Tree>
         <!-- <Tree
           :item-height="'40px'"
           :data="nav"
@@ -31,14 +43,28 @@
 </template>
 
 <script>
-import Tree from '@/components/Tree'
-import mixins from '../mixins'
+// import Tree from '@/components/Tree'
+import { Tree, TreeStore } from '@/components/Tree'
 import { mapGetters, mapActions } from 'vuex'
+import { ipcRenderer } from 'electron'
+
+const rootFolder = {
+  name: '我的文件夹',
+  id: '0',
+  pid: null,
+  dragDisabled: true,
+  addTreeNodeDisabled: true,
+  addLeafNodeDisabled: true,
+  editNodeDisabled: true,
+  delNodeDisabled: true,
+  children: [],
+  data: {
+    type: 'folder'
+  }
+}
 
 export default {
   name: 'Move',
-
-  mixins: mixins,
 
   components: {
     Tree
@@ -49,20 +75,24 @@ export default {
       path: '/',
       targetFolder: null,
       folderIndex: 0,
-      nav: [{}]
+      folderTree: new TreeStore([rootFolder]),
+      moveFile: {
+        title: '',
+        type: ''
+      }
     }
   },
 
   computed: {
     ...mapGetters({
-      allFileMap: 'GET_FILES',
-      moveFileId: 'GET_MOVE_FILE',
-      currentFolder: 'GET_CURRENT_FOLDER'
+      // allFileMap: 'GET_FILES',
+      // moveFileId: 'GET_MOVE_FILE',
+      // currentFolder: 'GET_CURRENT_FOLDER'
     }),
 
-    moveFile () {
-      return this.allFileMap[this.moveFileId]
-    }
+    // moveFile () {
+      // return this.allFileMap[this.moveFileId]
+    // }
   },
 
   methods: {
@@ -71,24 +101,57 @@ export default {
       'SET_CURRENT_FOLDER'
     ]),
 
-    init () {
+    init (tree, file) {
       this.targetFolder = null
-      // this.$refs.tree.store.currentNode = null
       this.path = '/'
+      console.log('init', tree, file)
+      this.folderTree = new TreeStore([tree])
+      this.moveFile = file
+    },
+
+    handleSetCurrentFolder (node) {
+      this.path = this.getPath(node)
+      console.log('handleSetCurrentFolder', node)
+      this.targetFolder = node.data
+      this.targetFolderNode = node
     },
 
     handleMove () {
-      if (this.targetFolder === null) {
-        this.targetFolder = this.$refs.tree.store.root.data[0]
+      console.log('handleMove', this.targetFolder, this.targetFolderNode, this.moveFile)
+      if (!this.targetFolder) {
+        return
+      }
+      if (!this.targetFolder.id) {
+        this.targetFolder.id = '0'
+      }
+      const c = this.$refs.tree.model.store.map[this.moveFile.id]
+      console.log('handleMove-c', c)
+      // const t = this.$refs.tree.model.store.map[this.targetFolder.id]
+      if (c.isTargetChild(this.targetFolderNode)) {
+        return
+      }
+      c.moveInto(this.targetFolderNode)
+
+      if (this.moveFile.pid !== this.targetFolderNode.id &&
+        this.moveFile.id !== this.targetFolderNode.id) {
+        let taskName = this.moveFile.type === 'folder' ? 'updateLocalFolder' : 'updateLocalNote'
+        ipcRenderer.send('fetch-local-data', {
+          tasks: [taskName],
+          params: [{
+            id: this.moveFile.id,
+            pid: this.targetFolderNode.id
+          }],
+          from: ['Move']
+        })
       }
 
-      this.APPEND_FILE({
-        fileId: this.moveFileId,
-        targetId: this.targetFolder.id
-      })
 
-      this.$emit('handleMove', this.targetFolder.id)
-      this.init()
+      console.log('handleMove', this.$refs.tree.model)
+      this.$emit('handleMove', {
+        moveId: this.moveFile.id,
+        targetId: this.targetFolderNode.id
+      })
+      // this.init()
     },
 
     handleItemClick (node) {
@@ -118,6 +181,17 @@ export default {
       }
       return `${pre} ${node.store.currentNode === node ? 'highlight' : ''}`
     },
+
+    getPath (node) {
+      let c = node
+      let result = [c.name]
+      console.log('getPath', c)
+      while (c.parent && c.parent.name !== 'root') {
+        result.unshift(c.parent.name || '')
+        c = c.parent
+      }
+      return result.join('/')
+    }
   }
 }
 </script>
@@ -141,7 +215,7 @@ export default {
     width 20px
     height 20px
     border-radius 3px
-    background-image url(../../../assets/images/document.png)
+    background-image url(../../../assets/images/lanhu/doc@2x.png)
     background-repeat no-repeat
     background-position center
     background-size contain
@@ -167,36 +241,40 @@ export default {
     height 240px
     overflow-y scroll
 
-.nav-node
-  position relative
-  width 100%
-  height 40px
-  display flex
-  align-items center
-  font-size 13px
-  -webkit-box-flex 1
-  .click-mask
-    position absolute
-    width 100%
-    height 100%
+.tn-mask
+  width 359px !important
+  left 21px !important
 
-.icon-folder_open
-  background-image url(../../../assets/images/lanhu/folder_open@2x.png)
-  &.highlight
-    background-image url(../../../assets/images/lanhu/folder_open_highlight@2x.png)
-.icon-folder_close
-  background-image url(../../../assets/images/lanhu/folder_close@2x.png)
-  &.highlight
-    background-image url(../../../assets/images/lanhu/folder_close_highlight@2x.png)
+// .nav-node
+//   position relative
+//   width 100%
+//   height 40px
+//   display flex
+//   align-items center
+//   font-size 13px
+//   -webkit-box-flex 1
+//   .click-mask
+//     position absolute
+//     width 100%
+//     height 100%
 
-.icon-folder
-  display block
-  margin-right 6px
-  width 24px
-  height 24px
-  opacity 0.8
-  background-image url(../../../assets/images/lanhu/folder_open_highlight@2x.png)
-  background-repeat no-repeat
-  background-size contain
-  background-position center
+// .icon-folder_open
+//   background-image url(../../../assets/images/lanhu/folder_open@2x.png)
+//   &.highlight
+//     background-image url(../../../assets/images/lanhu/folder_open_highlight@2x.png)
+// .icon-folder_close
+//   background-image url(../../../assets/images/lanhu/folder_close@2x.png)
+//   &.highlight
+//     background-image url(../../../assets/images/lanhu/folder_close_highlight@2x.png)
+
+// .icon-folder
+//   display block
+//   margin-right 6px
+//   width 24px
+//   height 24px
+//   opacity 0.8
+//   background-image url(../../../assets/images/lanhu/folder_open_highlight@2x.png)
+//   background-repeat no-repeat
+//   background-size contain
+//   background-position center
 </style>

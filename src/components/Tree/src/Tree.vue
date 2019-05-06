@@ -1,5 +1,5 @@
 <template>
-  <div class='tn' v-if="!model.hidden">
+  <div class='tn' v-if="!model.hidden" :class="{ dark: dark }">
     <div v-if="model.name !== 'root'">
       <div class="tn-border tn-up" :class="{'tn-active': isDragEnterUp}"
         @drop="dropUp"
@@ -19,7 +19,7 @@
         @contextmenu.prevent="contextmenu"
         @click.stop='click'
         @dblclick.prevent.stop="toggle">
-        <div class="tn-mask" :class="{ current: isCurrent }"></div>
+        <div class="tn-mask" :class="{ current: isCurrent }" :style="maskStyle"></div>
         <span class="tn-caret tn-is-small" :class="{ lucency: !model.children || model.children.filter(item => !item.hidden).length === 0 }">
           <i class="tn-icon" :class="caretClass" @click.prevent.stop="toggle"></i>
         </span>
@@ -38,7 +38,7 @@
           </slot>
         </span>
 
-        <div class="tn-node-content ellipsis" v-if="!editable">
+        <div class="tn-node-content ellipsis" :class="{ current: isCurrent }" v-if="!editable">
           {{model.name}}
         </div>
         <input v-else class="tn-input" type="text" ref="nodeInput" :value="model.name" @input="updateName" @blur="blur">
@@ -83,6 +83,7 @@
         :default-tree-node-name="defaultTreeNodeName"
         :default-leaf-node-name="defaultLeafNodeName"
         :flat-ids="flatIds"
+        :mask-style="maskStyle"
         v-bind:default-expanded="defaultExpanded"
         :model="model"
         :key='model.id'>
@@ -122,6 +123,11 @@ export default {
   },
 
   props: {
+    dark: {
+      type: Boolean,
+      default: false
+    },
+
     model: {
       type: Object
     },
@@ -144,6 +150,10 @@ export default {
     flatIds: {
       type: Array,
       default: () => []
+    },
+
+    maskStyle: {
+      type: Object
     }
   },
 
@@ -483,7 +493,7 @@ export default {
   height 30px
   // padding 5px 0 5px 1rem
   background-color inherit
-  color #fff
+  color #333
   font-size 13px
   .tn-input
     border none
@@ -495,9 +505,9 @@ export default {
   &.tn-active
     .tn-mask
       border 1px dashed #DDAF59
-      background-color #464646
+      background-color #FFF5E2
   &.tn-current
-    background-color #313336
+    background-color #FFF5E2
   &.tn-fat
     height 40px
     .tn-mask
@@ -552,13 +562,15 @@ export default {
   background-color transparent
   z-index 0
   &.current
-    background-color #313336
+    background-color #FFF5E2
     border-right 3px solid #DDAF59
 
 .tn-node-content
   height 30px
   line-height 33px
   z-index 1
+  &.current
+    color #DDAF59
 
 .tn-icon
   display block
@@ -590,13 +602,13 @@ export default {
   &.current
     background-image url(../../../assets/images/lanhu/documents_highlight@2x.png)
 .tn-icon-folder
-  background-image url(../../../assets/images/lanhu/folder_close@2x.png)
+  background-image url(../../../assets/images/lanhu/folder_close_grey@2x.png)
   &.expanded
-    background-image url(../../../assets/images/lanhu/folder_open@2x.png)
+    background-image url(../../../assets/images/lanhu/folder_open_grey@2x.png)
   &.current
     background-image url(../../../assets/images/lanhu/folder_close_highlight@2x.png)
     &.expanded
-     background-image url(../../../assets/images/lanhu/folder_open_highlight@2x.png)
+      background-image url(../../../assets/images/lanhu/folder_open_highlight@2x.png)
 .tn-icon-tag
   background-image url(../../../assets/images/lanhu/tag@2x.png)
   &.current
@@ -605,4 +617,37 @@ export default {
   background-image url(../../../assets/images/lanhu/recycle@2x.png)
   &.current
     background-image url(../../../assets/images/lanhu/recycle_highlight@2x.png)
+
+.dark
+  .tree-node
+    color #fff
+    &.tn-active
+      .tn-mask
+        border 1px dashed #DDAF59
+        background-color #464646
+    &.tn-current
+      background-color #313336
+  .tn-mask
+    &.current
+      background-color #313336
+  .tn-icon-latest
+    background-image url(../../../assets/images/lanhu/documents@2x.png)
+    &.current
+      background-image url(../../../assets/images/lanhu/documents_highlight@2x.png)
+  .tn-icon-folder
+    background-image url(../../../assets/images/lanhu/folder_close@2x.png)
+    &.expanded
+      background-image url(../../../assets/images/lanhu/folder_open@2x.png)
+    &.current
+      background-image url(../../../assets/images/lanhu/folder_close_highlight@2x.png)
+      &.expanded
+        background-image url(../../../assets/images/lanhu/folder_open_highlight@2x.png)
+  .tn-icon-tag
+    background-image url(../../../assets/images/lanhu/tag@2x.png)
+    &.current
+      background-image url(../../../assets/images/lanhu/tag_highlight@2x.png)
+  .tn-icon-bin
+    background-image url(../../../assets/images/lanhu/recycle@2x.png)
+    &.current
+      background-image url(../../../assets/images/lanhu/recycle_highlight@2x.png)
 </style>

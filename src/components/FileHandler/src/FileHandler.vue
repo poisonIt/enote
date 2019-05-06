@@ -66,10 +66,10 @@
 <script>
 import dayjs from 'dayjs'
 import { mapGetters, mapActions } from 'vuex'
-import {
-  updateLocalFolder,
-  updateLocalNote
-} from '@/service/local'
+// import {
+//   updateLocalFolder,
+//   updateLocalNote
+// } from '@/service/local'
 
 export default {
   name: 'FileHandler',
@@ -173,22 +173,21 @@ export default {
     async handleInputBlur () {
       this.isInputFocused = false
       if (this.titleValue === this.currentFile.title) return
-      if (this.currentFile.type === 'folder') {
-        await updateLocalFolder({
-          id: this.currentFile._id,
-          title: this.titleValue
-        })
-      } else {
-        await updateLocalNote({
-          id: this.currentFile._id,
-          title: this.titleValue
-        })
-      }
+      // if (this.currentFile.type === 'folder') {
+      //   await updateLocalFolder({
+      //     id: this.currentFile._id,
+      //     title: this.titleValue
+      //   })
+      // } else {
+      //   await updateLocalNote({
+      //     id: this.currentFile._id,
+      //     title: this.titleValue
+      //   })
+      // }
       this.$hub.dispatchHub('updateFile', this, {
         id: this.currentFile._id,
         name: this.titleValue
       })
-      this.$hub.dispatchHub('pushData', this)
     },
 
     handleResize () {

@@ -52,40 +52,6 @@ export default {
       }
     },
 
-    createPromise (data, type, rawData) {
-      if (type === 'img') {
-        return new Promise((resolve, reject) => {
-          uploadFile(data.file).then(resp => {
-            // ipcRenderer.send('fetch-local-data', {
-            //   tasks: ['getAllLocalImage'],
-            //   from: 'pushImgs'
-            // })
-            LocalDAO.files.getById({
-              id: data.img.doc_id
-            }).then(doc => {
-              let oldContent = doc.content
-              console.log('resp', resp)
-              let newContent = doc.content.replace(new RegExp(data.img.path,'gm'), resp.data.body[0].url)
-              console.log('newContent', newContent)
-              LocalDAO.files.update({
-                id: data.img.doc_id,
-                data: {
-                  content: newContent
-                }
-              }).then(() => {
-                LocalDAO.img.removeById({
-                  id: data.img._id
-                }).then(() => {
-                  unlinkSync(data.img.path.replace('file:///', ''))
-                  resolve()
-                })
-              })
-            })
-          })
-        })
-      }
-    },
-
     async hookMsgHandler () {
       ipcRenderer.on('fetch-local-data-response', (event, arg) => {
         if (arg.from === 'pushImgs') {
@@ -303,6 +269,7 @@ export default {
         }
     
         runTask()
+        this.$Message.success('同步成功')
       })
     },
 

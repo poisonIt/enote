@@ -1,11 +1,11 @@
 // import dayjs from 'dayjs'
 import * as _ from 'lodash'
-import { getLocalNoteByPid } from '@/service/local'
 
 const state = {
   search_keyword: '',
   current_nav: null,
   current_file: null,
+  duplicate_file: null,
   selected_tags: []
 }
 
@@ -22,17 +22,8 @@ const mutations = {
     state.current_file = file
   },
 
-  UPDATE_CURRENT_FILE (state, params) {
-    let fileCopy = {}
-    Object.keys(state.current_file).forEach(key => {
-      fileCopy[key] = state.current_file[key]
-    })
-    Object.keys(params).forEach(key => {
-      if (fileCopy.hasOwnProperty(key)) {
-        fileCopy[key] = params[key]
-      }
-    })
-    state.current_file = fileCopy
+  SET_DUPLICATE_FILE (state, file) {
+    state.duplicate_file = file
   },
 
   TOGGLE_SELECTED_TAG (state, params) {
@@ -61,8 +52,8 @@ const actions = {
     commit('SET_CURRENT_FILE', file)
   },
 
-  UPDATE_CURRENT_FILE ({ commit }, params) {
-    commit('UPDATE_CURRENT_FILE', params)
+  SET_DUPLICATE_FILE ({ commit }, file) {
+    commit('SET_DUPLICATE_FILE', file)
   },
 
   TOGGLE_SELECTED_TAG ({ commit }, params) {
@@ -81,6 +72,10 @@ const getters = {
 
   GET_CURRENT_FILE (state) {
     return state.current_file
+  },
+
+  GET_DUPLICATE_FILE (state) {
+    return state.duplicate_file
   },
 
   GET_SELECTED_TAGS (state) {

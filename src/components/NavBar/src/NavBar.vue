@@ -319,6 +319,7 @@ export default {
       'SET_VIEW_FILE_TYPE',
       'SET_CURRENT_NAV',
       'SET_IS_HOME_READY',
+      'SET_DUPLICATE_FILE',
       'TOGGLE_SHOW_MOVE_PANEL',
       'TOGGLE_SHOW_TAG_HANDLER'
     ]),
@@ -476,12 +477,25 @@ export default {
     },
 
     handleDuplicate () {
-      this.duplicatedNode = this.popupedNode
+      this.SET_DUPLICATE_FILE(this.copyFile(this.popupedNode.model.data))
     },
 
     handlePaste () {
-      let duplicateData = cloneDeep(this.duplicatedNode.data)
-      this.popupedNode.instance.insertChild(duplicateData)
+      // let duplicateData = cloneDeep(this.duplicatedNode.data)
+      // this.popupedNode.instance.insertChild(duplicateData)
+      console.log('handlePaste', this.popupedNode)
+      let taskName = this.duplicateFile.type === 'folder' ? 'addLocalFolder' : 'addLocalNote'
+      let data = this.duplicateFile
+      data.pid = this.popupedNode.model.data.id || this.popupedNode.model.data._id || '0'
+      data.remote_id = undefined
+      data.remote_pid = undefined
+      data._id = undefined
+      console.log('handlePaste', data)
+      // ipcRenderer.send('fetch-local-data', {
+      //   tasks: [taskName],
+      //   params: [data],
+      //   from: ['NavBar']
+      // })
     },
 
     handleDelete () {
@@ -566,6 +580,23 @@ export default {
         return this.viewFileType === link
       }
     },
+
+    copyFile (file) {
+      return {
+        type: file.type,
+        title: file.title,
+        create_at: file.create_at,
+        folder_title: file.folder_title,
+        need_push: file.need_push,
+        pid: file.pid,
+        remote_id: file.remote_id,
+        remote_pid: file.remote_pid,
+        seq: file.seq,
+        trash: file.trash,
+        update_at: file.update_at,
+        _id: file._id
+      }
+    }
 
     // updateTags (allTags) {
     //   console.log('allTags', allTags)

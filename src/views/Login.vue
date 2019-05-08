@@ -147,24 +147,24 @@ export default {
         }
       }
 
-      // const friendResp = await getFriendList(id_token).catch(err => {
-      //   this.isLoading = false
-      //   return
-      // })
-      // if (friendResp.data.returnCode !== 200) {
-      //   return {
-      //     returnMsg: friendResp.data.returnMsg
-      //   }
-      // }
+      const friendResp = await getFriendList(id_token).catch(err => {
+        this.isLoading = false
+        return
+      })
+      if (friendResp.data.returnCode !== 200) {
+        return {
+          returnMsg: friendResp.data.returnMsg
+        }
+      }
 
       const userDataTransed = this.transUserData(userInfoResp.data.body)
       userDataTransed.password = password
       userDataTransed.id_token = id_token
-      // userDataTransed.friend_list = friendResp.data.body
+      userDataTransed.friend_list = friendResp.data.body
       console.log('userDataTransed', userDataTransed)
       return {
         userData: userDataTransed,
-        // returnMsg: friendResp.data.returnMsg
+        returnMsg: friendResp.data.returnMsg
       }
     },
 

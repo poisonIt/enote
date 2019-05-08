@@ -512,6 +512,10 @@ export default {
         from: ['DocumentList', 'remove', this.popupedFile.file_id]
       })
     },
+    
+    handleNewWindow () {
+      ipcRenderer.send('create-preview-window', this.popupedFile.file_id)
+    },
 
     handleShare () {
       let idx = _.findIndex(this.fileList, { _id: this.popupedFile.file_id} )

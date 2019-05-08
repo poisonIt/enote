@@ -27,38 +27,43 @@ class MyUploadAdapter {
   upload () {
     return this.loader.file
     .then(file => new Promise((resolve, reject) => {
-      console.log('store-111', store, store.state.files.current_file._id)
-      const mimes = {
-        '.png': 'image/png',
-        '.gif': 'image/gif',
-        '.jpg': 'image/jpeg',
-        '.jpeg': 'image/jpeg'
-      }
-
-      const ext = path.extname(file.path)
-      const mime = mimes[ext]
-      const newFileName = GenNonDuplicateID(6) + ext
-      const dest = path.resolve(resourcePath, newFileName)
-      console.log('upload-111', ext, mime, newFileName, dest)
-      console.log('store-222', file.path, dest)
-      copyFile(file.path, dest, (err) => {
-        if (err) throw err
-        console.log(`${file.name} was copied to ${dest}`)
-        ipcRenderer.send('fetch-local-data', {
-          tasks: ['addLocalImage'],
-          params: [{
-            name: newFileName,
-            path: `file:///${dest}`,
-            note_id: store.state.files.current_file._id,
-            ext: ext,
-            mime: mime
-          }],
-          from: 'Editor',
-        })
+      uploadFile(file).then(res => {
         resolve({
-          default: `file:///${dest}`
+          default: res.data.body[0].url
         })
       })
+      // console.log('store-111', store, store.state.files.current_file._id)
+      // const mimes = {
+      //   '.png': 'image/png',
+      //   '.gif': 'image/gif',
+      //   '.jpg': 'image/jpeg',
+      //   '.jpeg': 'image/jpeg'
+      // }
+
+      // const ext = path.extname(file.path)
+      // const mime = mimes[ext]
+      // const newFileName = GenNonDuplicateID(6) + ext
+      // const dest = path.resolve(resourcePath, newFileName)
+      // console.log('upload-111', ext, mime, newFileName, dest)
+      // console.log('store-222', file.path, dest)
+      // copyFile(file.path, dest, (err) => {
+      //   if (err) throw err
+      //   console.log(`${file.name} was copied to ${dest}`)
+      //   ipcRenderer.send('fetch-local-data', {
+      //     tasks: ['addLocalImage'],
+      //     params: [{
+      //       name: newFileName,
+      //       path: `file:///${dest}`,
+      //       note_id: store.state.files.current_file._id,
+      //       ext: ext,
+      //       mime: mime
+      //     }],
+      //     from: 'Editor',
+      //   })
+      //   resolve({
+      //     default: `file:///${dest}`
+      //   })
+      // })
     }))
   }
 

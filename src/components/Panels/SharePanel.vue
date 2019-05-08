@@ -92,7 +92,7 @@
               :class="{ hightlight: selectedFd === item }"
               @click="selectFdItem(item)">
               <img class="avatar" src="https://avatar.saraba1st.com/images/noavatar_middle.gif" alt="">
-              <div class="name">{{ item.username }}</div>
+              <div class="name">{{ item.accountNameCN }}</div>
               <input type="checkbox" @change="handleFriendStateChange" v-model="item.state">
             </label>
           </ul>
@@ -104,7 +104,7 @@
               v-for="item in friendChecked"
               :key="item.userCode">
               <img class="avatar" src="https://avatar.saraba1st.com/images/noavatar_middle.gif" alt="">
-              <div class="name">{{ item.username }}</div>
+              <div class="name">{{ item.accountNameCN }}</div>
               <div class="icon-close" @click="handleFriendUnChecked(item)"></div>
             </label>
           </ul>
@@ -194,6 +194,7 @@ export default {
 
   watch: {
     isSharePanelShowed (val) {
+      console.log('userInfo', this.userInfo)
       if (val) {
         this.createShare()
       }

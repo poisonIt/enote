@@ -22,6 +22,7 @@ const isDevelopment = process.env.NODE_ENV !== 'production'
 let win
 let backWin
 let loginWin
+let previewWin
 let youdaoWin
 
 let template = [{
@@ -254,6 +255,36 @@ function createHomeWindow () {
   })
 }
 
+function createPreviewWindow (event, arg) {
+  console.log('createPreviewWindow', arg)
+  previewWin = new BrowserWindow({
+    id: 'preview',
+    width: 960,
+    height: 640,
+    title: '笔记预览',
+    backgroundColor: '#fcfbf7',
+    titleBarStyle: 'hidden',
+    webPreferences: {
+      webSecurity: false
+    }
+  })
+  previewWin.setMinimumSize(640, 640)
+
+  if (process.env.WEBPACK_DEV_SERVER_URL) {
+    // Load the url of the dev server if in development mode
+    previewWin.loadURL(process.env.WEBPACK_DEV_SERVER_URL + `#/preview?note_id=${arg}`)
+    previewWin.webContents.openDevTools()
+  } else {
+    createProtocol('app')
+    // Load the index.html when not in development
+    previewWin.loadURL('app://./index.html' + `#/preview?note_id=${arg}`)
+  }
+
+  previewWin.on('closed', () => {
+    previewWin = null
+  })
+}
+
 function createYoudaoAsyncWindow (event, url) {
   youdaoWin = new BrowserWindow({
     id: 'youdao',
@@ -280,7 +311,7 @@ function createYoudaoAsyncWindow (event, url) {
 
 ipcMain.on('changeWindow', (event, arg) => {
   if (arg.name === 'home') {
-    loginWin && loginWin.close()
+    // loginWin && loginWin.close()
     createHomeWindow()
   }
   if (arg.name === 'login') {
@@ -311,7 +342,11 @@ ipcMain.on('home-window-ready', (event) => {
 
 ipcMain.on('show-home-window', (event, arg) => {
   win && win.show()
-  loginWin && loginWin.close()
+  // loginWin && loginWin.close()
+})
+
+ipcMain.on('create-preview-window', (event, arg) => {
+    createPreviewWindow(event, arg)
 })
 
 ipcMain.on('create-youdao-window', (event, arg) => {
@@ -352,6 +387,10 @@ ipcMain.on('fetch-local-data', (event, arg) => {
 })
 
 ipcMain.on('fetch-local-data-response', (event, arg) => {
+  if (arg.from === 'Preview') {
+    previewWin.webContents.send('fetch-local-data-response', arg)
+    return
+  }
   win.webContents.send('fetch-local-data-response', arg)
 })
 

@@ -249,7 +249,24 @@ function getAll () {
   console.log('getAll-folder')
   return new Promise((resolve, reject) => {
     Folder.find({}, (err, folders) => {
-      resolve(folders)
+      let p = folders.map(folder => {
+        return new Promise((resolve, reject) => {
+          getById({ id: folder.pid }).then(pFolder => {
+            if (!pFolder) {
+              update({ id: folder._id, pid: '0' }).then(() => {
+                folder.folder_title = '我的文件夹'
+                resolve(folder)
+              })
+            } else {
+              folder.folder_title = pFolder.title
+              resolve(folder)
+            }
+          })
+        })
+      })
+      Promise.all(p).then(res => {
+        resolve(res)
+      })
     })
   })
 }

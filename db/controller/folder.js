@@ -253,10 +253,15 @@ function getAll () {
         return new Promise((resolve, reject) => {
           getById({ id: folder.pid }).then(pFolder => {
             if (!pFolder) {
-              update({ id: folder._id, pid: '0' }).then(() => {
+              if (folder.pid !== '0') {
+                update({ id: folder._id, pid: '0' }).then(() => {
+                  folder.folder_title = '我的文件夹'
+                  resolve(folder)
+                })
+              } else {
                 folder.folder_title = '我的文件夹'
                 resolve(folder)
-              })
+              }
             } else {
               folder.folder_title = pFolder.title
               resolve(folder)

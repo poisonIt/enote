@@ -378,10 +378,15 @@ function getAll () {
         return new Promise((resolve, reject) => {
           folderCtr.getById({ id: note.pid }).then(folder => {
             if (!folder) {
-              update({ id: note._id, pid: '0' }).then(() => {
+              if (note.pid !== '0') {
+                update({ id: note._id, pid: '0' }).then(() => {
+                  note.folder_title = '我的文件夹'
+                  resolve(note)
+                })
+              } else {
                 note.folder_title = '我的文件夹'
                 resolve(note)
-              })
+              }
             } else {
               note.folder_title = folder.title
               resolve(note)

@@ -11,6 +11,7 @@ function noteModel (opts) {
     trash: opts.trash || 'NORMAL',
     need_push: opts.need_push !== undefined ? opts.need_push : true,
     // content: opts.content || '',
+    size: opts.size || 0,
     tags: opts.tags || [],
     top: opts.top || false,
   }

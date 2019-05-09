@@ -37,7 +37,7 @@
           :content="item.brief"
           :isTop="item.top"
           :update_at="item.update_at | yyyymmdd"
-          :file_size="Number(item.content ? item.content.length : '')"
+          :file_size="item.size"
           :parent_folder="item.folder_title || ''"
           :need_push="item.need_push_remotely"
           :need_push_local="item.need_push_locally"
@@ -141,12 +141,12 @@ export default {
         },
         {
           label: '文件名称',
-          value: 'file_name',
+          value: 'title',
           type: 'sort'
         },
         {
           label: '文件大小',
-          value: 'file_size',
+          value: 'size',
           type: 'sort'
         }
       ]
@@ -216,13 +216,16 @@ export default {
 
     viewFileSortType (val) {
       console.log('viewFileSortType', val)
-      return
-      this.list = this.fileListSortFunc(this.list)
+      // return
+      this.updateFileList()
+      // this.$set(this.fileList, this.fileListSortFunc(this.fileList))
+      // this.fileList = this.fileListSortFunc(this.fileList)
     },
 
     viewFileSortOrder (val) {
       console.log('viewFileSortOrder', val)
-      this.list = this.fileListSortFunc(this.list)
+      this.updateFileList()
+      // this.list = this.fileListSortFunc(this.list)
     },
 
     stickTopFiles (val) {
@@ -410,9 +413,26 @@ export default {
 
     fileListSortFunc (list) {
       let order = this.viewFileSortOrder === 'down' ? -1 : 1
-      let listTemp = list.sort((a, b) => {
-        return (Number(a[this.viewFileSortType]) - Number(b[this.viewFileSortType])) * order
-      })
+      let listTemp = []
+      if (this.viewFileSortType === 'title') {
+        let en = list.filter(item => item.title[0].charCodeAt() <= 122 || !item.title[0])
+        let zh = list.filter(item => item.title[0].charCodeAt() > 122)
+
+        en = en.sort((a, b) => {
+          let aCode = a.title[0] ? a.title[0].charCodeAt() : 32
+          let bCode = b.title[0] ? b.title[0].charCodeAt() : 32
+          return (aCode - bCode) * order
+        })
+
+        zh = zh.sort((a, b) => {
+          return (a.title[0].localeCompare(b.title[0], 'zh')) * order
+        })
+        listTemp = order === 1 ? [...en, ...zh] : [...zh, ...en]
+      } else {
+        listTemp = list.sort((a, b) => {
+          return (Number(a[this.viewFileSortType]) - Number(b[this.viewFileSortType])) * order
+        })
+      }
       let topList = listTemp.filter(item => item.top)
       let downList = listTemp.filter(item => !item.top)
       this.stickTopFiles = topList

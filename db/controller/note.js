@@ -45,6 +45,10 @@ function createCollection (path) {
       type: Boolean,
       default: true
     },
+    size: {
+      type: Number,
+      default: 0
+    },
     tags: [String],
     top: {
       type: Boolean,

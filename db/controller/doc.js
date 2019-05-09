@@ -123,6 +123,7 @@ function update (req) {
           console.log('update-doc-111', newDoc)
           noteCtr.update({
             id: newDoc.note_id,
+            size: newDoc.content.length,
             need_push: true
           }).then(note => {
             resolve(newDoc)

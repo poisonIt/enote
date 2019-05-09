@@ -90,6 +90,14 @@ export default {
         }
       }
     })
+    ipcRenderer.on('communicate', (event, arg) => {
+      console.log('fetch-local-data-response', event, arg)
+      if (arg.from === 'Preview' && arg.tasks.indexOf('updateEditorDoc') > -1) {
+        let res = arg.params[arg.tasks.indexOf('updateEditorDoc')]
+        if (this.currentDoc._id === res.id)
+        this.editor.setData(res.content)
+      }
+    })
   },
 
   methods: {

@@ -272,16 +272,20 @@ function createPreviewWindow (event, arg) {
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode
-    previewWin.loadURL(process.env.WEBPACK_DEV_SERVER_URL + `#/preview?note_id=${arg}`)
+    previewWin.loadURL(process.env.WEBPACK_DEV_SERVER_URL + `#/preview?note_id=${arg.noteId}&title=${arg.title}`)
     previewWin.webContents.openDevTools()
   } else {
     createProtocol('app')
     // Load the index.html when not in development
-    previewWin.loadURL('app://./index.html' + `#/preview?note_id=${arg}`)
+    previewWin.loadURL('app://./index.html' + `#/preview?note_id=${arg}&title=${arg.title}`)
   }
 
   previewWin.on('closed', () => {
     previewWin = null
+    win && win.webContents.send('communicate', {
+      from: 'Preview',
+      tasks: ['pushData']
+    })
   })
 }
 
@@ -346,7 +350,7 @@ ipcMain.on('show-home-window', (event, arg) => {
 })
 
 ipcMain.on('create-preview-window', (event, arg) => {
-    createPreviewWindow(event, arg)
+  createPreviewWindow(event, arg)
 })
 
 ipcMain.on('create-youdao-window', (event, arg) => {
@@ -388,10 +392,14 @@ ipcMain.on('fetch-local-data', (event, arg) => {
 
 ipcMain.on('fetch-local-data-response', (event, arg) => {
   if (arg.from === 'Preview') {
-    previewWin.webContents.send('fetch-local-data-response', arg)
+    previewWin && previewWin.webContents.send('fetch-local-data-response', arg)
     return
   }
   win.webContents.send('fetch-local-data-response', arg)
+})
+
+ipcMain.on('communicate', (event, arg) => {
+  win && win.webContents.send('communicate', arg)
 })
 
 // Quit when all windows are closed.

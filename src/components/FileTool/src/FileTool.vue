@@ -22,6 +22,7 @@
 </template>
 
 <script>
+import { ipcRenderer } from 'electron'
 import { mapGetters } from 'vuex'
 import mixins from '../mixins'
 
@@ -54,6 +55,11 @@ export default {
   },
 
   mounted () {
+    ipcRenderer.on('communicate', (event, arg) => {
+      if (arg.from === 'Preview' && arg.tasks.indexOf('pushData') > -1) {
+        this.syncData()
+      }
+    })
     // let asyncItv = setInterval(() => {
     //   this.checkIsEditorFocused()
     //   console.log('isEditorFocused', this.isEditorFocused)
@@ -92,7 +98,7 @@ export default {
       if (!delay) {
         delay = 1000
       }
-      if (isAuto) return
+      // if (isAuto) return
       setTimeout(() => {
         this.pushData()
         .catch(err => {

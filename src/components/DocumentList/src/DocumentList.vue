@@ -542,7 +542,10 @@ export default {
     },
     
     handleNewWindow () {
-      ipcRenderer.send('create-preview-window', this.popupedFile.file_id)
+      ipcRenderer.send('create-preview-window', {
+        noteId: this.popupedFile.file_id,
+        title: this.popupedFile.title
+      })
     },
 
     handleShare () {

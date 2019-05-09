@@ -52,12 +52,13 @@
   box-shadow: none !important;
   padding-bottom: 60px !important;
 }
-li {
+
+.ck-content li {
   list-style: inside !important;
 }
-ul li {
+.ck-content ul li {
   list-style-type: disc !important;
 }
-ol li {
+.ck-content ol li {
   list-style-type: decimal !important;
 }

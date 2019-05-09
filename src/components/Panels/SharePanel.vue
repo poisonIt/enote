@@ -87,8 +87,8 @@
           </div>
           <ul>
             <label class="mem-item"
-              v-for="item in fdList"
-              :key="item.userCode"
+              v-for="(item, index) in fdList"
+              :key="item.userCode + index"
               :class="{ hightlight: selectedFd === item }"
               @click="selectFdItem(item)">
               <img class="avatar" src="https://avatar.saraba1st.com/images/noavatar_middle.gif" alt="">
@@ -101,8 +101,8 @@
           <div class="title">已选择({{ friendChecked.length }})</div>
           <ul>
             <label class="mem-item"
-              v-for="item in friendChecked"
-              :key="item.userCode">
+              v-for="(item, index) in friendChecked"
+              :key="item.userCode + index">
               <img class="avatar" src="https://avatar.saraba1st.com/images/noavatar_middle.gif" alt="">
               <div class="name">{{ item.accountNameCN }}</div>
               <div class="icon-close" @click="handleFriendUnChecked(item)"></div>
@@ -119,12 +119,13 @@
 </template>
 
 <script>
-import { clipboard } from 'electron'
+import { clipboard, ipcRenderer } from 'electron'
 import { mapActions, mapGetters } from 'vuex'
 import LocalDAO from '../../../db/api'
 import {
   publishShare,
-  unPublishShare
+  unPublishShare,
+  getShareInfo
 } from '../../service'
 import Loading from '@/components/Loading'
 
@@ -194,9 +195,23 @@ export default {
 
   watch: {
     isSharePanelShowed (val) {
-      console.log('userInfo', this.userInfo)
       if (val) {
-        this.createShare()
+        this.isFirstData = true
+        if (!this.currentFile.remote_id) {
+          ipcRenderer.send('fetch-local-data', {
+            tasks: ['getLocalNoteById'],
+            params: [{ id: this.currentFile._id }],
+            from: 'SharePanel'
+          })
+        } else {
+          getShareInfo(this.currentFile.remote_id).then(res => {
+            if (res.data.body && res.data.body) {
+              this.handleShareFinished(res)
+            } else {
+              this.createShare()
+            }
+          })
+        }
       }
     },
 
@@ -209,7 +224,6 @@ export default {
     },
 
     validity (val) {
-      console.log('watch-validity', val)
       this.modifyShare()
     },
 
@@ -223,23 +237,39 @@ export default {
     },
 
     entitledType (val) {
-      console.log('entitledType', val)
+      // console.log('entitledType', val)
       this.modifyShare()
-    },
-
-    friendChecked (val) {
-      console.log('friendChecked', val)
-    },
-
-    entitledUser (val) {
-      console.log('entitledUser', val)
     }
+
+    // friendChecked (val) {
+    //   // console.log('friendChecked', val)
+    // },
+
+    // entitledUser (val) {
+    //   // console.log('entitledUser', val)
+    // }
   },
 
-  mounted () {
-    // if (this.userInfo.friend_list.length > 0) {
-    //   this.selectedFd = this.userInfo.friend_list[0]
-    // }
+  created () {
+    ipcRenderer.on('fetch-local-data-response', (event, arg) => {
+      if (arg.from === 'SharePanel') {
+        if (arg.tasks.indexOf('getLocalNoteById') > -1) {
+          let remote_id = arg.res[0].remote_id
+          if (remote_id) {
+            getShareInfo(remote_id).then(res => {
+              if (res.data.body && res.data.body) {
+                this.handleShareFinished(res)
+              } else {
+                this.createShare(remote_id)
+              }
+            })
+          } else {
+            this.$Message.warn('请先同步')
+            this.TOGGLE_SHOW_SHARE_PANEL(false)
+          }
+        }
+      }
+    })
   },
 
   methods: {
@@ -251,24 +281,18 @@ export default {
       this.TOGGLE_SHOW_SHARE_PANEL(false)
     },
 
-    async createShare () {
-      console.log('createShare')
+    async createShare (remote_id) {
       this.isFirstData = true
       this.isLoading = true
 
       let shareResp = await publishShare({
-        noteId: this.currentFile.remote_id
+        noteId: remote_id || this.currentFile.remote_id
       })
 
-      console.log('publishShare-resp', shareResp)
       this.handleShareFinished(shareResp)
-      this.$nextTick(() => {
-        this.isFirstData = false
-      })
     },
 
     async modifyShare () {
-      console.log('modifyShare', this.isFirstData)
       if (this.isFirstData) {
         // this.isFirstData = false
         return
@@ -285,7 +309,6 @@ export default {
 
       let shareResp = await publishShare(data)
 
-      console.log('modifyShare-resp', shareResp)
       this.handleShareFinished(shareResp)
     },
 
@@ -305,7 +328,6 @@ export default {
             return true
           }
         })
-        console.log('handleShareFinished-friendChecked', this.friendChecked)
 
         this.pwd = !!this.sharePwd
 
@@ -316,6 +338,10 @@ export default {
         this.$refs.entitledTypeSelect.broadcast('b-option', 'select', this.entitledType)
         this.$refs.entitledTypeSelect.selectedLabel = (this.entitledType === 'PUBLIC'
           ? '公开-所有人可查看' : '私密-指定成员可查看')
+
+        this.$nextTick(() => {
+          this.isFirstData = false
+        })
       } else {
         this.TOGGLE_SHOW_SHARE_PANEL(false)
       }
@@ -336,12 +362,10 @@ export default {
     },
 
     handleLinkFocus () {
-      console.log('handleLinkFocus')
       this.$refs.linkInput.select()
     },
 
     showFrdPanel () {
-      console.log('showFrdPanel', this.isFrdPanelShowed)
       this.isFrdPanelShowed = true
     },
 

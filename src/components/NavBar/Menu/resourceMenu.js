@@ -13,13 +13,13 @@ const resourceMenu1 = [
       callbackName: 'handleRename'
     }
   },
-  {
-    label: '复制',
-    eventListener: {
-      eventName: 'click',
-      callbackName: 'handleDuplicate'
-    }
-  },
+  // {
+  //   label: '复制',
+  //   eventListener: {
+  //     eventName: 'click',
+  //     callbackName: 'handleDuplicate'
+  //   }
+  // },
   {
     label: '粘贴',
     eventListener: {

@@ -47,9 +47,11 @@ function saveAll (req) {
 function add (req) {
   console.log('add-doc', req)
   let data = docModel(req)
+  console.log('add-doc-data', data)
 
   return new Promise((resolve, reject) => {
     Doc.insert(data, (err, docs) => {
+      console.log('add-doc-res', docs)
       resolve(docs)
     })
   })
@@ -179,6 +181,7 @@ function getByNoteId (req) {
   console.log('getByNoteId', note_id, req)
   return new Promise((resolve, reject) => {
     Doc.findOne({ note_id: note_id }).exec((err, doc) => {
+      console.log('getByNoteId-res', doc)
       resolve(doc)
     })
   })

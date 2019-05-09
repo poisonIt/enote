@@ -92,7 +92,7 @@ export default {
       if (!delay) {
         delay = 1000
       }
-      // if (isAuto) return
+      if (isAuto) return
       setTimeout(() => {
         this.pushData()
         .catch(err => {

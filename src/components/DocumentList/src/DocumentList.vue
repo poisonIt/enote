@@ -41,6 +41,7 @@
           :parent_folder="item.folder_title || ''"
           :need_push="item.need_push_remotely"
           :need_push_local="item.need_push_locally"
+          :rawData="item"
           @contextmenu="handleContextmenu"
           @dblclick="handleDbClick(item)">
         </FileCard>
@@ -251,24 +252,26 @@ export default {
         }
       }
       if (arg.from[0] === 'DocumentList') {
+        console.log('fetch-local-data-response', event, arg)
         if (!this.popupedFile) {
           if (['updateLocalFolder', 'updateLocalNote'].indexOf(arg.tasks[0]) > -1) {
             // this.refreshList()
           }
         } else {
-          if (arg.from[2] === this.popupedFile.file_id) {
+          console.log('2222222', this.popupedFile)
+          if (arg.from[2] === this.popupedFile.rawData._id) {
             if (['updateLocalFolder', 'updateLocalNote'].indexOf(arg.tasks[0]) > -1) {
               if (arg.from[1] === 'stickTop') {
-                this.selectedIdCache = this.popupedFile.file_id
+                this.selectedIdCache = this.popupedFile.rawData._id
                 this.refreshList()
               }
               if (arg.from[1] === 'cancelStickTop') {
-                this.selectedIdCache = this.popupedFile.file_id
+                this.selectedIdCache = this.popupedFile.rawData._id
                 this.refreshList()
               }
               if (arg.from[1] === 'remove') {
                 if (this.popupedFile.type === 'folder') {
-                  this.$hub.dispatchHub('deleteNavNode', this, this.popupedFile.file_id)
+                  this.$hub.dispatchHub('deleteNavNode', this, this.popupedFile.rawData._id)
                 }
                 this.refreshList()
               }
@@ -278,6 +281,10 @@ export default {
               if (arg.from[1] === 'delete') {
                 this.refreshList()
               }
+            }
+            if (arg.from[1] === 'duplicate') {
+              console.log('duplicate-res', arg)
+              this.refreshList()
             }
           }
         }
@@ -377,9 +384,10 @@ export default {
     selectFile (index) {
       const file = this.fileList[index]
       console.log('selectFile', index, file)
-      this.$refs.fileCardGroup.select(index) // visually select file
       if (file) {
+        if (this.currentFile && file._id === this.currentFile._id) return
         this.SET_CURRENT_FILE(this.copyFile(file))
+        this.$refs.fileCardGroup.select(index) // visually select file
       } else {
         this.SET_CURRENT_FILE(null)
       }
@@ -516,8 +524,8 @@ export default {
     },
 
     handleDuplicate () {
-      console.log('handleDuplicate')
-      this.SET_DUPLICATE_FILE(this.copyFile(this.popupedFile))
+      console.log('handleDuplicate', this.popupedFile)
+      this.SET_DUPLICATE_FILE(this.copyFile(this.popupedFile.rawData))
     },
 
     handleRemove () {

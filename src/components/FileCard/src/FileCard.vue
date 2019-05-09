@@ -106,6 +106,10 @@ export default {
     need_push_local: {
       type: Boolean,
       default: false
+    },
+    rawData: {
+      type: Object,
+      default: () => { return {} }
     }
   },
 

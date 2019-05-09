@@ -71,6 +71,10 @@ export function addLocalNote (params) {
   return LocalDAO.note.add(params)
 }
 
+export function duplicateLocalNote (params) {
+  return LocalDAO.note.duplicate(params)
+}
+
 export function updateLocalNote (params) {
   return LocalDAO.note.update(params)
 }

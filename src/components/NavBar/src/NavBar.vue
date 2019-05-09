@@ -481,21 +481,17 @@ export default {
     },
 
     handlePaste () {
-      // let duplicateData = cloneDeep(this.duplicatedNode.data)
-      // this.popupedNode.instance.insertChild(duplicateData)
-      console.log('handlePaste', this.popupedNode)
-      let taskName = this.duplicateFile.type === 'folder' ? 'addLocalFolder' : 'addLocalNote'
-      let data = this.duplicateFile
-      data.pid = this.popupedNode.model.data.id || this.popupedNode.model.data._id || '0'
-      data.remote_id = undefined
-      data.remote_pid = undefined
-      data._id = undefined
-      console.log('handlePaste', data)
-      // ipcRenderer.send('fetch-local-data', {
-      //   tasks: [taskName],
-      //   params: [data],
-      //   from: ['NavBar']
-      // })
+      console.log('handlePaste', this.duplicateFile, this.popupedNode.model.data)
+      if (this.duplicateFile.type === 'note') {
+        ipcRenderer.send('fetch-local-data', {
+          tasks: ['duplicateLocalNote'],
+          params: [{
+            id: this.duplicateFile._id,
+            pid: this.popupedNode.model.data.id || this.popupedNode.model.data._id
+          }],
+          from: ['DocumentList', 'duplicate', this.duplicateFile._id]
+        })
+      }
     },
 
     handleDelete () {

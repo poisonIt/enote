@@ -93,6 +93,36 @@ async function add (req) {
   })
 }
 
+function duplicate (req) {
+  console.log('duplicate', req)
+  const { id } = req
+
+  return new Promise((resolve, reject) => {
+    Note.findOne({ _id: id }, (err, note) => {
+      let newNoteData = {
+        pid: req.pid || note.pid,
+        title: note.title,
+        seq: note.seq,
+        size: note.size
+      }
+      add(newNoteData).then(newNote => {
+        docCtr.getByNoteId({ note_id: id }).then(doc => {
+          console.log('duplicate-doc', doc, newNote)
+          docCtr.getByNoteId({ note_id: newNote._id }).then(newDoc => {
+            docCtr.update({
+              id: newDoc._id,
+              content: doc.content
+            }).then(newDoc => {
+              console.log('duplicate-do-111', newDoc, newNote)
+              resolve(newNote)
+            })
+          })
+        })
+      })
+    })
+  })
+}
+
 // remove
 function removeAll () {
   return new Promise((resolve, reject) => {
@@ -429,6 +459,7 @@ export default {
   createCollection,
   saveAll,
   add,
+  duplicate,
   removeAll,
   removeById,
   removeAllDeleted,

@@ -287,6 +287,15 @@ export default {
 
       if (resp.data.returnCode === 200) {
         let noteResolved = resp.data.body
+        if (noteResolved.length > 0) {
+          ipcRenderer.send('fetch-local-data', {
+            tasks: ['updateState'],
+            params: [{
+              note_ver: noteResolved[0].usn
+            }],
+            from: 'pushNotes'
+          })
+        }
 
         let saveNoteData = noteResolved.map((file, index) => {
           return {

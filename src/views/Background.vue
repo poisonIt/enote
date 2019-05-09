@@ -41,11 +41,14 @@ export default {
       ipcRenderer.on('login-ready', (event) => {
         const { user, dbPath } = remote.app.appConf
         this.user = user
-        createCollection('folder', dbPath + '/' + user)
-        createCollection('note', dbPath + '/' + user)
-        createCollection('doc', dbPath + '/' + user)
-        createCollection('tag', dbPath + '/' + user)
-        createCollection('img', dbPath + '/' + user)
+        let p = dbPath + '/' + user
+        console.log('p', p)
+        createCollection('folder', p)
+        createCollection('note', p)
+        createCollection('doc', p)
+        createCollection('tag', p)
+        createCollection('img', p)
+        createCollection('state', p)
 
         // LocalService.getAllLocalFolder().then(res => {
         //   folderDataCache = res

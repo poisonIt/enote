@@ -85,7 +85,7 @@ function removeByNoteId (req) {
 
   return new Promise((resolve, reject) => {
     Doc.findOne({ note_id: note_id }).exec((err, doc) => {
-      doc.remove()
+      doc && doc.remove()
       resolve()
     })
   })

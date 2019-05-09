@@ -13,7 +13,7 @@ function noteModel (opts) {
     // content: opts.content || '',
     size: opts.size || 0,
     tags: opts.tags || [],
-    top: opts.top || false,
+    top: opts.top || false
   }
 }
 

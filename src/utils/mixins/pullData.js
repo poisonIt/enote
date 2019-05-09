@@ -1,3 +1,4 @@
+import { ipcRenderer } from 'electron'
 import { 
   pullNotebooks,
   pullNote,
@@ -9,35 +10,30 @@ import { mapActions } from 'vuex'
 let allTagLocalMap = {}
 
 export default {
-  data () {
-    return {
-    }
-  },
-
   methods: {
     ...mapActions([
       'SET_TOKEN'
     ]),
 
-    async pullData () {
+    async pullData (noteVer) {
+      console.log('pullData', noteVer)
       return new Promise((resolve, reject) => {
-        let resp = this.runPullTasks()
+        let resp = this.runPullTasks(noteVer)
         console.log('pullData-resp', resp)
         resolve(resp)
       })
     },
 
-    async runPullTasks () {
+    async runPullTasks (noteVer) {
       let pullResp = await Promise.all([
         pullNotebooks(),
-        pullNote(),
+        pullNote({ version: noteVer }),
         pullTags()
       ])
       console.log('runPullTasks', pullResp)
-
       await LocalDAO.folder.removeAll()
-      await LocalDAO.note.removeAll()
-      await LocalDAO.doc.removeAll()
+      // await LocalDAO.note.removeAll()
+      // await LocalDAO.doc.removeAll()
       await LocalDAO.tag.removeAll()
       console.log('runPullTasks-1111')
 
@@ -75,8 +71,15 @@ export default {
 
       const saveNoteTask = pullResp[1].data.body
         .map(item => {
-          return LocalDAO.note.add(this.transNoteData(item)
+          return LocalDAO.note.diffAdd(this.transNoteData(item)
         )})
+
+      if (pullResp[1].data.body[0]) {
+        console.log('saveState', pullResp[1].data.body[0])
+        await LocalDAO.state.update({
+          note_ver: pullResp[1].data.body[0].usn
+        })
+      }
 
       let saveLocalRes = await Promise.all([...saveNoteBooksTask, ...saveNoteTask])
       console.log('saveLocalRes', saveLocalRes)

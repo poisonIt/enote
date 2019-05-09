@@ -29,6 +29,7 @@
 </template>
 
 <script>
+import fs from 'fs'
 import { ipcRenderer, remote } from 'electron'
 import { createCollection } from '../../db'
 import {
@@ -57,6 +58,7 @@ export default {
 
   data () {
     return {
+      appState: {},
       username: '',
       password: '',
       isLoading: false
@@ -111,11 +113,20 @@ export default {
 
     connectDB (userId) {
       const dbPath = remote.app.appConf.dbPath
-      createCollection('folder', dbPath + '/' + userId)
-      createCollection('note', dbPath + '/' + userId)
-      createCollection('doc', dbPath + '/' + userId)
-      createCollection('tag', dbPath + '/' + userId)
-      this.handleFetch()
+      let p = dbPath + '/' + userId
+      fs.mkdir(p, { recursive: true }, (err) => {
+        createCollection('folder', p)
+        createCollection('note', p)
+        createCollection('doc', p)
+        createCollection('tag', p)
+        createCollection('state', p)
+
+        LocalService.getLocalState().then(res => {
+          console.log('getLocalState', res)
+          this.appState = res
+          this.handleFetch()
+        })
+      })
     },
 
     async handleFetch () {
@@ -125,8 +136,8 @@ export default {
       // await this.pushImgs()
       // await this.SET_FILES_FROM_LOCAL()
       // await this.pushData()
-      let pullResp = await this.pullData()
-      console.log('pullResp', pullResp)
+      let pullResp = await this.pullData(this.appState ? this.appState.note_ver : 1)
+      // console.log('pullResp', pullResp)
       this.handleDataFinished()
     },
 

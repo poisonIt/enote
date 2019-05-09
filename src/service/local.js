@@ -214,6 +214,15 @@ export function removeLocalImageById (params) {
   return LocalDAO.img.removeById(params)
 }
 
+// version
+export function updateState (params) {
+  return LocalDAO.state.update(params)
+}
+
+export function getLocalState () {
+  return LocalDAO.state.get()
+}
+
 // danger
 export function deleteAll (params) {
   return LocalDAO.folder.deleteAll().then(() => {

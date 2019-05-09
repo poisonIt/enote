@@ -93,6 +93,24 @@ async function add (req) {
   })
 }
 
+function diffAdd (req) {
+  console.log('diffAdd', req)
+  Note.findOne({ remote_id: req.remote_id }, (err, note) => {
+    console.log('diffAdd-1111', note)
+    if (note) {
+      return update(req).then(newNote => {
+        console.log('diffAdd-2222', newNote)
+        docCtr.getByNoteId({ id: newNote._id }).then(doc => {
+          docCtr.update({ id: doc._id, content: req.content })
+        })
+      })
+    } else {
+      console.log('diffAdd-3333', note)
+      return add(req)
+    }
+  })
+}
+
 function duplicate (req) {
   console.log('duplicate', req)
   const { id } = req
@@ -375,7 +393,7 @@ function getAllByQuery (req) {
         Promise.all(p).then(docs => {
           console.log('docs', docs)
           notes.forEach((note, index) => {
-            note.content = docs[index].content
+            note.content = docs[index] ? docs[index].content : ''
           })
           resolve(notes)
         })
@@ -459,6 +477,7 @@ export default {
   createCollection,
   saveAll,
   add,
+  diffAdd,
   duplicate,
   removeAll,
   removeById,

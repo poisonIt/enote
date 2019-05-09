@@ -1,5 +1,6 @@
 'use strict'
 import path from 'path'
+import fs from 'fs'
 import {
   app,
   protocol,
@@ -431,13 +432,16 @@ app.on('ready', async () => {
   const menu = Menu.buildFromTemplate(template)
   Menu.setApplicationMenu(menu)
 
-  let dataPath = app.getAppPath('userData')
+  let dbPath = path.resolve(app.getAppPath('userData'), `../`)
   getAppConf(app.getAppPath('userData')).then(appConf => {
-    app.appConf = {
-      user: appConf.user,
-      dbPath: path.resolve(dataPath, `../database`),
-    }
-    createBackgroundWindow()
+    let p = dbPath + '/database'
+    fs.mkdir(p, { recursive: true }, (err) => {
+      app.appConf = {
+        user: appConf.user,
+        dbPath: p
+      }
+      createBackgroundWindow()
+    })
   })
 })
 

@@ -15,16 +15,22 @@ export function getFriendList () {
   return axios.get('/user/all')
 }
 
-export function pullNotebooks () {
-  return axios.get('/noteBook/notebooks')
+export function pullNotebooks (params) {
+  return axios.get('/noteBook/notebooks', {
+    params: params
+  })
 }
 
-export function pullNote () {
-  return axios.get('/note/pullNote')
+export function pullNote (params) {
+  return axios.get('/note/pullNote', {
+    params: params
+  })
 }
 
-export function pullTags () {
-  return axios.get('/note/tag/tags')
+export function pullTags (params) {
+  return axios.get('/note/tag/tags', {
+    params: params
+  })
 }
 
 export function pushNotebook (params) {

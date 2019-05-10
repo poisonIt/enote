@@ -22,11 +22,17 @@ export function getAppConf (appPath) {
 
 export function saveAppConf (appPath, conf) {
   return new Promise((resolve, reject) => {
-    writeFile(path.resolve(appPath,
-      `../appConfig.json`),
-      JSON.stringify(conf)
-    ).then(conf => {
-      resolve(conf)
+    getAppConf(appPath).then(c => {
+      Object.keys(conf).forEach(key => {
+        c[key] = conf[key]
+      })
+      console.log('saveAppConf', conf, c)
+      writeFile(path.resolve(appPath,
+        `../appConfig.json`),
+        JSON.stringify(c)
+      ).then(c => {
+        resolve(c)
+      })
     })
   })
 }

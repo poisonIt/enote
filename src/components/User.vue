@@ -33,6 +33,10 @@ export default {
         {
           label: '注销登录',
           value: 'logout'
+        },
+        {
+          label: '偏好设置',
+          value: 'setting'
         }
       ]
     }
@@ -46,7 +50,7 @@ export default {
   },
 
   methods: {
-    ...mapActions(['TOGGLE_SHOW_USER_PANEL']),
+    ...mapActions(['TOGGLE_SHOW_USER_PANEL', 'TOGGLE_SHOW_SETTING_PANEL']),
 
     showUserPanel () {
       this.TOGGLE_SHOW_USER_PANEL(true)
@@ -67,6 +71,9 @@ export default {
         ipcRenderer.send('changeWindow', {
           name: 'login'
         })
+      }
+      if (value === 'setting') {
+        this.TOGGLE_SHOW_SETTING_PANEL(true)
       }
     }
   }

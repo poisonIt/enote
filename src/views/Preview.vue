@@ -138,6 +138,7 @@ export default {
 <style lang="stylus" scoped>
 #preview
   position relative
+  height 100%
 .header
   width 100%
   height 30px

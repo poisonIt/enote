@@ -13,6 +13,7 @@ const state = {
   show_user_panel: false,
   show_share_panel: false,
   show_research_panel: false,
+  show_setting_panel: false,
   show_tag_handler: false,
   editor_content: '',
   editor_content_cache: '',
@@ -83,6 +84,10 @@ const mutations = {
 
   TOGGLE_SHOW_RESEARCH_PANEL (state, val) {
     state.show_research_panel = !!val
+  },
+
+  TOGGLE_SHOW_SETTING_PANEL (state, val) {
+    state.show_setting_panel = !!val
   },
 
   TOGGLE_SHOW_TAG_HANDLER (state, val) {
@@ -165,6 +170,10 @@ const actions = {
 
   TOGGLE_SHOW_RESEARCH_PANEL ({ commit }, val) {
     commit('TOGGLE_SHOW_RESEARCH_PANEL', val)
+  },
+
+  TOGGLE_SHOW_SETTING_PANEL ({ commit }, val) {
+    commit('TOGGLE_SHOW_SETTING_PANEL', val)
   },
 
   TOGGLE_SHOW_TAG_HANDLER ({ commit }, val) {
@@ -251,6 +260,10 @@ const getters = {
 
   GET_SHOW_RESEARCH_PANEL (state) {
     return state.show_research_panel
+  },
+
+  GET_SHOW_SETTING_PANEL (state) {
+    return state.show_setting_panel
   },
 
   GET_SHOW_TAG_HANDLER (state) {

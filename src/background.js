@@ -13,7 +13,7 @@ import {
   createProtocol,
   installVueDevtools
 } from 'vue-cli-plugin-electron-builder/lib'
-import { getAppConf } from './tools/appConf'
+import { getAppConf, saveAppConf } from './tools/appConf'
 
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
@@ -450,13 +450,17 @@ app.on('ready', async () => {
   Menu.setApplicationMenu(menu)
 
   let dbPath = path.resolve(app.getAppPath('userData'), `../`)
-  getAppConf(app.getAppPath('userData')).then(appConf => {
-    let p = dbPath + '/database'
-    app.appConf = {
-      user: appConf.user,
-      dbPath: p
-    }
-    createBackgroundWindow()
+  saveAppConf(app.getAppPath('userData'), {
+    serviceUrl: isDevelopment ? 'http://122.152.201.59:8000/api' : 'http://10.50.115.9:8000/api'
+  }).then(() => {
+    getAppConf(app.getAppPath('userData')).then(appConf => {
+      let p = dbPath + '/database'
+      app.appConf = {
+        user: appConf.user,
+        dbPath: p
+      }
+      createBackgroundWindow()
+    })
   })
 })
 

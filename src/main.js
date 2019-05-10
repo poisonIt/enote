@@ -4,6 +4,7 @@ import router from './route'
 import store from './store'
 import axios from 'axios'
 import Worker from 'worker-loader!./file.worker.js'
+import { getAppConf } from '@/tools/appConf'
 import EventHub from '@/utils/eventhub'
 import CollapseTransition from '@/utils/transitions'
 import Modal from '@/components/Modal'
@@ -16,10 +17,12 @@ import 'iview/dist/styles/iview.css'
 import '@/assets/styles/iview.styl'
 import '@/assets/styles/common.styl'
 
+const isDevelopment = process.env.NODE_ENV !== 'production'
+
 const { remote, shell, webFrame } = require('electron')
 console.log(remote.app.getAppPath('userData'))
 
-const serviceUrl = 'http://122.152.201.59:8000/api'
+let serviceUrl = ''
 
 Vue.use(CollapseTransition)
 Vue.use(Modal)
@@ -43,6 +46,10 @@ Vue.prototype.$webFrame = webFrame
 let worker = new Worker()
 Vue.prototype.$worker = new Worker()
 // worker.postMessage(1)
+
+getAppConf(remote.app.getAppPath('userData')).then(appConf => {
+  serviceUrl = appConf.serviceUrl
+})
 
 // const curWin = remote.getCurrentWindow()
 // const ses = curWin.webContents.session

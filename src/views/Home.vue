@@ -30,6 +30,7 @@
     <UserPanel></UserPanel>
     <SharePanel></SharePanel>
     <ResearchPanel></ResearchPanel>
+    <SettingPanel></SettingPanel>
     <div class="home-loading" v-if="!isHomeReady">
       <Loading :type="1" fill="#DDAF59" style="transform: scale(1.2)"></Loading>
     </div>
@@ -54,6 +55,7 @@ import MovePanel from '@/components/Panels/MovePanel'
 import UserPanel from '@/components/Panels/UserPanel'
 import SharePanel from '@/components/Panels/SharePanel'
 import ResearchPanel from '@/components/Panels/ResearchPanel'
+import SettingPanel from '@/components/Panels/SettingPanel'
 import Loading from '@/components/Loading'
 
 import { createCollection } from '../../db'
@@ -82,6 +84,7 @@ export default {
     UserPanel,
     SharePanel,
     ResearchPanel,
+    SettingPanel,
     Loading
   },
 

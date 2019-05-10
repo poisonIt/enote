@@ -31,12 +31,12 @@ export default {
           value: 'info'
         },
         {
-          label: '注销登录',
-          value: 'logout'
-        },
-        {
           label: '偏好设置',
           value: 'setting'
+        },
+        {
+          label: '注销登录',
+          value: 'logout'
         }
       ]
     }

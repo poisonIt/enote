@@ -53,6 +53,10 @@
   padding-bottom: 60px !important;
 }
 
+.ck-content .table {
+  margin: 1em 0 !important;
+}
+
 .ck-content li {
   list-style: inside !important;
 }

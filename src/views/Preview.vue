@@ -29,6 +29,7 @@ export default {
 
   created () {
     let query = this.$router.currentRoute.query
+    console.log('query', query)
     let noteId = query.note_id
     this.title = query.title
     this.SET_CURRENT_FILE({

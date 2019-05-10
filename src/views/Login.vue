@@ -58,6 +58,7 @@ export default {
 
   data () {
     return {
+      autoLogin: false,
       appState: {},
       username: '',
       password: '',
@@ -66,9 +67,19 @@ export default {
   },
 
   created () {
+    this.autoLogin = this.$router.currentRoute.query.autoLogin
+    console.log('query', this.$router.currentRoute.query)
     const dbPath = remote.app.appConf.dbPath
     createCollection('user', dbPath)
 
+    if (this.autoLogin === '1') {
+      LocalService.getLocalUserById({ id: remote.app.appConf.user }).then(res => {
+        console.log('getLastUser', res)
+        this.username = res.local_name
+        this.password = res.password
+        this.postInput()
+      })
+    }
     LocalService.getAllLocalUser().then(res => {
       console.log('getAllLocalUser', res)
     })
@@ -89,6 +100,11 @@ export default {
         username: username,
         password: password
       }).catch(err => {
+        console.error(err)
+        this.$Message.error(err)
+        if (this.autoLogin) {
+          this.handleDataFinished()
+        }
         this.isLoading = false
         return
       })
@@ -107,6 +123,7 @@ export default {
         console.log('userResp', userResp)
         this.connectDB(userSaved._id)
       } else {
+        this.$Message.error(authenticateResp.data.returnMsg)
         this.isLoading = false
       }
     },
@@ -169,6 +186,7 @@ export default {
       }
 
       const userDataTransed = this.transUserData(userInfoResp.data.body)
+      userDataTransed.local_name = username
       userDataTransed.password = password
       userDataTransed.id_token = id_token
       userDataTransed.friend_list = friendResp.data.body

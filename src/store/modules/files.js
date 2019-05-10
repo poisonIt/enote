@@ -6,7 +6,8 @@ const state = {
   current_nav: null,
   current_file: null,
   duplicate_file: null,
-  selected_tags: []
+  selected_tags: [],
+  note_ver: 0
 }
 
 const mutations = {
@@ -24,6 +25,11 @@ const mutations = {
 
   SET_DUPLICATE_FILE (state, file) {
     state.duplicate_file = file
+  },
+
+  SET_NOTE_VER (state, val) {
+    console.log('SET_NOTE_VER', val)
+    state.note_ver = val
   },
 
   TOGGLE_SELECTED_TAG (state, params) {
@@ -56,6 +62,10 @@ const actions = {
     commit('SET_DUPLICATE_FILE', file)
   },
 
+  SET_NOTE_VER ({ commit }, val) {
+    commit('SET_NOTE_VER', val)
+  },
+
   TOGGLE_SELECTED_TAG ({ commit }, params) {
     commit('TOGGLE_SELECTED_TAG', params)
   }
@@ -80,6 +90,10 @@ const getters = {
 
   GET_SELECTED_TAGS (state) {
     return state.selected_tags
+  },
+
+  GET_NOTE_VER (state) {
+    return state.note_ver
   }
 }
 

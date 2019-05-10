@@ -98,6 +98,7 @@ function diffAdd (req) {
   Note.findOne({ remote_id: req.remote_id }, (err, note) => {
     console.log('diffAdd-1111', note)
     if (note) {
+      req.id = note._id
       return update(req).then(newNote => {
         console.log('diffAdd-2222', newNote)
         docCtr.getByNoteId({ id: newNote._id }).then(doc => {

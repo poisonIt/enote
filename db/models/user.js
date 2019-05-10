@@ -1,5 +1,6 @@
 function userModel (opts) {
   return {
+    local_name: opts.local_name || '',
     username: opts.username || '',
     usercode: opts.usercode || '',
     password: opts.password || '',

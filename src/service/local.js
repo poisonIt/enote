@@ -1,6 +1,10 @@
 import LocalDAO from '../../db/api'
 
 // user
+export function removeAllUser () {
+  return LocalDAO.user.removeAll()
+}
+
 export function getAllLocalUser () {
   return LocalDAO.user.getAll()
 }

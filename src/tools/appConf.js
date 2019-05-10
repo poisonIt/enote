@@ -11,8 +11,10 @@ export function getAppConf (appPath) {
         JSON.stringify({
           user: null
         })
-      ).then(conf => {
-        resolve(conf)
+      ).then((err) => {
+        resolve({
+          user: null
+        })
       })
     })
   })

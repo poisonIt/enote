@@ -1,6 +1,5 @@
 'use strict'
 import path from 'path'
-import fs from 'fs'
 import {
   app,
   protocol,
@@ -162,7 +161,8 @@ let template = [{
 // Standard scheme must be registered before the app is ready
 protocol.registerStandardSchemes(['app'], { secure: true })
 
-function createLoginWindow () {
+function createLoginWindow (autoLogin) {
+  autoLogin = autoLogin ? '1' : '0'
   if (win) win.close()
 
   loginWin = new BrowserWindow({
@@ -170,6 +170,8 @@ function createLoginWindow () {
     width: isDevelopment ? 1024 : 442,
     height: 490,
     // frame: false,
+    resizable: isDevelopment ? true : false,
+    show: autoLogin === '1' ? false : true,
     titleBarStyle: 'hidden',
     icon: path.join(__static, 'icon.png'),
     webPreferences: {
@@ -180,12 +182,12 @@ function createLoginWindow () {
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode
-    loginWin.loadURL(process.env.WEBPACK_DEV_SERVER_URL)
+    loginWin.loadURL(process.env.WEBPACK_DEV_SERVER_URL + '#/?autoLogin=' + autoLogin)
     loginWin.webContents.openDevTools()
   } else {
     createProtocol('app')
     // Load the index.html when not in development
-    loginWin.loadURL('app://./index.html')
+    loginWin.loadURL('app://./index.html#/?autoLogin=' + autoLogin)
   }
 
   loginWin.on('closed', () => {
@@ -199,7 +201,11 @@ function createLoginWindow () {
 function createBackgroundWindow () {
   backWin = new BrowserWindow({
     id: 'background',
-    show: isDevelopment
+    width: isDevelopment ? 0 : 0,
+    height: 0,
+    backgroundColor: '#fcfbf7',
+    show: false,
+    titleBarStyle: 'default',
     // show: false
   })
 
@@ -227,7 +233,7 @@ function createHomeWindow () {
     width: isDevelopment ? 1366 : 960,
     height: 640,
     backgroundColor: '#fcfbf7',
-    // show: false,
+    show: true,
     // frame: false,
     titleBarStyle: isDevelopment ? 'default' : 'hidden',
     icon: path.join(__static, 'icon.png'),
@@ -250,9 +256,6 @@ function createHomeWindow () {
 
   win.on('closed', () => {
     win = null
-    if (!isDevelopment) {
-      backWin && backWin.close()
-    }
   })
 }
 
@@ -274,11 +277,11 @@ function createPreviewWindow (event, arg) {
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode
     previewWin.loadURL(process.env.WEBPACK_DEV_SERVER_URL + `#/preview?note_id=${arg.noteId}&title=${arg.title}`)
-    previewWin.webContents.openDevTools()
+    // previewWin.webContents.openDevTools()
   } else {
     createProtocol('app')
     // Load the index.html when not in development
-    previewWin.loadURL('app://./index.html' + `#/preview?note_id=${arg}&title=${arg.title}`)
+    previewWin.loadURL(`app://./index.html#/preview?note_id=${arg.noteId}&title=${arg.title}`)
   }
 
   previewWin.on('closed', () => {
@@ -320,8 +323,12 @@ ipcMain.on('changeWindow', (event, arg) => {
     createHomeWindow()
   }
   if (arg.name === 'login') {
-    win && win.close()
-    createLoginWindow()
+    loginWin && loginWin.close()
+    setTimeout(() => {
+      win && win.close()
+      backWin && backWin.reload()
+      createLoginWindow()
+    }, 1000)
   }
 })
 
@@ -338,6 +345,7 @@ ipcMain.on('showWindow', (event, arg) => {
 })
 
 ipcMain.on('create-home-window', (event, arg) => {
+  backWin && backWin.show()
   createHomeWindow()
 })
 
@@ -347,7 +355,15 @@ ipcMain.on('home-window-ready', (event) => {
 
 ipcMain.on('show-home-window', (event, arg) => {
   win && win.show()
-  // loginWin && loginWin.close()
+  if (backWin) {
+    // backWin.setIgnoreMouseEvents(true)
+    // backWin.setOpacity(0)
+    backWin.hide()
+    // backWin.setVisibleOnAllWorkspaces(true)
+  }
+  if (!isDevelopment) {
+    loginWin && loginWin.close()
+  }
 })
 
 ipcMain.on('create-preview-window', (event, arg) => {
@@ -361,6 +377,8 @@ ipcMain.on('create-youdao-window', (event, arg) => {
 })
 
 ipcMain.on('userDB-ready', (event, arg) => {
+  let autoLogin = app.appConf.user && app.appConf.user !== ''
+  !loginWin && createLoginWindow(autoLogin)
   // getAppConf(app.getAppPath('userData')).then(appConf => {
   //   if (appConf.user && appConf.user !== '') {
   //     backWin.webContents.send('login-ready')
@@ -369,7 +387,6 @@ ipcMain.on('userDB-ready', (event, arg) => {
   //     !loginWin && createLoginWindow()
   //   }
   // })
-  !loginWin && createLoginWindow()
 })
 
 ipcMain.on('login-ready', (event) => {
@@ -435,13 +452,11 @@ app.on('ready', async () => {
   let dbPath = path.resolve(app.getAppPath('userData'), `../`)
   getAppConf(app.getAppPath('userData')).then(appConf => {
     let p = dbPath + '/database'
-    fs.mkdir(p, { recursive: true }, (err) => {
-      app.appConf = {
-        user: appConf.user,
-        dbPath: p
-      }
-      createBackgroundWindow()
-    })
+    app.appConf = {
+      user: appConf.user,
+      dbPath: p
+    }
+    createBackgroundWindow()
   })
 })
 

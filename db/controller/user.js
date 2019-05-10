@@ -8,6 +8,7 @@ function createCollection (path) {
   LinvoDB.dbPath = path
 
   User = new LinvoDB('user', {
+    local_name: String,
     username: String,
     password: String,
     oa_id: String,
@@ -55,7 +56,7 @@ function removeAll () {
   return new Promise((resolve, reject) => {
     User.find({}).exec((err, users) => {
       users.forEach(user => {
-        User.remove()
+        user.remove()
       })
       resolve(users.length)
     })

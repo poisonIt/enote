@@ -63,6 +63,26 @@ function add (req) {
   })
 }
 
+function diffAdd (req) {
+  console.log('diffAdd', req)
+  return new Promise((resolve, reject) => {
+    Tag.findOne({ remote_id: req.remote_id }, (err, tag) => {
+      console.log('diffAdd-1111', tag)
+      if (tag) {
+        req.id = tag._id
+        update(req).then(res => {
+          resolve(res)
+        })
+      } else {
+        console.log('diffAdd-3333', req)
+        add(req).then(res => {
+          resolve(res)
+        })
+      }
+    })
+  })
+}
+
 // remove
 function removeAll () {
   return new Promise((resolve, reject) => {
@@ -190,6 +210,7 @@ export default {
   createCollection,
   saveAll,
   add,
+  diffAdd,
   removeAll,
   removeById,
   deleteAll,

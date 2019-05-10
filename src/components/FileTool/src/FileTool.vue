@@ -5,12 +5,12 @@
         <div class="icon-new"></div>
         <span>新建</span>
       </div>
-      <div class="item sync" @click="syncData(0)">
+      <div class="item sync" :class="{ 'grey': isOffline }" @click="syncData(0)">
         <div class="icon-sync infinite rotate" :class="{ animated: isSyncing }"></div>
         <span>同步</span>
       </div>
     </div>
-    <div class="button-sync" v-if="viewType === 'unexpanded'"></div>
+    <div class="button-sync" :class="{ 'grey': isOffline }" v-if="viewType === 'unexpanded'"></div>
     <div class="unexpanded" v-if="viewType === 'unexpanded'">+</div>
     <Menu
       :data="menuData"
@@ -25,6 +25,11 @@
 import { ipcRenderer } from 'electron'
 import { mapGetters } from 'vuex'
 import mixins from '../mixins'
+import {
+  authenticate,
+  getUserInfo,
+  getFriendList
+} from '../../../service'
 
 export default {
   name: 'FileTool',
@@ -33,6 +38,8 @@ export default {
 
   data () {
     return {
+      asyncItv: null,
+      isOffline: false,
       isMenuVisible: false,
       menuData: [
         {
@@ -49,23 +56,37 @@ export default {
 
   computed: {
     ...mapGetters({
+      userInfo: 'GET_USER_INFO',
       viewType: 'GET_VIEW_TYPE',
-      isEditorFocused: 'GET_IS_EDITOR_FOCUSED'
+      isEditorFocused: 'GET_IS_EDITOR_FOCUSED',
+      network_status: 'GET_NETWORK_STATUS'
     })
   },
 
+  watch: {
+    network_status (val) {
+      this.isOffline = (val === 'offline')
+      if (!this.isOffline) {
+        setTimeout(() => {
+          this.authenticate()
+        }, 3000)
+      }
+    }
+  },
+
+  created () {
+    this.isOffline = !window.navigator.onLine
+  },
+  
   mounted () {
     ipcRenderer.on('communicate', (event, arg) => {
       if (arg.from === 'Preview' && arg.tasks.indexOf('pushData') > -1) {
         this.syncData()
       }
     })
-    let asyncItv = setInterval(() => {
-      this.checkIsEditorFocused()
-      console.log('isEditorFocused', this.isEditorFocused)
-      if(this.isEditorFocused || this.isSyncing) return
-      this.syncData()
-    }, 5000)
+    if (this.isOffline) {
+      this.clearSyncItv()
+    }
   },
 
   methods: {
@@ -94,7 +115,22 @@ export default {
       }
     },
 
+    createSyncItv () {
+      this.asyncItv = setInterval(() => {
+        this.checkIsEditorFocused()
+        console.log('isEditorFocused', this.isEditorFocused)
+        if(this.isEditorFocused || this.isSyncing) return
+        this.syncData()
+      }, 5000)
+    },
+
+    clearSyncItv () {
+      clearInterval(this.asyncItv)
+    },
+
     syncData (delay, isAuto) {
+      console.log('syncData', this.network_status, window.navigator.onLine)
+      if (!window.navigator.onLine) return
       if (!delay) {
         delay = 1000
       }
@@ -110,12 +146,96 @@ export default {
 
     checkIsEditorFocused () {
       this.$hub.dispatchHub('getIsFocused', this)
+    },
+
+    async authenticate () {
+      console.log('authenticate', this.userInfo)
+      const username = this.userInfo.local_name
+      const password = this.userInfo.password
+
+      let authenticateResp = await authenticate({
+        username: username,
+        password: password
+      }).catch(err => {
+        console.error(err)
+        // this.$Message.error('认证错误，请重新登录')
+        setTimeout(() => {
+          this.authenticate()
+        }, 3000)
+      })
+     
+      if (authenticateResp.data.returnCode === 200) {
+        const id_token = authenticateResp.data.body.id_token
+        this.SET_TOKEN(id_token)
+        let userResp = await this.pullUserInfo(id_token, username, password)
+        console.log('userResp', userResp)
+        if (!userResp.userData) return
+        ipcRenderer.send('fetch-local-data', {
+          tasks: ['updateLocalUser'],
+          params: [userResp.userData],
+          from: 'FileTool'
+        })
+      } else {
+        this.$Message.error(authenticateResp.data.returnMsg)
+      }
+    },
+
+    async pullUserInfo (id_token, username, password) {
+      const userInfoResp = await getUserInfo(id_token).catch(err => {
+        this.isLoading = false
+        return
+      })
+      if (userInfoResp.data.returnCode !== 200) {
+        return {
+          returnMsg: userInfoResp.data.returnMsg
+        }
+      }
+
+      const friendResp = await getFriendList(id_token).catch(err => {
+        this.isLoading = false
+        return
+      })
+      if (friendResp.data.returnCode !== 200) {
+        return {
+          returnMsg: friendResp.data.returnMsg
+        }
+      }
+
+      const userDataTransed = this.transUserData(userInfoResp.data.body)
+      userDataTransed.local_name = username
+      userDataTransed.password = password
+      userDataTransed.id_token = id_token
+      userDataTransed.friend_list = friendResp.data.body
+      console.log('userDataTransed', userDataTransed)
+      return {
+        userData: userDataTransed,
+        returnMsg: friendResp.data.returnMsg
+      }
+    },
+
+    transUserData (obj) {
+      return {
+        username: obj.userName,
+        usercode: obj.userCode,
+        access_token: obj.accessToken,
+        account_name_cn: obj.accountNameCN,
+        department_id: obj.departmentId,
+        department_name: obj.departmentName,
+        image_url: obj.imageUrl,
+        is_sync: obj.isSync,
+        oa_id: obj.oaId,
+        position_id: obj.positionId,
+        position_name: obj.positionName
+      }
     }
   }
 }
 </script>
 
 <style lang="stylus" scoped>
+.grey
+  filter grayscale(100%)
+
 .container
   position relative
   width 100%

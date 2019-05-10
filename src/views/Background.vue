@@ -1,5 +1,9 @@
 <template>
-  <div style="width: 200px; height: 300px;background: red" @click="click"></div>
+  <div>
+    <!-- <div class="loading">
+      <Loading :type="1" fill="#DDAF59" style="transform: scale(1.2)"></Loading>
+    </div> -->
+  </div>
 </template>
 
 <script>
@@ -7,6 +11,7 @@ import * as _ from 'lodash'
 import { ipcRenderer, remote } from 'electron'
 import * as LocalService from '../service/local'
 import { createCollection } from '../../db'
+import Loading from '@/components/Loading'
 
 let taskId = 0
 let folderDataCache = []
@@ -14,6 +19,10 @@ let tagDataCache = []
 
 export default {
   name: 'Background',
+
+  components: {
+    Loading
+  },
 
   data () {
     return {
@@ -124,3 +133,16 @@ export default {
   }
 }
 </script>
+
+<style lang="stylus" scoped>
+.loading
+  position fixed
+  width 100%
+  height 100%
+  display flex
+  align-items center
+  justify-content center
+  background-color #fcfbf7
+  z-index 9999999
+</style>
+

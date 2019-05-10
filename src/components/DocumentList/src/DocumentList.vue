@@ -47,9 +47,9 @@
         </FileCard>
       </FileCardGroup>
       <div class="no-file" v-if="fileList.length === 0">
-        <span v-if="viewFileType === 'recycle'">回收站为空</span>
-        <span v-if="viewFileType !== 'recycle'">没有找到文件</span>
-        <div v-if="viewFileType !== 'recycle'"
+        <span v-if="currentNav && currentNav.type === 'bin'">回收站为空</span>
+        <span v-if="currentNav && currentNav.type !== 'bin'">没有找到文件</span>
+        <div v-if="currentNav && currentNav.type !== 'bin'"
           class="new-doc_button"
           @click="newNote">新建笔记
         </div>
@@ -165,7 +165,6 @@ export default {
       views: state => state.views
     }),
     ...mapGetters({
-      viewFileType: 'GET_VIEW_FILE_TYPE',
       currentNav: 'GET_CURRENT_NAV',
       currentFile: 'GET_CURRENT_FILE',
       viewFileListType: 'GET_VIEW_FILE_LIST_TYPE',

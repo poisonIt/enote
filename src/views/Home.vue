@@ -1,10 +1,10 @@
 <template>
   <div class="home">
     <div v-if="isDev">
-      <button style="position: fixed;top: 10px;left: 20px;z-index: 9999999;" @click="hideBackground">hideBackground</button>
+      <!-- <button style="position: fixed;top: 10px;left: 20px;z-index: 9999999;" @click="hideBackground">hideBackground</button>
       <button style="position: fixed;top: 50px;left: 20px;z-index: 9999999;" @click="showBackground">showBackground</button>
       <button style="position: fixed;top: 30px;left: 20px;z-index: 9999999;" @click="deleteAll">deleteAll</button>
-      <button style="position: fixed;top: 30px;left: 160px;z-index: 9999999;" @click="goLogin">goLogin!</button>
+      <button style="position: fixed;top: 30px;left: 160px;z-index: 9999999;" @click="goLogin">goLogin!</button> -->
     </div>
     <PageLayout>
       <div slot="left">
@@ -58,6 +58,7 @@ import Loading from '@/components/Loading'
 
 import { createCollection } from '../../db'
 import LocalDAO from '../../db/api'
+import * as LocalService from '../service/local'
 import { getLocalUserById } from '@/service/local'
 import { getAppConf, saveAppConf } from '@/tools/appConf'
 
@@ -180,7 +181,8 @@ export default {
       'TOGGLE_SHOW_SHARE_PANEL',
       'SET_FILE_PUSH_FINISHED',
       'SET_VIEW_TYPE',
-      'SET_DB_READY'
+      'SET_DB_READY',
+      'SET_NOTE_VER'
     ]),
 
     // closeUserPanel () {
@@ -276,8 +278,13 @@ export default {
       createCollection('note', p)
       createCollection('doc', p)
       createCollection('tag', p)
+      createCollection('state', p)
       ipcRenderer.send('fetch-user-data', {
         from: 'Home'
+      })
+      LocalService.getLocalState().then(res => {
+        console.log('getLocalState', res)
+        this.SET_NOTE_VER(res.note_ver)
       })
       this.SET_DB_READY(true)
     },

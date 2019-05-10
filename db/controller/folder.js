@@ -79,6 +79,27 @@ function add (req) {
   })
 }
 
+function diffAdd (req) {
+  console.log('diffAdd', req)
+  return new Promise((resolve, reject) => {
+    Folder.findOne({ remote_id: req.remote_id }, (err, folder) => {
+      console.log('diffAdd-1111', folder)
+      if (folder) {
+        req.id = folder._id
+        update(req).then(res => {
+          console.log('diffAdd-2222', res)
+          resolve(res)
+        })
+      } else {
+        add(req).then(res => {
+          console.log('diffAdd-3333', res)
+          resolve(res)
+        })
+      }
+    })
+  })
+}
+
 // remove
 function removeAll () {
   return new Promise((resolve, reject) => {
@@ -347,6 +368,7 @@ export default {
   createCollection,
   saveAll,
   add,
+  diffAdd,
   removeAll,
   removeById,
   removeAllDeleted,

@@ -11,6 +11,7 @@ let allTagRemoteMap = {}
 export default {
   computed: {
     ...mapGetters({
+      noteVer: 'GET_NOTE_VER',
       isSyncing: 'GET_IS_SYNCING'
     })
   },
@@ -288,13 +289,17 @@ export default {
       if (resp.data.returnCode === 200) {
         let noteResolved = resp.data.body
         if (noteResolved.length > 0) {
-          ipcRenderer.send('fetch-local-data', {
-            tasks: ['updateState'],
-            params: [{
-              note_ver: noteResolved[0].usn
-            }],
-            from: 'pushNotes'
-          })
+          let usnMax = Math.max(noteResolved.map(item => item.usn))
+          if (usnMax > this.noteVer) {
+            this.SET_NOTE_VER(usnMax)
+            ipcRenderer.send('fetch-local-data', {
+              tasks: ['updateState'],
+              params: [{
+                note_ver: noteResolved[0].usn
+              }],
+              from: 'pushNotes'
+            })
+          }
         }
 
         let saveNoteData = noteResolved.map((file, index) => {

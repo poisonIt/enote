@@ -31,10 +31,10 @@ export default {
         pullTags()
       ])
       console.log('runPullTasks', pullResp)
-      await LocalDAO.folder.removeAll()
+      // await LocalDAO.folder.removeAll()
       // await LocalDAO.note.removeAll()
       // await LocalDAO.doc.removeAll()
-      await LocalDAO.tag.removeAll()
+      // await LocalDAO.tag.removeAll()
       console.log('runPullTasks-1111')
 
       if (pullResp[0].data.returnMsg !== 'success') {
@@ -58,7 +58,7 @@ export default {
       let dataBody = pullResp[0].data.body
 
       const saveTagTask = (pullResp[2].data.body || [])
-        .map(item => LocalDAO.tag.add(this.transTagData(item)))
+        .map(item => LocalDAO.tag.diffAdd(this.transTagData(item)))
 
       let tagResp = await Promise.all(saveTagTask)
       allTagLocalMap = {}
@@ -67,7 +67,7 @@ export default {
       })
 
       const saveNoteBooksTask = dataBody
-      .map(item => LocalDAO.folder.add(this.transNoteBookData(item)))
+      .map(item => LocalDAO.folder.diffAdd(this.transNoteBookData(item)))
 
       const saveNoteTask = pullResp[1].data.body
         .map(item => {

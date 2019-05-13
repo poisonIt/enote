@@ -138,6 +138,7 @@ export default {
 
   data () {
     return {
+      remoteId: '',
       isFirstData: false,
       isLoading: true,
       isSyncPanelShowed: false,
@@ -256,6 +257,7 @@ export default {
         if (arg.tasks.indexOf('getLocalNoteById') > -1) {
           let remote_id = arg.res[0].remote_id
           if (remote_id) {
+            this.remoteId = remote_id
             getShareInfo(remote_id).then(res => {
               if (res.data.body && res.data.body) {
                 this.handleShareFinished(res)
@@ -264,8 +266,8 @@ export default {
               }
             })
           } else {
-            this.$Message.warn('请先同步')
-            this.TOGGLE_SHOW_SHARE_PANEL(false)
+            this.$Message.warning('请先同步')
+            this.closeSharePanel()
           }
         }
       }
@@ -278,6 +280,7 @@ export default {
     ]),
 
     closeSharePanel () {
+      this.remoteId = ''
       this.TOGGLE_SHOW_SHARE_PANEL(false)
     },
 
@@ -300,7 +303,7 @@ export default {
       this.isLoading = true
 
       let data = {
-        noteId: this.currentFile.remote_id,
+        noteId: this.remoteId,
         pwd: this.pwd,
         entitledType: this.entitledType,
         validityType: this.validity,
@@ -343,7 +346,7 @@ export default {
           this.isFirstData = false
         })
       } else {
-        this.TOGGLE_SHOW_SHARE_PANEL(false)
+        this.closeSharePanel()
       }
     },
 
@@ -357,7 +360,7 @@ export default {
       this.isLoading = false
 
       if (cancelResp.data.returnCode === 200) {
-        this.TOGGLE_SHOW_SHARE_PANEL(false)
+        this.closeSharePanel()
       }
     },
 

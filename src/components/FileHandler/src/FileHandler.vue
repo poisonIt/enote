@@ -76,6 +76,7 @@ export default {
 
   data () {
     return {
+      currentFileTitle: '',
       containerWidth: '0px',
       titleValue: '',
       isInputFocused: false,
@@ -106,6 +107,7 @@ export default {
         if (val) {
           console.log('currentFile', val)
           this.titleValue = val.title
+          this.currentFileTitle = val.title
         }
       },
       deep: true
@@ -172,7 +174,8 @@ export default {
 
     async handleInputBlur () {
       this.isInputFocused = false
-      if (this.titleValue === this.currentFile.title) return
+      console.log('handleInputBlur', this.titleValue, this.currentFileTitle)
+      if (this.titleValue === this.currentFileTitle) return
       // if (this.currentFile.type === 'folder') {
       //   await updateLocalFolder({
       //     id: this.currentFile._id,

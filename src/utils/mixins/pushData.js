@@ -59,7 +59,6 @@ export default {
           console.log('pushImgs-res', arg)
           if (arg.tasks.indexOf('getAllLocalImage') > -1) {
             console.log('pushImgs', arg.res)
-            this.SET_IS_SYNCING(false)
             this.runPushImgs(arg.res[0]).catch(err => this.pushTags())
           }
           if (arg.tasks.indexOf('updateLocalDocImg') > -1) {

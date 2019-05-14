@@ -135,6 +135,7 @@ export default {
         delay = 1000
       }
       // if (isAuto) return
+      this.SET_IS_SYNCING(true)
       setTimeout(() => {
         this.pushData()
         .catch(err => {

@@ -176,17 +176,6 @@ export default {
       this.isInputFocused = false
       console.log('handleInputBlur', this.titleValue, this.currentFileTitle)
       if (this.titleValue === this.currentFileTitle) return
-      // if (this.currentFile.type === 'folder') {
-      //   await updateLocalFolder({
-      //     id: this.currentFile._id,
-      //     title: this.titleValue
-      //   })
-      // } else {
-      //   await updateLocalNote({
-      //     id: this.currentFile._id,
-      //     title: this.titleValue
-      //   })
-      // }
       this.$hub.dispatchHub('updateFile', this, {
         id: this.currentFile._id,
         name: this.titleValue

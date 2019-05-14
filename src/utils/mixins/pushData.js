@@ -205,6 +205,7 @@ export default {
     },
     
     async runPushFolders (fNeedPush) {
+      const _self = this
       return new Promise ((resolve, reject) => {
         if (fNeedPush.length === 0) {
           this.SET_IS_SYNCING(false)
@@ -261,7 +262,7 @@ export default {
                 taskCol++
                 runTask()
               } else {
-                this.$Message.error(resp.data.returnMsg)
+                _self.$Message.error(resp.data.returnMsg)
               }
             }).catch(err => {
               reject(err)

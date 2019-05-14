@@ -112,7 +112,15 @@ export default {
       if (authenticateResp.data.returnCode === 200) {
         const id_token = authenticateResp.data.body.id_token
         this.SET_TOKEN(id_token)
-        let userResp = await this.pullUserInfo(id_token, username, password)
+        let userResp = await this.pullUserInfo(id_token, username, password).catch(err => {
+          console.error(err)
+          this.$Message.error(err)
+          if (this.autoLogin) {
+            this.handleDataFinished()
+          }
+          this.isLoading = false
+          return
+        })
         if (!userResp.userData) return
         // userResp.userData.is_last_login = true
         let userSaved = await LocalService.updateLocalUser(userResp.userData)

@@ -162,8 +162,9 @@ let template = [{
 protocol.registerStandardSchemes(['app'], { secure: true })
 
 function createLoginWindow (autoLogin) {
+  console.log('createLoginWindow', autoLogin)
   autoLogin = autoLogin ? '1' : '0'
-  if (win) win.close()
+  if (win) win.destroy()
 
   loginWin = new BrowserWindow({
     id: 'login',
@@ -204,7 +205,7 @@ function createBackgroundWindow () {
     width: isDevelopment ? 0 : 0,
     height: 0,
     backgroundColor: '#fcfbf7',
-    show: false,
+    show: true,
     titleBarStyle: 'default',
     // show: false
   })
@@ -220,9 +221,9 @@ function createBackgroundWindow () {
 
   backWin.on('closed', () => {
     backWin = null
-    win && win.close()
-    loginWin && loginWin.close()
-    youdaoWin && youdaoWin.close()
+    win && win.destroy()
+    loginWin && loginWin.destroy()
+    youdaoWin && youdaoWin.destroy()
   })
 }
 
@@ -323,9 +324,9 @@ ipcMain.on('changeWindow', (event, arg) => {
     createHomeWindow()
   }
   if (arg.name === 'login') {
-    loginWin && loginWin.close()
+    loginWin && loginWin.destroy()
     setTimeout(() => {
-      win && win.close()
+      win && win.destroy()
       backWin && backWin.reload()
       createLoginWindow()
     }, 1000)
@@ -362,7 +363,7 @@ ipcMain.on('show-home-window', (event, arg) => {
     // backWin.setVisibleOnAllWorkspaces(true)
   }
   if (!isDevelopment) {
-    loginWin && loginWin.close()
+    loginWin && loginWin.destroy()
   }
 })
 
@@ -451,9 +452,12 @@ app.on('ready', async () => {
 
   let dbPath = path.resolve(app.getAppPath('userData'), `../`)
   saveAppConf(app.getAppPath('userData'), {
-    serviceUrl: isDevelopment ? 'http://122.152.201.59:8000/api' : 'http://10.50.115.9:8000/api'
+    serviceUrl: isDevelopment
+      ? 'http://122.152.201.59:8000/api'
+      : 'http://10.50.115.9:8000/api'
   }).then(() => {
     getAppConf(app.getAppPath('userData')).then(appConf => {
+      console.log('appConf', appConf)
       let p = dbPath + '/database'
       app.appConf = {
         user: appConf.user,

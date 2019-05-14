@@ -8,7 +8,7 @@ export function authenticate (params) {
 }
 
 export function getUserInfo () {
-  return axios.get('/note/user/userInfo')
+  return axios.get('/user/userInfo')
 }
 
 export function getFriendList () {

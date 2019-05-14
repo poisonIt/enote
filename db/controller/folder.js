@@ -273,15 +273,43 @@ function getAll () {
       let p = folders.map(folder => {
         return new Promise((resolve, reject) => {
           getById({ id: folder.pid }).then(pFolder => {
+            console.log('getAll-1111', folder, pFolder)
             if (!pFolder) {
-              if (folder.pid !== '0') {
-                update({ id: folder._id, pid: '0' }).then(() => {
-                  folder.folder_title = '我的文件夹'
-                  resolve(folder)
+              console.log('getAll-2222', folder)
+              if (folder.remote_pid) {
+                Folder.findOne({ remote_id: folder.remote_pid }, (err, p) => {
+                  console.log('getAll-3333', p)
+                  pFolder = p
+                  if (pFolder) {
+                    update({ id: folder._id, pid: p._id }).then(() => {
+                      folder.folder_title = pFolder.title
+                      folder.pid = p._id
+                      resolve(folder)
+                    })
+                  } else {
+                    if (folder.pid !== '0') {
+                      update({ id: folder._id, pid: '0' }).then(() => {
+                        folder.folder_title = '我的文件夹'
+                        folder.pid = '0'
+                        resolve(folder)
+                      })
+                    } else {
+                      folder.folder_title = '我的文件夹'
+                      resolve(folder)
+                    }
+                  }
                 })
               } else {
-                folder.folder_title = '我的文件夹'
-                resolve(folder)
+                if (folder.pid !== '0') {
+                  update({ id: folder._id, pid: '0' }).then(() => {
+                    folder.folder_title = '我的文件夹'
+                    folder.pid = '0'
+                    resolve(folder)
+                  })
+                } else {
+                  folder.folder_title = '我的文件夹'
+                  resolve(folder)
+                }
               }
             } else {
               folder.folder_title = pFolder.title

@@ -142,4 +142,9 @@ TreeNode.prototype.getDepth = function () {
   return this.parent.getDepth() + 1
 }
 
+TreeNode.prototype.getIndex = function () {
+  if (!this.parent) return 0
+  return this.parent.children.indexOf(this)
+}
+
 export default TreeNode

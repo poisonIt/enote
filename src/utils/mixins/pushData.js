@@ -27,6 +27,7 @@ export default {
     ]),
 
     tranData (file) {
+      console.log('tranData', file, file.remote_pid)
       if (file.type === 'folder') {
         return {
           noteBookId: file.remote_id || file.id,
@@ -92,7 +93,7 @@ export default {
           }
           if (arg.tasks[0] === 'updateMultiLocalNote' &&
             arg.tasks[1] === 'removeAllDeletedNote') {
-            this.$Message.success('同步成功')
+            // this.$Message.success('同步成功')
             this.SET_IS_SYNCING(false)
           }
         }
@@ -109,7 +110,7 @@ export default {
     pushFolders () {
       ipcRenderer.send('fetch-local-data', {
         tasks: ['getAllLocalFolderByQuery'],
-        params: [{ query: { need_push: true } }],
+        params: [{ query: {} }],
         from: 'pushFolders'
       })
     },
@@ -270,7 +271,7 @@ export default {
         }
     
         runTask()
-        this.$Message.success('同步成功')
+        // this.$Message.success('同步成功')
       })
     },
 
@@ -405,7 +406,9 @@ export default {
 
       fNeedPush.forEach(folder => {
         let depth = folderMap[folder._id] ? folderMap[folder._id].getDepth() : 0
+        let index = folderMap[folder._id] ? folderMap[folder._id].getIndex() : 0
         folder.depth = depth
+        folder.seq = index
       })
 
       fSorted = fNeedPush.sort((a, b) => a.depth - b.depth)

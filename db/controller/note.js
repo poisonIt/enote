@@ -379,14 +379,38 @@ function getAll () {
         return new Promise((resolve, reject) => {
           folderCtr.getById({ id: note.pid }).then(folder => {
             if (!folder) {
-              if (note.pid !== '0') {
-                update({ id: note._id, pid: '0' }).then(() => {
-                  note.folder_title = '我的文件夹'
-                  resolve(note)
+              if (note.remote_pid) {
+                folderCtr.findOne({ remote_id: note.remote_pid }, (err, p) => {
+                  if (p) {
+                    update({ id: note._id, pid: p._id }).then(() => {
+                      note.folder_title = p.title
+                      note.pid = p._id
+                      resolve(note)
+                    })
+                  } else {
+                    if (folder.pid !== '0') {
+                      update({ id: note._id, pid: '0' }).then(() => {
+                        note.folder_title = '我的文件夹'
+                        note.pid = '0'
+                        resolve(note)
+                      })
+                    } else {
+                      note.folder_title = '我的文件夹'
+                      resolve(note)
+                    }
+                  }
                 })
               } else {
-                note.folder_title = '我的文件夹'
-                resolve(note)
+                if (note.pid !== '0') {
+                  update({ id: note._id, pid: '0' }).then(() => {
+                    note.folder_title = '我的文件夹'
+                    note.pid = '0'
+                    resolve(note)
+                  })
+                } else {
+                  note.folder_title = '我的文件夹'
+                  resolve(note)
+                }
               }
             } else {
               note.folder_title = folder.title

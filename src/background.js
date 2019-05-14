@@ -172,7 +172,7 @@ function createLoginWindow (autoLogin) {
     height: 490,
     // frame: false,
     resizable: isDevelopment ? true : false,
-    show: autoLogin === '1' ? false : true,
+    show: isDevelopment,
     titleBarStyle: 'hidden',
     icon: path.join(__static, 'icon.png'),
     parent: backWin,
@@ -194,7 +194,7 @@ function createLoginWindow (autoLogin) {
 
   loginWin.on('closed', () => {
     loginWin = null
-    if (!win) {
+    if (!isDevelopment) {
       app.quit()
     }
   })
@@ -206,7 +206,7 @@ function createBackgroundWindow () {
     width: isDevelopment ? 1366 : 960,
     height: 640,
     backgroundColor: '#fcfbf7',
-    show: false,
+    show: isDevelopment,
     titleBarStyle: isDevelopment ? 'default' : 'hidden',
     // show: false
   })
@@ -221,11 +221,7 @@ function createBackgroundWindow () {
   }
 
   backWin.on('closed', () => {
-    backWin = null
     app.quit()
-    win && win.destroy()
-    loginWin && loginWin.destroy()
-    youdaoWin && youdaoWin.destroy()
   })
 }
 
@@ -354,7 +350,9 @@ ipcMain.on('showWindow', (event, arg) => {
 
 ipcMain.on('create-home-window', (event, arg) => {
   backWin && backWin.show()
-  loginWin && loginWin.hide()
+  if (!isDevelopment) {
+    loginWin && loginWin.hide()
+  }
   createHomeWindow()
 })
 
@@ -365,15 +363,15 @@ ipcMain.on('home-window-ready', (event) => {
 ipcMain.on('show-home-window', (event, arg) => {
   // backWin && backWin.show()
   win && win.show()
-  if (backWin) {
+  if (backWin && !isDevelopment) {
     backWin.setIgnoreMouseEvents(true)
     backWin.setOpacity(0)
     // backWin.hide()
     // backWin.setVisibleOnAllWorkspaces(true)
   }
-  // if (!isDevelopment) {
+  if (!isDevelopment) {
     loginWin && loginWin.destroy()
-  // }
+  }
 })
 
 ipcMain.on('create-preview-window', (event, arg) => {

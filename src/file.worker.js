@@ -32,6 +32,8 @@ self.addEventListener('message', (e) => {
         hidden: item.trash !== 'NORMAL',
         children: []
       }
+    }).sort((a, b) => {
+      return a.seq - b.seq
     })
 
     rootChildren.forEach((item, index) => {
@@ -84,6 +86,8 @@ function getChildren (cur, arr) {
       hidden: item.trash !== 'NORMAL',
       children: []
     }
+  }).sort((a, b) => {
+    return a.data.seq - b.data.seq
   })
   cur.children.forEach(child => {
     getChildren(child, arr)

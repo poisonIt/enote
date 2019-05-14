@@ -88,11 +88,13 @@ export default {
     },
 
     transNoteBookData (obj) {
+      console.log('transNoteBookData', obj)
+      let pid = obj.parentId
       return {
         type: 'folder',
         remote_id: obj.noteBookId,
-        pid: obj.parentId,
-        remote_pid: obj.parentId,
+        // pid: pid,
+        remote_pid: pid,
         title: obj.title || '',
         seq: obj.seq || 0,
         create_at: new Date(obj.createDt).valueOf(),
@@ -109,7 +111,7 @@ export default {
         title: obj.title || '',
         create_at: new Date(obj.createDt).valueOf(),
         update_at: new Date(obj.modifyDt).valueOf(),
-        pid: obj.noteBookId,
+        // pid: obj.noteBookId,
         remote_pid: obj.noteBookId,
         trash: obj.trash,
         file_size: obj.size,

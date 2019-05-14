@@ -85,6 +85,14 @@ export default {
     })
   },
 
+  mounted () {
+    if (this.autoLogin !== '1') {
+      setTimeout(() => {
+        this.$remote.getCurrentWindow().show()
+      }, 300)
+    }
+  },
+
   methods: {
     ...mapActions([
       'SET_TOKEN',

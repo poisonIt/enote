@@ -60,9 +60,9 @@
         总共 {{ list.length }} 项
       </div>
     </div>
-    <div class="list-loading" v-if="isListLoading">
+    <!-- <div class="list-loading" v-if="isListLoading">
       <Loading :type="1" fill="#DDAF59" style="transform: scale(1.2) translateY(-60px)"></Loading>
-    </div>
+    </div> -->
   </div>
 </template>
 

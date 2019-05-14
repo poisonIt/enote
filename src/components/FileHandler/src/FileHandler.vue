@@ -64,6 +64,7 @@
 </template>
 
 <script>
+import { ipcRenderer } from 'electron'
 import dayjs from 'dayjs'
 import { mapGetters, mapActions } from 'vuex'
 // import {
@@ -176,6 +177,7 @@ export default {
       this.isInputFocused = false
       console.log('handleInputBlur', this.titleValue, this.currentFileTitle)
       if (this.titleValue === this.currentFileTitle) return
+      this.currentFileTitle = this.titleValue
       this.$hub.dispatchHub('updateFile', this, {
         id: this.currentFile._id,
         name: this.titleValue
@@ -266,6 +268,10 @@ export default {
 
     newWindow () {
       console.log('newWindow')
+      ipcRenderer.send('create-preview-window', {
+        noteId: this.currentFile._id,
+        title: this.currentFileTitle
+      })
     },
 
     showInfo () {

@@ -200,7 +200,7 @@ async function update (req) {
           if (newFolder.remote_id !== old_remote_id) {
             childData.remote_pid = newFolder.remote_id
           }
-          if (childData !== {}) {
+          if (childData.hasOwnProperty('trash') || childData.hasOwnProperty('remote_pid')) {
             updateByQuery({
               query: { pid: newFolder._id },
               data: childData

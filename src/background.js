@@ -175,6 +175,7 @@ function createLoginWindow (autoLogin) {
     show: autoLogin === '1' ? false : true,
     titleBarStyle: 'hidden',
     icon: path.join(__static, 'icon.png'),
+    parent: backWin,
     webPreferences: {
       webSecurity: false
     }
@@ -202,11 +203,11 @@ function createLoginWindow (autoLogin) {
 function createBackgroundWindow () {
   backWin = new BrowserWindow({
     id: 'background',
-    width: isDevelopment ? 0 : 0,
-    height: 0,
+    width: isDevelopment ? 1366 : 960,
+    height: 640,
     backgroundColor: '#fcfbf7',
     show: true,
-    titleBarStyle: 'default',
+    titleBarStyle: isDevelopment ? 'default' : 'hidden',
     // show: false
   })
 
@@ -234,10 +235,11 @@ function createHomeWindow () {
     width: isDevelopment ? 1366 : 960,
     height: 640,
     backgroundColor: '#fcfbf7',
-    show: true,
+    show: false,
     // frame: false,
     titleBarStyle: isDevelopment ? 'default' : 'hidden',
     icon: path.join(__static, 'icon.png'),
+    parent: backWin,
     webPreferences: {
       webSecurity: false
     }
@@ -357,9 +359,9 @@ ipcMain.on('home-window-ready', (event) => {
 ipcMain.on('show-home-window', (event, arg) => {
   win && win.show()
   if (backWin) {
-    // backWin.setIgnoreMouseEvents(true)
-    // backWin.setOpacity(0)
-    backWin.hide()
+    backWin.setIgnoreMouseEvents(true)
+    backWin.setOpacity(0)
+    // backWin.hide()
     // backWin.setVisibleOnAllWorkspaces(true)
   }
   if (!isDevelopment) {

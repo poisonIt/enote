@@ -1,8 +1,8 @@
 <template>
   <div>
-    <!-- <div class="loading">
+    <div class="loading">
       <Loading :type="1" fill="#DDAF59" style="transform: scale(1.2)"></Loading>
-    </div> -->
+    </div>
   </div>
 </template>
 

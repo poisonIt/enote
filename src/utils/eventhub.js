@@ -44,7 +44,7 @@ export default new Vue({
         cbs
       } = this
 
-      if (cbs[eventName].hasOwnProperty(from.$options._componentTag)) {
+      if (cbs[eventName] && cbs[eventName].hasOwnProperty(from.$options._componentTag)) {
         this.$emit(eventName, from.$options._componentTag, params)
       }
     }

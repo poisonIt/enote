@@ -159,12 +159,14 @@ export default {
   },
 
   created () {
-    window.onbeforeunload = (e) => {
-      e.returnValue = false
-      let curWin = this.$remote.getCurrentWindow()
-      let backWin = curWin.getParentWindow()
-      curWin.hide()
-      backWin.hide()
+    if (!isDevelopment) {
+      window.onbeforeunload = (e) => {
+        e.returnValue = false
+        let curWin = this.$remote.getCurrentWindow()
+        let backWin = curWin.getParentWindow()
+        curWin.hide()
+        backWin.hide()
+      }
     }
 
     ipcRenderer.on('fetch-user-data-response', (event, arg) => {

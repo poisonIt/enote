@@ -23,24 +23,26 @@ export default {
     },
 
     handleFileUpdate (params) {
-      console.log('handleFileUpdate', params)
-      let file = _.find(this.list, { _id: params.id })
-      let idx = this.list.indexOf(file)
-      if (params.name) {
-        file.title = params.name
-      }
-      this.$set(this.list, idx, file)
-
-      let taskName = this.currentFile.type === 'folder' ? 'updateLocalFolder' : 'updateLocalNote'
-      ipcRenderer.send('fetch-local-data', {
-        tasks: [taskName],
-        params: [{
-          id: this.currentFile._id,
-          title: params.name
-        }],
-        from: ['DocumentList', 'handleFileUpdate', this.currentFile._id]
+      this.$nextTick(() => {
+        let file = _.find(this.fileList, { _id: params.id })
+        console.log('handleFileUpdate', params, file, this.fileList)
+        let idx = this.fileList.indexOf(file)
+        if (params.name) {
+          file.title = params.name
+        }
+        this.$set(this.fileList, idx, file)
+  
+        let taskName = this.currentFile.type === 'folder' ? 'updateLocalFolder' : 'updateLocalNote'
+        ipcRenderer.send('fetch-local-data', {
+          tasks: [taskName],
+          params: [{
+            id: this.currentFile._id,
+            title: params.name
+          }],
+          from: ['DocumentList', 'handleFileUpdate', this.currentFile._id]
+        })
+        this.$hub.dispatchHub('pushData', this)
       })
-      this.$hub.dispatchHub('pushData', this)
     },
 
     navUpHub () {

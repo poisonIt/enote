@@ -206,7 +206,7 @@ function createBackgroundWindow () {
     width: isDevelopment ? 1366 : 960,
     height: 640,
     backgroundColor: '#fcfbf7',
-    show: true,
+    show: false,
     titleBarStyle: isDevelopment ? 'default' : 'hidden',
     // show: false
   })
@@ -222,6 +222,7 @@ function createBackgroundWindow () {
 
   backWin.on('closed', () => {
     backWin = null
+    app.quit()
     win && win.destroy()
     loginWin && loginWin.destroy()
     youdaoWin && youdaoWin.destroy()
@@ -257,7 +258,11 @@ function createHomeWindow () {
     win.loadURL('app://./index.html#/home')
   }
 
-  win.on('closed', () => {
+  win.on('show', (event) => {
+    win.focus()
+  })
+
+  win.on('closed', (event) => {
     win = null
   })
 }
@@ -349,6 +354,7 @@ ipcMain.on('showWindow', (event, arg) => {
 
 ipcMain.on('create-home-window', (event, arg) => {
   backWin && backWin.show()
+  loginWin && loginWin.hide()
   createHomeWindow()
 })
 
@@ -357,6 +363,7 @@ ipcMain.on('home-window-ready', (event) => {
 })
 
 ipcMain.on('show-home-window', (event, arg) => {
+  // backWin && backWin.show()
   win && win.show()
   if (backWin) {
     backWin.setIgnoreMouseEvents(true)
@@ -364,9 +371,9 @@ ipcMain.on('show-home-window', (event, arg) => {
     // backWin.hide()
     // backWin.setVisibleOnAllWorkspaces(true)
   }
-  if (!isDevelopment) {
+  // if (!isDevelopment) {
     loginWin && loginWin.destroy()
-  }
+  // }
 })
 
 ipcMain.on('create-preview-window', (event, arg) => {
@@ -382,6 +389,7 @@ ipcMain.on('create-youdao-window', (event, arg) => {
 ipcMain.on('userDB-ready', (event, arg) => {
   let autoLogin = app.appConf.user && app.appConf.user !== ''
   !loginWin && createLoginWindow(autoLogin)
+  autoLogin && backWin.show()
   // getAppConf(app.getAppPath('userData')).then(appConf => {
   //   if (appConf.user && appConf.user !== '') {
   //     backWin.webContents.send('login-ready')
@@ -436,6 +444,10 @@ app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
 
+  if (win && !win.isVisible()) {
+    win.show()
+    backWin.show()
+  }
   if (backWin === null) {
     createBackgroundWindow()
   }
@@ -453,20 +465,22 @@ app.on('ready', async () => {
   Menu.setApplicationMenu(menu)
 
   let dbPath = path.resolve(app.getAppPath('userData'), `../`)
-  saveAppConf(app.getAppPath('userData'), {
-    serviceUrl: isDevelopment
-      ? 'http://122.152.201.59:8000/api'
-      : 'http://10.50.115.9:8000/api'
-  }).then(() => {
-    getAppConf(app.getAppPath('userData')).then(appConf => {
-      console.log('appConf', appConf)
-      let p = dbPath + '/database'
-      app.appConf = {
-        user: appConf.user,
-        dbPath: p
-      }
-      createBackgroundWindow()
-    })
+
+  getAppConf(app.getAppPath('userData')).then(appConf => {
+    console.log('appConf', appConf)
+    if (!appConf.serviceUrl || appConf.serviceUrl === '') {
+      saveAppConf(app.getAppPath('userData'), {
+        serviceUrl: isDevelopment
+          ? 'http://122.152.201.59:8000/api'
+          : 'http://10.50.115.9:8000/api'
+      })
+    }
+    let p = dbPath + '/database'
+    app.appConf = {
+      user: appConf.user,
+      dbPath: p
+    }
+    createBackgroundWindow()
   })
 })
 

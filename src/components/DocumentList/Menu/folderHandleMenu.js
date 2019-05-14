@@ -13,7 +13,7 @@ export default [
         label: '新建模板笔记',
         eventListener: {
           eventName: 'click',
-          callbackName: 'handleNewTemplateDoc'
+          callbackName: 'handleNewTemplateNote'
         }
       },
       {

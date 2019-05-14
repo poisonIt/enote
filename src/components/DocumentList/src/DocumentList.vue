@@ -238,6 +238,7 @@ export default {
       if (arg.from === 'DocumentList') {
         console.log('fetch-local-data-response', event, arg)
         if (arg.tasks.indexOf('addLocalNote') > -1) {
+          this.$root.$navTree.select(this.popupedFile.file_id)
           return
         } else {
           let localFiles = []
@@ -496,15 +497,27 @@ export default {
       })
     },
 
-    handleNewNote () {
-      // addLocalNote({
-      //   title: '无标题笔记',
-      //   pid: this.popupedFile.file_id,
-      //   isTemp: false
-      // }).then(res => {
-      //   console.log('add-local-note-res', res)
-      //   this.$hub.dispatchHub('setCurrentFolder', this, this.popupedFile.file_id)
-      // })
+    handleNewNote (isTemp) {
+      ipcRenderer.send('fetch-local-data', {
+        tasks: ['addLocalNote'],
+        params: [{
+          title: '无标题笔记',
+          pid: this.popupedFile.file_id
+        }],
+        from: 'DocumentList'
+      })
+    },
+
+    handleNewTemplateNote () {
+      ipcRenderer.send('fetch-local-data', {
+        tasks: ['addLocalNote'],
+        params: [{
+          title: '无标题笔记',
+          pid: this.popupedFile.file_id,
+          isTemp: true
+        }],
+        from: 'DocumentList'
+      })
     },
 
     handleRename () {

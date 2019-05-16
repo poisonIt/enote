@@ -12,5 +12,8 @@ export default {
     this.$hub.hookHub('pushData', 'FileHandler', () => {
       this.syncData(1000, true)
     })
+    this.$hub.hookHub('pushData', 'Editor', () => {
+      this.syncData(1000, true)
+    })
   }
 }

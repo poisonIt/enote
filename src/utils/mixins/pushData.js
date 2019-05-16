@@ -23,6 +23,7 @@ export default {
   methods: {
     ...mapActions([
       'SET_IS_SYNCING',
+      'SET_NOTE_VER',
       'SET_FILE_PUSH_FINISHED'
     ]),
 
@@ -283,7 +284,6 @@ export default {
       let nTransed = nNeedPush.map(note => {
         return this.tranData(note)
       })
-      console.log('nTransed', nTransed)
 
       let resp = await pushNote(nTransed)
 

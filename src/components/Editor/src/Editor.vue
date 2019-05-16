@@ -114,7 +114,6 @@ export default {
       const _self = this
       if (this.editor) {
         this.editor.setData(content || '')
-        console.log('22222')
         this.showMask = false
       } else {
         ClassicEditor
@@ -126,17 +125,20 @@ export default {
             extraPlugins: [ uploadAdapter ],
             autosave: {
               save (editor) {
-                let editorData = editor.getData()
-                if (_self.currentDoc._id === _self.cachedDoc._id
-                  && editorData !== _self.cachedDoc.content) {
-                  _self.saveData(_self.currentDoc._id, editorData)
-                  _self.cachedDoc.content = editorData
-                }
+                _self.saveData(editor)
               }
             },
           })
           .then(editor => {
             this.editor = editor
+            this.editor.ui.focusTracker.on('change:isFocused', (val) => {
+              if (!this.editor.ui.view.editable.isFocused) {
+                if (this.currentDoc._id === this.cachedDoc._id
+                && this.editor.getData() !== this.cachedDoc.content) {
+                  this.$hub.dispatchHub('pushData', this)
+                }
+              }
+            })
             this.editor.setData(content || '')
             this.cachedDoc = {
               _id: this.currentDoc._id,
@@ -164,15 +166,20 @@ export default {
       document.getElementsByClassName('ck-content')[0].style.width = document.body.clientWidth - space + 'px'
     },
 
-    saveData (id, content) {
-      ipcRenderer.send('fetch-local-data', {
-        tasks: ['updateLocalDoc'],
-        params: [{
-          id: id,
-          content: content,
-        }],
-        from: 'Editor'
-      })
+    saveData (editor) {
+      let editorData = editor.getData()
+      if (this.currentDoc._id === this.cachedDoc._id
+        && editorData !== this.cachedDoc.content) {
+        ipcRenderer.send('fetch-local-data', {
+          tasks: ['updateLocalDoc'],
+          params: [{
+            id: this.currentDoc._id,
+            content: editorData,
+          }],
+          from: 'Editor'
+        })
+        this.cachedDoc.content = editorData
+      }
     }
   }
 }

@@ -194,7 +194,7 @@ function createLoginWindow (autoLogin) {
 
   loginWin.on('closed', () => {
     loginWin = null
-    if (!isDevelopment) {
+    if (!isDevelopment && !win) {
       app.quit()
     }
   })

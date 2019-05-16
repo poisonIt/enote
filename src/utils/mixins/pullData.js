@@ -93,7 +93,7 @@ export default {
       return {
         type: 'folder',
         remote_id: obj.noteBookId,
-        // pid: pid,
+        // pid: pid,f
         remote_pid: pid,
         title: obj.title || '',
         seq: obj.seq || 0,

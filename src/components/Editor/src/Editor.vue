@@ -114,6 +114,7 @@ export default {
       const _self = this
       if (this.editor) {
         this.editor.setData(content || '')
+        console.log('22222')
         this.showMask = false
       } else {
         ClassicEditor
@@ -125,7 +126,12 @@ export default {
             extraPlugins: [ uploadAdapter ],
             autosave: {
               save (editor) {
-                _self.saveData(editor)
+                let editorData = editor.getData()
+                if (_self.currentDoc._id === _self.cachedDoc._id
+                  && editorData !== _self.cachedDoc.content) {
+                  _self.saveData(_self.currentDoc._id, editorData)
+                  _self.cachedDoc.content = editorData
+                }
               }
             },
           })
@@ -166,20 +172,15 @@ export default {
       document.getElementsByClassName('ck-content')[0].style.width = document.body.clientWidth - space + 'px'
     },
 
-    saveData (editor) {
-      let editorData = editor.getData()
-      if (this.currentDoc._id === this.cachedDoc._id
-        && editorData !== this.cachedDoc.content) {
-        ipcRenderer.send('fetch-local-data', {
-          tasks: ['updateLocalDoc'],
-          params: [{
-            id: this.currentDoc._id,
-            content: editorData,
-          }],
-          from: 'Editor'
-        })
-        this.cachedDoc.content = editorData
-      }
+    saveData (id, content) {
+      ipcRenderer.send('fetch-local-data', {
+        tasks: ['updateLocalDoc'],
+        params: [{
+          id: id,
+          content: content,
+        }],
+        from: 'Editor'
+      })
     }
   }
 }

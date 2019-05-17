@@ -20,17 +20,17 @@ function loadLinvoDB (path) {
 function createCollection (name, path) {
   let isDirExist = fs.existsSync(path)
   console.log('isExist', isDirExist)
-  // if (!isDirExist) {
-  //   fs.mkdir(path, { recursive: true }, (err) => {
-  //     console.log('createCollection', name, path, LocalDAO[name])
-  //     LocalDAO[name].createCollection(path)
-  //   })
-  // } else {
-  //   console.log('createCollection', name, path, LocalDAO[name])
-  //   LocalDAO[name].createCollection(path)
-  // }
-  console.log('createCollection', name, path, LocalDAO[name])
-  LocalDAO[name].createCollection(path)
+  if (!isDirExist) {
+    fs.mkdir(path, { recursive: true }, (err) => {
+      console.log('createCollection', name, path, LocalDAO[name])
+      LocalDAO[name].createCollection(path)
+    })
+  } else {
+    console.log('createCollection', name, path, LocalDAO[name])
+    LocalDAO[name].createCollection(path)
+  }
+  // console.log('createCollection', name, path, LocalDAO[name])
+  // LocalDAO[name].createCollection(path)
 }
 
 export {

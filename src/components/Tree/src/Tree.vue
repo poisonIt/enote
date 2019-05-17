@@ -333,12 +333,9 @@ export default {
 
     click () {
       var root = this.getRootNode()
-      if (!this.model.instance) {
-        this.model.instance = this
-      }
       console.log(this, root, this === root)
       if (this === root) return
-      this.model.store.setCurrentNode(this.model, root)
+      this.model.store.setCurrentNode(this.model, root, this)
       if (this.model.type === 'select') {
         this.model.isSelected = !this.model.isSelected
         root.$emit('select', this.model)

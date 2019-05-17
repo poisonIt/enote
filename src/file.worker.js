@@ -75,7 +75,10 @@ self.addEventListener('message', (e) => {
 }, false)
 
 function getChildren (cur, arr) {
-  cur.children = arr.filter(item => (item.remote_pid === cur.remote_id || item.pid === cur.remote_id || item.pid === cur.id)).map(item => {
+  cur.children = arr.filter(item => (
+    (item.remote_pid && item.remote_pid === cur.remote_id) ||
+    (cur.remote_id && item.pid === cur.remote_id) ||
+    (item.pid && item.pid === cur.id))).map(item => {
     return {
       id: item._id,
       pid: item.pid,

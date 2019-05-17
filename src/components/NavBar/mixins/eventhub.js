@@ -2,8 +2,8 @@ import { TreeStore } from '@/components/Tree'
 
 export default {
   created () {
-    this.$hub.hookHub('newNote', 'FileTool', () => this.handleNewNote(true))
-    this.$hub.hookHub('newTemplateDoc', 'FileTool', () => this.handleNewNote(true))
+    this.$hub.hookHub('newNote', 'FileTool', () => this.handleNewNote(false))
+    this.$hub.hookHub('newTemplateNote', 'FileTool', () => this.handleNewNote(true))
     this.$hub.hookHub('newNote', 'DocumentList', () => this.handleNewNote(false))
     this.$hub.hookHub('setCurrentFolder', 'DocumentList', (id) => this.setCurrentFolder(id))
     this.$hub.hookHub('navUp', 'DocumentList', () => this.handleNavUp())

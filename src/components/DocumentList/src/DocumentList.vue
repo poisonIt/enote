@@ -363,6 +363,7 @@ export default {
 
       this.fileList = _.flatten([folders, notes])
       let idx = _.findIndex(this.fileList, { _id: this.selectedIdCache })
+      console.log('idx', idx)
       idx = (idx === -1 ? 0 : idx)
       this.selectFile(this.list.length > 0 ? idx : -1)
       this.isListLoading = false

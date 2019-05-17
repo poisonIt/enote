@@ -20,8 +20,11 @@ TreeStore.prototype.initNode = function (node, opts) {
   }
 }
 
-TreeStore.prototype.setCurrentNode = function (node, root) {
+TreeStore.prototype.setCurrentNode = function (node, root, instance) {
   if (this.currentNode === node) return
+  if (instance && !node.instance) {
+    node.instance = instance
+  }
   this.currentNode = node
   root.$emit('set-current', node)
 }

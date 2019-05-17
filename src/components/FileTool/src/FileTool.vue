@@ -43,8 +43,8 @@ export default {
       isMenuVisible: false,
       menuData: [
         {
-          label: '新建模板笔记',
-          value: 'new_doc'
+          label: '新建笔记',
+          value: 'new_note'
         },
         {
           label: '新建文件夹',
@@ -99,8 +99,8 @@ export default {
     },
 
     newNote () {
-      // this.$hub.dispatchHub('newNote', this)
-      this.$hub.dispatchHub('newTemplateDoc', this)
+      this.$hub.dispatchHub('newNote', this)
+      // this.$hub.dispatchHub('newTemplateNote', this)
     },
 
     newFolder () {
@@ -108,7 +108,7 @@ export default {
     },
 
     handleMenuClick (value) {
-      if (value === 'new_doc') {
+      if (value === 'new_note') {
         this.newNote()
       } else if (value === 'new_folder') {
         this.newFolder()

@@ -87,7 +87,10 @@ async function add (req) {
         note_id: note._id,
         content: req.isTemp ? docTemp : (req.content || '')
       }).then(() => {
-        resolve(note)
+        folderCtr.getById({ id: note.pid }).then(folder => {
+          note.folder_title = folder ? folder.title : '我的文件夹'
+          resolve(note)
+        })
       })
     })
   })

@@ -232,7 +232,7 @@ function createHomeWindow () {
     width: isDevelopment ? 1366 : 960,
     height: 640,
     backgroundColor: '#fcfbf7',
-    show: false,
+    show: true,
     // frame: false,
     titleBarStyle: isDevelopment ? 'default' : 'hidden',
     icon: path.join(__static, 'icon.png'),

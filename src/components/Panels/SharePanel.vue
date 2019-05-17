@@ -77,7 +77,7 @@
       height="506px"
       top="10vh"
       transition-name="fade-in-down"
-      title="选择微信好友"
+      title="选择好友"
       @close="closeFrdPanel"
       :visible.sync="isFrdPanelShowed">
       <div class="content">
@@ -198,6 +198,7 @@ export default {
     isSharePanelShowed (val) {
       if (val) {
         this.isFirstData = true
+        console.log('watch-isSharePanelShowed', val, this.currentFile)
         if (!this.currentFile.remote_id) {
           ipcRenderer.send('fetch-local-data', {
             tasks: ['getLocalNoteById'],
@@ -205,7 +206,8 @@ export default {
             from: 'SharePanel'
           })
         } else {
-          getShareInfo(this.currentFile.remote_id).then(res => {
+          this.remoteId = this.currentFile.remote_id
+          getShareInfo(this.remoteId).then(res => {
             if (res.data.body && res.data.body) {
               this.handleShareFinished(res)
             } else {
@@ -234,7 +236,7 @@ export default {
       }
 
       this.fdList = this.userInfo.friend_list
-        .filter(item => item.username.indexOf(val) > -1)
+        .filter(item => item.accountNameCN.indexOf(val) > -1)
     },
 
     entitledType (val) {
@@ -258,7 +260,9 @@ export default {
           let remote_id = arg.res[0].remote_id
           if (remote_id) {
             this.remoteId = remote_id
+            console.log('getLocalNoteById', arg.res)
             getShareInfo(remote_id).then(res => {
+              console.log('getShareInfo', res, this.remoteId, remote_id)
               if (res.data.body && res.data.body) {
                 this.handleShareFinished(res)
               } else {
@@ -310,12 +314,14 @@ export default {
         entitledUser: this.entitledUser
       }
 
+      console.log('modifyShare', data)
       let shareResp = await publishShare(data)
 
       this.handleShareFinished(shareResp)
     },
 
     handleShareFinished (shareResp) {
+      console.log('handleShareFinished', shareResp, this.remoteId)
       this.isLoading = false
       if (shareResp.data.returnCode === 200) {
         this.shareInfo = shareResp.data.body
@@ -329,6 +335,9 @@ export default {
           if (this.entitledUser.indexOf(item.userCode) > -1) {
             item.state = true
             return true
+          } else {
+            item.state = false
+            return false
           }
         })
 

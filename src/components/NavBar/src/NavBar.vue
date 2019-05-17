@@ -226,6 +226,7 @@ export default {
         // add folder
         if (arg.tasks.indexOf('addLocalFolder') > -1) {
           let res = arg.res[arg.tasks.indexOf('addLocalFolder')]
+          console.log('aaa', this.popupedNode)
           this.popupedNode.addChild({
             id: arg.res[0]._id,
             type: 'folder'
@@ -382,6 +383,13 @@ export default {
     },
 
     handleNewFolder (isCurrent) {
+      if (isCurrent) {
+        let currentNode = this.$refs.tree.model.store.currentNode.instance
+        if (!currentNode.model.parent.parent && currentNode.id !== '0') {
+          return
+        }
+        this.popupedNode = currentNode
+      }
       let nodeData = this.popupedNode.model.data
       ipcRenderer.send('fetch-local-data', {
         tasks: ['addLocalFolder'],

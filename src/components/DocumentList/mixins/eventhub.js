@@ -11,8 +11,10 @@ export default {
 
   methods: {
     handleFileAdded (file) {
-      this.fileList.unshift(file)
-      this.selectFile(0)
+      console.log('handleFileAdded', file)
+      this.noteList.unshift(file)
+      this.selectedIdCache = file._id
+      this.updateFileList()
     },
 
     handleFileRename (file) {

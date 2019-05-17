@@ -209,6 +209,7 @@ export default {
 
   created () {
     this.model.instance = this
+    console.log('created-tree', this, this.model, this.model.instance)
     this.id = this.model.data ? this.model.id : '0'
     this.$on('select', (params) => {
       if (this.model.id === params.id) {
@@ -332,6 +333,9 @@ export default {
 
     click () {
       var root = this.getRootNode()
+      if (!this.model.instance) {
+        this.model.instance = this
+      }
       console.log(this, root, this === root)
       if (this === root) return
       this.model.store.setCurrentNode(this.model, root)

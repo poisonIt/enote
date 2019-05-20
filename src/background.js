@@ -321,6 +321,75 @@ function createYoudaoAsyncWindow (event, url) {
   })
 }
 
+// Quit when all windows are closed.
+app.on('window-all-closed', () => {
+  // On macOS it is common for applications and their menu bar
+  // to stay active until the user quits explicitly with Cmd + Q
+  if (process.platform !== 'darwin') {
+    app.quit()
+  }
+})
+
+app.on('activate', () => {
+  // On macOS it's common to re-create a window in the app when the
+  // dock icon is clicked and there are no other windows open.
+
+  if (win && !win.isVisible()) {
+    win.show()
+    backWin.show()
+  }
+  if (backWin === null) {
+    createBackgroundWindow()
+  }
+})
+
+// This method will be called when Electron has finished
+// initialization and is ready to create browser windows.
+// Some APIs can only be used after this event occurs.
+app.on('ready', async () => {
+  if (isDevelopment && !process.env.IS_TEST) {
+    // Install Vue Devtools
+    await installVueDevtools()
+  }
+  const menu = Menu.buildFromTemplate(template)
+  Menu.setApplicationMenu(menu)
+
+  let dbPath = path.resolve(app.getAppPath('userData'), `../`)
+
+  getAppConf(app.getAppPath('userData')).then(appConf => {
+    console.log('appConf', appConf)
+    if (!appConf.serviceUrl || appConf.serviceUrl === '') {
+      saveAppConf(app.getAppPath('userData'), {
+        serviceUrl: isDevelopment
+          ? 'http://122.152.201.59:8000/api'
+          : 'http://10.50.115.9:8000/api'
+      })
+    }
+    let p = dbPath + '/database'
+    app.appConf = {
+      user: appConf.user,
+      dbPath: p
+    }
+    createBackgroundWindow()
+  })
+})
+
+// Exit cleanly on request from parent process in development mode.
+if (isDevelopment) {
+  if (process.platform === 'win32') {
+    process.on('message', data => {
+      if (data === 'graceful-exit') {
+        app.quit()
+      }
+    })
+  } else {
+    process.on('SIGTERM', () => {
+      app.quit()
+    })
+  }
+}
+
+// process communicate
 ipcMain.on('changeWindow', (event, arg) => {
   if (arg.name === 'home') {
     // loginWin && loginWin.close()
@@ -428,72 +497,3 @@ ipcMain.on('fetch-local-data-response', (event, arg) => {
 ipcMain.on('communicate', (event, arg) => {
   win && win.webContents.send('communicate', arg)
 })
-
-// Quit when all windows are closed.
-app.on('window-all-closed', () => {
-  // On macOS it is common for applications and their menu bar
-  // to stay active until the user quits explicitly with Cmd + Q
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
-})
-
-app.on('activate', () => {
-  // On macOS it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
-
-  if (win && !win.isVisible()) {
-    win.show()
-    backWin.show()
-  }
-  if (backWin === null) {
-    createBackgroundWindow()
-  }
-})
-
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-app.on('ready', async () => {
-  if (isDevelopment && !process.env.IS_TEST) {
-    // Install Vue Devtools
-    await installVueDevtools()
-  }
-  const menu = Menu.buildFromTemplate(template)
-  Menu.setApplicationMenu(menu)
-
-  let dbPath = path.resolve(app.getAppPath('userData'), `../`)
-
-  getAppConf(app.getAppPath('userData')).then(appConf => {
-    console.log('appConf', appConf)
-    if (!appConf.serviceUrl || appConf.serviceUrl === '') {
-      saveAppConf(app.getAppPath('userData'), {
-        serviceUrl: isDevelopment
-          ? 'http://122.152.201.59:8000/api'
-          : 'http://10.50.115.9:8000/api'
-      })
-    }
-    let p = dbPath + '/database'
-    app.appConf = {
-      user: appConf.user,
-      dbPath: p
-    }
-    createBackgroundWindow()
-  })
-})
-
-// Exit cleanly on request from parent process in development mode.
-if (isDevelopment) {
-  if (process.platform === 'win32') {
-    process.on('message', data => {
-      if (data === 'graceful-exit') {
-        app.quit()
-      }
-    })
-  } else {
-    process.on('SIGTERM', () => {
-      app.quit()
-    })
-  }
-}
-

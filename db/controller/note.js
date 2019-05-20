@@ -10,9 +10,7 @@ import doc from './doc';
 let Note = {}
 
 function createCollection (path) {
-  LinvoDB.dbPath = path
-
-  Note = new LinvoDB('note', {
+  Note = new LinvoDB(`note-${path}`, {
     type: {
       type: String,
       default: 'note'

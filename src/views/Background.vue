@@ -41,7 +41,7 @@ export default {
     },
 
     loadUserDB () {
-      const dbPath = remote.app.appConf.dbPath
+      const { dbPath } = remote.app.appConf
       createCollection('user', dbPath)
       ipcRenderer.send('userDB-ready')
     },
@@ -52,12 +52,12 @@ export default {
         this.user = user
         let p = dbPath + '/' + user
         console.log('p', p)
-        createCollection('folder', p)
-        createCollection('note', p)
-        createCollection('doc', p)
-        createCollection('tag', p)
-        createCollection('img', p)
-        createCollection('state', p)
+        createCollection('folder', user)
+        createCollection('note', user)
+        createCollection('doc', user)
+        createCollection('tag', user)
+        createCollection('img', user)
+        createCollection('state', user)
 
         // LocalService.getAllLocalFolder().then(res => {
         //   folderDataCache = res

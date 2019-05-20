@@ -7,9 +7,7 @@ import noteCtr from './note'
 let Folder = {}
 
 function createCollection (path) {
-  LinvoDB.dbPath = path
-
-  Folder = new LinvoDB('folder', {
+  Folder = new LinvoDB(`folder-${path}`, {
     type: {
       type: String,
       default: 'folder'
@@ -49,6 +47,7 @@ function createCollection (path) {
     }
   })
 }
+
 
 function saveAll (req) {
   const { data } = req

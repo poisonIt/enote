@@ -287,11 +287,11 @@ export default {
     handleDBLoaded () {
       const { user, dbPath } = this.$remote.app.appConf
       let p = dbPath + '/' + user
-      createCollection('folder', p)
-      createCollection('note', p)
-      createCollection('doc', p)
-      createCollection('tag', p)
-      createCollection('state', p)
+      createCollection('folder', user)
+      createCollection('note', user)
+      createCollection('doc', user)
+      createCollection('tag', user)
+      createCollection('state', user)
       ipcRenderer.send('fetch-user-data', {
         from: 'Home'
       })

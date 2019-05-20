@@ -5,9 +5,8 @@ import { LinvoDB } from '../index'
 let Tag = {}
 
 function createCollection (path) {
-  LinvoDB.dbPath = path
-
-  Tag = new LinvoDB('tag', {
+  console.log('createCollection', path)
+  Tag = new LinvoDB(`tag-${path}`, {
     type: {
       type: String,
       default: 'tag'

@@ -7,9 +7,7 @@ import imgCtr from './img'
 let Doc = {}
 
 function createCollection (path) {
-  LinvoDB.dbPath = path
-
-  Doc = new LinvoDB('doc', {
+  Doc = new LinvoDB(`doc-${path}`, {
     type: {
       type: String,
       default: 'doc'

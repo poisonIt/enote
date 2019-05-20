@@ -5,8 +5,6 @@ import { LinvoDB } from '../index'
 let User = {}
 
 function createCollection (path) {
-  LinvoDB.dbPath = path
-
   User = new LinvoDB('user', {
     local_name: String,
     username: String,

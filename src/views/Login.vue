@@ -69,7 +69,7 @@ export default {
   created () {
     this.autoLogin = this.$router.currentRoute.query.autoLogin
     console.log('query', this.$router.currentRoute.query)
-    const dbPath = remote.app.appConf.dbPath
+    const { dbPath } = remote.app.appConf
     createCollection('user', dbPath)
 
     if (this.autoLogin === '1') {
@@ -145,21 +145,21 @@ export default {
     },
 
     connectDB (userId) {
-      const dbPath = remote.app.appConf.dbPath
-      let p = dbPath + '/' + userId
-      fs.mkdir(p, { recursive: true }, (err) => {
-        createCollection('folder', p)
-        createCollection('note', p)
-        createCollection('doc', p)
-        createCollection('tag', p)
-        createCollection('state', p)
+      const { user } = remote.app.appConf
+      // let p = dbPath + '/' + userId
+      // fs.mkdir(p, { recursive: true }, (err) => {
+        createCollection('folder', user)
+        createCollection('note', user)
+        createCollection('doc', user)
+        createCollection('tag', user)
+        createCollection('state', user)
 
         LocalService.getLocalState().then(res => {
           console.log('getLocalState', res)
           this.appState = res
           this.handleFetch()
         })
-      })
+      // })
     },
 
     async handleFetch () {

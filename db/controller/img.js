@@ -7,9 +7,7 @@ import noteCtr from './note'
 let Img = {}
 
 function createCollection (path) {
-  LinvoDB.dbPath = path
-
-  Img = new LinvoDB('img', {
+  Img = new LinvoDB(`img-${path}`, {
     type: {
       type: String,
       default: 'img'

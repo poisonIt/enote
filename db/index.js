@@ -3,7 +3,7 @@ const fs = require('fs')
 const Datastore = require('nedb')
 const LinvoDB = require('linvodb3')
 
-LinvoDB.defaults.store = { db: require('level-js') }
+LinvoDB.defaults.store = { db: require('leveldown') }
 
 function loadDB (path) {
   return new Datastore({

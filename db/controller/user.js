@@ -5,6 +5,7 @@ import { LinvoDB } from '../index'
 let User = {}
 
 function createCollection (path) {
+  LinvoDB.dbPath = path
   User = new LinvoDB('user', {
     local_name: String,
     username: String,
@@ -39,7 +40,6 @@ function saveAll (req) {
 
 // add
 function add (req) {
-  console.log('add-user', req)
   let data = userModel(req)
 
   return new Promise((resolve, reject) => {
@@ -75,7 +75,6 @@ function removeById (req) {
 // update
 function update (req) {
   const { usercode } = req
-  console.log('update-user', req)
 
   return new Promise((resolve, reject) => {
     User.findOne({ usercode: usercode })
@@ -102,7 +101,6 @@ function update (req) {
 
 // get
 function getAll () {
-  console.log('User', User)
   return new Promise((resolve, reject) => {
     User.find({}).exec((err, users) => {
       resolve(users)
@@ -112,7 +110,6 @@ function getAll () {
 
 function getById (req) {
   const { id } = req
-
   return new Promise((resolve, reject) => {
     User.findOne({ _id: id }).exec((err, doc) => {
       resolve(doc)

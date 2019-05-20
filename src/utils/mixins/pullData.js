@@ -10,10 +10,42 @@ import { mapActions } from 'vuex'
 let allTagLocalMap = {}
 
 export default {
+  data () {
+    return {
+      pullResp: []
+    }
+  },
+
+  created () {
+    this.hookPullMsgHandler()
+  },
+
   methods: {
     ...mapActions([
       'SET_TOKEN'
     ]),
+
+    hookPullMsgHandler () {
+      ipcRenderer.on('fetch-local-data-response', (event, arg) => {
+        console.log('fetch-local-data-response', arg)
+        if (arg.from === 'pullData') {
+          console.log('pullData-res', arg)
+          if (arg.tasks.indexOf('diffAddMultiLocalTag') > -1) {
+            console.log('diffAddMultiLocalTag', arg.res)
+            let tagResp = arg.res
+            allTagLocalMap = {}
+            tagResp.forEach(item => {
+              allTagLocalMap[item.remote_id] = item._id
+            })
+            this.diffAddNoteBook(this.pullResp[0].data.body || [])
+          }
+          if (arg.tasks.indexOf('diffAddMultiLocalFolder') > -1) {
+            console.log('diffAddMultiLocalFolder-res', arg.res)
+            this.diffAddNote(this.pullResp[1].data.body)
+          }
+        }
+      })
+    },
 
     async pullData (noteVer) {
       console.log('pullData', noteVer)
@@ -25,54 +57,54 @@ export default {
     },
 
     async runPullTasks (noteVer) {
-      let pullResp = await Promise.all([
+      this.pullResp = await Promise.all([
         pullNotebooks(),
         pullNote({ version: noteVer }),
         pullTags()
       ])
-      console.log('runPullTasks', pullResp)
+      console.log('runPullTasks', this.pullResp)
       // await LocalDAO.folder.removeAll()
       // await LocalDAO.note.removeAll()
       // await LocalDAO.doc.removeAll()
       // await LocalDAO.tag.removeAll()
-      console.log('runPullTasks-1111')
 
-      if (pullResp[0].data.returnMsg !== 'success') {
-        // alert(`获取笔记本：${pullResp[1].data.returnMsg}`)
+      if (this.pullResp[0].data.returnMsg !== 'success') {
+        // alert(`获取笔记本：${this.pullResp[1].data.returnMsg}`)
         this.isLoading = false
         return
       }
 
-      if (pullResp[1].data.returnMsg !== 'success') {
-        // alert(`获取笔记：${pullResp[2].data.returnMsg}`)
+      if (this.pullResp[1].data.returnMsg !== 'success') {
+        // alert(`获取笔记：${this.pullResp[2].data.returnMsg}`)
         this.isLoading = false
         return
       }
 
-      if (pullResp[2].data.returnMsg !== 'success') {
-        // alert(`获取标签：${pullResp[3].data.returnMsg}`)
+      if (this.pullResp[2].data.returnMsg !== 'success') {
+        // alert(`获取标签：${this.pullResp[3].data.returnMsg}`)
         this.isLoading = false
         return
       }
 
-      let dataBody = pullResp[0].data.body
+      // const saveTagTask = (pullResp[2].data.body || [])
+      //   .map(item => LocalDAO.tag.diffAdd(this.transTagData(item)))
 
-      const saveTagTask = (pullResp[2].data.body || [])
-        .map(item => LocalDAO.tag.diffAdd(this.transTagData(item)))
+      this.diffAddTag(this.pullResp[2].data.body || [])
+      return
 
-      let tagResp = await Promise.all(saveTagTask)
-      allTagLocalMap = {}
-      tagResp.forEach(item => {
-        allTagLocalMap[item.remote_id] = item._id
-      })
+      // let tagResp = await Promise.all(saveTagTask)
+      // allTagLocalMap = {}
+      // tagResp.forEach(item => {
+      //   allTagLocalMap[item.remote_id] = item._id
+      // })
 
-      const saveNoteBooksTask = dataBody
-      .map(item => LocalDAO.folder.diffAdd(this.transNoteBookData(item)))
+      // const saveNoteBooksTask = pullResp[0].data.body
+      //   .map(item => LocalDAO.folder.diffAdd(this.transNoteBookData(item)))
 
-      const saveNoteTask = pullResp[1].data.body
-        .map(item => {
-          return LocalDAO.note.diffAdd(this.transNoteData(item)
-        )})
+      // const saveNoteTask = pullResp[1].data.body
+      //   .map(item => {
+      //     return LocalDAO.note.diffAdd(this.transNoteData(item)
+      //   )})
 
       if (pullResp[1].data.body[0]) {
         console.log('saveState', pullResp[1].data.body[0])
@@ -85,6 +117,30 @@ export default {
       console.log('saveLocalRes', saveLocalRes)
 
       return saveLocalRes
+    },
+
+    diffAddTag (data) {
+      ipcRenderer.send('fetch-local-data', {
+        tasks: ['diffAddMultiLocalTag'],
+        params: [data.map(item => this.transTagData(item))],
+        from: 'pullData'
+      })
+    },
+
+    diffAddNoteBook (data) {
+      ipcRenderer.send('fetch-local-data', {
+        tasks: ['diffAddMultiLocalFolder'],
+        params: [data.map(item => this.transNoteBookData(item))],
+        from: 'pullData'
+      })
+    },
+
+    diffAddNote (data) {
+      ipcRenderer.send('fetch-local-data', {
+        tasks: ['diffAddMultiLocalNote'],
+        params: [data.map(item => this.transNoteData(item))],
+        from: 'pullData'
+      })
     },
 
     transNoteBookData (obj) {

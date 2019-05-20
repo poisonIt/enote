@@ -5,8 +5,9 @@ import { LinvoDB } from '../index'
 let Tag = {}
 
 function createCollection (path) {
-  console.log('createCollection', path)
-  Tag = new LinvoDB(`tag-${path}`, {
+  console.log('createCollection-tag', path)
+  LinvoDB.dbPath = path
+  Tag = new LinvoDB(`tag`, {
     type: {
       type: String,
       default: 'tag'
@@ -78,6 +79,18 @@ function diffAdd (req) {
           resolve(res)
         })
       }
+    })
+  })
+}
+
+function diffAddMulti (reqs) {
+  console.log('diffAddMulti-tag', reqs)
+  return new Promise((resolve, reject) => {
+    let p = reqs.map(req => {
+      return diffAdd(req)
+    })
+    Promise.all(p).then(res => {
+      resolve(res)
     })
   })
 }
@@ -210,6 +223,7 @@ export default {
   saveAll,
   add,
   diffAdd,
+  diffAddMulti,
   removeAll,
   removeById,
   deleteAll,

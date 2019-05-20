@@ -30,7 +30,7 @@
 
 <script>
 import fs from 'fs'
-import { ipcRenderer, remote } from 'electron'
+import { ipcRenderer, remote, ipcMain } from 'electron'
 import { createCollection } from '../../db'
 import {
   authenticate,
@@ -67,21 +67,37 @@ export default {
   },
 
   created () {
-    this.autoLogin = this.$router.currentRoute.query.autoLogin
-    console.log('query', this.$router.currentRoute.query)
-    const { dbPath } = remote.app.appConf
-    createCollection('user', dbPath)
-
+    let { autoLogin, username, password } = this.$router.currentRoute.query
+    this.autoLogin = autoLogin
     if (this.autoLogin === '1') {
-      LocalService.getLocalUserById({ id: remote.app.appConf.user }).then(res => {
-        console.log('getLastUser', res)
-        this.username = res.local_name
-        this.password = res.password
-        this.postInput()
-      })
+      this.username = username
+      this.password = password
+      this.postInput()
     }
-    LocalService.getAllLocalUser().then(res => {
-      console.log('getAllLocalUser', res)
+    // console.log('query', this.$router.currentRoute.query)
+    // const { dbPath } = remote.app.appConf
+    // createCollection('user', dbPath)
+
+    // if (this.autoLogin === '1') {
+    //   LocalService.getLocalUserById({ id: remote.app.appConf.user }).then(res => {
+    //     console.log('getLastUser', res)
+    //     this.username = res.local_name
+    //     this.password = res.password
+    //     this.postInput()
+    //   })
+    // }
+    // LocalService.getAllLocalUser().then(res => {
+    //   console.log('getAllLocalUser', res)
+    // })
+
+    ipcRenderer.on('update-user-data-response', (event, arg) => {
+      let userSaved = arg
+      saveAppConf(this.$remote.app.getAppPath('appData'), {
+        user: userSaved._id
+      })
+      console.log('userSaved', userSaved)
+      this.handleFetch()
+      // this.connectDB(userSaved._id)
     })
   },
 
@@ -120,24 +136,26 @@ export default {
       if (authenticateResp.data.returnCode === 200) {
         const id_token = authenticateResp.data.body.id_token
         this.SET_TOKEN(id_token)
-        let userResp = await this.pullUserInfo(id_token, username, password).catch(err => {
-          console.error(err)
-          this.$Message.error(err)
-          if (this.autoLogin) {
-            this.handleDataFinished()
-          }
-          this.isLoading = false
-          return
-        })
+        let userResp = await this.pullUserInfo(id_token, username, password)
+          .catch(err => {
+            console.error(err)
+            this.$Message.error(err)
+            if (this.autoLogin) {
+              this.handleDataFinished()
+            }
+            this.isLoading = false
+            return
+          })
+
         if (!userResp.userData) return
-        // userResp.userData.is_last_login = true
-        let userSaved = await LocalService.updateLocalUser(userResp.userData)
-        saveAppConf(this.$remote.app.getAppPath('appData'), {
-          user: userSaved._id
-        })
-        console.log('userSaved', userSaved)
-        console.log('userResp', userResp)
-        this.connectDB(userSaved._id)
+        ipcRenderer.send('update-user-data', userResp.userData)
+        // let userSaved = await LocalService.updateLocalUser(userResp.userData)
+        // saveAppConf(this.$remote.app.getAppPath('appData'), {
+        //   user: userSaved._id
+        // })
+        // console.log('userSaved', userSaved)
+        // console.log('userResp', userResp)
+        // this.connectDB(userSaved._id)
       } else {
         this.$Message.error(authenticateResp.data.returnMsg)
         this.isLoading = false
@@ -163,19 +181,12 @@ export default {
     },
 
     async handleFetch () {
-      console.log('handleFetch')
-      // let localFolders = await LocalDAO.folder.getAll()
-      // console.log('localFolders', localFolders)
-      // await this.pushImgs()
-      // await this.SET_FILES_FROM_LOCAL()
-      // await this.pushData()
       let pullResp = await this.pullData(this.appState ? this.appState.note_ver : 1)
-      // console.log('pullResp', pullResp)
+
       this.handleDataFinished()
     },
 
     handleDataFinished () {
-      ipcRenderer.send('login-ready')
       ipcRenderer.send('create-home-window')
       this.$Message.success('登录成功')
     },

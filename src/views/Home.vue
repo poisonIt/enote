@@ -286,19 +286,19 @@ export default {
 
     handleDBLoaded () {
       const { user, dbPath } = this.$remote.app.appConf
-      let p = dbPath + '/' + user
-      createCollection('folder', user)
-      createCollection('note', user)
-      createCollection('doc', user)
-      createCollection('tag', user)
-      createCollection('state', user)
+      // let p = dbPath + '/' + user
+      // createCollection('folder', user)
+      // createCollection('note', user)
+      // createCollection('doc', user)
+      // createCollection('tag', user)
+      // createCollection('state', user)
       ipcRenderer.send('fetch-user-data', {
         from: 'Home'
       })
-      LocalService.getLocalState().then(res => {
-        console.log('getLocalState', res)
-        this.SET_NOTE_VER(res.note_ver)
-      })
+      // LocalService.getLocalState().then(res => {
+      //   console.log('getLocalState', res)
+      //   this.SET_NOTE_VER(res.note_ver)
+      // })
       this.SET_DB_READY(true)
     },
 

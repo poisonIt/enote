@@ -7,7 +7,8 @@ import noteCtr from './note'
 let Folder = {}
 
 function createCollection (path) {
-  Folder = new LinvoDB(`folder-${path}`, {
+  LinvoDB.dbPath = path
+  Folder = new LinvoDB(`folder`, {
     type: {
       type: String,
       default: 'folder'
@@ -97,6 +98,10 @@ function diffAdd (req) {
       }
     })
   })
+}
+
+function diffAddMulti (reqs) {
+  return Promise.all(reqs.map(req => diffAdd(req)))
 }
 
 // remove
@@ -396,6 +401,7 @@ export default {
   saveAll,
   add,
   diffAdd,
+  diffAddMulti,
   removeAll,
   removeById,
   removeAllDeleted,

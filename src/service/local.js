@@ -38,6 +38,10 @@ export function addLocalFolder (params) {
   return LocalDAO.folder.add(params)
 }
 
+export function diffAddMultiLocalFolder (params) {
+  return LocalDAO.folder.diffAddMulti(params)
+}
+
 export function updateLocalFolder (params) {
   return LocalDAO.folder.update(params)
 }
@@ -73,6 +77,10 @@ export function getLocalTrashNote () {
 
 export function addLocalNote (params) {
   return LocalDAO.note.add(params)
+}
+
+export function diffAddMultiLocalNote (params) {
+  return LocalDAO.note.diffAddMulti(params)
 }
 
 export function duplicateLocalNote (params) {
@@ -203,6 +211,10 @@ export function updateLocalTag (params) {
 
 export function updateMultiLocalTag (params) {
   return LocalDAO.tag.updateMulti(params)
+}
+
+export function diffAddMultiLocalTag (params) {
+  return LocalDAO.tag.diffAddMulti(params)
 }
 
 // image

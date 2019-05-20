@@ -10,7 +10,8 @@ import doc from './doc';
 let Note = {}
 
 function createCollection (path) {
-  Note = new LinvoDB(`note-${path}`, {
+  LinvoDB.dbPath = path
+  Note = new LinvoDB(`note`, {
     type: {
       type: String,
       default: 'note'
@@ -110,6 +111,17 @@ function diffAdd (req) {
       console.log('diffAdd-3333', note)
       return add(req)
     }
+  })
+}
+
+function diffAddMulti (reqs) {
+  return new Promise((resolve, reject) => {
+    let p = reqs.map(req => {
+      return diffAdd(req)
+    })
+    Promise.all(p).then(res => {
+      resolve(res)
+    })
   })
 }
 
@@ -526,6 +538,7 @@ export default {
   saveAll,
   add,
   diffAdd,
+  diffAddMulti,
   duplicate,
   removeAll,
   removeById,

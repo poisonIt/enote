@@ -5,7 +5,8 @@ import { LinvoDB } from '../index'
 let State = {}
 
 function createCollection (path) {
-  State = new LinvoDB(`state-${path}`, {
+  LinvoDB.dbPath = path
+  State = new LinvoDB(`state`, {
     note_ver: {
       type: Number,
       default: 0

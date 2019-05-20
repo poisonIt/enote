@@ -1,5 +1,6 @@
 'use strict'
 import path from 'path'
+import fs from 'fs'
 import {
   app,
   protocol,
@@ -14,6 +15,8 @@ import {
   installVueDevtools
 } from 'vue-cli-plugin-electron-builder/lib'
 import { getAppConf, saveAppConf } from './tools/appConf'
+import { createCollection } from '../db'
+import * as LocalService from './service/local'
 
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
@@ -24,6 +27,8 @@ let backWin
 let loginWin
 let previewWin
 let youdaoWin
+
+let taskId = 0
 
 let template = [{
   label: app.getName(),
@@ -161,9 +166,23 @@ let template = [{
 // Standard scheme must be registered before the app is ready
 protocol.registerStandardSchemes(['app'], { secure: true })
 
-function createLoginWindow (autoLogin) {
-  console.log('createLoginWindow', autoLogin)
-  autoLogin = autoLogin ? '1' : '0'
+function createLoginWindow (user) {
+  let autoLogin = '0'
+  let data = {
+    username: '',
+    password: ''
+  }
+  if (user !== 'null') {
+    LocalService.getLocalUserById({ id: user }).then(res => {
+      console.log('getLastUser', user, res)
+      if (res) {
+        data.username = res.local_name
+        data.password = res.password
+        autoLogin = '1'
+      }
+    })
+  }
+
   if (win) win.destroy()
 
   loginWin = new BrowserWindow({
@@ -184,12 +203,12 @@ function createLoginWindow (autoLogin) {
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode
-    loginWin.loadURL(process.env.WEBPACK_DEV_SERVER_URL + '#/?autoLogin=' + autoLogin)
+    loginWin.loadURL(`${process.env.WEBPACK_DEV_SERVER_URL}#/?autoLogin=${autoLogin}&username=${data.username}&password=${data.password}`)
     loginWin.webContents.openDevTools()
   } else {
     createProtocol('app')
     // Load the index.html when not in development
-    loginWin.loadURL('app://./index.html#/?autoLogin=' + autoLogin)
+    loginWin.loadURL(`app://./index.html#/?autoLogin=${autoLogin}&username=${data.username}&password=${data.password}`)
   }
 
   loginWin.on('closed', () => {
@@ -264,7 +283,6 @@ function createHomeWindow () {
 }
 
 function createPreviewWindow (event, arg) {
-  console.log('createPreviewWindow', arg)
   previewWin = new BrowserWindow({
     id: 'preview',
     width: 960,
@@ -334,13 +352,13 @@ app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
 
-  if (win && !win.isVisible()) {
-    win.show()
-    backWin.show()
-  }
-  if (backWin === null) {
-    createBackgroundWindow()
-  }
+  // if (win && !win.isVisible()) {
+  //   win.show()
+  //   backWin.show()
+  // }
+  // if (backWin === null) {
+  //   createBackgroundWindow()
+  // }
 })
 
 // This method will be called when Electron has finished
@@ -357,7 +375,6 @@ app.on('ready', async () => {
   let dbPath = path.resolve(app.getAppPath('userData'), `../`)
 
   getAppConf(app.getAppPath('userData')).then(appConf => {
-    console.log('appConf', appConf)
     if (!appConf.serviceUrl || appConf.serviceUrl === '') {
       saveAppConf(app.getAppPath('userData'), {
         serviceUrl: isDevelopment
@@ -370,7 +387,12 @@ app.on('ready', async () => {
       user: appConf.user,
       dbPath: p
     }
-    createBackgroundWindow()
+
+    fs.mkdir(p, { recursive: true }, (err) => {
+      createCollection('user', p)
+      createLoginWindow(appConf.user)
+    })
+    // createBackgroundWindow()
   })
 })
 
@@ -418,7 +440,7 @@ ipcMain.on('showWindow', (event, arg) => {
 })
 
 ipcMain.on('create-home-window', (event, arg) => {
-  backWin && backWin.show()
+  // backWin && backWin.show()
   if (!isDevelopment) {
     loginWin && loginWin.hide()
   }
@@ -426,7 +448,16 @@ ipcMain.on('create-home-window', (event, arg) => {
 })
 
 ipcMain.on('home-window-ready', (event) => {
-  backWin.webContents.send('home-window-ready')
+  LocalService.getAllLocalFolder().then(res1 => {
+    LocalService.getAllLocalTag().then(res2 => {
+      sendLocalDataRes({
+        tasks: ['getAllLocalFolder', 'getAllLocalTag'],
+        res: [res1, res2],
+        from: ['NavBar']
+      })
+    })
+  })
+  // backWin.webContents.send('home-window-ready')
 })
 
 ipcMain.on('show-home-window', (event, arg) => {
@@ -457,43 +488,110 @@ ipcMain.on('userDB-ready', (event, arg) => {
   let autoLogin = app.appConf.user && app.appConf.user !== ''
   !loginWin && createLoginWindow(autoLogin)
   autoLogin && backWin.show()
-  // getAppConf(app.getAppPath('userData')).then(appConf => {
-  //   if (appConf.user && appConf.user !== '') {
-  //     backWin.webContents.send('login-ready')
-  //     createHomeWindow()
-  //   } else {
-  //     !loginWin && createLoginWindow()
-  //   }
-  // })
 })
 
 ipcMain.on('login-ready', (event) => {
   getAppConf(app.getAppPath('userData')).then(appConf => {
-    app.appConf.user = appConf.user
-    backWin.webContents.send('login-ready')
+    const user = appConf.user
+    let p = app.appConf.dbPath + '/' + user
+    fs.mkdir(p, { recursive: true }, (err) => {
+      createCollection('folder', p)
+      createCollection('note', p)
+      createCollection('doc', p)
+      createCollection('tag', p)
+      createCollection('img', p)
+      createCollection('state', p)
+    })
+  })
+})
+
+ipcMain.on('update-user-data', (event, arg) => {
+  LocalService.updateLocalUser(arg).then(res => {
+    app.appConf.user = res._id
+    getAppConf(app.getAppPath('userData')).then(appConf => {
+      const user = appConf.user
+      let p = app.appConf.dbPath + '/' + user
+      fs.mkdir(p, { recursive: true }, (err) => {
+        createCollection('folder', p)
+        createCollection('note', p)
+        createCollection('doc', p)
+        createCollection('tag', p)
+        createCollection('img', p)
+        createCollection('state', p)
+        loginWin.webContents.send('update-user-data-response', res)
+      })
+    })
   })
 })
 
 ipcMain.on('fetch-user-data', (event, arg) => {
-  backWin.webContents.send('fetch-user-data', arg)
+  LocalService.getLocalUserById({ id: app.appConf.user }).then(res => {
+    sendLocalDataRes({
+      res: res,
+      from: arg.from
+    })
+  })
 })
 
 ipcMain.on('fetch-user-data-response', (event, arg) => {
-  win.webContents.send('fetch-user-data-response', arg)
+  win && win.webContents.send('fetch-user-data-response', arg)
 })
 
 ipcMain.on('fetch-local-data', (event, arg) => {
-  backWin.webContents.send('fetch-local-data', arg)
+  taskId++
+  let tasks = arg.tasks.map((item, index) => {
+    if (arg.params) {
+      return LocalService[item](arg.params[index])
+    } else {
+      return LocalService[item]()
+    }
+  })
+  execPromise(taskId, tasks, arg)  
 })
 
-ipcMain.on('fetch-local-data-response', (event, arg) => {
-  if (arg.from === 'Preview') {
-    previewWin && previewWin.webContents.send('fetch-local-data-response', arg)
-    return
-  }
-  win.webContents.send('fetch-local-data-response', arg)
-})
+// ipcMain.on('fetch-local-data-response', (event, arg) => {
+//   if (arg.from === 'Preview') {
+//     previewWin && previewWin.webContents.send('fetch-local-data-response', arg)
+//     return
+//   }
+//   win.webContents.send('fetch-local-data-response', arg)
+// })
 
 ipcMain.on('communicate', (event, arg) => {
   win && win.webContents.send('communicate', arg)
 })
+
+function sendLocalDataRes (arg) {
+  if (arg.from === 'Preview') {
+    previewWin && previewWin.webContents.send('fetch-local-data-response', arg)
+    return
+  }
+  win && win.webContents.send('fetch-local-data-response', arg)
+  loginWin && loginWin.webContents.send('fetch-local-data-response', arg)
+}
+
+function execPromise (id, tasks, arg) {
+  let tid = id
+  if (arg.queue) {
+    LocalService[arg.tasks[0]](arg.params[0]).then((res0) => {
+      LocalService[arg.tasks[1]](arg.params[1]).then((res1) => {
+        sendLocalDataRes({
+          res: [res0, res1],
+          from: arg.from,
+          queue: true,
+          tasks: arg.tasks
+        })
+      })
+    })
+  } else {
+    Promise.all(tasks).then(res => {
+      if (tid === taskId) {
+        sendLocalDataRes({
+          res: res,
+          from: arg.from,
+          tasks: arg.tasks
+        })
+      }
+    })
+  }
+}

@@ -210,7 +210,7 @@ export default {
           _self.$nextTick(() => {
             _self.$refs.tree.$children[0].click()
             _self.SET_IS_HOME_READY(true)
-            ipcRenderer.send('show-home-window')
+            // ipcRenderer.send('show-home-window')
           })
         }
       }
@@ -309,8 +309,6 @@ export default {
         }
       }
     })
-
-    ipcRenderer.send('home-window-ready')
   },
 
   methods: {

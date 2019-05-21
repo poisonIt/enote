@@ -43,6 +43,10 @@ export default {
             console.log('diffAddMultiLocalFolder-res', arg.res)
             this.diffAddNote(this.pullResp[1].data.body)
           }
+          if (arg.tasks.indexOf('diffAddMultiLocalNote') > -1) {
+            console.log('diffAddMultiLocalNote-res', arg.res)
+            ipcRenderer.send('pull-finished')
+          }
         }
       })
     },

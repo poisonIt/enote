@@ -153,13 +153,15 @@ export default {
   },
 
   created () {
-    if (!isDevelopment) {
-      window.onbeforeunload = (e) => {
-        e.returnValue = false
-        let curWin = this.$remote.getCurrentWindow()
-        curWin.hide()
-      }
+    window.onbeforeunload = (e) => {
+      e.returnValue = false
+      let curWin = this.$remote.getCurrentWindow()
+      curWin.hide()
     }
+
+    ipcRenderer.on('login-ready', (event, arg) => {
+      this.handleDBLoaded()
+    })
 
     ipcRenderer.on('fetch-user-data-response', (event, arg) => {
       console.log('fetch-user-data-response-1111', arg)
@@ -168,7 +170,7 @@ export default {
         this.SET_TOKEN(arg.res.id_token)
       }
     })
-    this.handleDBLoaded()
+    // this.handleDBLoaded()
   },
 
   mounted () {
@@ -278,20 +280,9 @@ export default {
 
     handleDBLoaded () {
       console.log('handleDBLoaded')
-      const { user, dbPath } = this.$remote.app.appConf
-      // let p = dbPath + '/' + user
-      // createCollection('folder', user)
-      // createCollection('note', user)
-      // createCollection('doc', user)
-      // createCollection('tag', user)
-      // createCollection('state', user)
       ipcRenderer.send('fetch-user-data', {
         from: 'Home'
       })
-      // LocalService.getLocalState().then(res => {
-      //   console.log('getLocalState', res)
-      //   this.SET_NOTE_VER(res.note_ver)
-      // })
       this.SET_DB_READY(true)
     },
 

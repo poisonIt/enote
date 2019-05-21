@@ -23,7 +23,6 @@ const isDevelopment = process.env.NODE_ENV !== 'production'
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win
-let backWin
 let loginWin
 let previewWin
 let youdaoWin
@@ -36,9 +35,11 @@ let template = [{
     label: '退出',
     accelerator: 'CmdOrCtrl+Q',
     click: (item, focusedWindow) => {
-      if (focusedWindow) {
-        app.quit()
-      }
+      win && win.destroy()
+      loginWin && loginWin.destroy()
+      previewWin && previewWin.destroy()
+      youdaoWin && youdaoWin.destroy()
+      app.quit()
     }
   }]
 }, {
@@ -175,7 +176,6 @@ function prepareCreateLogin (user) {
     }
     if (user && user !== 'null') {
       LocalService.getLocalUserById({ id: user }).then(res => {
-        console.log('getLocalUserById', user, res)
         if (res) {
           data.username = res.local_name
           data.password = res.password
@@ -194,9 +194,10 @@ function prepareCreateLogin (user) {
 function createLoginWindow (user) {
   prepareCreateLogin(user).then(res => {
     const { autoLogin, data } = res
-    if (win) win.destroy()
     console.log('createLoginWindow', user, autoLogin, data)
-  
+    if (autoLogin === '1') {
+      win && win.show()
+    }
     loginWin = new BrowserWindow({
       id: 'login',
       width: isDevelopment ? 1024 : 442,
@@ -206,7 +207,6 @@ function createLoginWindow (user) {
       show: isDevelopment,
       titleBarStyle: 'hidden',
       icon: path.join(__static, 'icon.png'),
-      parent: backWin,
       webPreferences: {
         webSecurity: false
       }
@@ -225,52 +225,26 @@ function createLoginWindow (user) {
   
     loginWin.on('closed', () => {
       loginWin = null
-      if (!isDevelopment && !win) {
+      if (!isDevelopment && (win && !win.isVisible())) {
         app.quit()
       }
     })
   })
-
 }
-
-// function createBackgroundWindow () {
-//   backWin = new BrowserWindow({
-//     id: 'background',
-//     width: isDevelopment ? 1366 : 960,
-//     height: 640,
-//     backgroundColor: '#fcfbf7',
-//     show: isDevelopment,
-//     titleBarStyle: isDevelopment ? 'default' : 'hidden',
-//     // show: false
-//   })
-
-//   if (process.env.WEBPACK_DEV_SERVER_URL) {
-//     // Load the url of the dev server if in development mode
-//     backWin.loadURL(process.env.WEBPACK_DEV_SERVER_URL + '#/background')
-//     backWin.webContents.openDevTools()
-//   } else {
-//     createProtocol('app')
-//     backWin.loadURL('app://./index.html#/background')
-//   }
-
-//   backWin.on('closed', () => {
-//     app.quit()
-//   })
-// }
 
 function createHomeWindow () {
   // Create the browser window.
+  console.log('createHomeWindow')
   win = new BrowserWindow({
     id: 'home',
     width: app.appConf.size.width,
     height: app.appConf.size.height,
     backgroundColor: '#fcfbf7',
-    show: true,
+    show: false,
     title: '添富云笔记',
     // frame: false,
     titleBarStyle: isDevelopment ? 'default' : 'hidden',
     icon: path.join(__static, 'icon.png'),
-    parent: backWin,
     webPreferences: {
       webSecurity: false
     }
@@ -372,13 +346,9 @@ app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
 
-  // if (win && !win.isVisible()) {
-  //   win.show()
-  //   backWin.show()
-  // }
-  // if (backWin === null) {
-  //   createBackgroundWindow()
-  // }
+  if (win && !win.isVisible()) {
+    win.show()
+  }
 })
 
 // This method will be called when Electron has finished
@@ -426,6 +396,7 @@ app.on('ready', async () => {
     fs.mkdir(p, { recursive: true }, (err) => {
       createCollection('user', p)
       createLoginWindow(appConf.user)
+      createHomeWindow()
     })
   })
 })
@@ -455,33 +426,21 @@ ipcMain.on('changeWindow', (event, arg) => {
     loginWin && loginWin.destroy()
     setTimeout(() => {
       win && win.destroy()
-      backWin && backWin.reload()
+      createHomeWindow()
       createLoginWindow()
-    }, 1000)
+    }, 500)
   }
 })
 
 ipcMain.on('hideWindow', (event, arg) => {
-  if (arg.name === 'background') {
-    backWin && backWin.hide()
-  }
 })
 
 ipcMain.on('showWindow', (event, arg) => {
-  if (arg.name === 'background') {
-    backWin && backWin.show()
-  }
 })
 
-ipcMain.on('create-home-window', (event, arg) => {
-  // backWin && backWin.show()
-  if (!isDevelopment) {
-    loginWin && loginWin.hide()
-  }
-  createHomeWindow()
-})
-
-ipcMain.on('home-window-ready', (event) => {
+ipcMain.on('login-ready', (event, arg) => {
+  win && win.show()
+  win && win.webContents.send('login-ready')
   LocalService.getAllLocalFolder().then(res1 => {
     LocalService.getAllLocalTag().then(res2 => {
       sendLocalDataRes({
@@ -491,21 +450,33 @@ ipcMain.on('home-window-ready', (event) => {
       })
     })
   })
-  // backWin.webContents.send('home-window-ready')
-})
-
-ipcMain.on('show-home-window', (event, arg) => {
-  // backWin && backWin.show()
-  win && win.show()
-  if (backWin && !isDevelopment) {
-    backWin.setIgnoreMouseEvents(true)
-    backWin.setOpacity(0)
-    // backWin.hide()
-    // backWin.setVisibleOnAllWorkspaces(true)
-  }
   if (!isDevelopment) {
     loginWin && loginWin.destroy()
   }
+})
+
+ipcMain.on('pull-finished', (event, arg) => {
+  if (!isDevelopment) {
+    loginWin && loginWin.hide()
+  }
+  win && win.show()
+  win && win.webContents.send('login-ready')
+  LocalService.getAllLocalFolder().then(res1 => {
+    LocalService.getAllLocalTag().then(res2 => {
+      sendLocalDataRes({
+        tasks: ['getAllLocalFolder', 'getAllLocalTag'],
+        res: [res1, res2],
+        from: ['NavBar']
+      })
+    })
+  })
+})
+
+ipcMain.on('create-home-window', (event, arg) => {
+  if (!isDevelopment) {
+    loginWin && loginWin.hide()
+  }
+  createHomeWindow()
 })
 
 ipcMain.on('create-preview-window', (event, arg) => {
@@ -534,9 +505,7 @@ ipcMain.on('update-user-data', (event, arg) => {
       createCollection('state', p)
 
       LocalService.getLocalState().then(res => {
-        console.log('getLocalState', res)
         app.appConf.note_ver = res.note_ver
-        console.log('appConf', app.appConf)
         setTimeout(() => {
           loginWin.webContents.send('update-user-data-response', res)
         }, 3000)

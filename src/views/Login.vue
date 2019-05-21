@@ -139,12 +139,10 @@ export default {
       let { note_ver } = remote.app.appConf
       console.log('handleFetch', remote.app.appConf)
       let pullResp = await this.pullData(note_ver || 1)
-
-      this.handleDataFinished()
     },
 
     handleDataFinished () {
-      ipcRenderer.send('create-home-window')
+      ipcRenderer.send('login-ready')
       this.$Message.success('登录成功')
     },
 

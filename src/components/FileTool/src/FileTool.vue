@@ -23,13 +23,13 @@
 
 <script>
 import { ipcRenderer } from 'electron'
-import { mapGetters } from 'vuex'
+import { mapGetters, mapActions } from 'vuex'
 import mixins from '../mixins'
-// import {
-//   authenticate,
-//   getUserInfo,
-//   getFriendList
-// } from '../../../service'
+import {
+  authenticate,
+  getUserInfo,
+  getFriendList
+} from '../../../service'
 
 export default {
   name: 'FileTool',
@@ -66,7 +66,7 @@ export default {
   watch: {
     network_status (val) {
       this.isOffline = (val === 'offline')
-      if (!this.isOffline) {
+      if (!this.isOffline && this.$remote.getCurrentWindow().isVisible()) {
         setTimeout(() => {
           this.authenticate()
         }, 3000)
@@ -90,6 +90,9 @@ export default {
   },
 
   methods: {
+    ...mapActions([
+      'SET_TOKEN'
+    ]),
     toggleMenu () {
       this.isMenuVisible = !this.isMenuVisible
     },
@@ -149,86 +152,86 @@ export default {
       this.$hub.dispatchHub('getIsFocused', this)
     },
 
-    // async authenticate () {
-    //   console.log('authenticate', this.userInfo)
-    //   const username = this.userInfo.local_name
-    //   const password = this.userInfo.password
+    async authenticate () {
+      console.log('authenticate', this.userInfo)
+      const username = this.userInfo.local_name
+      const password = this.userInfo.password
 
-    //   let authenticateResp = await authenticate({
-    //     username: username,
-    //     password: password
-    //   }).catch(err => {
-    //     console.error(err)
-    //     // this.$Message.error('认证错误，请重新登录')
-    //     setTimeout(() => {
-    //       this.authenticate()
-    //     }, 3000)
-    //   })
+      let authenticateResp = await authenticate({
+        username: username,
+        password: password
+      }).catch(err => {
+        console.error(err)
+        // this.$Message.error('认证错误，请重新登录')
+        setTimeout(() => {
+          this.authenticate()
+        }, 6000)
+      })
      
-    //   if (authenticateResp.data.returnCode === 200) {
-    //     const id_token = authenticateResp.data.body.id_token
-    //     this.SET_TOKEN(id_token)
-    //     let userResp = await this.pullUserInfo(id_token, username, password)
-    //     console.log('userResp', userResp)
-    //     if (!userResp.userData) return
-    //     ipcRenderer.send('fetch-local-data', {
-    //       tasks: ['updateLocalUser'],
-    //       params: [userResp.userData],
-    //       from: 'FileTool'
-    //     })
-    //   } else {
-    //     this.$Message.error(authenticateResp.data.returnMsg)
-    //   }
-    // },
+      if (authenticateResp.data.returnCode === 200) {
+        const id_token = authenticateResp.data.body.id_token
+        this.SET_TOKEN(id_token)
+        let userResp = await this.pullUserInfo(id_token, username, password)
+        console.log('userResp', userResp)
+        if (!userResp.userData) return
+        ipcRenderer.send('fetch-local-data', {
+          tasks: ['updateLocalUser'],
+          params: [userResp.userData],
+          from: 'FileTool'
+        })
+      } else {
+        this.$Message.error(authenticateResp.data.returnMsg)
+      }
+    },
 
-    // async pullUserInfo (id_token, username, password) {
-    //   const userInfoResp = await getUserInfo(id_token).catch(err => {
-    //     this.isLoading = false
-    //     return
-    //   })
-    //   if (userInfoResp.data.returnCode !== 200) {
-    //     return {
-    //       returnMsg: userInfoResp.data.returnMsg
-    //     }
-    //   }
+    async pullUserInfo (id_token, username, password) {
+      const userInfoResp = await getUserInfo(id_token).catch(err => {
+        this.isLoading = false
+        return
+      })
+      if (userInfoResp.data.returnCode !== 200) {
+        return {
+          returnMsg: userInfoResp.data.returnMsg
+        }
+      }
 
-    //   const friendResp = await getFriendList(id_token).catch(err => {
-    //     this.isLoading = false
-    //     return
-    //   })
-    //   if (friendResp.data.returnCode !== 200) {
-    //     return {
-    //       returnMsg: friendResp.data.returnMsg
-    //     }
-    //   }
+      const friendResp = await getFriendList(id_token).catch(err => {
+        this.isLoading = false
+        return
+      })
+      if (friendResp.data.returnCode !== 200) {
+        return {
+          returnMsg: friendResp.data.returnMsg
+        }
+      }
 
-    //   const userDataTransed = this.transUserData(userInfoResp.data.body)
-    //   userDataTransed.local_name = username
-    //   userDataTransed.password = password
-    //   userDataTransed.id_token = id_token
-    //   userDataTransed.friend_list = friendResp.data.body
-    //   console.log('userDataTransed', userDataTransed)
-    //   return {
-    //     userData: userDataTransed,
-    //     returnMsg: friendResp.data.returnMsg
-    //   }
-    // },
+      const userDataTransed = this.transUserData(userInfoResp.data.body)
+      userDataTransed.local_name = username
+      userDataTransed.password = password
+      userDataTransed.id_token = id_token
+      userDataTransed.friend_list = friendResp.data.body
+      console.log('userDataTransed', userDataTransed)
+      return {
+        userData: userDataTransed,
+        returnMsg: friendResp.data.returnMsg
+      }
+    },
 
-    // transUserData (obj) {
-    //   return {
-    //     username: obj.userName,
-    //     usercode: obj.userCode,
-    //     access_token: obj.accessToken,
-    //     account_name_cn: obj.accountNameCN,
-    //     department_id: obj.departmentId,
-    //     department_name: obj.departmentName,
-    //     image_url: obj.imageUrl,
-    //     is_sync: obj.isSync,
-    //     oa_id: obj.oaId,
-    //     position_id: obj.positionId,
-    //     position_name: obj.positionName
-    //   }
-    // }
+    transUserData (obj) {
+      return {
+        username: obj.userName,
+        usercode: obj.userCode,
+        access_token: obj.accessToken,
+        account_name_cn: obj.accountNameCN,
+        department_id: obj.departmentId,
+        department_name: obj.departmentName,
+        image_url: obj.imageUrl,
+        is_sync: obj.isSync,
+        oa_id: obj.oaId,
+        position_id: obj.positionId,
+        position_name: obj.positionName
+      }
+    }
   }
 }
 </script>

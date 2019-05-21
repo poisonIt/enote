@@ -444,20 +444,23 @@ ipcMain.on('showWindow', (event, arg) => {
 })
 
 ipcMain.on('login-ready', (event, arg) => {
-  win && win.show()
-  win && win.webContents.send('login-ready')
-  LocalService.getAllLocalFolder().then(res1 => {
-    LocalService.getAllLocalTag().then(res2 => {
-      sendLocalDataRes({
-        tasks: ['getAllLocalFolder', 'getAllLocalTag'],
-        res: [res1, res2],
-        from: ['NavBar']
+  console.log('login-ready')
+  connectDatabase().then(() => {
+    win && win.show()
+    win && win.webContents.send('login-ready')
+    LocalService.getAllLocalFolder().then(res1 => {
+      LocalService.getAllLocalTag().then(res2 => {
+        sendLocalDataRes({
+          tasks: ['getAllLocalFolder', 'getAllLocalTag'],
+          res: [res1, res2],
+          from: ['NavBar']
+        })
       })
     })
+    if (!isDevelopment) {
+      loginWin && loginWin.destroy()
+    }
   })
-  if (!isDevelopment) {
-    loginWin && loginWin.destroy()
-  }
 })
 
 ipcMain.on('pull-finished', (event, arg) => {
@@ -500,21 +503,8 @@ ipcMain.on('update-user-data', (event, arg) => {
     saveAppConf(app.getAppPath('appData'), {
       user: res._id
     })
-    let p = app.appConf.dbPath + '/' + res._id
-    fs.mkdir(p, { recursive: true }, (err) => {
-      createCollection('folder', p)
-      createCollection('note', p)
-      createCollection('doc', p)
-      createCollection('tag', p)
-      createCollection('img', p)
-      createCollection('state', p)
-
-      LocalService.getLocalState().then(res => {
-        app.appConf.note_ver = res.note_ver
-        setTimeout(() => {
-          loginWin.webContents.send('update-user-data-response', res)
-        }, 3000)
-      })
+    connectDatabase().then(() => {
+      loginWin.webContents.send('update-user-data-response')
     })
   })
 })
@@ -543,6 +533,25 @@ ipcMain.on('fetch-local-data', (event, arg) => {
 ipcMain.on('communicate', (event, arg) => {
   win && win.webContents.send('communicate', arg)
 })
+
+function connectDatabase () {
+  return new Promise((resolve, reject) => {
+    let p = app.appConf.dbPath + '/' + app.appConf.user
+    fs.mkdir(p, { recursive: true }, (err) => {
+      createCollection('folder', p)
+      createCollection('note', p)
+      createCollection('doc', p)
+      createCollection('tag', p)
+      createCollection('img', p)
+      createCollection('state', p)
+  
+      LocalService.getLocalState().then(res => {
+        app.appConf.note_ver = res.note_ver
+        resolve()
+      })
+    })
+  })
+}
 
 function sendLocalDataRes (arg) {
   if (arg.from === 'Preview') {

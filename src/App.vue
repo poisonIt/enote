@@ -9,6 +9,8 @@ import { mapActions } from 'vuex'
 
 export default {
   mounted () {
+    let network_status = window.navigator.onLine ? 'online' : 'offline'
+    this.SET_NETWORK_STATUS(network_status)
     window.addEventListener('online', () => {
       console.log('online')
       this.SET_NETWORK_STATUS('online')

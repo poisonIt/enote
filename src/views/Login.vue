@@ -76,7 +76,6 @@ export default {
     }
 
     ipcRenderer.on('update-user-data-response', (event, arg) => {
-      let userSaved = arg
       this.handleFetch()
     })
   },
@@ -106,9 +105,7 @@ export default {
       }).catch(err => {
         console.error(err)
         this.$Message.error(err)
-        if (this.autoLogin) {
-          this.handleDataFinished()
-        }
+        this.handleDataFinished()
         this.isLoading = false
         return
       })
@@ -142,8 +139,10 @@ export default {
     },
 
     handleDataFinished () {
-      ipcRenderer.send('login-ready')
-      this.$Message.success('登录成功')
+      console.log('handleDataFinished', this.autoLogin)
+      if (this.autoLogin === '1') {
+        ipcRenderer.send('login-ready')
+      }
     },
 
     async pullUserInfo (id_token, username, password) {

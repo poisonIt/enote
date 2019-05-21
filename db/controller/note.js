@@ -93,6 +93,7 @@ async function add (req) {
 }
 
 function diffAdd (req) {
+  console.log('note-diffAdd', req)
   Note.findOne({ remote_id: req.remote_id }, (err, note) => {
     if (note) {
       req.id = note._id
@@ -108,6 +109,7 @@ function diffAdd (req) {
 }
 
 function diffAddMulti (reqs) {
+  console.log('note-diffAddMulti', reqs)
   return new Promise((resolve, reject) => {
     let p = reqs.map(req => {
       return diffAdd(req)
@@ -209,6 +211,7 @@ function deleteAll () {
 
 // update
 async function update (req) {
+  console.log('note-update', req)
   const { id } = req
 
   if (!req.hasOwnProperty('need_push')) {

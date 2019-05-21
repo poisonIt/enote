@@ -269,7 +269,7 @@ export default {
               } else {
                 _self.$Message.error(resp.data.returnMsg)
                 if (resp.data.returnCode === 403) {
-                  saveAppConf(this.$remote.app.getAppPath('appData'), {
+                  saveAppConf(_self.$remote.app.getAppPath('appData'), {
                     user: null
                   })
                   ipcRenderer.send('changeWindow', {
@@ -278,6 +278,12 @@ export default {
                 }
               }
             }).catch(err => {
+              saveAppConf(_self.$remote.app.getAppPath('appData'), {
+                user: null
+              })
+              ipcRenderer.send('changeWindow', {
+                name: 'login'
+              })
               reject(err)
             })
           }

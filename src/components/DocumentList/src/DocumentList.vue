@@ -36,7 +36,7 @@
           :title="item.title"
           :content="item.brief"
           :isTop="item.top"
-          :isShared="true"
+          :isShared="false"
           :update_at="item.update_at | yyyymmdd"
           :file_size="item.size"
           :parent_folder="item.folder_title || ''"

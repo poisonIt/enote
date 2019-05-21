@@ -1,6 +1,9 @@
 import { getValid } from '../tools'
 import userModel from '../models/user'
 import { LinvoDB } from '../index'
+import {
+  dialog
+} from 'electron'
 
 let User = {}
 
@@ -24,8 +27,6 @@ function createCollection (path) {
     },
     access_token: String,
     id_token: String
-  }, {
-    filename: path + '/user.db'
   })
 }
 

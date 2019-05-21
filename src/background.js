@@ -393,6 +393,7 @@ app.on('ready', async () => {
   Menu.setApplicationMenu(menu)
 
   let dbPath = path.resolve(app.getAppPath('userData'), `../`)
+  // let dbPath = '/Users/bowiego/Documents/workspace/enote/temp'
   let serviceUrl = isDevelopment
     ? 'http://122.152.201.59:8000/api'
     : 'http://10.50.115.9:8000/api'
@@ -400,7 +401,7 @@ app.on('ready', async () => {
     if (!appConf.serviceUrl || appConf.serviceUrl === '') {
       saveAppConf(app.getAppPath('userData'), {
         serviceUrl: serviceUrl,
-        appPath: app.getAppPath('userData')
+        appPath: dbPath
       })
     }
     let defaultSize = [960, 640]
@@ -412,7 +413,7 @@ app.on('ready', async () => {
     app.appConf = {
       user: appConf.user,
       dbPath: p,
-      serviceUrl: serviceUrl,
+      serviceUrl: appConf.serviceUrl || serviceUrl,
       note_ver: 1,
       size: {
         x: 0,

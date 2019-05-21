@@ -30,7 +30,6 @@ TreeStore.prototype.setCurrentNode = function (node, root, instance) {
 }
 
 TreeStore.prototype.getNodeById = function (id) {
-  console.log('getNodeById', id, this.map)
   return this.map[id]
 }
 

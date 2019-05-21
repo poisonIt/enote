@@ -44,13 +44,13 @@ import * as LocalService from '../service/local'
 import { saveAppConf } from '../tools/appConf'
 import { mapActions } from 'vuex'
 import pullData from '@/utils/mixins/pullData'
-import pushData from '@/utils/mixins/pushData'
+// import pushData from '@/utils/mixins/pushData'
 import Loading from '@/components/Loading'
 
 export default {
   name: 'Login',
 
-  mixins: [ pullData, pushData ],
+  mixins: [ pullData ],
 
   components: {
     Loading
@@ -74,30 +74,10 @@ export default {
       this.password = password
       this.postInput()
     }
-    // console.log('query', this.$router.currentRoute.query)
-    // const { dbPath } = remote.app.appConf
-    // createCollection('user', dbPath)
-
-    // if (this.autoLogin === '1') {
-    //   LocalService.getLocalUserById({ id: remote.app.appConf.user }).then(res => {
-    //     console.log('getLastUser', res)
-    //     this.username = res.local_name
-    //     this.password = res.password
-    //     this.postInput()
-    //   })
-    // }
-    // LocalService.getAllLocalUser().then(res => {
-    //   console.log('getAllLocalUser', res)
-    // })
 
     ipcRenderer.on('update-user-data-response', (event, arg) => {
       let userSaved = arg
-      saveAppConf(this.$remote.app.getAppPath('appData'), {
-        user: userSaved._id
-      })
-      console.log('userSaved', userSaved)
       this.handleFetch()
-      // this.connectDB(userSaved._id)
     })
   },
 
@@ -132,7 +112,7 @@ export default {
         this.isLoading = false
         return
       })
-     
+
       if (authenticateResp.data.returnCode === 200) {
         const id_token = authenticateResp.data.body.id_token
         this.SET_TOKEN(id_token)
@@ -149,39 +129,16 @@ export default {
 
         if (!userResp.userData) return
         ipcRenderer.send('update-user-data', userResp.userData)
-        // let userSaved = await LocalService.updateLocalUser(userResp.userData)
-        // saveAppConf(this.$remote.app.getAppPath('appData'), {
-        //   user: userSaved._id
-        // })
-        // console.log('userSaved', userSaved)
-        // console.log('userResp', userResp)
-        // this.connectDB(userSaved._id)
       } else {
         this.$Message.error(authenticateResp.data.returnMsg)
         this.isLoading = false
       }
     },
 
-    connectDB (userId) {
-      const { user } = remote.app.appConf
-      // let p = dbPath + '/' + userId
-      // fs.mkdir(p, { recursive: true }, (err) => {
-        createCollection('folder', user)
-        createCollection('note', user)
-        createCollection('doc', user)
-        createCollection('tag', user)
-        createCollection('state', user)
-
-        LocalService.getLocalState().then(res => {
-          console.log('getLocalState', res)
-          this.appState = res
-          this.handleFetch()
-        })
-      // })
-    },
-
     async handleFetch () {
-      let pullResp = await this.pullData(this.appState ? this.appState.note_ver : 1)
+      let { note_ver } = remote.app.appConf
+      console.log('handleFetch', remote.app.appConf)
+      let pullResp = await this.pullData(note_ver || 1)
 
       this.handleDataFinished()
     },
@@ -217,7 +174,6 @@ export default {
       userDataTransed.password = password
       userDataTransed.id_token = id_token
       userDataTransed.friend_list = friendResp.data.body
-      console.log('userDataTransed', userDataTransed)
       return {
         userData: userDataTransed,
         returnMsg: friendResp.data.returnMsg

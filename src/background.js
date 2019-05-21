@@ -166,83 +166,95 @@ let template = [{
 // Standard scheme must be registered before the app is ready
 protocol.registerStandardSchemes(['app'], { secure: true })
 
+function prepareCreateLogin (user) {
+  return new Promise((resolve, reject) => {
+    let autoLogin = '0'
+    let data = {
+      username: '',
+      password: ''
+    }
+    if (user && user !== 'null') {
+      LocalService.getLocalUserById({ id: user }).then(res => {
+        console.log('getLocalUserById', user, res)
+        if (res) {
+          data.username = res.local_name
+          data.password = res.password
+          autoLogin = '1'
+          resolve({ autoLogin, data })
+        }
+      })
+    } else {
+      resolve({ autoLogin, data })
+    }
+  })
+}
+
 function createLoginWindow (user) {
-  let autoLogin = '0'
-  let data = {
-    username: '',
-    password: ''
-  }
-  if (user !== 'null') {
-    LocalService.getLocalUserById({ id: user }).then(res => {
-      console.log('getLastUser', user, res)
-      if (res) {
-        data.username = res.local_name
-        data.password = res.password
-        autoLogin = '1'
+  prepareCreateLogin(user).then(res => {
+    const { autoLogin, data } = res
+    if (win) win.destroy()
+    console.log('createLoginWindow', user, autoLogin, data)
+  
+    loginWin = new BrowserWindow({
+      id: 'login',
+      width: isDevelopment ? 1024 : 442,
+      height: 490,
+      // frame: false,
+      resizable: isDevelopment ? true : false,
+      show: isDevelopment,
+      titleBarStyle: 'hidden',
+      icon: path.join(__static, 'icon.png'),
+      parent: backWin,
+      webPreferences: {
+        webSecurity: false
       }
     })
-  }
-
-  if (win) win.destroy()
-
-  loginWin = new BrowserWindow({
-    id: 'login',
-    width: isDevelopment ? 1024 : 442,
-    height: 490,
-    // frame: false,
-    resizable: isDevelopment ? true : false,
-    show: isDevelopment,
-    titleBarStyle: 'hidden',
-    icon: path.join(__static, 'icon.png'),
-    parent: backWin,
-    webPreferences: {
-      webSecurity: false
+    loginWin.setMinimumSize(442, 490)
+  
+    if (process.env.WEBPACK_DEV_SERVER_URL) {
+      // Load the url of the dev server if in development mode
+      loginWin.loadURL(`${process.env.WEBPACK_DEV_SERVER_URL}#/?autoLogin=${autoLogin}&username=${data.username}&password=${data.password}`)
+      loginWin.webContents.openDevTools()
+    } else {
+      createProtocol('app')
+      // Load the index.html when not in development
+      loginWin.loadURL(`app://./index.html#/?autoLogin=${autoLogin}&username=${data.username}&password=${data.password}`)
     }
+  
+    loginWin.on('closed', () => {
+      loginWin = null
+      if (!isDevelopment && !win) {
+        app.quit()
+      }
+    })
   })
-  loginWin.setMinimumSize(442, 490)
 
-  if (process.env.WEBPACK_DEV_SERVER_URL) {
-    // Load the url of the dev server if in development mode
-    loginWin.loadURL(`${process.env.WEBPACK_DEV_SERVER_URL}#/?autoLogin=${autoLogin}&username=${data.username}&password=${data.password}`)
-    loginWin.webContents.openDevTools()
-  } else {
-    createProtocol('app')
-    // Load the index.html when not in development
-    loginWin.loadURL(`app://./index.html#/?autoLogin=${autoLogin}&username=${data.username}&password=${data.password}`)
-  }
-
-  loginWin.on('closed', () => {
-    loginWin = null
-    if (!isDevelopment && !win) {
-      app.quit()
-    }
-  })
 }
 
-function createBackgroundWindow () {
-  backWin = new BrowserWindow({
-    id: 'background',
-    width: isDevelopment ? 1366 : 960,
-    height: 640,
-    backgroundColor: '#fcfbf7',
-    show: isDevelopment,
-    titleBarStyle: isDevelopment ? 'default' : 'hidden',
-    // show: false
-  })
+// function createBackgroundWindow () {
+//   backWin = new BrowserWindow({
+//     id: 'background',
+//     width: isDevelopment ? 1366 : 960,
+//     height: 640,
+//     backgroundColor: '#fcfbf7',
+//     show: isDevelopment,
+//     titleBarStyle: isDevelopment ? 'default' : 'hidden',
+//     // show: false
+//   })
 
-  if (process.env.WEBPACK_DEV_SERVER_URL) {
-    // Load the url of the dev server if in development mode
-    backWin.loadURL(process.env.WEBPACK_DEV_SERVER_URL + '#/background')
-    backWin.webContents.openDevTools()
-  } else {
-    createProtocol('app')
-    backWin.loadURL('app://./index.html#/background')
-  }
+//   if (process.env.WEBPACK_DEV_SERVER_URL) {
+//     // Load the url of the dev server if in development mode
+//     backWin.loadURL(process.env.WEBPACK_DEV_SERVER_URL + '#/background')
+//     backWin.webContents.openDevTools()
+//   } else {
+//     createProtocol('app')
+//     backWin.loadURL('app://./index.html#/background')
+//   }
 
-  backWin.on('closed', () => {
-    app.quit()
-  })
-}
+//   backWin.on('closed', () => {
+//     app.quit()
+//   })
+// }
 
 function createHomeWindow () {
   // Create the browser window.
@@ -329,11 +341,6 @@ function createYoudaoAsyncWindow (event, url) {
   youdaoWin.setMinimumSize(960, 640)
   youdaoWin.loadURL(url)
 
-  // event.sender.send('youdao-reply', {
-  //   url: url,
-  //   winUrl: youdaoWin.getURL()
-  // }
-
   youdaoWin.on('closed', () => {
     youdaoWin = null
   })
@@ -373,19 +380,21 @@ app.on('ready', async () => {
   Menu.setApplicationMenu(menu)
 
   let dbPath = path.resolve(app.getAppPath('userData'), `../`)
-
+  let serviceUrl = isDevelopment
+    ? 'http://122.152.201.59:8000/api'
+    : 'http://10.50.115.9:8000/api'
   getAppConf(app.getAppPath('userData')).then(appConf => {
     if (!appConf.serviceUrl || appConf.serviceUrl === '') {
       saveAppConf(app.getAppPath('userData'), {
-        serviceUrl: isDevelopment
-          ? 'http://122.152.201.59:8000/api'
-          : 'http://10.50.115.9:8000/api'
+        serviceUrl: serviceUrl
       })
     }
     let p = dbPath + '/database'
     app.appConf = {
       user: appConf.user,
-      dbPath: p
+      dbPath: p,
+      serviceUrl: serviceUrl,
+      note_ver: 1
     }
 
     fs.mkdir(p, { recursive: true }, (err) => {
@@ -484,16 +493,13 @@ ipcMain.on('create-youdao-window', (event, arg) => {
   }
 })
 
-ipcMain.on('userDB-ready', (event, arg) => {
-  let autoLogin = app.appConf.user && app.appConf.user !== ''
-  !loginWin && createLoginWindow(autoLogin)
-  autoLogin && backWin.show()
-})
-
-ipcMain.on('login-ready', (event) => {
-  getAppConf(app.getAppPath('userData')).then(appConf => {
-    const user = appConf.user
-    let p = app.appConf.dbPath + '/' + user
+ipcMain.on('update-user-data', (event, arg) => {
+  LocalService.updateLocalUser(arg).then(res => {
+    app.appConf.user = res._id
+    saveAppConf(app.getAppPath('appData'), {
+      user: res._id
+    })
+    let p = app.appConf.dbPath + '/' + res._id
     fs.mkdir(p, { recursive: true }, (err) => {
       createCollection('folder', p)
       createCollection('note', p)
@@ -501,24 +507,14 @@ ipcMain.on('login-ready', (event) => {
       createCollection('tag', p)
       createCollection('img', p)
       createCollection('state', p)
-    })
-  })
-})
 
-ipcMain.on('update-user-data', (event, arg) => {
-  LocalService.updateLocalUser(arg).then(res => {
-    app.appConf.user = res._id
-    getAppConf(app.getAppPath('userData')).then(appConf => {
-      const user = appConf.user
-      let p = app.appConf.dbPath + '/' + user
-      fs.mkdir(p, { recursive: true }, (err) => {
-        createCollection('folder', p)
-        createCollection('note', p)
-        createCollection('doc', p)
-        createCollection('tag', p)
-        createCollection('img', p)
-        createCollection('state', p)
-        loginWin.webContents.send('update-user-data-response', res)
+      LocalService.getLocalState().then(res => {
+        console.log('getLocalState', res)
+        app.appConf.note_ver = res.note_ver
+        console.log('appConf', app.appConf)
+        setTimeout(() => {
+          loginWin.webContents.send('update-user-data-response', res)
+        }, 3000)
       })
     })
   })
@@ -526,15 +522,11 @@ ipcMain.on('update-user-data', (event, arg) => {
 
 ipcMain.on('fetch-user-data', (event, arg) => {
   LocalService.getLocalUserById({ id: app.appConf.user }).then(res => {
-    sendLocalDataRes({
+    win && win.webContents.send('fetch-user-data-response', {
       res: res,
       from: arg.from
     })
   })
-})
-
-ipcMain.on('fetch-user-data-response', (event, arg) => {
-  win && win.webContents.send('fetch-user-data-response', arg)
 })
 
 ipcMain.on('fetch-local-data', (event, arg) => {
@@ -548,14 +540,6 @@ ipcMain.on('fetch-local-data', (event, arg) => {
   })
   execPromise(taskId, tasks, arg)  
 })
-
-// ipcMain.on('fetch-local-data-response', (event, arg) => {
-//   if (arg.from === 'Preview') {
-//     previewWin && previewWin.webContents.send('fetch-local-data-response', arg)
-//     return
-//   }
-//   win.webContents.send('fetch-local-data-response', arg)
-// })
 
 ipcMain.on('communicate', (event, arg) => {
   win && win.webContents.send('communicate', arg)

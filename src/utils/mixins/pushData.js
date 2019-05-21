@@ -1,9 +1,17 @@
 // import pReduce from 'p-reduce'
+import { readFileSync, createReadStream } from 'fs'
 import { ipcRenderer } from 'electron'
 import { mapGetters, mapActions } from 'vuex'
-import { pushNotebook, pushNote, createTag, modifyTag, deleteTag, uploadFile } from '@/service'
+import {
+  pushNotebook,
+  pushNote,
+  createTag,
+  modifyTag,
+  deleteTag,
+  uploadFile
+} from '@/service'
 import LocalDAO from '../../../db/api'
-import { readFileSync, createReadStream } from 'fs'
+import { saveAppConf } from '@/tools/appConf'
 
 const mimes = ['image/png', 'image/gif','image/jpeg']
 let allTagRemoteMap = {}
@@ -28,7 +36,6 @@ export default {
     ]),
 
     tranData (file) {
-      console.log('tranData', file, file.remote_pid)
       if (file.type === 'folder') {
         return {
           noteBookId: file.remote_id || file.id,
@@ -45,7 +52,8 @@ export default {
           title: file.title,
           trash: file.trash,
           top: file.top,
-          tagId: file.tags.map(item => allTagRemoteMap[item])
+          tagId: file.tags.map(item => allTagRemoteMap[item]),
+          usn: file.usn
         }
       } else if (file.type === 'tag') {
         return {
@@ -117,7 +125,6 @@ export default {
     },
 
     pushNotes () {
-      console.log('pushNotes')
       ipcRenderer.send('fetch-local-data', {
         tasks: ['getAllLocalNoteByQuery'],
         params: [{ query: { need_push: true }, with_doc: true }],
@@ -233,10 +240,8 @@ export default {
             return
           } else {
             pushNotebook(fDepthedTransed[taskCol]).then(resp => {
-              console.log('222222', taskCol, fDepthedTransed[taskCol])
               if (resp.data.returnCode === 200) {
                 let fileResolved = resp.data.body
-                console.log('fileResolved', fileResolved)
                 let saveFolderData = fileResolved.map((file, idx) => {
                   return {
                     id: fDepthed[taskCol][idx]._id,
@@ -257,13 +262,20 @@ export default {
                     if (pFileIdx > -1) {
                       file.parentId = fileResolved[pFileIdx].noteBookId
                     }
-                    console.log('fileResolved-111', file, pFileIdx, file.parentId)
                   })
                 }
                 taskCol++
                 runTask()
               } else {
                 _self.$Message.error(resp.data.returnMsg)
+                if (resp.data.returnCode === 403) {
+                  saveAppConf(this.$remote.app.getAppPath('appData'), {
+                    user: null
+                  })
+                  ipcRenderer.send('changeWindow', {
+                    name: 'login'
+                  })
+                }
               }
             }).catch(err => {
               reject(err)
@@ -306,6 +318,7 @@ export default {
         let saveNoteData = noteResolved.map((file, index) => {
           return {
             id: nNeedPush[index]._id,
+            usn: file.usn,
             remote_id: file.noteId,
             need_push: false
           }
@@ -354,44 +367,11 @@ export default {
         return
       })
       console.log('imgResp', imgResp)
-      console.log('docsNeedSave', docsNeedSave)
       ipcRenderer.send('fetch-local-data', {
         tasks: ['updateLocalDocImg'],
         params: [docsNeedSave],
         from: 'pushImgs'
       })
-
-      // allImgs.forEach(img => {
-      //   if (mimes.indexOf(img.mime) > -1 && img.path) {
-      //     console.log('img', img)
-      //     let buffer = readFileSync(img.path.replace('file:///', ''))
-      //     let blob = new Blob([buffer])
-      //     let file = new window.File([blob], img.name, {type: img.mime})
-          
-      //     uploadFile(file).then(resp => {
-      //       LocalDAO.files.getById({
-      //         id: img.doc_id
-      //       }).then(doc => {
-      //         let oldContent = doc.content
-      //         let newContent = doc.content.replace(new RegExp(img.path,'gm'), resp.data.body[0].url)
-      //         console.log('newContent', newContent)
-      //         LocalDAO.files.update({
-      //           id: img.doc_id,
-      //           data: {
-      //             content: newContent
-      //           }
-      //         }).then(() => {
-      //           LocalDAO.img.removeById({
-      //             id: img._id
-      //           }).then(() => {
-      //             unlinkSync(img.path.replace('file:///', ''))
-      //             resolve()
-      //           })
-      //         })
-      //       })
-      //     })
-      //   }
-      // })
     },
 
     async pushData () {
@@ -412,7 +392,6 @@ export default {
       })
 
       fSorted = fNeedPush.sort((a, b) => a.depth - b.depth)
-      console.log('fNeedPush-2222', fSorted)
 
       if (fSorted.length > 0) {
         let minDepth = fSorted[0].depth

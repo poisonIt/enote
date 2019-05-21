@@ -79,7 +79,6 @@ function update (req) {
   return new Promise((resolve, reject) => {
     User.findOne({ usercode: usercode })
     .exec((err, user) => {
-      console.log('update-user-111', user)
       if (!user) {
         add(req).then(user => {
           resolve(user)
@@ -90,7 +89,6 @@ function update (req) {
           { $set: req },
           { multi: true },
           (err, numReplaced, newUser) => {
-            console.log('update-folder-111', numReplaced, newUser)
             resolve(newUser)
           }
         )

@@ -50,8 +50,6 @@
         </div>
         <div class="form-item small" v-if="largeType != 100035 && largeType != 100031">
           <div class="form-label">选择股票</div>
-          <!-- <input type="text" v-model="stock"> -->
-          <!-- <div></div> -->
           <Select
             class="stock-select"
             v-model="stock"
@@ -91,11 +89,6 @@
             :class="{ error: showTitleError }"
             @blur="handleTitleBlur"/>
           <span class="tip-error" v-show="showTitleError">请不要超出50个中文字符长度</span>
-          <!-- <Form ref="formCustom" :model="titleFrom" :rules="ruleCustom" :label-width="0">
-            <FormItem label="" prop="title">
-              <textarea type="text" v-model="titleFrom.title"/>
-            </FormItem>
-          </Form> -->
         </div>
         <div class="form-item">
           <div class="form-label">关键字</div>
@@ -104,6 +97,14 @@
             :class="{ error: showKeywordError }"
             @blur="handleKeywordBlur"/>
           <span class="tip-error" v-show="showKeywordError">请不要超出50个中文字符长度</span>
+        </div>
+        <div class="form-item">
+          <div class="form-label">摘要</div>
+          <textarea type="text"
+            v-model="summary"
+            :class="{ error: showSummaryError }"
+            @blur="handleSummaryBlur"/>
+          <span class="tip-error" v-show="showSummaryError">请不要超出50个中文字符长度</span>
         </div>
         <div class="form-item">
           <div class="form-label">上传附件</div>
@@ -183,6 +184,8 @@ export default {
       showTitleError: false,
       keywords: '',
       showKeywordError: false,
+      summary: '',
+      showSummaryError: false,
       uploadList: [],
       largeTypeArr: [
         {
@@ -304,10 +307,12 @@ export default {
       }).then(resp => {
         this.loadingStock = false
         if (resp.data.returnCode === 200) {
+          console.log('getReportStock', resp.data.body)
           this.stockMenuData = resp.data.body.body.map(item => {
             return {
               value: item.scode,
-              label: item.sname
+              label: item.sname,
+              mktcode: item.mktcode
             }
           })
         } else {
@@ -326,7 +331,8 @@ export default {
           this.tradeMenuData = resp.data.body.map(item => {
             return {
               value: item.id,
-              label: item.name
+              label: item.name,
+              mktcode: item.mktcode
             }
           })
         } else {
@@ -355,27 +361,39 @@ export default {
       }
     },
 
+    handleSummaryBlur () {
+      if (this.keywords.length > 100) {
+        this.showSummaryError = true
+      } else {
+        this.showSummaryError = false
+      }
+    },
+
     postReport () {
       let stockItem = this.stockMenuData.filter(item => item.value === this.stock)[0]
       let tradeItem = this.tradeMenuData.filter(item => item.value === this.trade)[0]
-      console.log(stockItem, tradeItem)
       addReport({
         indcode: this.trade,
         indname: tradeItem.label,
         isupdatepeandeps: 0,
-        mktcode: '',
+        mktcode: stockItem.mktcode,
         reporttypeid: this.smallType,
         scode: this.stock,
         scodename: stockItem.label,
         status: 50,
         stype: 2,
-        summary: this.keyword,
+        keywords: this.keywords,
+        summary: this.summary,
         title: this.title,
-        username: this.userInfo.username
+        username: this.userInfo.usercode
       }).then(res => {
         if (res.data.returnCode === 200) {
           this.closeResearchPanel()
-        }
+        } else (
+          this.$Message.error(res.data.returnMsg)
+        )
+      }).catch(err => {
+        this.$Message.error(err)
       })
     }
   }

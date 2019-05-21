@@ -28,16 +28,12 @@ function remove () {
 
 // update
 async function update (req) {
-  console.log('update', req)
   return new Promise((resolve, reject) => {
     State.find({})
     .exec((err, states) => {
       let state = states[0]
-      console.log('update-000', state)
       if (!state) {
-        console.log('update-res-111111', stateModel(req))
         State.insert(stateModel(req), (err, newState) => {
-          console.log('update-res-111', newState)
           resolve(newState)
         })
       } else {
@@ -46,7 +42,6 @@ async function update (req) {
           { $set: req },
           { multi: true },
           (err, num, newState) => {
-            console.log('update-res-222', newState)
             resolve(newState)
           }
         )
@@ -59,7 +54,6 @@ async function update (req) {
 function get () {
   return new Promise((resolve, reject) => {
     State.find({}, (err, states) => {
-      console.log('get-res', states)
       resolve(states[0])
     })
   })

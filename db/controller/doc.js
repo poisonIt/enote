@@ -46,7 +46,6 @@ function saveAll (req) {
 function add (req) {
   console.log('add-doc', req)
   let data = docModel(req)
-  console.log('add-doc-data', data)
 
   return new Promise((resolve, reject) => {
     Doc.insert(data, (err, docs) => {
@@ -121,7 +120,6 @@ function update (req) {
         { $set: req },
         { multi: true },
         (err, num, newDoc) => {
-          console.log('update-doc-111', newDoc)
           noteCtr.update({
             id: newDoc.note_id,
             size: newDoc.content.length,
@@ -142,7 +140,6 @@ function updateImg (reqs) {
     let p = reqs.map((req, index) => {
         return new Promise((resolve, reject) => {
           Doc.findOne({ note_id: req.note_id }).exec((err, doc) => {
-          console.log('updateImg-1111', doc)
           if (!doc) resolve()
           let oldContent = doc.content
           let newContent = oldContent.replace(new RegExp(req.img.path,'gm'), req.img.url)
@@ -150,9 +147,7 @@ function updateImg (reqs) {
             id: doc._id,
             content: newContent
           }
-          console.log('updateImg-222', newContent)
           update(newReq).then((res) => {
-            console.log('updateImg-res', res)
             imgCtr.removeById({ id: req.img.id }).then(() => {
               resolve(res)
             })
@@ -180,7 +175,6 @@ function getByNoteId (req) {
   console.log('getByNoteId', note_id, req)
   return new Promise((resolve, reject) => {
     Doc.findOne({ note_id: note_id }).exec((err, doc) => {
-      console.log('getByNoteId-res', doc)
       resolve(doc)
     })
   })

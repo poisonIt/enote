@@ -4,7 +4,6 @@ import router from './route'
 import store from './store'
 import axios from 'axios'
 import Worker from 'worker-loader!./file.worker.js'
-import { getAppConf } from '@/tools/appConf'
 import EventHub from '@/utils/eventhub'
 import CollapseTransition from '@/utils/transitions'
 import Modal from '@/components/Modal'
@@ -34,7 +33,7 @@ Vue.component('Button', Button)
 Vue.component('Select', Select)
 Vue.component('Option', Option)
 // Vue.component('Form', Form)
-Vue.component('FormItem', FormItem)
+// Vue.component('FormItem', FormItem)
 Vue.prototype.$Message = Message
 Vue.prototype.$hub = EventHub
 
@@ -42,24 +41,11 @@ Vue.prototype.$remote = remote
 Vue.prototype.$shell = shell
 Vue.prototype.$webFrame = webFrame
 
-// console.log('Worker', Worker)
 let worker = new Worker()
 Vue.prototype.$worker = new Worker()
-// worker.postMessage(1)
-
-getAppConf(remote.app.getAppPath('userData')).then(appConf => {
-  serviceUrl = appConf.serviceUrl
-})
-
-// const curWin = remote.getCurrentWindow()
-// const ses = curWin.webContents.session
-// const app = remote.app
-// console.log(app, ses.getUserAgent())
-// shell.beep()
-// console.log(curWin.webContents)
 
 axios.interceptors.request.use(config => {
-  config.url = `${serviceUrl}${config.url}`
+  config.url = `${remote.app.appConf.serviceUrl}${config.url}`
   if (store.state.user.id_token) {
     config.headers['Authorization'] = 'Bearer' + store.state.user.id_token
   }

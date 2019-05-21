@@ -80,19 +80,15 @@ function add (req) {
 }
 
 function diffAdd (req) {
-  console.log('diffAdd', req)
   return new Promise((resolve, reject) => {
     Folder.findOne({ remote_id: req.remote_id }, (err, folder) => {
-      console.log('diffAdd-1111', folder)
       if (folder) {
         req.id = folder._id
         update(req).then(res => {
-          console.log('diffAdd-2222', res)
           resolve(res)
         })
       } else {
         add(req).then(res => {
-          console.log('diffAdd-3333', res)
           resolve(res)
         })
       }
@@ -128,7 +124,6 @@ function removeById (req) {
 }
 
 function removeAllDeleted () {
-  console.log('removeAllDeleted')
   return new Promise((resolve, reject) => {
     Folder.find({ trash: 'DELETED' }, (err, folders) => {
       let p = folders.map(folder => {
@@ -138,7 +133,6 @@ function removeAllDeleted () {
         })
       })
       Promise.all(p).then(() => {
-        console.log('removeAllDeleted-res', p)
         resolve(p.length)
       })
     })
@@ -165,7 +159,6 @@ function deleteAll () {
 
 // update
 async function update (req) {
-  console.log('update', req)
   const { id } = req
 
   if (!req.hasOwnProperty('need_push')) {
@@ -238,7 +231,6 @@ async function update (req) {
 function updateByQuery (req) {
   const { query, data } = req
   data.need_push = true
-  console.log('updateByQuery', query ,data)
 
   return new Promise((resolve, reject) => {
     Folder.find(query, (err, folders) => {
@@ -251,7 +243,6 @@ function updateByQuery (req) {
         return update(r)
       })
       Promise.all(p).then(res => {
-        console.log('update-folder-by-query-111', res)
         resolve(res)
       })
     })
@@ -271,18 +262,14 @@ function updateMulti (reqs) {
 
 // get
 function getAll () {
-  console.log('getAll-folder')
   return new Promise((resolve, reject) => {
     Folder.find({}, (err, folders) => {
       let p = folders.map(folder => {
         return new Promise((resolve, reject) => {
           getById({ id: folder.pid }).then(pFolder => {
-            console.log('getAll-1111', folder, pFolder)
             if (!pFolder) {
-              console.log('getAll-2222', folder)
               if (folder.remote_pid) {
                 Folder.findOne({ remote_id: folder.remote_pid }, (err, p) => {
-                  console.log('getAll-3333', p)
                   pFolder = p
                   if (pFolder) {
                     update({ id: folder._id, pid: p._id }).then(() => {
@@ -331,7 +318,6 @@ function getAll () {
 
 function getAllByQuery (req) {
   const { query } = req
-  console.log('getAllByQuery', req, query)
 
   return new Promise((resolve, reject) => {
     Folder.find(query, (err, folders) => {
@@ -342,7 +328,6 @@ function getAllByQuery (req) {
 
 function getAllByPid (req) {
   const { pid, remote_pid } = req
-  console.log('getAllByPid', pid)
 
   return new Promise((resolve, reject) => {
     getById({ id: pid }).then(pFolder => {

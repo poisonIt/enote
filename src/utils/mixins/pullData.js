@@ -174,7 +174,8 @@ export default {
         content: obj.noteContent,
         tags: obj.tagId ? obj.tagId.map(item => allTagLocalMap[item]) : [],
         need_push: false,
-        top: obj.top
+        top: obj.top,
+        usn: obj.usn
       }
     },
 

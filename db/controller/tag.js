@@ -5,7 +5,6 @@ import { LinvoDB } from '../index'
 let Tag = {}
 
 function createCollection (path) {
-  console.log('createCollection-tag', path)
   LinvoDB.dbPath = path
   Tag = new LinvoDB(`tag`, {
     type: {
@@ -46,7 +45,6 @@ function saveAll (req) {
 // add
 function add (req) {
   const { name } = req
-  console.log('add-tag', req)
   let data = tagModel(req)
 
   return new Promise((resolve, reject) => {
@@ -55,7 +53,6 @@ function add (req) {
         resolve(tag)
       } else {
         Tag.insert(data, (err, tags) => {
-          console.log('add-tag', tags)
           resolve(tags)
         })
       }
@@ -64,17 +61,14 @@ function add (req) {
 }
 
 function diffAdd (req) {
-  console.log('diffAdd', req)
   return new Promise((resolve, reject) => {
     Tag.findOne({ remote_id: req.remote_id }, (err, tag) => {
-      console.log('diffAdd-1111', tag)
       if (tag) {
         req.id = tag._id
         update(req).then(res => {
           resolve(res)
         })
       } else {
-        console.log('diffAdd-3333', req)
         add(req).then(res => {
           resolve(res)
         })
@@ -84,7 +78,6 @@ function diffAdd (req) {
 }
 
 function diffAddMulti (reqs) {
-  console.log('diffAddMulti-tag', reqs)
   return new Promise((resolve, reject) => {
     let p = reqs.map(req => {
       return diffAdd(req)
@@ -127,9 +120,7 @@ function deleteAll () {
       })
     })
     Promise.all(p).then(() => {
-      // removeAll().then(() => {
-        resolve(tags.length)
-      // })
+      resolve(tags.length)
     })
   })
 }
@@ -137,14 +128,12 @@ function deleteAll () {
 // update
 function update (req) {
   const { id } = req
-  console.log('update-tag', req)
 
   if (!req.hasOwnProperty('need_push')) {
     req.need_push = true
   }
 
   return new Promise((resolve, reject) => {
-    console.log('update-111', Tag)
     Tag.findOne({ _id: id })
     .exec((err, tag) => {
       Tag.update(
@@ -155,7 +144,6 @@ function update (req) {
           if (err) {
             console.log('err', err)
           }
-          console.log('update-tag-111', newTag)
           if (!newTag) {
             resolve(tag)
           } else {
@@ -182,7 +170,6 @@ function updateMulti (reqs) {
 function getAll () {
   return new Promise((resolve, reject) => {
     Tag.find({}).exec((err, tags) => {
-      console.log('getAll-tags', tags)
       resolve(tags)
     })
   })
@@ -190,11 +177,9 @@ function getAll () {
 
 function getAllByQuery (req) {
   const { query } = req
-  console.log('getAllByQuery', req, query)
 
   return new Promise((resolve, reject) => {
     Tag.find(query, (err, tags) => {
-      console.log('getAllByQuery-tags', tags)
       resolve(tags)
     })
   })

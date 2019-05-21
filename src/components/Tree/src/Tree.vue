@@ -209,7 +209,6 @@ export default {
 
   created () {
     this.model.instance = this
-    console.log('created-tree', this, this.model, this.model.instance)
     this.id = this.model.data ? this.model.id : '0'
     this.$on('select', (params) => {
       if (this.model.id === params.id) {
@@ -333,7 +332,6 @@ export default {
 
     click () {
       var root = this.getRootNode()
-      console.log(this, root, this === root)
       if (this === root) return
       this.model.store.setCurrentNode(this.model, root, this)
       if (this.model.type === 'select') {
@@ -344,7 +342,6 @@ export default {
     },
 
     addChild (data, editable, isLeaf) {
-      console.log('addChild', data)
       if (data.type === 'select') {
         var node = new TreeNode({
           id: data.data._id,

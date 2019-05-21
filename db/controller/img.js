@@ -38,12 +38,10 @@ function createCollection (path) {
 
 // add
 function add (req) {
-  console.log('add-img', req)
   let data = imgModel(req)
 
   return new Promise((resolve, reject) => {
     Img.insert(data, (err, imgs) => {
-      console.log('add-img-res', imgs)
       resolve(imgs)
     })
   })
@@ -89,7 +87,6 @@ function deleteAll () {
 function getAll () {
   return new Promise((resolve, reject) => {
     Img.find({}).exec((err, imgs) => {
-      console.log('get-all-img-res', imgs)
       resolve(imgs)
     })
   })

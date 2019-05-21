@@ -159,15 +159,15 @@ export default {
   },
 
   created () {
-    if (!isDevelopment) {
-      window.onbeforeunload = (e) => {
-        e.returnValue = false
-        let curWin = this.$remote.getCurrentWindow()
-        let backWin = curWin.getParentWindow()
-        curWin.hide()
-        backWin.hide()
-      }
-    }
+    // if (!isDevelopment) {
+    //   window.onbeforeunload = (e) => {
+    //     e.returnValue = false
+    //     let curWin = this.$remote.getCurrentWindow()
+    //     let backWin = curWin.getParentWindow()
+    //     curWin.hide()
+    //     backWin.hide()
+    //   }
+    // }
 
     ipcRenderer.on('fetch-user-data-response', (event, arg) => {
       console.log('fetch-user-data-response-1111', arg)
@@ -285,6 +285,7 @@ export default {
     },
 
     handleDBLoaded () {
+      console.log('handleDBLoaded')
       const { user, dbPath } = this.$remote.app.appConf
       // let p = dbPath + '/' + user
       // createCollection('folder', user)

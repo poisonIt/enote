@@ -70,15 +70,12 @@ function saveAll (req) {
 
 // add
 async function add (req) {
-  console.log('add-note', req)
   let data = noteModel(req)
 
   if (req.hasOwnProperty('pid') && !req.hasOwnProperty('remote_pid')) {
     let folder = await folderCtr.getById({ id: req.pid })
     data.remote_pid = folder ? folder.remote_id : '0'
-    console.log('add-note-0000', folder, data)
   }
-  console.log('add-note-1111', data)
 
   return new Promise((resolve, reject) => {
     Note.insert(data, (err, note) => {
@@ -96,19 +93,15 @@ async function add (req) {
 }
 
 function diffAdd (req) {
-  console.log('diffAdd', req)
   Note.findOne({ remote_id: req.remote_id }, (err, note) => {
-    console.log('diffAdd-1111', note)
     if (note) {
       req.id = note._id
       return update(req).then(newNote => {
-        console.log('diffAdd-2222', newNote)
         docCtr.getByNoteId({ id: newNote._id }).then(doc => {
           docCtr.update({ id: doc._id, content: req.content })
         })
       })
     } else {
-      console.log('diffAdd-3333', note)
       return add(req)
     }
   })
@@ -126,7 +119,6 @@ function diffAddMulti (reqs) {
 }
 
 function duplicate (req) {
-  console.log('duplicate', req)
   const { id } = req
 
   return new Promise((resolve, reject) => {
@@ -139,13 +131,11 @@ function duplicate (req) {
       }
       add(newNoteData).then(newNote => {
         docCtr.getByNoteId({ note_id: id }).then(doc => {
-          console.log('duplicate-doc', doc, newNote)
           docCtr.getByNoteId({ note_id: newNote._id }).then(newDoc => {
             docCtr.update({
               id: newDoc._id,
               content: doc.content
             }).then(newDoc => {
-              console.log('duplicate-do-111', newDoc, newNote)
               resolve(newNote)
             })
           })
@@ -173,7 +163,6 @@ function removeById (req) {
   return new Promise((resolve, reject) => {
     Note.findOne({ _id: id }, (err, note) => {
       if (note) {
-        console.log('removeById', id, note)
         note.remove()
         docCtr.removeByNoteId({ note_id: id }).then(() => {
           resolve()
@@ -186,7 +175,6 @@ function removeById (req) {
 }
 
 function removeAllDeleted () {
-  console.log('removeAllDeleted')
   return new Promise((resolve, reject) => {
     Note.find({ trash: 'DELETED' }, (err, notes) => {
       let p = notes.map(note => {
@@ -197,7 +185,6 @@ function removeAllDeleted () {
         })
       })
       Promise.all(p).then(() => {
-        console.log('removeAllDeleted-res', p)
         resolve(p.length)
       })
     })
@@ -214,9 +201,7 @@ function deleteAll () {
         })
       })
       Promise.all(p).then(() => {
-        // removeAll().then(() => {
-          resolve(notes.length)
-        // })
+        resolve(notes.length)
       })
     })
   })
@@ -249,7 +234,6 @@ async function update (req) {
         { multi: true },
         (err, num, newNote) => {
           if (req.trash === 'NORMAL' && old_trash !== newNote.trash) {
-            console.log('update-p', newNote)
             folderCtr.update({
               id: newNote.pid,
               trash: 'NORMAL'
@@ -257,7 +241,6 @@ async function update (req) {
               resolve(newNote)
             })
           } else {
-            console.log('update-folder-111', newNote)
             resolve(newNote)
           }
         }
@@ -269,7 +252,6 @@ async function update (req) {
 function updateByQuery (req) {
   const { query, data } = req
   data.need_push = true
-  console.log('update-note-query', query, data)
 
   return new Promise((resolve, reject) => {
     Note.find(query, (err, notes) => {
@@ -282,7 +264,6 @@ function updateByQuery (req) {
         return update(r)
       })
       Promise.all(p).then(res => {
-        console.log('update-note-by-query-111', res)
         resolve(res)
       })
     })
@@ -308,7 +289,6 @@ function updateRemoteTagIds (req) {
   tags.forEach(item => {
     tagMap[item.tag_id] = item.remote_id
   })
-  console.log('updateRemoteTagIds', req, tagArr, tagMap)
 
   return new Promise((resolve, reject) => {
     Note.find({}).filter(x => {
@@ -320,7 +300,6 @@ function updateRemoteTagIds (req) {
         let newTags = _.pullAll(note.tags, itc)
         let remoteItc = itc.map(item => tagMap[item])
         newTags = _.concat(newTags, remoteItc)
-        console.log('updateRemoteTagIds-11111', note.tags, itc, newTags, remoteItc, newTags)
         return update({
           id: note._id,
           tags: newTags
@@ -335,7 +314,6 @@ function updateRemoteTagIds (req) {
 
 function trashAll (req) {
   const { trash } = req
-  console.log('trashAll', req)
 
   return new Promise((resolve, reject) => {
     if (['NORMAL', 'TRASH', 'DELETED'].indexOf(trash) === -1) {
@@ -350,7 +328,6 @@ function trashAll (req) {
       { multi: true },
       (err, num, notes) => {
         if (err) reject(err)
-        console.log('trashAll-res', num, notes)
         resolve(notes)
       }
     )
@@ -359,15 +336,12 @@ function trashAll (req) {
 
 function addTag (req) {
   const { id, tags } = req
-  console.log('addTag', req)
 
   return new Promise((resolve, reject) => {
     Note.findOne({ _id: id }, (err, note) => {
       if (err) reject(err)
       if (!note) reject(`note ${id} not exist`)
-      console.log('oldTags', note, note.tags, tags)
       let newTags = _.union(note.tags, tags)
-      console.log('newTags', newTags)
       Note.update(
         { _id: id },
         { $set: {
@@ -376,7 +350,6 @@ function addTag (req) {
         }},
         { multi: true },
         (err, num, newNote) => {
-          console.log('update-folder-111', newNote)
           resolve(newNote)
         }
       )
@@ -441,17 +414,14 @@ function getAll () {
 
 function getAllByQuery (req) {
   const { query, with_doc } = req
-  console.log('getAllByQuery', req, query, with_doc)
 
   return new Promise((resolve, reject) => {
     Note.find(query, (err, notes) => {
-      console.log('getAllByQuery-notes', notes)
       if (with_doc) {
         let p = notes.map(note => {
           return docCtr.getByNoteId({ note_id: note._id })
         })
         Promise.all(p).then(docs => {
-          console.log('docs', docs)
           notes.forEach((note, index) => {
             note.content = docs[index] ? docs[index].content : ''
           })
@@ -466,7 +436,6 @@ function getAllByQuery (req) {
 
 function getAllByPid (req) {
   const { pid, remote_pid } = req
-  console.log('getAllByPid', pid, remote_pid, req)
 
   return new Promise((resolve, reject) => {
     folderCtr.getById({ id: pid }).then(pFolder => {

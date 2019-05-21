@@ -24,6 +24,8 @@ function createCollection (path) {
     },
     access_token: String,
     id_token: String
+  }, {
+    filename: path + '/user.db'
   })
 }
 

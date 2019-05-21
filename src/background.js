@@ -423,9 +423,6 @@ app.on('ready', async () => {
     }
 
     fs.mkdir(p, { recursive: true }, (err) => {
-      if (err) {
-        dialog.showErrorBox('err', err)
-      }
       createCollection('user', p)
       createLoginWindow(appConf.user)
     })

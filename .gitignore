@@ -1,6 +1,8 @@
 .DS_Store
 node_modules
+database
 /dist
+appConfig.json
 
 # local env files
 .env.local

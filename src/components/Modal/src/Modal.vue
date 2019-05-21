@@ -51,6 +51,10 @@ export default {
     height: {
       type: String,
       default: 'auto'
+    },
+    top: {
+      type: String,
+      default: '10vh'
     }
   },
 
@@ -58,7 +62,8 @@ export default {
     modalStyle () {
       return {
         width: this.width,
-        height: this.height
+        height: this.height,
+        margin: this.top + ' auto'
       }
     }
   },
@@ -70,7 +75,7 @@ export default {
     },
     handleWrapperClick () {
       // return
-      // this.handleClose()
+      this.handleClose()
     }
   }
 }
@@ -83,28 +88,34 @@ export default {
   left 0
   right 0
   bottom 0
-  background-color rgba(0, 0, 0, 0)
+  background-color rgba(0, 0, 0, 0.3)
   z-index 10001
 .modal
   position relative
-  margin 10vh auto
-  background-color #f5f5f5
-  box-shadow 0px 3px 10px 1px rgba(0, 0, 0, 0.3)
+  // margin 10vh auto
+  background-color #fff
+  border-radius 4px
+  box-shadow 0px 0px 13px 0px rgba(0,0,0,0.15)
 
 .modal__header
-  height 40px
+  height 42px
   position relative
   display flex
   flex-direction row
   align-items center
-  border-bottom 1px solid #c5c5c5
-  background linear-gradient(#eff0f1, #dddee0)
+  border-bottom 1px solid #E9E9E9
+  background-color #fff
+  border-radius 4px
 .modal__title
   flex 1
   font-size 14px
-  text-align center
+  font-weight 500
+  text-align left
+  padding 0 30px
+  color #333
 .modal__body
-  padding 20px 30px 0
+  // padding 20px 30px 0
+  background-color #fff
 // .icon-close
 //   position absolute
 //   top 20px
@@ -112,9 +123,10 @@ export default {
 //   cursor pointer
 .icon-close
   position absolute
-  left 10px
+  right 20px
   width 13px
   height 13px
   background-image url('../../../assets/images/close.png')
   background-size cover
+  opacity .3
 </style>

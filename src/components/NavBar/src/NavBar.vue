@@ -1,45 +1,53 @@
 <template>
-  <div id="navbar">
+  <div id="navbar" ref="navbar">
     <Tree
-      v-show="viewType === 'expanded'"
-      :data="nav"
-      :labelProxy="'name'"
-      :expand-on-click-node="false"
-      :prevent-default-click="true"
-      @insertChildNode="handleInsertChildNode"
-      default-expand-all
-      ref="tree">
-      <div class="nav-node"
-        slot-scope="{ node, data }">
-        <div class="icon-folder"></div>
-        <div class="title ellipsis"
-          v-show="typingNode !== node">
-          {{ data.title }}
-        </div>
-        <div class="click-mask"
-          v-show="typingNode !== node"
-          @click="handleItemClick(node)"
-          @contextmenu.prevent="handleContextmenu(node)"></div>
-        <input class="node-input"
-          :class="{ 'show' : typingNode === node }"
-          v-show="typingNode === node"
-          v-model="nodeInput"
-          @keyup.enter="$event.target.blur"
-          @blur="handleNodeInputBlur"
-          ref="nodeInput"/>
-      </div>
+      ref="tree"
+      :dark="true"
+      :model="folderTree"
+      default-tree-node-name="新建文件夹"
+      v-bind:default-expanded="true"
+      :flat-ids="['0', 'latest', 'share', 'tag', 'bin']"
+      @contextmenu="handleContextmenu"
+      @add-node="handleAddNode"
+      @set-current="handleSetCurrentFolder"
+      @select="handleSelect"
+      @change-name-blur="handleChangeNodeName"
+      @drop="handleNodeDrop">
     </Tree>
     <div class="nav-mini" v-show="viewType === 'unexpanded'">
       <div class="icon icon-latest"
-        :class="{ active : navMiniActive('latest') }"
+        :class="{
+          active : navMiniActive('latest'),
+          highlight : navMiniActive('latest')
+        }"
         @click="handleClickMini('latest')">
       </div>
-      <div class="icon icon-folders"
-        :class="{ active : navMiniActive(['folders', 'new folder']) }"
+      <div class="icon icon-share"
+        :class="{
+          active : navMiniActive(['share']),
+          highlight : navMiniActive(['share'])
+        }"
+        @click="handleClickMini('share')">
+      </div>
+      <div class="icon icon-folder_open"
+        :class="{
+          active : navMiniActive(['folders', 'new folder']),
+          highlight : navMiniActive(['folders', 'new folder'])
+        }"
         @click="handleClickMini('folders')">
       </div>
+      <div class="icon icon-tags"
+        :class="{
+          active : navMiniActive('tags'),
+          highlight : navMiniActive('tags')
+        }"
+        @click="handleClickMini('tags')">
+      </div>
       <div class="icon icon-recycle"
-        :class="{ active : navMiniActive('recycle') }"
+        :class="{
+          active : navMiniActive('recycle'),
+          highlight : navMiniActive('recycle')
+        }"
         @click="handleClickMini('recycle')">
       </div>
     </div>
@@ -47,12 +55,86 @@
 </template>
 
 <script>
+import { ipcRenderer } from 'electron'
 import { cloneDeep } from 'lodash'
 import { mapActions, mapGetters } from 'vuex'
-import { folderMenu, resourceMenu, recycleMenu } from '../Menu'
+import {
+  folderMenu,
+  rootFolderMenu,
+  resourceMenu,
+  binMenu,
+  tagMenu
+} from '../Menu'
 import { GenNonDuplicateID } from '@/utils/utils'
 import mixins from '../mixins'
-import Tree from '@/components/Tree'
+import { Tree, TreeStore, TreeNode } from '@/components/Tree'
+import LocalDAO from '../../../../db/api'
+import {
+  getAllLocalFolder,
+  addLocalFolder,
+  updateLocalFolder,
+  addLocalNote
+} from '@/service/local'
+// import folderData from '../folderData'
+const latestNav = {
+  name: '最新文档',
+  id: 'latest',
+  pid: null,
+  dragDisabled: true,
+  addTreeNodeDisabled: true,
+  addLeafNodeDisabled: true,
+  editNodeDisabled: true,
+  delNodeDisabled: true,
+  children: [],
+  data: {
+    type: 'latest'
+  }
+}
+
+const rootFolder = {
+  name: '我的文件夹',
+  id: '0',
+  pid: null,
+  dragDisabled: true,
+  addTreeNodeDisabled: true,
+  addLeafNodeDisabled: true,
+  editNodeDisabled: true,
+  delNodeDisabled: true,
+  children: [],
+  data: {
+    type: 'folder'
+  }
+}
+
+const tagNav = {
+  name: '标签',
+  id: 'tag',
+  pid: null,
+  dragDisabled: true,
+  addTreeNodeDisabled: true,
+  addLeafNodeDisabled: true,
+  editNodeDisabled: true,
+  delNodeDisabled: true,
+  children: [],
+  data: {
+    type: 'tag'
+  }
+}
+
+const binNav = {
+  name: '回收站',
+  id: 'bin',
+  pid: null,
+  dragDisabled: true,
+  addTreeNodeDisabled: true,
+  addLeafNodeDisabled: true,
+  editNodeDisabled: true,
+  delNodeDisabled: true,
+  children: [],
+  data: {
+    type: 'bin'
+  }
+}
 
 export default {
   name: 'NavBar',
@@ -70,166 +152,267 @@ export default {
       currentNode: null,
       popupedNode: null,
       duplicatedNode: null,
+      dragNode: null,
+      dragOverNode: null,
       nativeMenuData: [
-        folderMenu,
+        rootFolderMenu,
         [...folderMenu, ...resourceMenu[0]],
         [...folderMenu, ...resourceMenu[1]],
-        recycleMenu
+        binMenu,
+        tagMenu
       ],
       nodeInput: '',
       folderIndex: 1,
-      nav: [
-        {
-          title: '最新文档',
-          link: 'latest',
-          type: 'docs'
-        },
-        {
-          title: '我的文件夹',
-          link: 'folders',
-          type: 'folder',
-          children: []
-        },
-        {
-          title: '回收站',
-          link: 'recycle',
-          type: 'recycle'
-        }
-      ]
+      // selectedTags: [],
+      folderTree: new TreeStore([rootFolder])
     }
   },
 
   computed: {
     ...mapGetters({
+      isDBReady: 'GET_DB_READY',
       viewType: 'GET_VIEW_TYPE',
-      viewFileType: 'GET_VIEW_FILE_TYPE'
+      viewFileType: 'GET_VIEW_FILE_TYPE',
+      currentFile: 'GET_CURRENT_FILE',
+      duplicateFile: 'GET_DUPLICATE_FILE'
+      // allTags: 'GET_ALL_TAGS'
     })
   },
 
+  watch: {
+    isDBReady (val) {
+      console.log('watch-isDBReady', val)
+    },
+
+    // allTags (val) {
+    //   console.log('allTags', val)
+    //   this.updateTags(val)
+    // },
+
+    // selectedTags (val) {
+      // this.SET_VIEW_NAME(val.map(item => item.data.title).join('、'))
+      // this.SET_SELECTED_TAGS(val.map(item => item.data.id))
+    // }
+  },
+
   mounted () {
-    const curNode = this.$refs.tree.store.currentNode
-    this.handleItemClick(curNode)
+    const _self = this
+
+    this.$root.$navTree = this.$refs.tree
+
+    this.$worker.onmessage = function (e) {
+      if (e.data !== 'Unknown command') {
+        if (e.data[0] === 'calcLocalData') {
+          let newRootFolder = e.data[1]
+          let newTagNav = e.data[2]
+          // _self.folderTree = new TreeStore([newRootFolder])
+          _self.folderTree = new TreeStore([latestNav, newRootFolder, newTagNav, binNav])
+          _self.$nextTick(() => {
+            _self.$refs.tree.$children[0].click()
+            _self.SET_IS_HOME_READY(true)
+            // ipcRenderer.send('show-home-window')
+          })
+        }
+      }
+    }
+
+    ipcRenderer.on('fetch-local-data-response', (event, arg) => {
+      if (arg.from[0] === 'NavBar') {
+        console.log('fetch-local-data-response', arg)
+        if (arg.tasks[0] === 'getAllLocalFolder' && arg.tasks[1] === 'getAllLocalTag') {
+          this.$worker.postMessage(['calcLocalData', arg.res])
+        }
+
+        // add folder
+        if (arg.tasks.indexOf('addLocalFolder') > -1) {
+          let res = arg.res[arg.tasks.indexOf('addLocalFolder')]
+          console.log('aaa', this.popupedNode)
+          this.popupedNode.addChild({
+            id: arg.res[0]._id,
+            type: 'folder'
+          }, true)
+          this.$hub.dispatchHub('pushData', this)
+        }
+
+        // add note
+        if (arg.tasks.indexOf('addLocalNote') > -1) {
+          let res = arg.res[arg.tasks.indexOf('addLocalNote')]
+          this.$hub.dispatchHub('addFile', this, res)
+          this.$hub.dispatchHub('pushData', this)
+        }
+
+        // update folder
+        if (arg.tasks.indexOf('updateLocalFolder') > -1) {
+          if (arg.from[1] === 'delete') {
+            this.popupedNode.model.hidden = true
+            this.setCurrentFolder('bin')
+          }
+          if (arg.from[1] === 'renameFolder') {
+            if (this.popupedNode.model.parent === this.$refs.tree.model.store.currentNode) {
+              this.$hub.dispatchHub('renameListFile', this, {
+                id: this.popupedNode.model.data._id,
+                title: this.popupedNode.model.name
+              })
+            }
+          }
+          this.$hub.dispatchHub('pushData', this)
+        }
+
+        // update tag
+        if (arg.tasks.indexOf('updateLocalTag') > -1) {
+          if (arg.from[1] === 'renameTag') {
+            console.log('renameTag', this.popupedNode.model, this.$refs.tree)
+            if (arg.res[0].name !== this.popupedNode.model.name) {
+              this.popupedNode.model.name = arg.res[0].name
+              this.popupedNode.model.data.name = arg.res[0].name
+            } else {
+              this.TOGGLE_SHOW_TAG_HANDLER(false)
+            }
+          }
+          this.$hub.dispatchHub('pushData', this)
+        }
+
+        if (arg.tasks.indexOf('deleteAllTrash') > -1) {
+          if (arg.from[1] === 'clearBin') {
+            this.setCurrentFolder('bin')
+            ipcRenderer.send('fetch-local-data', {
+              tasks: ['getLocalTrashFolder', 'getLocalTrashNote'],
+              from: 'DocumentList',
+            })
+            if (arg.res[arg.tasks.indexOf('deleteAllTrash')]) {
+              let nodes = arg.res[arg.tasks.indexOf('deleteAllTrash')]
+                .filter(item => item.type === 'folder')
+              let map = this.$refs.tree.model.store.map
+              nodes.forEach(node => {
+                map[node._id].remove()
+              })
+            }
+          }
+          this.$hub.dispatchHub('pushData', this)
+        }
+
+        if (arg.tasks.indexOf('resumeAllTrash') > -1) {
+          if (arg.from[1] === 'resumeBin') {
+            this.setCurrentFolder('bin')
+            ipcRenderer.send('fetch-local-data', {
+              tasks: ['getLocalTrashFolder', 'getLocalTrashNote'],
+              from: 'DocumentList',
+            })
+            let nodes = arg.res[arg.tasks.indexOf('resumeAllTrash')]
+              .filter(item => item.type === 'folder')
+            let map = this.$refs.tree.model.store.map
+            nodes.forEach(node => {
+              map[node._id].hidden = false
+            })
+          }
+          this.$hub.dispatchHub('pushData', this)
+        }
+      }
+    })
   },
 
   methods: {
     ...mapActions([
-      'ADD_FILE',
-      'DELETE_FILE',
-      'EDIT_FILE',
-      'CLEAR_ALL_RECYCLE',
-      'RESUME_ALL_RECYCLE',
-      'SET_VIEW_FOLDER',
+      'TOGGLE_SELECTED_TAG',
       'SET_VIEW_NAME',
       'SET_VIEW_FILE_TYPE',
-      'SET_CURRENT_FOLDER',
-      'TOGGLE_SHOW_MOVE_PANEL'
+      'SET_CURRENT_NAV',
+      'SET_IS_HOME_READY',
+      'SET_DUPLICATE_FILE',
+      'TOGGLE_SHOW_MOVE_PANEL',
+      'TOGGLE_SHOW_TAG_HANDLER'
     ]),
 
-    getTreeNode (link) {
-      let nodeMap = this.$refs.tree.store.nodeMap
-      for (let i in nodeMap) {
-        let node = nodeMap[i]
-        if (node.data.link === link) {
-          return node
-        }
-      }
+    handleSetCurrentFolder (node) {
+      console.log('handleSetCurrentFolder', node)
+      this.SET_CURRENT_NAV(node.data)
+    },
+
+    handleSelect (node) {
+      console.log('handleSelect', node)
+      this.TOGGLE_SELECTED_TAG({
+        id: node.data._id
+      })
     },
 
     setCurrentFolder (id) {
-      let nodeMap = this.$refs.tree.store.nodeMap
-      for (let i in nodeMap) {
-        let node = nodeMap[i]
-        if (node.data.id === id) {
-          this.handleItemClick(node)
-          return
+      this.$refs.tree.select(id)
+    },
+
+    handleContextmenu (nodeInstance) {
+      this.popupedNode = nodeInstance
+      // nodeInstance.click()
+      const d = nodeInstance.model
+      console.log('handleContextmenu-11', nodeInstance, nodeInstance.model)
+      if (d.data.type === 'folder') {
+        if (d.id === '0') {
+          this.popupNativeMenu(this.nativeMenus[0])
+        } else {
+          const resourceMenu = !this.duplicatedNode
+            ? this.nativeMenus[1]
+            : this.nativeMenus[2]
+          this.popupNativeMenu(resourceMenu)
+        }
+      } else {
+        if (d.data.type === 'select') {
+          this.popupNativeMenu(this.nativeMenus[4])
+        }
+        if (d.data.type === 'bin') {
+          this.popupNativeMenu(this.nativeMenus[3])
         }
       }
     },
 
-    handleItemClick (node) {
-      node.instance.handleClick()
-      this.currentNode = node
-      this.SET_VIEW_FOLDER(node.uid)
-      this.SET_VIEW_NAME(node.data.title)
-      this.SET_VIEW_FILE_TYPE(node.data.link)
-      if (node.data.type === 'folder') {
-        this.SET_CURRENT_FOLDER(node.data.id)
-      }
-    },
-
-    handleContextmenu (node) {
-      this.popupedNode = node
-      const d = node.data
-      if (d.type === 'folder' && d.link === 'folders') {
-        this.popupNativeMenu(this.nativeMenus[0])
-      }
-      if (d.type === 'folder') {
-        const resourceMenu = !this.duplicatedNode
-          ? this.nativeMenus[1]
-          : this.nativeMenus[2]
-        this.popupNativeMenu(resourceMenu)
-      }
-      if (d.type === 'recycle') {
-        this.popupNativeMenu(this.nativeMenus[3])
-      }
-    },
-
-    handleNewDoc (isCurrent) {
-      if (isCurrent) {
-        this.popupedNode = this.currentNode
-      }
-      if (this.popupedNode === null ||
-        this.popupedNode.data.link === 'latest' ||
-        this.popupedNode.data.link === 'recycle') {
-        this.popupedNode = this.getTreeNode('folders')
-      }
-      let id = GenNonDuplicateID(6)
-      this.ADD_FILE({
-        title: '无标题笔记',
-        type: 'doc',
-        id: id,
-        parent_folder: this.popupedNode.data.id
-      }).then(() => {
-        this.$nextTick(() => {
-          for (let i in this.popupedNode.store.nodeMap) {
-            let node = this.popupedNode.store.nodeMap[i]
-            if (node.data.id === this.popupedNode.data.id) {
-              this.handleItemClick(node)
-              return
-            }
-          }
-        })
+    handleNewNote (isTemp) {
+      let currentNode = this.$refs.tree.model.store.currentNode
+      ipcRenderer.send('fetch-local-data', {
+        tasks: ['addLocalNote'],
+        params: [{
+          title: '无标题笔记',
+          pid: currentNode.id || currentNode._id || currentNode.data._id || '0',
+          isTemp: isTemp
+        }],
+        from: ['NavBar']
       })
+    },
+
+    handleNewTemplateNote () {
+      this.handleNewNote(true)
     },
 
     handleNewFolder (isCurrent) {
       if (isCurrent) {
-        this.popupedNode = this.currentNode
+        let currentNode = this.$refs.tree.model.store.currentNode.instance
+        if (!currentNode.model.parent.parent && currentNode.id !== '0') {
+          return
+        }
+        this.popupedNode = currentNode
       }
-      if (this.popupedNode === null ||
-        this.popupedNode.data.link === 'latest' ||
-        this.popupedNode.data.link === 'recycle') {
-        this.popupedNode = this.getTreeNode('folders')
-      }
-      let id = GenNonDuplicateID(6)
-      this.ADD_FILE({
-        title: '新建文件夹',
-        link: 'new folder',
-        type: 'folder',
-        id: id,
-        parent_folder: this.popupedNode.data.id
-      }).then(() => {
-        this.$nextTick(() => {
-          for (let i in this.popupedNode.store.nodeMap) {
-            let node = this.popupedNode.store.nodeMap[i]
-            if (node.data.id === id) {
-              this.handleInsertChildNode(node)
-              this.handleItemClick(node)
-              return
-            }
-          }
-        })
+      let nodeData = this.popupedNode.model.data
+      ipcRenderer.send('fetch-local-data', {
+        tasks: ['addLocalFolder'],
+        params: [{ pid: nodeData.id || nodeData._id || '0' }],
+        from: ['NavBar']
       })
+    },
+
+    handleAddNode (node) {
+    },
+
+    handleAddTagNode (tagData) {
+      console.log('handleAddTagNode', tagData)
+      let tagRootNode = this.$refs.tree.model.store.root.children[2]
+      let tag = {}
+      tag.type = 'select'
+      tag.isSelected = false
+      tag.data = {
+        type: 'select',
+        name: tagData.name,
+        _id: tagData._id,
+        remote_id: tagData.remote_id
+      }
+      console.log('handleAddTagNode-tag', tag)
+      tagRootNode.instance.addChild(tag)
     },
 
     handleInsertChildNode (childNode) {
@@ -242,72 +425,151 @@ export default {
 
     handleRename () {
       this.typingNode = this.popupedNode
-      this.nodeInput = this.typingNode.data.title
-      this.$nextTick(() => {
-        const inputEl = document.querySelectorAll('input.node-input.show')
-        console.log('inputEl', inputEl[0])
-        inputEl[0].select()
-      })
+      this.popupedNode.setEditable()
     },
 
-    handleNodeInputBlur () {
-      this.EDIT_FILE({
-        id: this.typingNode.data.id,
-        attr: 'title',
-        val: this.nodeInput
-      })
-      // this.typingNode.data.title = this.nodeInput
-      this.$nextTick(() => {
-        for (let i in this.typingNode.store.nodeMap) {
-          let nodeTemp = this.typingNode.store.nodeMap[i]
-          if (nodeTemp.data.id === this.typingNode.data.id) {
-            this.handleItemClick(nodeTemp)
-            this.typingNode = null
-            return
-          }
-        }
-      })
+    handleChangeNodeName (node) {
+      console.log('handleChangeNodeName', node)
+      if (node.type === 'select') {
+        ipcRenderer.send('fetch-local-data', {
+          tasks: ['updateLocalTag'],
+          params: [{
+            id: node.data._id || node.data.id || node.id,
+            name: node.name
+          }],
+          from: ['NavBar', 'renameTag']
+        })
+      } else {
+        ipcRenderer.send('fetch-local-data', {
+          tasks: ['updateLocalFolder'],
+          params: [{
+            id: node.data._id || node.data.id || node.id,
+            title: node.name
+          }],
+          from: ['NavBar', 'renameFolder']
+        })
+      }
+    },
+
+    handleFolderUpdate (params) {
+      this.$refs.tree.updateNodeModel(params)
+    },
+
+    handleNodeDrop ({node, oldParent}) {
+      console.log('handleNodeDrop', node, oldParent, node.id, oldParent.id)
+      if (node.pid !== oldParent.id) {
+        console.log('move')
+        ipcRenderer.send('fetch-local-data', {
+          tasks: ['updateLocalFolder'],
+          params: [{
+            id: node.data._id || node.data.id || node.id,
+            pid: node.pid
+          }],
+          from: ['NavBar']
+        })
+      }
     },
 
     handleMove () {
-      this.TOGGLE_SHOW_MOVE_PANEL(this.currentNode.data.id)
+      this.$hub.dispatchHub('showMovePanel', this, {
+        file: {
+          type: this.popupedNode.model.data.type,
+          id: this.popupedNode.model.id,
+          title: this.popupedNode.model.name
+        },
+        tree: this.$refs.tree.model.children[1]
+      })
+      // this.TOGGLE_SHOW_MOVE_PANEL(this.popupedNode.model.data._id)
     },
 
     handleDuplicate () {
-      this.duplicatedNode = this.popupedNode
+      this.SET_DUPLICATE_FILE(this.copyFile(this.popupedNode.model.data))
     },
 
     handlePaste () {
-      let duplicateData = cloneDeep(this.duplicatedNode.data)
-      this.popupedNode.instance.insertChild(duplicateData)
-    },
-
-    clickRecycleNode () {
-      this.$nextTick(() => {
-        let recycleNode = this.$refs.tree.store.root.childNodes[2]
-        this.handleItemClick(recycleNode)
-      })
+      console.log('handlePaste', this.duplicateFile, this.popupedNode.model.data)
+      if (this.duplicateFile.type === 'note') {
+        ipcRenderer.send('fetch-local-data', {
+          tasks: ['duplicateLocalNote'],
+          params: [{
+            id: this.duplicateFile._id,
+            pid: this.popupedNode.model.data.id || this.popupedNode.model.data._id
+          }],
+          from: ['DocumentList', 'duplicate', this.duplicateFile._id]
+        })
+      }
     },
 
     handleDelete () {
-      this.SET_CURRENT_FOLDER('000000')
-      this.DELETE_FILE(this.popupedNode.data.id)
-      this.clickRecycleNode()
+      console.log('handleDelete', this.popupedNode)
+      let node = this.popupedNode.model
+      ipcRenderer.send('fetch-local-data', {
+        tasks: ['updateLocalFolder'],
+        params: [{
+          id: node.data._id || node.data.id || node.id,
+          trash: 'TRASH'
+        }],
+        from: ['NavBar', 'delete']
+      })
     },
 
-    handleClearRecycle () {
-      this.CLEAR_ALL_RECYCLE()
-      this.clickRecycleNode()
+    handleClearBin () {
+      console.log('clearBin')
+      ipcRenderer.send('fetch-local-data', {
+        tasks: ['deleteAllTrash'],
+        from: ['NavBar', 'clearBin']
+      })
     },
 
-    handleResumeRecycle () {
-      this.RESUME_ALL_RECYCLE()
-      this.clickRecycleNode()
+    handleResumeBin () {
+      console.log('handleResumeBin')
+      ipcRenderer.send('fetch-local-data', {
+        tasks: ['resumeAllTrash'],
+        from: ['NavBar', 'resumeBin']
+      })
     },
 
-    navIcon (node) {
-      return 'icon-' + node.data.link
+    handleRenameTag () {
+      console.log('handleRenameTag', this.popupedNode)
+      this.popupedNode.setEditable()
     },
+
+    handleDeleteTag () {
+      console.log('handleDeleteTag', this.popupedNode)
+      // if (this.popupedNode.data.remote_id) {
+      //   ipcRenderer.send('fetch-local-data', {
+      //     tasks: ['updateLocalTag'],
+      //     params: [{
+      //       id: node.data._id || node.data.id || node.id,
+      //       trash: 'DELETED'
+      //     }],
+      //     from: ['NavBar', 'deleteTag']
+      //   })
+      // } else {
+      //   ipcRenderer.send('fetch-local-data', {
+      //     tasks: ['deleteLocalTag'],
+      //     params: [{
+      //       id: node.data._id || node.data.id || node.id,
+      //       trash: 'DELETED'
+      //     }],
+      //     from: ['NavBar', 'deleteTag']
+      //   })
+      // }
+    },
+
+    iconClassComputed (node) {
+      let pre = ''
+      if (node.data.type === 'folder') {
+        pre = (node.expanded ? 'icon-folder_open' : 'icon-folder_close')
+      } else {
+        pre = `icon-${node.data.link}`
+      }
+      return `${pre} ${node.store.currentNode === node ? 'highlight' : ''}`
+    },
+
+    // navIcon (node) {
+    //   return 'icon-' + node.data.link
+    // },
 
     handleClickMini (link) {
       this.$hub.dispatchHub('clickNavMini', this, link)
@@ -319,97 +581,73 @@ export default {
       } else {
         return this.viewFileType === link
       }
+    },
+
+    copyFile (file) {
+      return {
+        type: file.type,
+        title: file.title,
+        create_at: file.create_at,
+        folder_title: file.folder_title,
+        need_push: file.need_push,
+        pid: file.pid,
+        remote_id: file.remote_id,
+        remote_pid: file.remote_pid,
+        seq: file.seq,
+        trash: file.trash,
+        update_at: file.update_at,
+        _id: file._id
+      }
     }
+
+    // updateTags (allTags) {
+    //   console.log('allTags', allTags)
+    //   this.$set(
+    //     this.nav[2],
+    //     'children',
+    //     allTags.map(item => {
+    //       return {
+    //         id: item._id,
+    //         title: item.name,
+    //         type: 'select'
+    //       }
+    //     })
+    //   )
+    // }
   }
 }
 </script>
 
 <style lang="stylus" scoped>
 #navbar
+  position relative
   flex 1
+  display flex
+  flex-direction column
   padding-bottom 30px
   overflow-y scroll
+
+.nav-item
+  height 40px
+  color #fff
+
+.folder-tree
+  flex 1
+  overflow-y scroll
+  position relative
 
 .child
   background-color #fff
 
-.nav-node
-  position relative
-  width 100%
-  height 40px
-  display flex
-  align-items center
-  -webkit-box-flex 1
-  &.unexpanded
-    height 60px
-  .title
-    font-size 14px
-    &.ellipsis
-      // padding-left 8px
-  .click-mask
-    position absolute
-    width 100%
-    height 100%
-  .node-input
-    width 98%
-    height 26px
-    padding-left 10px
-    border-radius 3px
-    border 1px solid #73a8d6
-    outline none
-    font-size 14px
-    .icon
-      width 16px
-      height 16px
-      display block
-      position absolute
-      top 12px
-      left 10px
-      display flex
-      justify-content center
-      align-items center
-      // transform translateY(-50%)
-      &::after
-        content ''
-        display block
-        width 0
-        height 0
-      &.icon-expand::after
-        width 0
-        height 0
-        border-top 4px solid transparent
-        border-left 6px solid #a1a1a1
-        border-bottom 4px solid transparent
-      &.icon-expanded::after
-        transform rotate(90deg)
-
-.nav-mini
-  width 100%
-  display flex
-  flex-direction column
-  .icon
-    width 80px
-    height 80px
-    background-repeat  no-repeat
-    background-size 28%
-    background-position center
-    &.active
-      background-color #eff0f1
-  .icon-latest
-    background-image url(../../../assets/images/documents.png)
-  .icon-folders
-    background-image url(../../../assets/images/folders.png)
-  .icon-recycle
-    background-image url(../../../assets/images/recycle.png)
-
-.icon-folder
-  display block
-  margin-right 6px
-  width 24px
-  height 24px
-  opacity 0.8
-  background-image url(../../../assets/images/folder-open-fill.png)
-  background-repeat no-repeat
-  background-size contain
-  background-position center
+.push-mark
+  position absolute
+  top 10px
+  left 10px
+  width 4px
+  height 4px
+  background-color red
+  border-radius 50%
+  &.local
+    left 0px
+    background-color green
 </style>

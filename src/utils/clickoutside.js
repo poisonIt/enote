@@ -10,7 +10,7 @@ let seed = 0
 !Vue.prototype.$isServer && on(document, 'mousedown', e => (startClick = e))
 
 !Vue.prototype.$isServer && on(document, 'mouseup', e => {
-  nodeList.forEach(node => node[ctx].documentHandler(e, startClick));
+  nodeList.forEach(node => node[ctx].documentHandler(e, startClick))
 })
 
 function createDocumentHandler (el, binding, vnode) {
@@ -45,8 +45,8 @@ function createDocumentHandler (el, binding, vnode) {
  * ```
  */
 
- export default {
-  bind(el, binding, vnode) {
+export default {
+  bind (el, binding, vnode) {
     nodeList.push(el)
     const id = seed++
     el[ctx] = {
@@ -57,13 +57,13 @@ function createDocumentHandler (el, binding, vnode) {
     }
   },
 
-  update(el, binding, vnode) {
+  update (el, binding, vnode) {
     el[ctx].documentHandler = createDocumentHandler(el, binding, vnode)
     el[ctx].methodName = binding.expression
     el[ctx].bindingFn = binding.value
   },
 
-  unbind(el) {
+  unbind (el) {
     let len = nodeList.length
 
     for (let i = 0; i < len; i++) {

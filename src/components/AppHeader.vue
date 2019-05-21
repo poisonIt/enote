@@ -1,7 +1,7 @@
 <template>
   <div class="app-header">
     <div class="tools">
-      <div class="avatar">
+      <div class="avatar" @click="showUserPanel">
         <img src="https://avatar.saraba1st.com/images/noavatar_middle.gif" alt="">
       </div>
       <div class="sync"></div>
@@ -36,8 +36,15 @@ export default {
     }
   },
 
+  watch: {
+    searchText (val) {
+      console.log('watch-searchText', val)
+      this.SET_SEARCH_KEYWORD(val)
+    }
+  },
+
   methods: {
-    ...mapActions(['SET_VIEW_TYPE']),
+    ...mapActions(['SET_VIEW_TYPE', 'SET_SEARCH_KEYWORD', 'TOGGLE_SHOW_USER_PANEL']),
 
     isViewButtonActived (type) {
       return type === this.viewType
@@ -46,6 +53,10 @@ export default {
     changeViewType (type) {
       this.viewType = type
       this.SET_VIEW_TYPE(type)
+    },
+
+    showUserPanel () {
+      this.TOGGLE_SHOW_USER_PANEL(true)
     }
   }
 }
@@ -61,8 +72,9 @@ export default {
   flex-direction row
   justify-content space-between
   align-items center
-  padding 0 20px
+  padding 0 20px 0 80px
   background-color #1985D7
+  -webkit-app-region drag
 
 .tools
   display flex

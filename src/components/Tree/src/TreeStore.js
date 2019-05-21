@@ -1,40 +1,36 @@
-import Node from './Node'
+import TreeNode from './TreeNode'
 
-// function cloneShallow (target) {
-//   let result = {}
-//   for (let name in target) {
-//     console.log(name)
-//     if (name !== '__ob__') {
-//       result[name] = target[name]
-//     }
-//   }
-//   return result
-// }
+function TreeStore (opts) {
+  this.map = {}
+  this.root = new TreeNode({ name: 'root', isLeaf: false, id: 0 }, this)
+  this.initNode(this.root, opts)
+  this.currentNode = null
+  return this.root
+}
 
-export default class TreeStore {
-  constructor (options) {
-    this.currentNode = null
-    this.currentNodeKey = null
+TreeStore.prototype.initNode = function (node, opts) {
+  for (let i = 0, len = opts.length; i < len; i++) {
+    var _opts = opts[i]
 
-    for (let name in options) {
-      if (options.hasOwnProperty(name)) {
-        this[name] = options[name]
-      }
+    var child = new TreeNode(_opts, this)
+    if (_opts.children && _opts.children.length > 0) {
+      this.initNode(child, _opts.children)
     }
-
-    this.nodeMap = {}
-    this.root = new Node({
-      data: this.data,
-      store: this
-    })
-  }
-
-  setData (newVal) {
-    this.nodeMap = {}
-    this.root.setData(newVal)
-  }
-
-  setCurrentNode (node) {
-    this.currentNode = node
+    node.addChildren(child)
   }
 }
+
+TreeStore.prototype.setCurrentNode = function (node, root, instance) {
+  if (this.currentNode === node) return
+  if (instance && !node.instance) {
+    node.instance = instance
+  }
+  this.currentNode = node
+  root.$emit('set-current', node)
+}
+
+TreeStore.prototype.getNodeById = function (id) {
+  return this.map[id]
+}
+
+export default TreeStore

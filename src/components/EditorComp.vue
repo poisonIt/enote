@@ -1,21 +1,11 @@
 <template>
   <div id="editor">
-    <ckeditor
-      :editor="editor"
-      v-model="editorHtml"
-      @ready="onEditorReady"
-      @input="handleEditorInput"
-      @blur="saveData"
-      :config="editorConfig">
-    </ckeditor>
+    <div id="editor-container"></div>
   </div>
 </template>
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
-import ClassicEditor from '@ckeditor/ckeditor5-build-classic'
-// import Autosave from '@ckeditor/ckeditor5-autosave/src/autosave'
-import '@ckeditor/ckeditor5-build-classic/build/translations/zh-cn'
 import '../assets/styles/editor.css'
 
 export default {
@@ -23,26 +13,8 @@ export default {
 
   data () {
     return {
-      editorInstance: null,
-      editor: ClassicEditor,
-      editorHtml: '<p></p>',
-      editorConfig: {
-        toolbar: [ 'undo', 'redo', 'heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote' ],
-        language: 'zh-cn'
-        // plugins: [
-        //   Autosave
-        // ],
-        // autosave: {
-        //   save (editor) {
-        //     console.log(Array.from( editor.ui.componentFactory.names()))
-        //     console.log('autosave', editor.getData())
-        //     // return editor.getData()
-        //     // The saveData() function must return a promise
-        //     // which should be resolved when the data is successfully saved.
-        //     return saveData(editor.getData())
-        //   }
-        // },
-      }
+      editor: null,
+      writer: null
     }
   },
 
@@ -56,7 +28,8 @@ export default {
 
   watch: {
     content (val) {
-      this.editorHtml = val
+      console.log('content', val)
+      this.editor.setData(val)
     },
 
     viewType (val) {
@@ -64,38 +37,76 @@ export default {
     }
   },
 
-  methods: {
-    ...mapActions(['SAVE_DOC']),
+  mounted () {
+    // console.log(CKEDITOR)
+    this.editor = CKEDITOR.replace('editor-container', {
+      uiColor: '#FFFFFF',
+      toolbarGroups: [
+        { name: 'undo', groups: [ 'undo', 'basicstyles', 'colors', 'cleanup', 'list', 'indent', 'blocks', 'links', 'insert', 'tools' ] },
+        '/',
+        { name:  'styles', groups: [ 'styles' ] }
+      ],
+      removeButtons: 'Source,NewPage,Preview,Print,Templates,Save,Cut,Copy,Paste,PasteText,PasteFromWord,SelectAll,Scayt,Replace,Form,Checkbox,Radio,TextField,Textarea,Select,Button,ImageButton,HiddenField,Anchor,Unlink,Flash,HorizontalRule,Smiley,SpecialChar,PageBreak,Iframe,CopyFormatting'
+    })
+    this.editor.on('instanceReady', (ev) => {
+      // ev.editor.fire('contentDom');
+      this.onEditorReady()
+    })
+    this.editor.on('change', () => {
+      console.log('change', this.editor.getData())
+      this.SET_EDITOR_CONTENT_CACHE(this.editor.getData())
+    })
+    this.editor.on('dataReady', () => {
+      console.log('dataReady', this.editor.getData())
+      // this.editor.resetUndo()
+    })
+    this.editor.on('blur', () => {
+      this.saveData()
+      // this.editor.resetUndo()
+    })
+    console.log('ready', this.$remote.globalShortcut)
+    // this.$remote.globalShortcut.register('CommandOrControl+A', () => {
+    //   this.editor.setData('<p>aaa</p>')
+    // })
+    // const editorParser = new CKEDITOR.htmlParser()
+    // console.log('editorParser-1111', editorParser.parse('<!-- Example --><b>Hello</b>'))
+    // this.editor.on('blur', () => {
+    //   console.log('blur')
+    //   this.saveData()
+    // })
+  },
 
-    onEditorReady (editor) {
-      this.editorInstance = editor
+  methods: {
+    ...mapActions(['SAVE_DOC', 'SET_EDITOR_CONTENT_CACHE']),
+
+    onEditorReady () {
+      console.log('editorReady')
+      this.SET_EDITOR_CONTENT_CACHE(this.content)
       this.handleResize()
       this.$hub.pool.push(() => {
         this.handleResize()
       })
     },
 
-    handleEditorInput () {
-      // console.log('handleEditorInput', this.editorInstance.getData())
-    },
-
     saveData () {
       console.log('saveData')
       this.SAVE_DOC({
         id: this.currentFile.id,
-        html: this.editorHtml
+        html: this.editor.getData()
       })
     },
 
     handleResize () {
-      let space = this.viewType === 'expanded' ? 500 : 360
-      document.getElementsByClassName('ck-content')[0].style.width = document.body.clientWidth - space + 'px'
+      console.log('handleResize', this.viewType)
+      // this.editor.setData(this.content)
+      let space = this.viewType === 'expanded' ? 540 : 390
+      let w = document.body.clientWidth - space
+      let h = document.body.clientHeight - document.getElementById('cke_1_top').getBoundingClientRect().height - 100
+      this.editor.resize(w, h, true)
     }
   }
 }
 </script>
 
 <style lang="stylus" scoped>
-#editor
-  // margin-top 40px
 </style>

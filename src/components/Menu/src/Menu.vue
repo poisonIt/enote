@@ -1,5 +1,5 @@
 <template>
-  <transition name="fade">
+  <transition :name="transition">
     <div class="menu"
       v-show="visible"
       :style="{ width: width + 'px', top: top + 'px' }">
@@ -64,6 +64,10 @@ export default {
       default: () => {
         return []
       }
+    },
+    transition: {
+      type: String,
+      default: 'dropdown'
     }
   },
 
@@ -186,10 +190,10 @@ export default {
   margin 0 auto
   width auto
   height auto
-  border-radius 3px
+  border-radius 2px
   overflow hidden
-  box-shadow 0 2px 6px 2px rgba(0, 0, 0, 0.3)
-  z-index 9999
+  box-shadow 0px 0px 6px 0px rgba(0,0,0,0.15)
+  z-index 99999
   .item-list
     z-index 1
     .item
@@ -198,9 +202,11 @@ export default {
       font-size 14px
       display flex
       align-items center
+      color #333
       transition background-color ease 0.1s
       &:hover
-        background-color #dddee0 !important
+        background-color #FFF5E2 !important
+        color #DDAF59
       &::after
         position absolute
         top 50%
@@ -208,8 +214,8 @@ export default {
         transform translateY(-50%)
         content ''
         display block
-        width 18px
-        height 18px
+        width 16px
+        height 16px
         background-repeat no-repeat
         background-size contain
         background-position center
@@ -225,8 +231,8 @@ export default {
           transform rotate(180deg)
       &.sortDown
         &::after
-          width 16px
-          height 16px
+          width 13px
+          height 13px
           background-image url(../../../assets/images/arrows_down.png)
 .separator
   height 1px !important

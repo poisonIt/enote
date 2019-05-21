@@ -12,9 +12,6 @@ export default {
 
   mixins: [Emitter],
 
-  props: {
-  },
-
   mounted () {
     this.$on('item-click', instance => {
       this.broadcast('FileCard', 'cancelSelect')

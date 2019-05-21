@@ -1,26 +1,29 @@
-
+import LocalDAO from './api'
+const fs = require('fs')
 const Datastore = require('nedb')
-const path = require('path')
+const LinvoDB = require('linvodb3')
 
-function db (app) {
-  const files_db = new Datastore({
-    filename: path.join(app.getAppPath(), 'db/files.db')
+LinvoDB.defaults.store = { db: require('medeadown') }
+
+function loadDB (path) {
+  return new Datastore({
+    filename: path,
+    autoload: true
   })
+}
 
-  files_db.loadDatabase(function (err) {    // Callback is optional
-    // Now commands will be executed
-    if (err) {
-      console.error(err)
-    } else {
-      console.log('db loaded')
-    }
-  })
+function loadLinvoDB (path) {
+  LinvoDB.dbPath = path
+  return LinvoDB
+}
 
-  return {
-    files_db: files_db
-  }
+function createCollection (name, path) {
+  LocalDAO[name].createCollection(path)
 }
 
 export {
-  db
+  loadDB,
+  LinvoDB,
+  loadLinvoDB,
+  createCollection
 }

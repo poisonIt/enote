@@ -35,6 +35,7 @@ let template = [{
     label: '退出',
     accelerator: 'CmdOrCtrl+Q',
     click: (item, focusedWindow) => {
+      beforeQuit()
       win && win.destroy()
       loginWin && loginWin.destroy()
       previewWin && previewWin.destroy()
@@ -266,7 +267,11 @@ function createHomeWindow () {
     win.focus()
   })
 
-  win.on('close', (event) => {
+  win.on('closed', (event) => {
+    win = null
+  })
+
+  win.on('destroy', (event) => {
     let sizeInteger = win.getSize()
     saveAppConf(app.getAppPath('userData'), {
       size: {
@@ -274,10 +279,6 @@ function createHomeWindow () {
         height: sizeInteger[1]
       }
     })
-  })
-
-  win.on('closed', (event) => {
-    win = null
   })
 }
 
@@ -399,6 +400,10 @@ app.on('ready', async () => {
       createHomeWindow()
     })
   })
+})
+
+app.on('before-quit', () => {
+  beforeQuit()
 })
 
 // Exit cleanly on request from parent process in development mode.
@@ -572,4 +577,14 @@ function execPromise (id, tasks, arg) {
       }
     })
   }
+}
+
+function beforeQuit () {
+  let sizeInteger = win.getSize()
+  saveAppConf(app.getAppPath('userData'), {
+    size: {
+      width: sizeInteger[0],
+      height: sizeInteger[1]
+    }
+  })
 }

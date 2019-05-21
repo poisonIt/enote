@@ -45,11 +45,14 @@ export default {
       }
       if (val && val.type === 'note') {
         this.showMask = true
+        if (val.trash !== 'NORMAL') {
+          this.showMask = true
+          return
+        }
         if (this.editor) {
           // 切换选中笔记，保存上一个笔记修改内容
           let editorData = this.editor.getData()
           if (editorData !== this.cachedDoc.content) {
-            console.log('0000000')
             this.saveData(this.cachedDoc._id, editorData)
           }
         }
@@ -58,15 +61,6 @@ export default {
           params: [{ note_id: val._id }],
           from: 'Editor'
         })
-        // getLocalDoc({ note_id: val._id }).then(res => {
-        //   console.log('getLocalDoc-res', res)
-        //   this.currentDoc = res
-        //   this.cachedDoc = {
-        //     _id: res._id,
-        //     content: res.content
-        //   }
-        //   this.initEditor(res.content)
-        // })
       }
     },
 
@@ -114,15 +108,10 @@ export default {
       const _self = this
       if (this.editor) {
         this.editor.setData(content || '')
-        console.log('22222')
         this.showMask = false
       } else {
         ClassicEditor
           .create(this.$refs.editor, {
-            // language: 'zh-cn',
-            // toolbar: [ 'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor'],
-            // // toolbar: [ 'bulletedList' ],
-            // // toolbar: [ 'undo', 'redo', 'heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', 'highlight:yellowMarker', 'Image' ],
             extraPlugins: [ uploadAdapter ],
             autosave: {
               save (editor) {
@@ -168,7 +157,6 @@ export default {
 
     handleResize () {
       let space = this.viewType === 'expanded' ? 540 : 390
-      console.log('handleResize', space)
       document.getElementsByClassName('ck-content')[0].style.width = document.body.clientWidth - space + 'px'
     },
 

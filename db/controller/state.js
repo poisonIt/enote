@@ -54,7 +54,13 @@ async function update (req) {
 function get () {
   return new Promise((resolve, reject) => {
     State.find({}, (err, states) => {
-      resolve(states[0])
+      if (states.length === 0) {
+        State.insert(stateModel({}), (err, newState) => {
+          resolve(newState)
+        })
+      } else {
+        resolve(states[0])
+      }
     })
   })
 }

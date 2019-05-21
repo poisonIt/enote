@@ -17,8 +17,8 @@ function loadLinvoDB (path) {
   return LinvoDB
 }
 
-function createCollection (name, user) {
-  LocalDAO[name].createCollection(user)
+function createCollection (name, path) {
+  LocalDAO[name].createCollection(path)
 }
 
 export {

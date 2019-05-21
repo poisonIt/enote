@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div class="container" @dblclick="handleDbClick">
     <div class="avatar" :class="{ expanded : viewType === 'expanded' }" @click="showUserPanel">
       <!-- <img src="file:////Users/bowiego/Desktop/WechatIMG44.jpeg" alt=""> -->
       <img :src="userInfo.image_url" alt="">
@@ -51,6 +51,16 @@ export default {
 
   methods: {
     ...mapActions(['TOGGLE_SHOW_USER_PANEL', 'TOGGLE_SHOW_SETTING_PANEL']),
+
+    handleDbClick () {
+      let curWin = this.$remote.getCurrentWindow()
+      let isMaximized = curWin.isMaximized()
+      if (!isMaximized) {
+        curWin.maximize()
+      } else {
+        curWin.unmaximize()
+      }
+    },
 
     showUserPanel () {
       this.TOGGLE_SHOW_USER_PANEL(true)

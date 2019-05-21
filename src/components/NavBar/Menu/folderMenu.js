@@ -9,13 +9,13 @@ const folderMenu = [
           callbackName: 'handleNewNote'
         }
       },
-      {
-        label: '新建模板笔记',
-        eventListener: {
-          eventName: 'click',
-          callbackName: 'handleNewTemplateNote'
-        }
-      },
+      // {
+      //   label: '新建模板笔记',
+      //   eventListener: {
+      //     eventName: 'click',
+      //     callbackName: 'handleNewTemplateNote'
+      //   }
+      // },
       {
         label: '新建文件夹',
         eventListener: {

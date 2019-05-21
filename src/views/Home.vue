@@ -1,11 +1,5 @@
 <template>
   <div class="home">
-    <div v-if="isDev">
-      <!-- <button style="position: fixed;top: 10px;left: 20px;z-index: 9999999;" @click="hideBackground">hideBackground</button>
-      <button style="position: fixed;top: 50px;left: 20px;z-index: 9999999;" @click="showBackground">showBackground</button>
-      <button style="position: fixed;top: 30px;left: 20px;z-index: 9999999;" @click="deleteAll">deleteAll</button>
-      <button style="position: fixed;top: 30px;left: 160px;z-index: 9999999;" @click="goLogin">goLogin!</button> -->
-    </div>
     <PageLayout>
       <div slot="left">
         <div id="nav">
@@ -159,15 +153,13 @@ export default {
   },
 
   created () {
-    // if (!isDevelopment) {
-    //   window.onbeforeunload = (e) => {
-    //     e.returnValue = false
-    //     let curWin = this.$remote.getCurrentWindow()
-    //     let backWin = curWin.getParentWindow()
-    //     curWin.hide()
-    //     backWin.hide()
-    //   }
-    // }
+    if (!isDevelopment) {
+      window.onbeforeunload = (e) => {
+        e.returnValue = false
+        let curWin = this.$remote.getCurrentWindow()
+        curWin.hide()
+      }
+    }
 
     ipcRenderer.on('fetch-user-data-response', (event, arg) => {
       console.log('fetch-user-data-response-1111', arg)

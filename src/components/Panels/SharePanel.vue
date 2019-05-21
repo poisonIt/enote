@@ -57,7 +57,9 @@
                 :children="item.children">
               </b-option>
             </BSelect>
-            <div class="add-mem-button" @click="showFrdPanel">
+            <div class="add-mem-button"
+              :class="{ disabled: isAddMemDisable }"
+              @click="showFrdPanel">
               <div class="icon-mem"></div>
               添加可查看成员
             </div>
@@ -191,7 +193,11 @@ export default {
       isSharePanelShowed: 'GET_SHOW_SHARE_PANEL',
       userInfo: 'GET_USER_INFO',
       currentFile: 'GET_CURRENT_FILE'
-    })
+    }),
+
+    isAddMemDisable () {
+      return this.entitledType === 'PUBLIC'
+    }
   },
 
   watch: {
@@ -242,7 +248,7 @@ export default {
     entitledType (val) {
       // console.log('entitledType', val)
       this.modifyShare()
-    }
+    },
 
     // friendChecked (val) {
     //   // console.log('friendChecked', val)
@@ -378,6 +384,7 @@ export default {
     },
 
     showFrdPanel () {
+      if (this.isAddMemDisable) return
       this.isFrdPanelShowed = true
     },
 
@@ -477,6 +484,8 @@ export default {
   text-align center
   display flex
   align-items center
+  &.disabled
+    filter grayscale(100%)
 
 .icon-mem
   width 12px

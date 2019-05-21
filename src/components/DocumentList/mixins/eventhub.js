@@ -7,6 +7,7 @@ export default {
     this.$hub.hookHub('renameListFile', 'NavBar', (file) => this.handleFileRename(file))
     this.$hub.hookHub('updateFile', 'FileCard', (params) => this.handleFileUpdate(params))
     this.$hub.hookHub('updateFile', 'FileHandler', (params) => this.handleFileUpdate(params))
+    this.$hub.hookHub('removeFile', 'FileHandler', (file) => this.handleFileRemove(file))
   },
 
   methods: {
@@ -44,6 +45,18 @@ export default {
           from: ['DocumentList', 'handleFileUpdate', this.currentFile._id]
         })
         this.$hub.dispatchHub('pushData', this)
+      })
+    },
+
+    handleFileRemove (file) {
+      const { id } = file
+      ipcRenderer.send('fetch-local-data', {
+        tasks: ['updateLocalNote'],
+        params: [{
+          id: id,
+          trash: 'TRASH'
+        }],
+        from: ['DocumentList', 'remove-1', id]
       })
     },
 

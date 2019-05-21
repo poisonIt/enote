@@ -1,6 +1,6 @@
 <template>
   <div class="document-list">
-    <div class="header">
+    <div class="header" @dblclick.self="handleHeaderDbClick">
       <div class="button button-back"
         :class="{ disable : !currentNav || !currentNav._id || currentNav.type !== 'folder' }"
         @click="handleBack">
@@ -36,6 +36,7 @@
           :title="item.title"
           :content="item.brief"
           :isTop="item.top"
+          :isShared="true"
           :update_at="item.update_at | yyyymmdd"
           :file_size="item.size"
           :parent_folder="item.folder_title || ''"
@@ -263,29 +264,27 @@ export default {
             if (['updateLocalFolder', 'updateLocalNote'].indexOf(arg.tasks[0]) > -1) {
               if (arg.from[1] === 'stickTop') {
                 this.selectedIdCache = this.popupedFile.rawData._id
-                this.refreshList()
               }
               if (arg.from[1] === 'cancelStickTop') {
                 this.selectedIdCache = this.popupedFile.rawData._id
-                this.refreshList()
               }
               if (arg.from[1] === 'remove') {
                 if (this.popupedFile.type === 'folder') {
                   this.$hub.dispatchHub('deleteNavNode', this, this.popupedFile.rawData._id)
                 }
-                this.refreshList()
               }
               if (arg.from[1] === 'resume') {
-                this.refreshList()
               }
               if (arg.from[1] === 'delete') {
-                this.refreshList()
               }
-            }
-            if (arg.from[1] === 'duplicate') {
-              console.log('duplicate-res', arg)
               this.refreshList()
             }
+            if (arg.from[1] === 'duplicate') {
+              this.refreshList()
+            }
+          }
+          if (arg.from[1] === 'remove-1') {
+            this.refreshList()
           }
         }
         this.$hub.dispatchHub('pushData', this)
@@ -611,6 +610,16 @@ export default {
         trash: file.trash,
         update_at: file.update_at,
         _id: file._id
+      }
+    },
+
+    handleHeaderDbClick () {
+      let curWin = this.$remote.getCurrentWindow()
+      let isMaximized = curWin.isMaximized()
+      if (!isMaximized) {
+        curWin.maximize()
+      } else {
+        curWin.unmaximize()
       }
     }
   }

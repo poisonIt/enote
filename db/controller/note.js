@@ -484,7 +484,17 @@ function getById (req) {
 function getTrash () {
   return new Promise((resolve, reject) => {
     Note.find({ trash: 'TRASH' }, (err, notes) => {
-      resolve(notes)
+      let p = notes.map(note => {
+        return new Promise((resolve, reject) => {
+          folderCtr.getById({ id: note.pid }).then(pfolder => {
+            note.folder_title = pfolder ? pfolder.title : '我的文件夹'
+            resolve(note)
+          })
+        })
+      })
+      Promise.all(p).then(res => {
+        resolve(res)
+      })
     })
   })
 }

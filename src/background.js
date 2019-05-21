@@ -181,6 +181,8 @@ function prepareCreateLogin (user) {
           data.password = res.password
           autoLogin = '1'
           resolve({ autoLogin, data })
+        } else {
+          resolve({ autoLogin, data })
         }
       })
     } else {
@@ -260,10 +262,11 @@ function createHomeWindow () {
   // Create the browser window.
   win = new BrowserWindow({
     id: 'home',
-    width: isDevelopment ? 1366 : 960,
-    height: 640,
+    width: app.appConf.size.width,
+    height: app.appConf.size.height,
     backgroundColor: '#fcfbf7',
     show: true,
+    title: '添富云笔记',
     // frame: false,
     titleBarStyle: isDevelopment ? 'default' : 'hidden',
     icon: path.join(__static, 'icon.png'),
@@ -287,6 +290,16 @@ function createHomeWindow () {
 
   win.on('show', (event) => {
     win.focus()
+  })
+
+  win.on('close', (event) => {
+    let sizeInteger = win.getSize()
+    saveAppConf(app.getAppPath('userData'), {
+      size: {
+        width: sizeInteger[0],
+        height: sizeInteger[1]
+      }
+    })
   })
 
   win.on('closed', (event) => {
@@ -386,22 +399,36 @@ app.on('ready', async () => {
   getAppConf(app.getAppPath('userData')).then(appConf => {
     if (!appConf.serviceUrl || appConf.serviceUrl === '') {
       saveAppConf(app.getAppPath('userData'), {
-        serviceUrl: serviceUrl
+        serviceUrl: serviceUrl,
+        appPath: app.getAppPath('userData')
       })
+    }
+    let defaultSize = [960, 640]
+    if (appConf.size) {
+      defaultSize[0] = appConf.size.width || 960
+      defaultSize[1] = appConf.size.height || 640
     }
     let p = dbPath + '/database'
     app.appConf = {
       user: appConf.user,
       dbPath: p,
       serviceUrl: serviceUrl,
-      note_ver: 1
+      note_ver: 1,
+      size: {
+        x: 0,
+        y: 0,
+        width: defaultSize[0],
+        height: defaultSize[1]
+      }
     }
 
     fs.mkdir(p, { recursive: true }, (err) => {
+      if (err) {
+        dialog.showErrorBox('err', err)
+      }
       createCollection('user', p)
       createLoginWindow(appConf.user)
     })
-    // createBackgroundWindow()
   })
 })
 

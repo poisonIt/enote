@@ -2,18 +2,20 @@
   <div class="container"
     ref="container"
     v-if="currentFile"
+    @dblclick.self="handleHeaderDbClick"
     :style="{ width: containerWidth }">
     <div class="title" :class="{ disable : viewFileType === 'recycle' }">
       <input
         ref="input"
         type="text"
         v-model="titleValue"
-        @focus="isInputFocused = true"
+        :disabled="isTrash"
+        @focus="handleInputFocus"
         @blur="handleInputBlur"
         @keyup.enter="handleInputEnter">
       <p class="ellipsis">{{ titleValue }}</p>
     </div>
-    <div class="handler">
+    <div class="handler" v-show="!isTrash">
       <div class="handler-item"
         :class="{ hidden: isHandlerHidden(item) }"
         v-for="(item, index) in handlers"
@@ -27,7 +29,7 @@
       <transition name="fade-in-down">
         <div class="more" v-show="isMoreShowed">
           <div class="item" @click="handleExport">导出为PDF</div>
-          <div class="item" @click="handleDelete">删除笔记</div>
+          <div class="item" @click="handleRemove">删除笔记</div>
           <div class="item" @click="showHistory">查看历史版本</div>
         </div>
       </transition>
@@ -95,7 +97,11 @@ export default {
       viewType: 'GET_VIEW_TYPE',
       viewFileType: 'GET_VIEW_FILE_TYPE',
       isTagShowed: 'GET_SHOW_TAG_HANDLER'
-    })
+    }),
+
+    isTrash () {
+      return this.currentFile && this.currentFile.trash !== 'NORMAL'
+    }
   },
 
   watch: {
@@ -168,6 +174,10 @@ export default {
       'TOGGLE_SHOW_RESEARCH_PANEL',
       'SET_SHARE_INFO'
     ]),
+
+    handleInputFocus () {
+      this.isInputFocused = true
+    },
 
     handleInputEnter () {
       this.$refs.input.blur()
@@ -282,12 +292,25 @@ export default {
       console.log('handleExport')
     },
 
-    handleDelete () {
-      console.log('handleDelete')
+    handleRemove () {
+      console.log('handleRemove')
+      this.$hub.dispatchHub('removeFile', this, {
+        id: this.currentFile._id
+      })
     },
 
     showHistory () {
       console.log('showHistory')
+    },
+
+    handleHeaderDbClick () {
+      let curWin = this.$remote.getCurrentWindow()
+      let isMaximized = curWin.isMaximized()
+      if (!isMaximized) {
+        curWin.maximize()
+      } else {
+        curWin.unmaximize()
+      }
     }
   }
 }

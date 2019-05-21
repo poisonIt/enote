@@ -23,9 +23,12 @@
           {{ item }}
         </span>
       </div>
-      <div class="icon stick-top" v-if="isTop"></div>
-      <div class="need_push" v-if="need_push"></div>
-      <div class="need_push local" v-if="need_push_local"></div>
+      <div class="icon-stack">
+        <div class="icon stick-top" v-if="isTop"></div>
+        <div class="isShared" v-if="isShared"></div>
+        <div class="need_push" v-if="need_push"></div>
+        <div class="need_push local" v-if="need_push_local"></div>
+      </div>
     </div>
     <div class="body" v-if="content.length > 0 && !mini && type === 'doc'">
       <span class="content ellipsis">{{ content }}</span>
@@ -96,6 +99,10 @@ export default {
       type: String
     },
     isTop: {
+      type: Boolean,
+      default: false
+    },
+    isShared: {
       type: Boolean,
       default: false
     },
@@ -301,10 +308,21 @@ export default {
   &.folder
     background-image url(../../../assets/images/lanhu/folder@2x.png)
   &.stick-top
+    width 16px
+    height 16px
     background-image url(../../../assets/images/lanhu/stick_top@2x.png)
 
+.icon-stack
+  // width 100%
+  height 100%
+  display flex
+  flex-direction row
+  justify-content flex-end
+  align-items center
+  div
+    margin-left 10px
+
 .need_push
-  position absolute
   right 50px
   width 16px
   height 16px
@@ -316,6 +334,15 @@ export default {
   opacity .6
   &.local
     background-color green
+
+.isShared
+  right 50px
+  width 20px
+  height 20px
+  background-image url(../../../assets/images/lanhu/share_highlight@2x.png)
+  background-repeat no-repeat
+  background-size contain
+  background-position center
 
 .body
   margin: 12px 0

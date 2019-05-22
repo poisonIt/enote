@@ -56,7 +56,7 @@ export function removeAllDeletedFolder () {
 
 // note
 export function getAllLocalNote () {
-  return LocalDAO.note.getAll()
+  return LocalDAO.note.getAllByQuery({ trash: 'NORMAL', width_folder_title: true })
 }
 
 export function getLocalNoteById (params) {

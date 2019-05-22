@@ -179,6 +179,7 @@ export default {
         tags: obj.tagId ? obj.tagId.map(item => allTagLocalMap[item]) : [],
         need_push: false,
         top: obj.top,
+        share: obj.share,
         usn: obj.usn
       }
     },

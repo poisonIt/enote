@@ -16,7 +16,6 @@ import { getLocalDoc, updateLocalDoc } from '@/service/local'
 export default {
   name: 'EditorComp',
 
-
   data () {
     return {
       doc: {},

@@ -1,4 +1,5 @@
 // import { folderDB } from './index.js'
+import * as _ from 'lodash'
 import { getValid } from '../tools'
 import folderModel from '../models/folder'
 import { LinvoDB } from '../index'
@@ -373,6 +374,23 @@ function getById (req) {
   })
 }
 
+function getByQuery (req, opts) {
+  const isReqArr = _.isArray(req)
+  const query = isReqArr ? { $or: req } : req
+
+  let operation = opts.multi ? 
+
+  if (opts.multi) {
+
+  }
+
+  return new Promise((resolve, reject) => {
+    Folder.findOne({ req }, (err, folder) => {
+      resolve(folder)
+    })
+  })
+}
+
 function getTrash () {
   return new Promise((resolve, reject) => {
     Folder.find({ trash: 'TRASH' }, (err, folders) => {
@@ -398,5 +416,6 @@ export default {
   getAllByQuery,
   getAllByPid,
   getById,
+  getByQuery,
   getTrash
 }

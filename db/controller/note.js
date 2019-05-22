@@ -226,6 +226,7 @@ async function update (req) {
   return new Promise((resolve, reject) => {
     Note.findOne({ _id: id })
     .exec((err, note) => {
+      console.log('note-update-note', note)
       if (!note) {
         resolve()
         return
@@ -241,9 +242,11 @@ async function update (req) {
               id: newNote.pid,
               trash: 'NORMAL'
             }).then(() => {
+              console.log('note-update-resolve', newNote)
               resolve(newNote)
             })
           } else {
+            console.log('note-update-resolve', newNote)
             resolve(newNote)
           }
         }
@@ -364,12 +367,13 @@ function addTag (req) {
 function getAll () {
   return new Promise((resolve, reject) => {
     Note.find({}, (err, notes) => {
+      console.log('getAll-note', notes)
       let p = notes.map(note => {
         return new Promise((resolve, reject) => {
           folderCtr.getById({ id: note.pid }).then(folder => {
             if (!folder) {
               if (note.remote_pid) {
-                folderCtr.findOne({ remote_id: note.remote_pid }, (err, p) => {
+                folderCtr.getByQuery({ remote_id: note.remote_pid }, (err, p) => {
                   if (p) {
                     update({ id: note._id, pid: p._id }).then(() => {
                       note.folder_title = p.title
@@ -416,23 +420,74 @@ function getAll () {
 }
 
 function getAllByQuery (req) {
-  const { query, with_doc } = req
+  const { query, with_doc, width_folder_title } = req
 
   return new Promise((resolve, reject) => {
     Note.find(query, (err, notes) => {
+      let p = []
       if (with_doc) {
-        let p = notes.map(note => {
-          return docCtr.getByNoteId({ note_id: note._id })
-        })
-        Promise.all(p).then(docs => {
-          notes.forEach((note, index) => {
-            note.content = docs[index] ? docs[index].content : ''
+        p.concat(notes.map((note, index) => {
+          return new Promise((resolve, reject) => {
+            docCtr.getByNoteId({ note_id: note._id }).then(doc => {
+              notes[index].content = doc.content
+              resolve()
+            })
           })
-          resolve(notes)
-        })
-      } else {
-        resolve(notes)
+        }))
       }
+
+      if (width_folder_title) {
+        p.concat(notes.map((note, index) => {
+          return new Promise((resolve, reject) => {
+            folderCtr.getById({ id: note.pid }).then(folder => {
+              if (!folder) {
+                if (note.remote_pid) {
+                  folderCtr.getByQuery({ remote_id: note.remote_pid }, (err, p) => {
+                    if (p) {
+                      update({ id: note._id, pid: p._id }).then(() => {
+                        notes[index].folder_title = p.title
+                        notes[index].pid = p._id
+                        resolve()
+                      })
+                    } else {
+                      if (folder.pid !== '0') {
+                        update({ id: note._id, pid: '0' }).then(() => {
+                          notes[index].folder_title = '我的文件夹'
+                          notes[index].pid = '0'
+                          resolve()
+                        })
+                      } else {
+                        notes[index].folder_title = '我的文件夹'
+                        resolve()
+                      }
+                    }
+                  })
+                } else {
+                  if (note.pid !== '0') {
+                    update({ id: note._id, pid: '0' }).then(() => {
+                      notes[index].folder_title = '我的文件夹'
+                      notes[index].pid = '0'
+                      resolve()
+                    })
+                  } else {
+                    notes[index].folder_title = '我的文件夹'
+                    resolve()
+                  }
+                }
+              } else {
+                notes[index].folder_title = folder.title
+                resolve()
+              }
+            })
+          })
+        }))
+      }
+      console.log('p', p.length) // 0
+
+      Promise.all(p).then(() => {
+        console.log('getAllByQuery', req, notes)
+        resolve(notes)
+      })
     })
   })
 }
@@ -511,6 +566,52 @@ function getByTags (req) {
     }).exec((err, notes) => {
       if (err) reject(err)
       resolve(notes)
+    })
+  })
+}
+
+function patchParentFolderTitle (note) {
+  return new Promise((resolve, reject) => {
+    
+    folderCtr.getById({ id: note.pid }).then(pfolder => {
+      if (!pfolder) {
+        if (note.remote_pid) {
+          folderCtr.getByQuery({ remote_id: note.remote_pid }, (err, pRemote) => {
+            if (pRemote) {
+              update({ id: note._id, pid: pRemote._id }).then(() => {
+                note.folder_title = pRemote.title
+                note.pid = pRemote._id
+                resolve(note)
+              })
+            } else {
+              if (pfolder.pid !== '0') {
+                update({ id: note._id, pid: '0' }).then(() => {
+                  note.folder_title = '我的文件夹'
+                  note.pid = '0'
+                  resolve(note)
+                })
+              } else {
+                note.folder_title = '我的文件夹'
+                resolve(note)
+              }
+            }
+          })
+        } else {
+          if (note.pid !== '0') {
+            update({ id: note._id, pid: '0' }).then(() => {
+              note.folder_title = '我的文件夹'
+              note.pid = '0'
+              resolve(note)
+            })
+          } else {
+            note.folder_title = '我的文件夹'
+            resolve(note)
+          }
+        }
+      } else {
+        note.folder_title = pFolder.title
+        resolve(note)
+      }
     })
   })
 }

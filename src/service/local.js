@@ -22,8 +22,14 @@ export function getAllLocalFolder () {
   return LocalDAO.folder.getAll()
 }
 
-export function getAllLocalFolderByQuery (params) {
-  return LocalDAO.folder.getAllByQuery(params)
+export function getLocalFolderByQuery (params, option) {
+  console.log('getLocalFolderByQuery', params, option)
+  return LocalDAO.folder.getByQuery(params, option)
+}
+
+export function getLocalFolderById (params) {
+  console.log('getLocalFolderById', params)
+  return LocalDAO.folder.getById(params)
 }
 
 export function getLocalFolderByPid (params) {
@@ -56,7 +62,7 @@ export function removeAllDeletedFolder () {
 
 // note
 export function getAllLocalNote () {
-  return LocalDAO.note.getAllByQuery({ trash: 'NORMAL', width_folder_title: true })
+  return LocalDAO.note.getByQuery({ trash: 'NORMAL' } , { multi: true, width_parent_folder: true })
 }
 
 export function getLocalNoteById (params) {
@@ -64,7 +70,11 @@ export function getLocalNoteById (params) {
 }
 
 export function getAllLocalNoteByQuery (params) {
-  return LocalDAO.note.getAllByQuery(params)
+  return LocalDAO.note.getByQuery(params, )
+}
+
+export function getLocalNoteByQuery (params, option) {
+  return LocalDAO.folder.getByQuery(params, option)
 }
 
 export function getLocalNoteByPid (params) {
@@ -232,6 +242,7 @@ export function removeLocalImageById (params) {
 
 // version
 export function updateState (params) {
+  console.log('updateState', params)
   return LocalDAO.state.update(params)
 }
 

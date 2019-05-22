@@ -39,7 +39,7 @@
           :isShared="item.share"
           :update_at="item.update_at | yyyymmdd"
           :file_size="item.size"
-          :parent_folder="item.folder_title || ''"
+          :parent_folder="item.parent_folder ? item.parent_folder.title : '我的文件夹'"
           :need_push="item.need_push_remotely"
           :need_push_local="item.need_push_locally"
           :rawData="item"

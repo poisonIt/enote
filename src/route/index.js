@@ -3,7 +3,7 @@ import Router from 'vue-router'
 import { ipcRenderer } from 'electron'
 
 import Home from '@/views/Home'
-import Background from '@/views/Background'
+import TestGround from '@/views/TestGround'
 import Login from '@/views/Login'
 import Preview from '@/views/Preview'
 
@@ -29,9 +29,9 @@ export default new Router({
       component: Preview
     },
     {
-      path: '/background',
-      name: 'Background',
-      component: Background
+      path: '/test',
+      name: 'TestGround',
+      component: TestGround
     }
   ]
 })

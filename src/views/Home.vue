@@ -283,6 +283,7 @@ export default {
       ipcRenderer.send('fetch-user-data', {
         from: 'Home'
       })
+      this.SET_NOTE_VER(this.$remote.app.appConf.note_ver || 1)
       this.SET_DB_READY(true)
     },
 

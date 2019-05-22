@@ -31,7 +31,6 @@ export default {
   methods: {
     ...mapActions([
       'SET_IS_SYNCING',
-      'SET_NOTE_VER',
       'SET_FILE_PUSH_FINISHED'
     ]),
 
@@ -66,7 +65,7 @@ export default {
     async hookMsgHandler () {
       ipcRenderer.on('fetch-local-data-response', (event, arg) => {
         if (arg.from === 'pushImgs') {
-          console.log('pushImgs-res', arg)
+          console.log('push-res', arg)
           if (arg.tasks.indexOf('getAllLocalImage') > -1) {
             console.log('pushImgs', arg.res)
             this.runPushImgs(arg.res[0]).catch(err => this.pushTags())
@@ -85,7 +84,7 @@ export default {
           }
         }
         if (arg.from === 'pushFolders') {
-          if (arg.tasks.indexOf('getAllLocalFolderByQuery') > -1) {
+          if (arg.tasks.indexOf('getAllLocalFolder') > -1) {
             console.log('pushFolders', arg.res)
             this.runPushFolders(arg.res[0]).then(() => {
               console.log('runPushFolders-res')
@@ -95,10 +94,9 @@ export default {
         }
         if (arg.from === 'pushNotes') {
           console.log('pushNotes-res', arg)
-          if (arg.tasks.indexOf('getAllLocalNoteByQuery') > -1) {
+          if (arg.tasks.indexOf('getLocalNoteByQuery') > -1) {
             console.log('pushNotes', arg.res)
             this.runPushNotes(arg.res[0])
-            this.SET_IS_SYNCING(false)
           }
           if (arg.tasks[0] === 'updateMultiLocalNote' &&
             arg.tasks[1] === 'removeAllDeletedNote') {
@@ -118,16 +116,16 @@ export default {
 
     pushFolders () {
       ipcRenderer.send('fetch-local-data', {
-        tasks: ['getAllLocalFolderByQuery'],
-        params: [{ query: {} }],
+        tasks: ['getAllLocalFolder'],
         from: 'pushFolders'
       })
     },
 
     pushNotes () {
       ipcRenderer.send('fetch-local-data', {
-        tasks: ['getAllLocalNoteByQuery'],
-        params: [{ query: { need_push: true }, with_doc: true }],
+        tasks: ['getLocalNoteByQuery'],
+        params: [{ need_push: true }],
+        options: [{ multi: true, with_doc: true }],
         from: 'pushNotes'
       })
     },
@@ -216,7 +214,6 @@ export default {
       const _self = this
       return new Promise ((resolve, reject) => {
         if (fNeedPush.length === 0) {
-          this.SET_IS_SYNCING(false)
           resolve()
           return
         }
@@ -278,12 +275,7 @@ export default {
                 }
               }
             }).catch(err => {
-              saveAppConf(_self.$remote.app.getAppPath('appData'), {
-                user: null
-              })
-              ipcRenderer.send('changeWindow', {
-                name: 'login'
-              })
+              _self.$Message.error(err)
               reject(err)
             })
           }
@@ -308,13 +300,13 @@ export default {
       if (resp.data.returnCode === 200) {
         let noteResolved = resp.data.body
         if (noteResolved.length > 0) {
-          let usnMax = Math.max(noteResolved.map(item => item.usn))
+          let usnArr = noteResolved.map(item => item.usn)
+          let usnMax = Math.max(...usnArr)
           if (usnMax > this.noteVer) {
-            this.SET_NOTE_VER(usnMax)
             ipcRenderer.send('fetch-local-data', {
               tasks: ['updateState'],
               params: [{
-                note_ver: noteResolved[0].usn
+                note_ver: usnMax
               }],
               from: 'pushNotes'
             })
@@ -381,6 +373,7 @@ export default {
     },
 
     async pushData () {
+      if (this.isSyncing) return
       this.SET_IS_SYNCING(true)
       this.pushImgs()
     },

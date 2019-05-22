@@ -44,7 +44,6 @@ function saveAll (req) {
 
 // add
 function add (req) {
-  console.log('add-doc', req)
   let data = docModel(req)
 
   return new Promise((resolve, reject) => {
@@ -110,7 +109,6 @@ function deleteAll () {
 // update
 function update (req) {
   const { id } = req
-  console.log('update-doc', req)
 
   return new Promise((resolve, reject) => {
     Doc.findOne({ _id: id })
@@ -134,8 +132,6 @@ function update (req) {
 }
 
 function updateImg (reqs) {
-  console.log('updateImg', reqs)
-
   return new Promise((resolve, reject) => {
     let p = reqs.map((req, index) => {
         return new Promise((resolve, reject) => {
@@ -172,7 +168,6 @@ function getAll () {
 
 function getByNoteId (req) {
   const { note_id } = req
-  console.log('getByNoteId', note_id, req)
   return new Promise((resolve, reject) => {
     Doc.findOne({ note_id: note_id }).exec((err, doc) => {
       resolve(doc)

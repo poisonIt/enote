@@ -14,6 +14,10 @@
           <input type="text" v-model="serviceUrl">
           <span class="tip-error">非测试人员请勿更改!</span>
         </div>
+        <div class="button-group" style="position: relative;top: 20px;">
+          <div class="button primary" @click="deleteAllNote">清空笔记</div>
+          <div class="button primary" @click="deleteAllData">清空所有数据</div>
+        </div>
       </div>
       <div class="button-group" slot="footer">
         <div class="button primary" @click="saveSetting">保存</div>
@@ -26,6 +30,7 @@
 <script>
 import { mapActions, mapGetters } from 'vuex'
 import { getAppConf, saveAppConf } from '@/tools/appConf'
+import { ipcRenderer } from 'electron'
 
 export default {
   name: 'SettingPanel',
@@ -69,6 +74,16 @@ export default {
       }).then(() => {
         this.$Message.success('保存成功')
         this.closeSettingPanel()
+      })
+    },
+
+    deleteAllNote () {
+    },
+
+    deleteAllData () {
+      ipcRenderer.send('fetch-local-data', {
+        tasks: ['deleteAll'],
+        from: 'Setting',
       })
     }
   }

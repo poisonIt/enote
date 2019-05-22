@@ -5,7 +5,7 @@
         <div class="icon-new"></div>
         <span>新建</span>
       </div>
-      <div class="item sync" :class="{ 'grey': isOffline }" @click="syncData(0)">
+      <div class="item sync" :class="{ 'grey': isOffline }" @click="syncData(30)">
         <div class="icon-sync infinite rotate" :class="{ animated: isSyncing }"></div>
         <span>同步</span>
       </div>
@@ -138,7 +138,6 @@ export default {
         delay = 1000
       }
       // if (isAuto) return
-      this.SET_IS_SYNCING(true)
       setTimeout(() => {
         this.pushData()
         .catch(err => {

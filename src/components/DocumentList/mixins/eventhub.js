@@ -1,5 +1,4 @@
 import * as _ from 'lodash'
-import { ipcRenderer } from 'electron'
 import fetchLocal from '../../../utils/fetchLocal'
 
 export default {
@@ -44,13 +43,11 @@ export default {
 
     handleFileRemove (file) {
       const { id } = file
-      ipcRenderer.send('fetch-local-data', {
-        tasks: ['updateLocalNote'],
-        params: [{
-          id: id,
-          trash: 'TRASH'
-        }],
-        from: ['DocumentList', 'remove-1', id]
+      fetchLocal('updateLocalNote', {
+        id: id,
+        trash: 'TRASH'
+      }).then(res => {
+        this.refreshList()
       })
     },
 

@@ -17,7 +17,6 @@
 </template>
 
 <script>
-import { ipcRenderer } from 'electron'
 import fetchLocal from '../utils/fetchLocal'
 
 export default {
@@ -29,12 +28,6 @@ export default {
       folderPid: '',
       notePid: ''
     }
-  },
-
-  created () {
-    ipcRenderer.on('fetch-local-data-response', (event, arg) => {
-      console.log('fetch-local-data-response', arg)
-    })
   },
 
   methods: {

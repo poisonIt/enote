@@ -46,7 +46,7 @@
 // import Tree from '@/components/Tree'
 import { Tree, TreeStore } from '@/components/Tree'
 import { mapGetters, mapActions } from 'vuex'
-import { ipcRenderer } from 'electron'
+import fetchLocal from '../../../utils/fetchLocal';
 
 const rootFolder = {
   name: '我的文件夹',
@@ -83,18 +83,6 @@ export default {
     }
   },
 
-  computed: {
-    ...mapGetters({
-      // allFileMap: 'GET_FILES',
-      // moveFileId: 'GET_MOVE_FILE',
-      // currentFolder: 'GET_CURRENT_FOLDER'
-    }),
-
-    // moveFile () {
-      // return this.allFileMap[this.moveFileId]
-    // }
-  },
-
   methods: {
     ...mapActions([
       'APPEND_FILE',
@@ -104,20 +92,17 @@ export default {
     init (tree, file) {
       this.targetFolder = null
       this.path = '/'
-      console.log('init', tree, file)
       this.folderTree = new TreeStore([tree])
       this.moveFile = file
     },
 
     handleSetCurrentFolder (node) {
       this.path = this.getPath(node)
-      console.log('handleSetCurrentFolder', node)
       this.targetFolder = node.data
       this.targetFolderNode = node
     },
 
     handleMove () {
-      console.log('handleMove', this.targetFolder, this.targetFolderNode, this.moveFile)
       if (!this.targetFolder) {
         return
       }
@@ -125,8 +110,6 @@ export default {
         this.targetFolder.id = '0'
       }
       const c = this.$refs.tree.model.store.map[this.moveFile.id]
-      console.log('handleMove-c', c)
-      // const t = this.$refs.tree.model.store.map[this.targetFolder.id]
       if (c.isTargetChild(this.targetFolderNode)) {
         return
       }
@@ -135,23 +118,16 @@ export default {
       if (this.moveFile.pid !== this.targetFolderNode.id &&
         this.moveFile.id !== this.targetFolderNode.id) {
         let taskName = this.moveFile.type === 'folder' ? 'updateLocalFolder' : 'updateLocalNote'
-        ipcRenderer.send('fetch-local-data', {
-          tasks: [taskName],
-          params: [{
-            id: this.moveFile.id,
-            pid: this.targetFolderNode.id
-          }],
-          from: ['Move']
+        fetchLocal(taskName, {
+          id: this.moveFile.id,
+          pid: this.targetFolderNode.id
+        }).then(res => {
+          this.$emit('handleMove', {
+            moveId: this.moveFile.id,
+            targetId: this.targetFolderNode.id
+          })
         })
       }
-
-
-      console.log('handleMove', this.$refs.tree.model)
-      this.$emit('handleMove', {
-        moveId: this.moveFile.id,
-        targetId: this.targetFolderNode.id
-      })
-      // this.init()
     },
 
     handleItemClick (node) {
@@ -185,7 +161,6 @@ export default {
     getPath (node) {
       let c = node
       let result = [c.name]
-      console.log('getPath', c)
       while (c.parent && c.parent.name !== 'root') {
         result.unshift(c.parent.name || '')
         c = c.parent

@@ -30,6 +30,7 @@ import {
   getUserInfo,
   getFriendList
 } from '../../../service'
+import fetchLocal from '../../../utils/fetchLocal'
 
 export default {
   name: 'FileTool',
@@ -185,11 +186,7 @@ export default {
         let userResp = await this.pullUserInfo(id_token, username, password)
         console.log('userResp', userResp)
         if (!userResp.userData) return
-        ipcRenderer.send('fetch-local-data', {
-          tasks: ['updateLocalUser'],
-          params: [userResp.userData],
-          from: 'FileTool'
-        })
+        fetchLocal('updateLocalUser', userResp.userData)
       } else {
         this.$Message.error(authenticateResp.data.returnMsg)
       }

@@ -57,6 +57,7 @@ import LocalDAO from '../../db/api'
 import * as LocalService from '../service/local'
 import { getLocalUserById } from '@/service/local'
 import { getAppConf, saveAppConf } from '@/tools/appConf'
+import fetchLocal from '../utils/fetchLocal'
 
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
@@ -287,10 +288,7 @@ export default {
     },
 
     deleteAll () {
-      ipcRenderer.send('fetch-local-data', {
-        tasks: ['deleteAll'],
-        from: 'Home',
-      })
+      fetchLocal('deleteAll')
     }
   }
 }

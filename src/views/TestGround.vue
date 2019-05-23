@@ -12,6 +12,7 @@
 
 <script>
 import { ipcRenderer } from 'electron'
+import { fetchLocal } from '../utils/communicate'
 
 export default {
   name: 'TestGround',
@@ -31,43 +32,60 @@ export default {
 
   methods: {
     getAllLocalFolder () {
-      ipcRenderer.send('fetch-local-data', {
-        tasks: ['getAllLocalFolder'],
-        from: 'Test'
-      })
+      fetchLocal(
+        'getAllLocalFolder',
+        'Test',
+        (res) => {
+          console.log('fetchLocal-getAllLocalFolder', res)
+        }
+      )
     },
 
     getLocalFolderByQuery () {
-      ipcRenderer.send('fetch-local-data', {
-        tasks: ['getLocalFolderByQuery'],
-        params: [{
-          trash: 'NORMAL'
-        }],
-        options: [
-          {
-            multi: true,
-            with_parent_folder: true
-          }
-        ],
-        from: 'Test',
+      // fetchLocal(
+      //   'getLocalFolderByQuery',
+      //   'Test',
+      //   { trash: 'NORMAL' },
+      //   {
+      //     multi: true,
+      //     with_parent_folder: true
+      //   },
+      //   (res) => {
+      //     console.log('fetchLocal-getLocalFolderByQuery', res)
+      //   }
+      // )
+      fetchLocal(
+        'getLocalFolderByQuery',
+        'Test',
+        { trash: 'NORMAL' },
+        {
+          multi: true,
+          with_parent_folder: true
+        }
+      ).then(res => {
+        console.log('fetchLocal-getLocalFolderByQuery-p', res)
       })
     },
 
     getLocalFolderById () {
-      ipcRenderer.send('fetch-local-data', {
-        tasks: ['getLocalFolderById'],
-        params: [{
-          id: this.folderId
-        }],
-        from: 'Test',
-      })
+      fetchLocal(
+        'getLocalFolderById',
+        'Test',
+        { id: this.folderId },
+        (res) => {
+          console.log('fetchLocal-getLocalFolderById', res)
+        }
+      )
     },
 
     getLocalTrashFolder () {
-      ipcRenderer.send('fetch-local-data', {
-        tasks: ['getLocalTrashFolder'],
-        from: 'Test',
-      })
+      fetchLocal(
+        'getLocalTrashFolder',
+        'Test',
+        (res) => {
+          console.log('fetchLocal-getLocalTrashFolder', res)
+        }
+      )
     },
 
     getLocalFolderByPid () {

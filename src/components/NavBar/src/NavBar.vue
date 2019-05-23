@@ -177,7 +177,6 @@ export default {
         if (e.data[0] === 'calcLocalData') {
           let newRootFolder = e.data[1]
           let newTagNav = e.data[2]
-          // _self.folderTree = new TreeStore([newRootFolder])
           _self.folderTree = new TreeStore([latestNav, newRootFolder, newTagNav, binNav])
           _self.$nextTick(() => {
             _self.$refs.tree.$children[0].click()
@@ -297,7 +296,6 @@ export default {
           id: res._id,
           type: 'folder'
         }, true)
-        this.$hub.dispatchHub('pushData', this)
       })
     },
 

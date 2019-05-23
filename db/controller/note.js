@@ -80,11 +80,7 @@ async function add (req) {
       if (pFolder && pFolder.remote_id) {
         data.remote_pid = pFolder.remote_id
       }
-      console.log('add', req, data)
       Note.insert(data, (err, note) => {
-        if (err) {
-          console.log('err:', err)
-        }
         docCtr.add({
           note_id: note._id,
           content: req.isTemp ? docTemp : (req.content || '')
@@ -368,8 +364,6 @@ async function getAllByPid (req) {
     querys.push({ remote_pid: remote_pid })
   }
 
-  console.log('getAllByPid', req, querys)
-
   return await getByQuery(
     querys,
     { multi: true, with_parent_folder: true }
@@ -438,14 +432,6 @@ async function getByQuery (params, opts) {
       notes.push(note)
     }
   }
-
-  // clear illegal data
-  // notes.forEach((note, index) => {
-  //   if (isIllegal(schemaKeys, note)) {
-  //     note.remove()
-  //     _.remove(notes, note)
-  //   }
-  // })
 
   if (opts.with_parent_folder) {
     notes = await Promise.all(notes.map(note => {

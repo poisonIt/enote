@@ -47,7 +47,6 @@ export default {
     getLocalFolderByQuery () {
       fetchLocal(
         'getLocalFolderByQuery',
-        'Test',
         { trash: 'NORMAL' },
         {
           multi: true,

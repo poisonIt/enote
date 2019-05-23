@@ -50,7 +50,6 @@ function add (req) {
 
   return new Promise((resolve, reject) => {
     Doc.insert(data, (err, docs) => {
-      console.log('add-doc-res', docs)
       resolve(docs)
     })
   })
@@ -100,9 +99,7 @@ function deleteAll () {
         })
       })
       Promise.all(p).then(() => {
-        // removeAll().then(() => {
-          resolve(docs.length)
-        // })
+        resolve(docs.length)
       })
     })
   })

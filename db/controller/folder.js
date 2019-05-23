@@ -1,4 +1,3 @@
-// import { folderDB } from './index.js'
 import * as _ from 'lodash'
 import { promisifyAll } from '../promisify'
 import { isIllegal } from '../tools'
@@ -73,12 +72,11 @@ async function add (req) {
       if (pFolder && pFolder.remote_id) {
         data.remote_pid = pFolder.remote_id
       }
-      Folder.insert(data, function (err, folders) {
+      Folder.insert(data, function (err, newFolder) {
         if (err) {
           reject(err)
         }
-        console.log('add-folder', data, folders)
-        resolve(folders)
+        resolve(newFolder)
       })
     })
   })
@@ -130,6 +128,7 @@ async function diffAddMulti (reqs) {
 
 // remove
 function removeAll () {
+  console.log('removeAll-folder')
   return new Promise((resolve, reject) => {
     Folder.find({}, (err, folders) => {
       folders.forEach(folder => {
@@ -141,12 +140,14 @@ function removeAll () {
 }
 
 async function removeById (req) {
+  console.log('removeById-folder')
   const { id } = req
   let folder = await getById({ id: id })
   folder && folder.remove()
 }
 
 async function removeAllDeleted () {
+  console.log('removeAllDeleted-folder')
   let folders = await getByQuery({ trash: 'DELETED' }, { multi: true })
 
   let p = folders.map(folder => {
@@ -183,7 +184,7 @@ function updateP (query, req, multi) {
       { multi: true },
       (err, num, newFolders) => {
         if (err) {
-          console.log(err)
+          reject(err)
         }
         resolve(newFolders)
       }
@@ -274,16 +275,6 @@ async function updateMulti (reqs) {
 // get
 async function getAll () {
   return await getByQuery({}, { multi: true })
-}
-
-function getAllByQuery (req) {
-  const { query } = req
-
-  return new Promise((resolve, reject) => {
-    Folder.find(query, (err, folders) => {
-      resolve(folders)
-    })
-  })
 }
 
 async function getAllByPid (req) {

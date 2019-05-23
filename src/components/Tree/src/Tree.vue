@@ -404,6 +404,7 @@ export default {
     drop(e) {
       if (!fromComp) return
       const oldParent = fromComp.model.parent
+      fromComp.editable = false
       fromComp.model.moveInto(this.model)
       this.isDragEnterNode = false
       var node = this.getRootNode()

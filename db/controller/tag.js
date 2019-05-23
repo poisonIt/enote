@@ -141,9 +141,7 @@ function update (req) {
         { $set: req },
         { multi: true },
         (err, num, newTag) => {
-          if (err) {
-            console.log('err', err)
-          }
+          reject(err)
           if (!newTag) {
             resolve(tag)
           } else {

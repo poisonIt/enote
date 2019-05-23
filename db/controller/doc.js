@@ -1,4 +1,5 @@
 import { getValid } from '../tools'
+import { promisifyAll } from '../promisify'
 import docModel from '../models/doc'
 import { LinvoDB } from '../index'
 import noteCtr from './note'
@@ -29,6 +30,7 @@ function createCollection (path) {
       default: true
     }
   })
+  promisifyAll(Doc)
 }
 
 // save

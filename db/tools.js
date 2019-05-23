@@ -7,7 +7,7 @@ export function isIllegal (keys, data) {
   let result = false
   for (let i = 0, len = keys.length; i < len; i++) {
     let key = keys[i]
-    if (_.isUndefined(data[key])) {
+    if (!data.hasOwnProperty(key)) {
       result = true
       break
     }

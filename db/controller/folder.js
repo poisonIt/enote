@@ -77,6 +77,7 @@ async function add (req) {
         if (err) {
           reject(err)
         }
+        console.log('add-folder', data, folders)
         resolve(folders)
       })
     })
@@ -336,12 +337,13 @@ async function getByQuery (params, opts) {
   }
 
   // clear illegal data
-  folders.forEach((folder, index) => {
-    if (isIllegal(schemaKeys, folder)) {
-      folder.remove()
-      _.remove(folders, folder)
-    }
-  })
+  // folders.forEach((folder, index) => {
+  //   if (isIllegal(schemaKeys, folder)) {
+  //     console.log('isIllegal', folder)
+  //     folder.remove()
+  //     _.remove(folders, folder)
+  //   }
+  // })
 
   if (opts.with_parent_folder) {
     folders = await Promise.all(folders.map(folder => {

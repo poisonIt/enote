@@ -1,5 +1,6 @@
 <template>
   <div>
+    folder:
     <button @click="getAllLocalFolder">getAllLocalFolder</button>
     <button @click="getLocalFolderByQuery">getLocalFolderByQuery</button>
     <input type="text" v-model="folderId" placeholder="folderId">
@@ -7,12 +8,17 @@
     <button @click="getLocalTrashFolder">getLocalTrashFolder</button>
     <input type="text" v-model="folderPid" placeholder="folderPid">
     <button @click="getLocalFolderByPid">getLocalFolderByPid</button>
+
+    note:
+    <button @click="getAllLocalNote">getAllLocalNote</button>
+    <input type="text" v-model="notePid" placeholder="notePid">
+    <button @click="getLocalNoteByPid">getLocalNoteByPid</button>
   </div>
 </template>
 
 <script>
 import { ipcRenderer } from 'electron'
-import { fetchLocal } from '../utils/communicate'
+import fetchLocal from '../utils/fetchLocal'
 
 export default {
   name: 'TestGround',
@@ -20,7 +26,8 @@ export default {
   data () {
     return {
       folderId: '',
-      folderPid: ''
+      folderPid: '',
+      notePid: ''
     }
   },
 
@@ -32,13 +39,9 @@ export default {
 
   methods: {
     getAllLocalFolder () {
-      fetchLocal(
-        'getAllLocalFolder',
-        'Test',
-        (res) => {
-          console.log('fetchLocal-getAllLocalFolder', res)
-        }
-      )
+      fetchLocal('getAllLocalFolder').then(res => {
+        console.log('fetchLocal-getAllLocalFolder-p', res)
+      })
     },
 
     getLocalFolderByQuery () {
@@ -89,12 +92,26 @@ export default {
     },
 
     getLocalFolderByPid () {
-      ipcRenderer.send('fetch-local-data', {
-        tasks: ['getLocalFolderByPid'],
-        params: [{
-          pid: this.folderPid
-        }],
-        from: 'Test',
+      fetchLocal(
+        'getLocalFolderByPid',
+        { pid: this.folderPid },
+      ).then(res => {
+        console.log('fetchLocal-getLocalFolderByPid-p', res)
+      })
+    },
+
+    getAllLocalNote () {
+      fetchLocal('getAllLocalNote').then(res => {
+        console.log('fetchLocal-getAllLocalNote-p', res)
+      })
+    },
+
+    getLocalNoteByPid () {
+      fetchLocal(
+        'getLocalFolderByPid',
+        { pid: this.notePid },
+      ).then(res => {
+        console.log('fetchLocal-getLocalFolderByPid-p', res)
       })
     }
   }

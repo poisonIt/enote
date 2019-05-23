@@ -530,20 +530,15 @@ ipcMain.on('fetch-user-data', (event, arg) => {
 ipcMain.on('fetch-local', (event, arg) => {
   taskId++
   let option = arg.options || {}
-  let p
+  let args = [option]
   if (arg.params) {
-    p = LocalService[arg.taskName](arg.params, option).then(res => {
-      arg.res = res
-      arg.event = event
-      sendLocalRes(arg)
-    })
-  } else {
-    p = LocalService[arg.taskName](option).then(res => {
-      arg.res = res
-      arg.event = event
-      sendLocalRes(arg)
-    })
+    args.unshift(arg.params)
   }
+
+  LocalService[arg.taskName].call(this, ...args).then(res => {
+    arg.res = res
+    event.sender.send('fetch-local-response', arg)
+  })
 })
 
 ipcMain.on('fetch-local-data', (event, arg) => {
@@ -581,19 +576,6 @@ function connectDatabase () {
       })
     })
   })
-}
-
-function sendLocalRes (arg) {
-  if (arg.from === 'Preview') {
-    previewWin && previewWin.webContents.send('fetch-local-response', arg)
-    return
-  }
-  if (arg.from === 'Test') {
-    testWin && testWin.webContents.send('fetch-local-response', arg)
-    return
-  }
-  win && win.webContents.send('fetch-local-response', arg)
-  loginWin && loginWin.webContents.send('fetch-local-response', arg)
 }
 
 function sendLocalDataRes (arg) {

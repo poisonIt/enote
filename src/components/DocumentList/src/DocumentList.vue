@@ -73,6 +73,7 @@ import * as _ from 'lodash'
 import dayjs from 'dayjs'
 import mixins from '../mixins'
 import { mapGetters, mapState, mapActions } from 'vuex'
+import fetchLocal from '../../../utils/fetchLocal'
 
 import SearchBar from '@/components/SearchBar'
 import Loading from '@/components/Loading'
@@ -310,35 +311,32 @@ export default {
       this.selectFile(-1)
       let localFiles = [[], []]
       if (nav.type === 'latest') {
-        ipcRenderer.send('fetch-local-data', {
-          tasks: ['getAllLocalFolder', 'getAllLocalNote'],
-          from: 'DocumentList'
+        fetchLocal('getAllLocalFolder').then(folders => {
+          fetchLocal('getAllLocalNote').then(notes => {
+            this.handleDataFetched([folders, notes])
+          })
         })
       } else if (nav.type === 'folder') {
-        ipcRenderer.send('fetch-local-data', {
-          tasks: ['getLocalFolderByPid', 'getLocalNoteByPid'],
-          params: [{
-            pid: nav._id || nav.id || '0',
-            remote_pid: nav.remote_id
-          },
-          {
-            pid: nav._id || nav.id || '0',
-            remote_pid: nav.remote_id
-          }],
-          from: 'DocumentList',
+        let params = {
+          pid: nav._id || nav.id || '0',
+          remote_pid: nav.remote_id
+        }
+        fetchLocal('getLocalFolderByPid', params).then(folders => {
+          fetchLocal('getLocalNoteByPid', params).then(notes => {
+            this.handleDataFetched([folders, notes])
+          })
         })
       } else if (nav.type === 'tag') {
-        ipcRenderer.send('fetch-local-data', {
-          tasks: ['getLocalTagNote'],
-          params: [
-            { tags: this.selectedTags}
-          ],
-          from: 'DocumentList',
+        fetchLocal('getLocalTagNote', {
+          tags: this.selectedTags
+        }).then(notes => {
+          this.handleDataFetched([[], notes])
         })
       } else if (nav.type === 'bin') {
-        ipcRenderer.send('fetch-local-data', {
-          tasks: ['getLocalTrashFolder', 'getLocalTrashNote'],
-          from: 'DocumentList',
+        fetchLocal('getLocalTrashFolder').then(folders => {
+          fetchLocal('getLocalTrashNote').then(notes => {
+            this.handleDataFetched([folders, notes])
+          })
         })
       }
     },
@@ -476,48 +474,38 @@ export default {
     },
 
     handleStickTop () {
-      ipcRenderer.send('fetch-local-data', {
-        tasks: ['updateLocalNote'],
-        params: [{
-          id: this.popupedFile.file_id,
-          top: true
-        }],
-        from: ['DocumentList', 'stickTop', this.popupedFile.file_id]
+      this.selectedIdCache = this.popupedFile.rawData._id
+      fetchLocal('updateLocalNote', {
+        id: this.popupedFile.file_id,
+        top: true
+      }).then(res => {
+        this.refreshList()
       })
     },
 
     handleCancelStickTop () {
-      ipcRenderer.send('fetch-local-data', {
-        tasks: ['updateLocalNote'],
-        params: [{
-          id: this.popupedFile.file_id,
-          top: false
-        }],
-        from: ['DocumentList', 'cancelStickTop', this.popupedFile.file_id]
+      this.selectedIdCache = this.popupedFile.rawData._id
+      fetchLocal('updateLocalNote', {
+        id: this.popupedFile.file_id,
+        top: false
+      }).then(res => {
+        this.refreshList()
       })
     },
 
     handleNewNote (isTemp) {
-      ipcRenderer.send('fetch-local-data', {
-        tasks: ['addLocalNote'],
-        params: [{
-          title: '无标题笔记',
-          pid: this.popupedFile.file_id
-        }],
-        from: 'DocumentList'
+      let pid = this.popupedFile.file_id
+      fetchLocal('addLocalNote', {
+        title: '无标题笔记',
+        pid: pid,
+        isTemp: isTemp
+      }).then(res => {
+        this.$root.$navTree.select(pid)
       })
     },
 
     handleNewTemplateNote () {
-      ipcRenderer.send('fetch-local-data', {
-        tasks: ['addLocalNote'],
-        params: [{
-          title: '无标题笔记',
-          pid: this.popupedFile.file_id,
-          isTemp: true
-        }],
-        from: 'DocumentList'
-      })
+      this.handleNewNote(true)
     },
 
     handleRename () {
@@ -541,15 +529,16 @@ export default {
     },
 
     handleRemove () {
-      console.log('handleRemove', this.popupedFile)
+      let fileId = this.popupedFile.file_id
       let taskName = this.popupedFile.type === 'folder' ? 'updateLocalFolder' : 'updateLocalNote'
-      ipcRenderer.send('fetch-local-data', {
-        tasks: [taskName],
-        params: [{
-          id: this.popupedFile.file_id,
-          trash: 'TRASH'
-        }],
-        from: ['DocumentList', 'remove', this.popupedFile.file_id]
+      fetchLocal(taskName, {
+        id: fileId,
+        trash: 'TRASH'
+      }).then(res => {
+        if (taskName === 'updateLocalFolder') {
+          this.$hub.dispatchHub('deleteNavNode', this, fileId)
+        }
+        this.refreshList()
       })
     },
     
@@ -562,24 +551,22 @@ export default {
 
     handleShare () {
       let idx = _.findIndex(this.fileList, { _id: this.popupedFile.file_id} )
-      console.log('handleShare', this.popupedFile, idx)
       this.selectFile(idx)
       this.TOGGLE_SHOW_SHARE_PANEL(true)
-      // this.$hub.dispatchHub('shareFile', this, this.popupedFile.file_id)
     },
 
     handleResume () {
       console.log('handleResume', this.popupedFile)
       this.trashFileCache = this.fileList.map(file => file._id)
       this.navNeedUpdate = true
+      let fileId = this.popupedFile.file_id
       let taskName = this.popupedFile.type === 'folder' ? 'updateLocalFolder' : 'updateLocalNote'
-      ipcRenderer.send('fetch-local-data', {
-        tasks: [taskName],
-        params: [{
-          id: this.popupedFile.file_id,
-          trash: 'NORMAL'
-        }],
-        from: ['DocumentList', 'resume', this.popupedFile.file_id]
+
+      fetchLocal(taskName, {
+        id: fileId,
+        trash: 'NORMAL'
+      }).then(res => {
+        this.refreshList()
       })
     },
 

@@ -75,19 +75,20 @@ function saveAll (req) {
 async function add (req) {
   let data = noteModel(req)
 
-  if (req.hasOwnProperty('pid') && !req.hasOwnProperty('remote_pid')) {
-    let folder = await folderCtr.getById({ id: req.pid })
-    data.remote_pid = folder ? folder.remote_id : '0'
-  }
-
   return new Promise((resolve, reject) => {
-    Note.insert(data, (err, note) => {
-      docCtr.add({
-        note_id: note._id,
-        content: req.isTemp ? docTemp : (req.content || '')
-      }).then(() => {
-        folderCtr.getById({ id: note.pid }).then(folder => {
-          note.folder_title = folder ? folder.title : '我的文件夹'
+    folderCtr.getById({ id: req.pid }).then(pFolder => {
+      if (pFolder && pFolder.remote_id) {
+        data.remote_pid = pFolder.remote_id
+      }
+      console.log('add', req, data)
+      Note.insert(data, (err, note) => {
+        if (err) {
+          console.log('err:', err)
+        }
+        docCtr.add({
+          note_id: note._id,
+          content: req.isTemp ? docTemp : (req.content || '')
+        }).then(() => {
           resolve(note)
         })
       })
@@ -356,135 +357,6 @@ function addTag (req) {
 }
 
 // get
-function getAll () {
-  return new Promise((resolve, reject) => {
-    Note.find({}, (err, notes) => {
-      console.log('getAll-note', notes)
-      let p = notes.map(note => {
-        return new Promise((resolve, reject) => {
-          folderCtr.getById({ id: note.pid }).then(folder => {
-            if (!folder) {
-              if (note.remote_pid) {
-                folderCtr.getByQuery({ remote_id: note.remote_pid }, (err, p) => {
-                  if (p) {
-                    update({ id: note._id, pid: p._id }).then(() => {
-                      note.folder_title = p.title
-                      note.pid = p._id
-                      resolve(note)
-                    })
-                  } else {
-                    if (folder.pid !== '0') {
-                      update({ id: note._id, pid: '0' }).then(() => {
-                        note.folder_title = '我的文件夹'
-                        note.pid = '0'
-                        resolve(note)
-                      })
-                    } else {
-                      note.folder_title = '我的文件夹'
-                      resolve(note)
-                    }
-                  }
-                })
-              } else {
-                if (note.pid !== '0') {
-                  update({ id: note._id, pid: '0' }).then(() => {
-                    note.folder_title = '我的文件夹'
-                    note.pid = '0'
-                    resolve(note)
-                  })
-                } else {
-                  note.folder_title = '我的文件夹'
-                  resolve(note)
-                }
-              }
-            } else {
-              note.folder_title = folder.title
-              resolve(note)
-            }
-          })
-        })
-      })
-      Promise.all(p).then(res => {
-        resolve(res)
-      })
-    })
-  })
-}
-
-// async function getAllByQuery (req) {
-//   const { query, with_doc, width_folder_title } = req
-
-//   return await getByQuery(query, { multi: true, with_doc: with_doc })
-
-//   return new Promise((resolve, reject) => {
-//     Note.find(query, (err, notes) => {
-//       let p = []
-//       if (with_doc) {
-//         p.concat(notes.map((note, index) => {
-//           return new Promise((resolve, reject) => {
-//             docCtr.getByNoteId({ note_id: note._id }).then(doc => {
-//               notes[index].content = doc.content
-//               resolve()
-//             })
-//           })
-//         }))
-//       }
-
-//       if (width_folder_title) {
-//         p.concat(notes.map((note, index) => {
-//           return new Promise((resolve, reject) => {
-//             folderCtr.getById({ id: note.pid }).then(folder => {
-//               if (!folder) {
-//                 if (note.remote_pid) {
-//                   folderCtr.getByQuery({ remote_id: note.remote_pid }, (err, p) => {
-//                     if (p) {
-//                       update({ id: note._id, pid: p._id }).then(() => {
-//                         notes[index].folder_title = p.title
-//                         notes[index].pid = p._id
-//                         resolve()
-//                       })
-//                     } else {
-//                       if (folder.pid !== '0') {
-//                         update({ id: note._id, pid: '0' }).then(() => {
-//                           notes[index].folder_title = '我的文件夹'
-//                           notes[index].pid = '0'
-//                           resolve()
-//                         })
-//                       } else {
-//                         notes[index].folder_title = '我的文件夹'
-//                         resolve()
-//                       }
-//                     }
-//                   })
-//                 } else {
-//                   if (note.pid !== '0') {
-//                     update({ id: note._id, pid: '0' }).then(() => {
-//                       notes[index].folder_title = '我的文件夹'
-//                       notes[index].pid = '0'
-//                       resolve()
-//                     })
-//                   } else {
-//                     notes[index].folder_title = '我的文件夹'
-//                     resolve()
-//                   }
-//                 }
-//               } else {
-//                 notes[index].folder_title = folder.title
-//                 resolve()
-//               }
-//             })
-//           })
-//         }))
-//       }
-//       console.log('p', p.length) // 0
-
-//       Promise.all(p).then(() => {
-//         resolve(notes)
-//       })
-//     })
-//   })
-// }
-
 async function getAllByPid (req) {
   const { pid, remote_pid } = req
 
@@ -495,6 +367,8 @@ async function getAllByPid (req) {
   if (!_.isUndefined(remote_pid)) {
     querys.push({ remote_pid: remote_pid })
   }
+
+  console.log('getAllByPid', req, querys)
 
   return await getByQuery(
     querys,
@@ -559,12 +433,12 @@ async function getByQuery (params, opts) {
   }
 
   // clear illegal data
-  notes.forEach((note, index) => {
-    if (isIllegal(schemaKeys, note)) {
-      note.remove()
-      _.remove(notes, note)
-    }
-  })
+  // notes.forEach((note, index) => {
+  //   if (isIllegal(schemaKeys, note)) {
+  //     note.remove()
+  //     _.remove(notes, note)
+  //   }
+  // })
 
   if (opts.with_parent_folder) {
     notes = await Promise.all(notes.map(note => {
@@ -623,7 +497,6 @@ export default {
   updateRemoteTagIds,
   trashAll,
   addTag,
-  getAll,
   getAllByPid,
   getById,
   getTrash,

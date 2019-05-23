@@ -424,7 +424,14 @@ async function getByQuery (params, opts) {
   
   let notes = []
   if (opts.multi) {
-    notes = await Note.find(query).execAsync()
+    let queryFunc = Note.find(query)
+    if (opts.limit) {
+      queryFunc = queryFunc.limit(opts.limit)
+    }
+    if (opts.sort) {
+      queryFunc = queryFunc.sort(opts.sort)
+    }
+    let notes = await queryFunc.execAsync()
   } else {
     let note = await Note.findOne(query).execAsync()
     if (note) {

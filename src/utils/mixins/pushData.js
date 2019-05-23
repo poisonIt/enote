@@ -373,6 +373,7 @@ export default {
     },
 
     async pushData () {
+      return
       if (this.isSyncing) return
       this.SET_IS_SYNCING(true)
       this.pushImgs()

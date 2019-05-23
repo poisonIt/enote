@@ -39,24 +39,12 @@ export default {
 
   methods: {
     getAllLocalFolder () {
-      fetchLocal('getAllLocalFolder').then(res => {
+      fetchLocal('getLocalFolderByQuery', {}, { multi: true }).then(res => {
         console.log('fetchLocal-getAllLocalFolder-p', res)
       })
     },
 
     getLocalFolderByQuery () {
-      // fetchLocal(
-      //   'getLocalFolderByQuery',
-      //   'Test',
-      //   { trash: 'NORMAL' },
-      //   {
-      //     multi: true,
-      //     with_parent_folder: true
-      //   },
-      //   (res) => {
-      //     console.log('fetchLocal-getLocalFolderByQuery', res)
-      //   }
-      // )
       fetchLocal(
         'getLocalFolderByQuery',
         'Test',
@@ -73,22 +61,16 @@ export default {
     getLocalFolderById () {
       fetchLocal(
         'getLocalFolderById',
-        'Test',
         { id: this.folderId },
-        (res) => {
-          console.log('fetchLocal-getLocalFolderById', res)
-        }
-      )
+      ).then(res => {
+        console.log('fetchLocal-getLocalFolderById', res)
+      })
     },
 
     getLocalTrashFolder () {
-      fetchLocal(
-        'getLocalTrashFolder',
-        'Test',
-        (res) => {
-          console.log('fetchLocal-getLocalTrashFolder', res)
-        }
-      )
+      fetchLocal('getLocalTrashFolder').then(res => {
+        console.log('fetchLocal-getLocalTrashFolder', res)
+      })
     },
 
     getLocalFolderByPid () {

@@ -328,7 +328,14 @@ async function getByQuery (params, opts) {
   
   let folders = []
   if (opts.multi) {
-    folders = await Folder.find(query).execAsync()
+    let queryFunc = Folder.find(query)
+    if (opts.limit) {
+      queryFunc = queryFunc.limit(opts.limit)
+    }
+    if (opts.sort) {
+      queryFunc = queryFunc.sort(opts.sort)
+    }
+    let folders = await queryFunc.execAsync()
   } else {
     let folder = await Folder.findOne(query).execAsync()
     if (folder) {

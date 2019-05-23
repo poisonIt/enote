@@ -8,7 +8,6 @@
       v-bind:default-expanded="true"
       :flat-ids="['0', 'latest', 'share', 'tag', 'bin']"
       @contextmenu="handleContextmenu"
-      @add-node="handleAddNode"
       @set-current="handleSetCurrentFolder"
       @select="handleSelect"
       @change-name-blur="handleChangeNodeName"
@@ -56,7 +55,6 @@
 
 <script>
 import { ipcRenderer } from 'electron'
-import { cloneDeep } from 'lodash'
 import { mapActions, mapGetters } from 'vuex'
 import {
   folderMenu,
@@ -65,17 +63,10 @@ import {
   binMenu,
   tagMenu
 } from '../Menu'
-import { GenNonDuplicateID } from '@/utils/utils'
+import fetchLocal from '../../../utils/fetchLocal'
 import mixins from '../mixins'
 import { Tree, TreeStore, TreeNode } from '@/components/Tree'
-import LocalDAO from '../../../../db/api'
-import {
-  getAllLocalFolder,
-  addLocalFolder,
-  updateLocalFolder,
-  addLocalNote
-} from '@/service/local'
-// import folderData from '../folderData'
+
 const latestNav = {
   name: '最新文档',
   id: 'latest',
@@ -163,36 +154,17 @@ export default {
       ],
       nodeInput: '',
       folderIndex: 1,
-      // selectedTags: [],
       folderTree: new TreeStore([rootFolder])
     }
   },
 
   computed: {
     ...mapGetters({
-      isDBReady: 'GET_DB_READY',
       viewType: 'GET_VIEW_TYPE',
       viewFileType: 'GET_VIEW_FILE_TYPE',
       currentFile: 'GET_CURRENT_FILE',
       duplicateFile: 'GET_DUPLICATE_FILE'
-      // allTags: 'GET_ALL_TAGS'
     })
-  },
-
-  watch: {
-    isDBReady (val) {
-      console.log('watch-isDBReady', val)
-    },
-
-    // allTags (val) {
-    //   console.log('allTags', val)
-    //   this.updateTags(val)
-    // },
-
-    // selectedTags (val) {
-      // this.SET_VIEW_NAME(val.map(item => item.data.title).join('、'))
-      // this.SET_SELECTED_TAGS(val.map(item => item.data.id))
-    // }
   },
 
   mounted () {
@@ -223,41 +195,6 @@ export default {
           this.$worker.postMessage(['calcLocalData', arg.res])
         }
 
-        // add folder
-        if (arg.tasks.indexOf('addLocalFolder') > -1) {
-          let res = arg.res[arg.tasks.indexOf('addLocalFolder')]
-          console.log('aaa', this.popupedNode)
-          this.popupedNode.addChild({
-            id: arg.res[0]._id,
-            type: 'folder'
-          }, true)
-          this.$hub.dispatchHub('pushData', this)
-        }
-
-        // add note
-        if (arg.tasks.indexOf('addLocalNote') > -1) {
-          let res = arg.res[arg.tasks.indexOf('addLocalNote')]
-          this.$hub.dispatchHub('addFile', this, res)
-          this.$hub.dispatchHub('pushData', this)
-        }
-
-        // update folder
-        if (arg.tasks.indexOf('updateLocalFolder') > -1) {
-          if (arg.from[1] === 'delete') {
-            this.popupedNode.model.hidden = true
-            this.setCurrentFolder('bin')
-          }
-          if (arg.from[1] === 'renameFolder') {
-            if (this.popupedNode.model.parent === this.$refs.tree.model.store.currentNode) {
-              this.$hub.dispatchHub('renameListFile', this, {
-                id: this.popupedNode.model.data._id,
-                title: this.popupedNode.model.name
-              })
-            }
-          }
-          this.$hub.dispatchHub('pushData', this)
-        }
-
         // update tag
         if (arg.tasks.indexOf('updateLocalTag') > -1) {
           if (arg.from[1] === 'renameTag') {
@@ -268,42 +205,6 @@ export default {
             } else {
               this.TOGGLE_SHOW_TAG_HANDLER(false)
             }
-          }
-          this.$hub.dispatchHub('pushData', this)
-        }
-
-        if (arg.tasks.indexOf('deleteAllTrash') > -1) {
-          if (arg.from[1] === 'clearBin') {
-            this.setCurrentFolder('bin')
-            ipcRenderer.send('fetch-local-data', {
-              tasks: ['getLocalTrashFolder', 'getLocalTrashNote'],
-              from: 'DocumentList',
-            })
-            if (arg.res[arg.tasks.indexOf('deleteAllTrash')]) {
-              let nodes = arg.res[arg.tasks.indexOf('deleteAllTrash')]
-                .filter(item => item.type === 'folder')
-              let map = this.$refs.tree.model.store.map
-              nodes.forEach(node => {
-                map[node._id].remove()
-              })
-            }
-          }
-          this.$hub.dispatchHub('pushData', this)
-        }
-
-        if (arg.tasks.indexOf('resumeAllTrash') > -1) {
-          if (arg.from[1] === 'resumeBin') {
-            this.setCurrentFolder('bin')
-            ipcRenderer.send('fetch-local-data', {
-              tasks: ['getLocalTrashFolder', 'getLocalTrashNote'],
-              from: 'DocumentList',
-            })
-            let nodes = arg.res[arg.tasks.indexOf('resumeAllTrash')]
-              .filter(item => item.type === 'folder')
-            let map = this.$refs.tree.model.store.map
-            nodes.forEach(node => {
-              map[node._id].hidden = false
-            })
           }
           this.$hub.dispatchHub('pushData', this)
         }
@@ -324,12 +225,10 @@ export default {
     ]),
 
     handleSetCurrentFolder (node) {
-      console.log('handleSetCurrentFolder', node)
       this.SET_CURRENT_NAV(node.data)
     },
 
     handleSelect (node) {
-      console.log('handleSelect', node)
       this.TOGGLE_SELECTED_TAG({
         id: node.data._id
       })
@@ -341,9 +240,7 @@ export default {
 
     handleContextmenu (nodeInstance) {
       this.popupedNode = nodeInstance
-      // nodeInstance.click()
       const d = nodeInstance.model
-      console.log('handleContextmenu-11', nodeInstance, nodeInstance.model)
       if (d.data.type === 'folder') {
         if (d.id === '0') {
           this.popupNativeMenu(this.nativeMenus[0])
@@ -365,14 +262,14 @@ export default {
 
     handleNewNote (isTemp) {
       let currentNode = this.$refs.tree.model.store.currentNode
-      ipcRenderer.send('fetch-local-data', {
-        tasks: ['addLocalNote'],
-        params: [{
-          title: '无标题笔记',
-          pid: currentNode.id || currentNode._id || currentNode.data._id || '0',
-          isTemp: isTemp
-        }],
-        from: ['NavBar']
+
+      fetchLocal('addLocalNote', {
+        title: '无标题笔记',
+        pid: currentNode.id || currentNode._id || currentNode.data._id || '0',
+        isTemp: isTemp
+      }).then(res => {
+        console.log('addLocalNote', res)
+        this.$hub.dispatchHub('addFile', this, res)
       })
     },
 
@@ -381,22 +278,27 @@ export default {
     },
 
     handleNewFolder (isCurrent) {
+      let node
       if (isCurrent) {
         let currentNode = this.$refs.tree.model.store.currentNode.instance
         if (!currentNode.model.parent.parent && currentNode.id !== '0') {
           return
         }
-        this.popupedNode = currentNode
+        node = currentNode
+      } else {
+        node = this.popupedNode
       }
-      let nodeData = this.popupedNode.model.data
-      ipcRenderer.send('fetch-local-data', {
-        tasks: ['addLocalFolder'],
-        params: [{ pid: nodeData.id || nodeData._id || '0' }],
-        from: ['NavBar']
-      })
-    },
+      let nodeData = node.model.data
 
-    handleAddNode (node) {
+      fetchLocal('addLocalFolder', {
+        pid: nodeData.id || nodeData._id || '0'
+      }).then(res => {
+        node.addChild({
+          id: res._id,
+          type: 'folder'
+        }, true)
+        this.$hub.dispatchHub('pushData', this)
+      })
     },
 
     handleAddTagNode (tagData) {
@@ -429,24 +331,29 @@ export default {
     },
 
     handleChangeNodeName (node) {
-      console.log('handleChangeNodeName', node)
       if (node.type === 'select') {
-        ipcRenderer.send('fetch-local-data', {
-          tasks: ['updateLocalTag'],
-          params: [{
-            id: node.data._id || node.data.id || node.id,
-            name: node.name
-          }],
-          from: ['NavBar', 'renameTag']
+        fetchLocal('updateLocalTag', {
+          id: node.data._id || node.data.id || node.id,
+          name: node.name
+        }).then(res => {
+          if (res.name !== node.name) {
+            node.name = res.name
+            node.data.name = res.name
+          } else {
+            this.TOGGLE_SHOW_TAG_HANDLER(false)
+          }
         })
       } else {
-        ipcRenderer.send('fetch-local-data', {
-          tasks: ['updateLocalFolder'],
-          params: [{
-            id: node.data._id || node.data.id || node.id,
-            title: node.name
-          }],
-          from: ['NavBar', 'renameFolder']
+        fetchLocal('updateLocalFolder', {
+          id: node.data._id || node.data.id || node.id,
+          title: node.name
+        }).then(res => {
+          if (node.parent === this.$refs.tree.model.store.currentNode) {
+            this.$hub.dispatchHub('renameListFile', this, {
+              id: node.model.data._id,
+              title: node.model.name
+            })
+          }
         })
       }
     },
@@ -456,16 +363,10 @@ export default {
     },
 
     handleNodeDrop ({node, oldParent}) {
-      console.log('handleNodeDrop', node, oldParent, node.id, oldParent.id)
       if (node.pid !== oldParent.id) {
-        console.log('move')
-        ipcRenderer.send('fetch-local-data', {
-          tasks: ['updateLocalFolder'],
-          params: [{
-            id: node.data._id || node.data.id || node.id,
-            pid: node.pid
-          }],
-          from: ['NavBar']
+        fetchLocal('updateLocalFolder', {
+          id: node.data._id || node.data.id || node.id,
+          pid: node.pid
         })
       }
     },
@@ -479,7 +380,6 @@ export default {
         },
         tree: this.$refs.tree.model.children[1]
       })
-      // this.TOGGLE_SHOW_MOVE_PANEL(this.popupedNode.model.data._id)
     },
 
     handleDuplicate () {
@@ -487,50 +387,58 @@ export default {
     },
 
     handlePaste () {
-      console.log('handlePaste', this.duplicateFile, this.popupedNode.model.data)
+      let data = this.popupedNode.model.data
+      let shouldUpdateList = (this.popupedNode.model === this.$refs.tree.model.store.currentNode)
+
       if (this.duplicateFile.type === 'note') {
-        ipcRenderer.send('fetch-local-data', {
-          tasks: ['duplicateLocalNote'],
-          params: [{
-            id: this.duplicateFile._id,
-            pid: this.popupedNode.model.data.id || this.popupedNode.model.data._id
-          }],
-          from: ['DocumentList', 'duplicate', this.duplicateFile._id]
+        fetchLocal('duplicateLocalNote', {
+          id: this.duplicateFile._id,
+          pid: data.id || data._id
+        }).then(res => {
+          if (shouldUpdateList) {
+            this.$hub.dispatchHub('refreshList', this)
+          }
         })
       }
     },
 
     handleDelete () {
-      console.log('handleDelete', this.popupedNode)
       let node = this.popupedNode.model
-      ipcRenderer.send('fetch-local-data', {
-        tasks: ['updateLocalFolder'],
-        params: [{
-          id: node.data._id || node.data.id || node.id,
-          trash: 'TRASH'
-        }],
-        from: ['NavBar', 'delete']
+
+      fetchLocal('updateLocalFolder', {
+        id: node.data._id || node.data.id || node.id,
+        trash: 'TRASH'
+      }).then(res => {
+        node.hidden = true
+        this.setCurrentFolder('bin')
       })
     },
 
     handleClearBin () {
-      console.log('clearBin')
-      ipcRenderer.send('fetch-local-data', {
-        tasks: ['deleteAllTrash'],
-        from: ['NavBar', 'clearBin']
+      let node = this.popupedNode.model
+
+      fetchLocal('deleteAllTrash').then(res => {
+        this.$hub.dispatchHub('refreshList', this)
+        let nodes = res.filter(item => item.type === 'folder')
+        let map = this.$refs.tree.model.store.map
+        nodes.forEach(node => {
+          map[node._id].remove()
+        })
       })
     },
 
     handleResumeBin () {
-      console.log('handleResumeBin')
-      ipcRenderer.send('fetch-local-data', {
-        tasks: ['resumeAllTrash'],
-        from: ['NavBar', 'resumeBin']
+      fetchLocal('resumeAllTrash').then(res => {
+        this.$hub.dispatchHub('refreshList', this)
+        let nodes = res.filter(item => item.type === 'folder')
+        let map = this.$refs.tree.model.store.map
+        nodes.forEach(node => {
+          this.$set(map[node._id], 'hidden', false)
+        })
       })
     },
 
     handleRenameTag () {
-      console.log('handleRenameTag', this.popupedNode)
       this.popupedNode.setEditable()
     },
 
@@ -566,10 +474,6 @@ export default {
       }
       return `${pre} ${node.store.currentNode === node ? 'highlight' : ''}`
     },
-
-    // navIcon (node) {
-    //   return 'icon-' + node.data.link
-    // },
 
     handleClickMini (link) {
       this.$hub.dispatchHub('clickNavMini', this, link)

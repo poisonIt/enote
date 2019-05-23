@@ -16,7 +16,8 @@
         </div>
         <div class="button-group" style="position: relative;top: 20px;">
           <div class="button primary" @click="deleteAllNote">清空笔记</div>
-          <div class="button primary" @click="deleteAllData">清空所有数据</div>
+          <div class="button primary" @click="deleteAllData">删除所有数据</div>
+          <div class="button primary" @click="removeAllData">清空所有数据</div>
         </div>
       </div>
       <div class="button-group" slot="footer">
@@ -31,6 +32,7 @@
 import { mapActions, mapGetters } from 'vuex'
 import { getAppConf, saveAppConf } from '@/tools/appConf'
 import { ipcRenderer } from 'electron'
+import fetchLocal from '../../utils/fetchLocal'
 
 export default {
   name: 'SettingPanel',
@@ -81,9 +83,15 @@ export default {
     },
 
     deleteAllData () {
-      ipcRenderer.send('fetch-local-data', {
-        tasks: ['deleteAll'],
-        from: 'Setting',
+      fetchLocal('deleteAll').then((res) => {
+        this.$Message.success('删除成功')
+      })
+    },
+
+    removeAllData () {
+      fetchLocal('removeAll').then((res) => {
+        console.log('removeAll', res)
+        this.$Message.success('清空成功')
       })
     }
   }

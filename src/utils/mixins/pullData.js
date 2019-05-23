@@ -74,6 +74,7 @@ export default {
 
     async pullData (noteVer) {
       console.log('pullData', noteVer)
+      return
       return new Promise((resolve, reject) => {
         let resp = this.runPullTasks(noteVer)
         console.log('pullData-resp', resp)

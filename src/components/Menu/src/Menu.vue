@@ -25,6 +25,7 @@
 
 <script>
 import mixins from '../mixins'
+import * as _ from 'lodash'
 
 export default {
   name: 'Menu',
@@ -82,6 +83,13 @@ export default {
     }
   },
 
+  watch: {
+    data (val) {
+      this.trdata = val
+      this.initGroups()
+    }
+  },
+
   created () {
     this.trdata = this.data
     this.initGroups()
@@ -94,12 +102,14 @@ export default {
         value: '',
         items: []
       }
+      let valTemp
       let uid = 0
       function pushGroup (item) {
         group.items.push(item)
         item.groupId = uid
       }
       function addGroup (groups) {
+        group.value = valTemp
         groups[uid] = group
         uid++
         group = {
@@ -109,8 +119,13 @@ export default {
       }
       for (let i = 0, len = this.trdata.length; i < len; i++) {
         let item = this.trdata[i]
+        if (item.actived) {
+          valTemp = item.value
+        }
         let prevItem = this.trdata[i - 1]
-        item.actived = false
+        if (_.isUndefined(item.actived)) {
+          item.actived = false
+        }
         item.groupId = null
         item.type = item.type || 'default'
         if (item.type === 'separator') {
@@ -120,7 +135,6 @@ export default {
           continue
         }
         if (group.items.length === 0) {
-          group.value = item.value
           pushGroup(item)
         } else {
           if (prevItem && prevItem.type === item.type && i !== len - 1) {

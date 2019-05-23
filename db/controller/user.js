@@ -78,6 +78,7 @@ function removeById (req) {
 // update
 function update (req) {
   const { usercode } = req
+  req.update_at = new Date().valueOf()
 
   return new Promise((resolve, reject) => {
     User.findOne({ usercode: usercode })

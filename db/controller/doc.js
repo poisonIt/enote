@@ -108,6 +108,7 @@ function deleteAll () {
 // update
 function update (req) {
   const { id } = req
+  req.update_at = new Date().valueOf()
 
   return new Promise((resolve, reject) => {
     Doc.findOne({ _id: id })

@@ -33,10 +33,12 @@ export default {
           id: this.currentFile._id,
           title: params.name
         }).then(res => {
-          let file = _.find(this.fileList, { _id: res._id })
-          let idx = this.fileList.indexOf(file)
-          file.title = res.title
-          this.$set(this.fileList, idx, file)
+          this.selectedIdCache = res._id
+          this.refreshList()
+          // let file = _.find(this.fileList, { _id: res._id })
+          // let idx = this.fileList.indexOf(file)
+          // file.title = res.title
+          // this.$set(this.fileList, idx, file)
         })
       })
     },

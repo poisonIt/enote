@@ -86,6 +86,10 @@ import {
   fileInfoMenu,
   binMenu
 } from '../Menu'
+import {
+  listtypeMenu1,
+  listtypeMenu2
+} from './config'
 
 export default {
   name: 'DocumentList',
@@ -116,41 +120,6 @@ export default {
         fileCloudMenu,
         fileInfoMenu,
         binMenu
-      ],
-      menuData: [
-        {
-          label: '摘要',
-          value: 'summary',
-          type: 'select'
-        },
-        {
-          label: '列表',
-          value: 'list',
-          type: 'select'
-        },
-        {
-          type: 'separator'
-        },
-        {
-          label: '创建时间',
-          value: 'create_at',
-          type: 'sort'
-        },
-        {
-          label: '修改时间',
-          value: 'update_at',
-          type: 'sort'
-        },
-        {
-          label: '文件名称',
-          value: 'title',
-          type: 'sort'
-        },
-        {
-          label: '文件大小',
-          value: 'size',
-          type: 'sort'
-        }
       ]
     }
   },
@@ -165,6 +134,7 @@ export default {
     ...mapState({
       views: state => state.views
     }),
+
     ...mapGetters({
       currentNav: 'GET_CURRENT_NAV',
       currentFile: 'GET_CURRENT_FILE',
@@ -174,7 +144,23 @@ export default {
       tagsMap: 'GET_TAGS_MAP',
       selectedTags: 'GET_SELECTED_TAGS',
       searchKeyword: 'GET_SEARCH_KEYWORD'
-    })
+    }),
+
+    menuData () {
+      if (this.currentNav) {
+        let menu = this.currentNav.type !== 'latest' ? listtypeMenu1 : listtypeMenu2
+        menu.forEach(item => {
+          if (item.value === this.viewFileListType || item.value === this.viewFileSortType) {
+            item.actived = true
+          } else {
+            item.actived = false
+          }
+        })
+        return menu
+      } else {
+        return []
+      }
+    }
   },
 
   watch: {
@@ -336,9 +322,18 @@ export default {
     },
 
     fileListSortFunc (list) {
-      let order = this.viewFileSortOrder === 'down' ? -1 : 1
+      let order
+      let sortKey
+
+      if (this.currentNav.type === 'latest') {
+        order = -1
+        sortKey = 'update_at'
+      } else {
+        order = this.viewFileSortOrder === 'down' ? -1 : 1
+        sortKey = this.viewFileSortType
+      }
       let listTemp = []
-      if (this.viewFileSortType === 'title') {
+      if (sortKey === 'title') {
         let en = list.filter(item => item.title[0].charCodeAt() <= 122 || !item.title[0])
         let zh = list.filter(item => item.title[0].charCodeAt() > 122)
 
@@ -354,8 +349,8 @@ export default {
         listTemp = order === 1 ? [...en, ...zh] : [...zh, ...en]
       } else {
         listTemp = list.sort((a, b) => {
-          return (Number(a[this.viewFileSortType]) -
-            Number(b[this.viewFileSortType])) * order
+          return (Number(a[sortKey]) -
+            Number(b[sortKey])) * order
         })
       }
       let topList = listTemp.filter(item => item.top)

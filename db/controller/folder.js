@@ -192,6 +192,7 @@ function updateP (query, req, multi) {
 // update
 async function update (req) {
   const { id } = req
+  req.update_at = new Date().valueOf()
 
   if (!req.hasOwnProperty('need_push')) {
     req.need_push = true
@@ -322,11 +323,11 @@ async function getByQuery (params, opts) {
   let folders = []
   if (opts.multi) {
     let queryFunc = Folder.find(query)
-    if (typeof opts.limit === 'number') {
-      queryFunc = queryFunc.limit(opts.limit)
-    }
     if (opts.sort) {
       queryFunc = queryFunc.sort(opts.sort)
+    }
+    if (typeof opts.limit === 'number') {
+      queryFunc = queryFunc.limit(opts.limit)
     }
     folders = await queryFunc.execAsync()
   } else {

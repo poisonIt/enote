@@ -208,6 +208,7 @@ function deleteAll () {
 // update
 async function update (req) {
   const { id } = req
+  req.update_at = new Date().valueOf()
 
   if (!req.hasOwnProperty('need_push')) {
     req.need_push = true
@@ -422,11 +423,11 @@ async function getByQuery (params, opts) {
   let notes = []
   if (opts.multi) {
     let queryFunc = Note.find(query)
-    if (typeof opts.limit === 'number') {
-      queryFunc = queryFunc.limit(opts.limit)
-    }
     if (opts.sort) {
       queryFunc = queryFunc.sort(opts.sort)
+    }
+    if (typeof opts.limit === 'number') {
+      queryFunc = queryFunc.limit(opts.limit)
     }
     notes = await queryFunc.execAsync()
   } else {

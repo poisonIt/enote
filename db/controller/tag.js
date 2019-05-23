@@ -128,6 +128,7 @@ function deleteAll () {
 // update
 function update (req) {
   const { id } = req
+  req.update_at = new Date().valueOf()
 
   if (!req.hasOwnProperty('need_push')) {
     req.need_push = true

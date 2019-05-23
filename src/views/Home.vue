@@ -168,9 +168,10 @@ export default {
       if (arg.from === 'Home') {
         this.SET_USER_INFO(arg.res)
         this.SET_TOKEN(arg.res.id_token)
+        this.SET_NOTE_VER(this.$remote.app.appConf.note_ver || 1)
+        this.SET_DB_READY(true)
       }
     })
-    // this.handleDBLoaded()
   },
 
   mounted () {
@@ -283,8 +284,6 @@ export default {
       ipcRenderer.send('fetch-user-data', {
         from: 'Home'
       })
-      this.SET_NOTE_VER(this.$remote.app.appConf.note_ver || 1)
-      this.SET_DB_READY(true)
     },
 
     deleteAll () {

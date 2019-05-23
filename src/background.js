@@ -483,6 +483,7 @@ ipcMain.on('login-ready', (event, arg) => {
 })
 
 ipcMain.on('pull-finished', (event, arg) => {
+  console.log('pull-finished')
   if (!isDevelopment) {
     loginWin && loginWin.hide()
   }
@@ -507,14 +508,13 @@ ipcMain.on('create-youdao-window', (event, arg) => {
 })
 
 ipcMain.on('update-user-data', (event, arg) => {
+  console.log('update-user-data')
   LocalService.updateLocalUser(arg).then(res => {
     app.appConf.user = res._id
     saveAppConf(app.getAppPath('appData'), {
       user: res._id
     })
-    connectDatabase().then(() => {
-      loginWin.webContents.send('update-user-data-response')
-    })
+    loginWin.webContents.send('update-user-data-response')
   })
 })
 
@@ -529,9 +529,6 @@ ipcMain.on('fetch-user-data', (event, arg) => {
 
 ipcMain.on('fetch-local-data', (event, arg) => {
   taskId++
-  if (arg.tasks[0] === 'updateState') {
-    console.log('updateState-fecth', arg)
-  }
   let tasks = arg.tasks.map((item, index) => {
     let option = arg.options ? arg.options[index] : {}
     if (arg.params) {
@@ -590,7 +587,8 @@ function execPromise (id, tasks, arg) {
           res: [res0, res1],
           from: arg.from,
           queue: true,
-          tasks: arg.tasks
+          tasks: arg.tasks,
+          fid: arg.fid
         })
       })
     })
@@ -600,7 +598,8 @@ function execPromise (id, tasks, arg) {
         sendLocalDataRes({
           res: res,
           from: arg.from,
-          tasks: arg.tasks
+          tasks: arg.tasks,
+          fid: arg.fid
         })
       }
     })

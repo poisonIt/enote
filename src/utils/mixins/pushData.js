@@ -269,9 +269,9 @@ export default {
                   saveAppConf(_self.$remote.app.getAppPath('appData'), {
                     user: null
                   })
-                  ipcRenderer.send('changeWindow', {
-                    name: 'login'
-                  })
+                  // ipcRenderer.send('changeWindow', {
+                  //   name: 'login'
+                  // })
                 }
               }
             }).catch(err => {

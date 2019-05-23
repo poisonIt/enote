@@ -56,6 +56,8 @@ export default {
 
   computed: {
     ...mapGetters({
+      isDBReady: 'GET_DB_READY',
+      noteVer: 'GET_NOTE_VER',
       userInfo: 'GET_USER_INFO',
       viewType: 'GET_VIEW_TYPE',
       isEditorFocused: 'GET_IS_EDITOR_FOCUSED',
@@ -64,6 +66,15 @@ export default {
   },
 
   watch: {
+    isDBReady (val) {
+      console.log('watch-isDBReady', val)
+      if (val) {
+        this.pushData().then(() => {
+          this.pullData(this.noteVer)
+        })
+      }
+    },
+
     network_status (val) {
       this.isOffline = (val === 'offline')
       if (!this.isOffline && this.$remote.getCurrentWindow().isVisible()) {
@@ -93,6 +104,7 @@ export default {
     ...mapActions([
       'SET_TOKEN'
     ]),
+
     toggleMenu () {
       this.isMenuVisible = !this.isMenuVisible
     },

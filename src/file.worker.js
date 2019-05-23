@@ -1,6 +1,7 @@
 self.addEventListener('message', (e) => {
   var command = e.data[0]
   if (command === 'calcLocalData') {
+    console.log('calcLocalData', e)
     let folderFiles = e.data[1][0]
     let tags = e.data[1][1]
 

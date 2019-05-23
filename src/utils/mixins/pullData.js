@@ -34,7 +34,6 @@ export default {
 
     hookPullMsgHandler () {
       ipcRenderer.on('fetch-local-data-response', (event, arg) => {
-        console.log('fetch-local-data-response', arg)
         if (arg.from === 'pullData') {
           console.log('pullData-res', arg)
           if (arg.tasks.indexOf('diffAddMultiLocalTag') > -1) {

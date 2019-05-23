@@ -89,7 +89,7 @@ export default {
 
     getLocalNoteByPid () {
       fetchLocal(
-        'getLocalFolderByPid',
+        'getLocalNoteByPid',
         { pid: this.notePid },
       ).then(res => {
         console.log('fetchLocal-getLocalFolderByPid-p', res)

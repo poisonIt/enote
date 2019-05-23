@@ -1,12 +1,13 @@
 import * as _ from 'lodash'
 import { ipcRenderer } from 'electron'
+import fetchLocal from '../../../utils/fetchLocal'
 
 export default {
   created () {
     this.$hub.hookHub('addFile', 'NavBar', (file) => this.handleFileAdded(file))
     this.$hub.hookHub('renameListFile', 'NavBar', (file) => this.handleFileRename(file))
     this.$hub.hookHub('refreshList', 'NavBar', () => this.refreshList())
-    this.$hub.hookHub('updateFile', 'FileCard', (params) => this.handleFileUpdate(params))
+    this.$hub.hookHub('renameListFile', 'FileCard', (file) => this.handleFileRename(file))
     this.$hub.hookHub('updateFile', 'FileHandler', (params) => this.handleFileUpdate(params))
     this.$hub.hookHub('removeFile', 'FileHandler', (file) => this.handleFileRemove(file))
   },
@@ -28,24 +29,16 @@ export default {
 
     handleFileUpdate (params) {
       this.$nextTick(() => {
-        let file = _.find(this.fileList, { _id: params.id })
-        console.log('handleFileUpdate', params, file, this.fileList)
-        let idx = this.fileList.indexOf(file)
-        if (params.name) {
-          file.title = params.name
-        }
-        this.$set(this.fileList, idx, file)
-  
         let taskName = this.currentFile.type === 'folder' ? 'updateLocalFolder' : 'updateLocalNote'
-        ipcRenderer.send('fetch-local-data', {
-          tasks: [taskName],
-          params: [{
-            id: this.currentFile._id,
-            title: params.name
-          }],
-          from: ['DocumentList', 'handleFileUpdate', this.currentFile._id]
+        fetchLocal(taskName, {
+          id: this.currentFile._id,
+          title: params.name
+        }).then(res => {
+          let file = _.find(this.fileList, { _id: res._id })
+          let idx = this.fileList.indexOf(file)
+          file.title = res.title
+          this.$set(this.fileList, idx, file)
         })
-        this.$hub.dispatchHub('pushData', this)
       })
     },
 

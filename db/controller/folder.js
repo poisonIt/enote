@@ -128,7 +128,6 @@ async function diffAddMulti (reqs) {
 
 // remove
 function removeAll () {
-  console.log('removeAll-folder')
   return new Promise((resolve, reject) => {
     Folder.find({}, (err, folders) => {
       folders.forEach(folder => {
@@ -140,14 +139,12 @@ function removeAll () {
 }
 
 async function removeById (req) {
-  console.log('removeById-folder')
   const { id } = req
   let folder = await getById({ id: id })
   folder && folder.remove()
 }
 
 async function removeAllDeleted () {
-  console.log('removeAllDeleted-folder')
   let folders = await getByQuery({ trash: 'DELETED' }, { multi: true })
 
   let p = folders.map(folder => {
@@ -274,7 +271,12 @@ async function updateMulti (reqs) {
 
 // get
 async function getAll () {
-  return await getByQuery({}, { multi: true })
+  return new Promise((resolve, reject) => {
+    Folder.find({}, (err, folders) => {
+      resolve(folders)
+    })
+  })
+  // return await getByQuery({}, { multi: true })
 }
 
 async function getAllByPid (req) {
@@ -320,13 +322,13 @@ async function getByQuery (params, opts) {
   let folders = []
   if (opts.multi) {
     let queryFunc = Folder.find(query)
-    if (opts.limit) {
+    if (typeof opts.limit === 'number') {
       queryFunc = queryFunc.limit(opts.limit)
     }
     if (opts.sort) {
       queryFunc = queryFunc.sort(opts.sort)
     }
-    let folders = await queryFunc.execAsync()
+    folders = await queryFunc.execAsync()
   } else {
     let folder = await Folder.findOne(query).execAsync()
     if (folder) {
@@ -353,10 +355,15 @@ async function getByQuery (params, opts) {
 }
 
 async function patchParentFolder (folder) {
-  let pFolder = await getByQuery([
-    { _id: folder.pid },
-    { remote_id: folder.remote_pid }]
-  )
+  let pFolder
+  if (_.isUndefined(folder.remote_pid)) {
+    pFolder = await getByQuery({ _id: folder.pid })
+  } else {
+    pFolder = await getByQuery([
+      { _id: folder.pid },
+      { remote_id: folder.remote_pid }]
+    )
+  }
   if (pFolder) {
     folder.parent_folder = pFolder
     if (folder.pid !== pFolder._id) {

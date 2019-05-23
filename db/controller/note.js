@@ -81,6 +81,9 @@ async function add (req) {
         data.remote_pid = pFolder.remote_id
       }
       Note.insert(data, (err, note) => {
+        if (err) {
+          reject(err)
+        }
         docCtr.add({
           note_id: note._id,
           content: req.isTemp ? docTemp : (req.content || '')
@@ -419,13 +422,13 @@ async function getByQuery (params, opts) {
   let notes = []
   if (opts.multi) {
     let queryFunc = Note.find(query)
-    if (opts.limit) {
+    if (typeof opts.limit === 'number') {
       queryFunc = queryFunc.limit(opts.limit)
     }
     if (opts.sort) {
       queryFunc = queryFunc.sort(opts.sort)
     }
-    let notes = await queryFunc.execAsync()
+    notes = await queryFunc.execAsync()
   } else {
     let note = await Note.findOne(query).execAsync()
     if (note) {
@@ -453,10 +456,15 @@ async function getByQuery (params, opts) {
 }
 
 async function patchParentFolder (note) {
-  let pFolder = await folderCtr.getByQuery([
-    { _id: note.pid },
-    { remote_id: note.remote_pid }]
-  )
+  let pFolder
+  if (_.isUndefined(note.remote_pid)) {
+    pFolder = await folderCtr.getByQuery({ _id: note.pid })
+  } else {
+    pFolder = await folderCtr.getByQuery([
+      { _id: note.pid },
+      { remote_id: note.remote_pid }]
+    )
+  }
   if (pFolder) {
     note.parent_folder = pFolder
     if (note.pid !== pFolder._id) {

@@ -46,9 +46,10 @@
 <script>
 import { mapGetters, mapActions } from 'vuex'
 import mixins from '../mixins'
-import {
-  updateLocalFolder
-} from '@/service/local'
+import fetchLocal from '../../../utils/fetchLocal'
+// import {
+//   updateLocalFolder
+// } from '@/service/local'
 
 export default {
   name: 'FileCard',
@@ -221,14 +222,13 @@ export default {
 
     handleTitleInputBlur () {
       this.showTitleInput = false
-      updateLocalFolder({
+      let taskName = this.type === 'folder' ? 'updateLocalFolder' : 'updateLocalNote'
+
+      fetchLocal(taskName, {
         id: this.file_id,
         title: this.titleValue
       }).then(res => {
-        this.$hub.dispatchHub('updateFile', this, {
-          id: this.file_id,
-          name: this.titleValue
-        })
+        this.$hub.dispatchHub('handleFileRename', this, res)
       })
     },
 

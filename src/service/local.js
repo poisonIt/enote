@@ -23,12 +23,10 @@ export function getAllLocalFolder () {
 }
 
 export function getLocalFolderByQuery (params, option) {
-  console.log('getLocalFolderByQuery', params, option)
   return LocalDAO.folder.getByQuery(params, option)
 }
 
 export function getLocalFolderById (params) {
-  console.log('getLocalFolderById', params)
   return LocalDAO.folder.getById(params)
 }
 

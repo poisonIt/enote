@@ -349,6 +349,7 @@ export default {
           name: data.data.name,
           type: 'select',
           data: data.data,
+          dragDisabled: data.dragDisabled,
           isSelected: false
         }, this.model.store)
         this.model.addChildren(node, true)

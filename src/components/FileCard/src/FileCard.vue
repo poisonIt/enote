@@ -30,8 +30,8 @@
         <div class="need_push local" v-if="need_push_local"></div>
       </div>
     </div>
-    <div class="body" v-if="content.length > 0 && !mini && type === 'doc'">
-      <span class="content ellipsis">{{ content }}</span>
+    <div class="body" v-if="content.length > 0 && !mini && type === 'note'">
+      <p class="content">{{ content }}</p>
     </div>
     <div class="footer">
       <div class="path" v-if="!mini && selected && viewFileType === 'latest'">
@@ -358,8 +358,15 @@ export default {
   .content
     display inline-block
     width 100%
-    height 18px
+    height 36px
     font-size 12px
+    overflow hidden
+    text-overflow ellipsis
+    word-break break-all
+    display -webkit-box
+    -webkit-box-orient vertical
+    -webkit-line-clamp 2
+
 
 .footer
   margin 10px 0 0

@@ -337,6 +337,7 @@ export default {
   font-size 18px
   font-weight 500
   color #333
+  -webkit-app-region no-drag
   &.disable
     opacity 0.5
     input
@@ -366,6 +367,7 @@ export default {
   display flex
   position relative
   justify-content space-between
+  -webkit-app-region no-drag
 
 .icon
   width 15px

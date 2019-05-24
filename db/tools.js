@@ -14,3 +14,19 @@ export function isIllegal (keys, data) {
   }
   return result
 }
+
+export function htmlToText (html) {
+  const reTag = /<(?:.|\s)*?>/g
+  const decodingMap = {
+    '&lt;': '<',
+    '&gt;': '>',
+    '&quot;': '"',
+    '&amp;': '&',
+    '&#10;': '\n',
+    '&#9;': '\t',
+    '&nbsp;': '  ',
+  }
+  const encode = /&(?:lt|gt|quot|amp|#10|#9|nbsp);/g
+
+  return html.replace(reTag, '').replace(encode, match => decodingMap[match])
+}

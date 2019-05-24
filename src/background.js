@@ -244,7 +244,7 @@ function createHomeWindow () {
     show: false,
     title: '添富云笔记',
     // frame: false,
-    titleBarStyle: isDevelopment ? 'default' : 'hidden',
+    titleBarStyle: isDevelopment ? 'hidden' : 'hidden',
     icon: path.join(__static, 'icon.png'),
     webPreferences: {
       webSecurity: false

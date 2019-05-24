@@ -1,4 +1,4 @@
-import { getValid } from '../tools'
+import { htmlToText, getValid } from '../tools'
 import { promisifyAll } from '../promisify'
 import docModel from '../models/doc'
 import { LinvoDB } from '../index'
@@ -123,7 +123,7 @@ function update (req) {
             size: newDoc.content.length,
             need_push: true
           }).then(note => {
-            resolve(newDoc)
+            resolve(htmlToText(newDoc.content))
           })
         }
       )

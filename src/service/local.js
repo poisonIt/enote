@@ -76,6 +76,7 @@ export function getLatesLocalNote () {
       multi: true,
       limit: 20,
       sort: { update_at: -1 },
+      with_summary: true,
       with_parent_folder: true
     }
   )
@@ -93,12 +94,12 @@ export function getLocalNoteByQuery (params, option) {
   return LocalDAO.folder.getByQuery(params, option)
 }
 
-export function getLocalNoteByPid (params) {
-  return LocalDAO.note.getAllByPid(params)
+export function getLocalNoteByPid (params, option) {
+  return LocalDAO.note.getAllByPid(params, option)
 }
 
-export function getLocalTrashNote () {
-  return LocalDAO.note.getTrash()
+export function getLocalTrashNote (option) {
+  return LocalDAO.note.getTrash(option)
 }
 
 export function addLocalNote (params) {

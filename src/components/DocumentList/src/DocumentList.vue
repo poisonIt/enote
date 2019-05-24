@@ -34,7 +34,7 @@
           :file_id="item._id"
           :type="item.type"
           :title="item.title"
-          :content="item.brief"
+          :content="item.summary"
           :isTop="item.top"
           :isShared="item.share"
           :update_at="item.update_at | yyyymmdd"
@@ -233,7 +233,10 @@ export default {
           remote_pid: nav.remote_id
         }
         fetchLocal('getLocalFolderByPid', params).then(folders => {
-          fetchLocal('getLocalNoteByPid', params).then(notes => {
+          fetchLocal('getLocalNoteByPid', params, {
+            with_parent_folder: true,
+            with_summary: true
+          }).then(notes => {
             this.handleDataFetched([folders, notes])
           })
         })
@@ -245,7 +248,10 @@ export default {
         })
       } else if (nav.type === 'bin') {
         fetchLocal('getLocalTrashFolder').then(folders => {
-          fetchLocal('getLocalTrashNote').then(notes => {
+          fetchLocal('getLocalTrashNote', {
+            with_parent_folder: true,
+            with_summary: true
+          }).then(notes => {
             this.handleDataFetched([folders, notes])
           })
         })

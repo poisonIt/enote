@@ -1,6 +1,6 @@
 import * as _ from 'lodash'
 import { promisifyAll } from '../promisify'
-import { isIllegal } from '../tools'
+import { htmlToText, isIllegal } from '../tools'
 import noteModel from '../models/note'
 import folderCtr from './folder'
 import docCtr from './doc'
@@ -357,7 +357,7 @@ function addTag (req) {
 }
 
 // get
-async function getAllByPid (req) {
+async function getAllByPid (req, opts) {
   const { pid, remote_pid } = req
 
   let querys = []
@@ -368,9 +368,12 @@ async function getAllByPid (req) {
     querys.push({ remote_pid: remote_pid })
   }
 
+  opts = opts || {}
+  opts.multi = true
+
   return await getByQuery(
     querys,
-    { multi: true, with_parent_folder: true }
+    opts
   )
 }
 
@@ -381,22 +384,11 @@ async function getById (req) {
   return note
 }
 
-function getTrash () {
-  return new Promise((resolve, reject) => {
-    Note.find({ trash: 'TRASH' }, (err, notes) => {
-      let p = notes.map(note => {
-        return new Promise((resolve, reject) => {
-          folderCtr.getById({ id: note.pid }).then(pfolder => {
-            note.folder_title = pfolder ? pfolder.title : '我的文件夹'
-            resolve(note)
-          })
-        })
-      })
-      Promise.all(p).then(res => {
-        resolve(res)
-      })
-    })
-  })
+async function getTrash (opts) {
+  opts = opts || {}
+  opts.multi = true
+
+  return await getByQuery({ trash: 'TRASH' }, opts)
 }
 
 function getByTags (req) {
@@ -415,7 +407,8 @@ function getByTags (req) {
 async function getByQuery (params, opts) {
   opts = opts || {
     multi: false,
-    with_parent_folder: false
+    with_parent_folder: false,
+    with_summary: false
   }
   const isReqArr = _.isArray(params)
   const query = isReqArr ? { $or: params } : params
@@ -435,6 +428,12 @@ async function getByQuery (params, opts) {
     if (note) {
       notes.push(note)
     }
+  }
+
+  if (opts.with_summary) {
+    notes = await Promise.all(notes.map(note => {
+      return patchSummary(note)
+    }))
   }
 
   if (opts.with_parent_folder) {
@@ -479,6 +478,15 @@ async function patchParentFolder (note) {
       await update({ id: note._id, pid: '0' })
     }
   }
+  return note
+}
+
+async function patchSummary (note) {
+  let doc = await docCtr.getByNoteId({ note_id: note._id })
+  if (doc) {
+    note.summary = htmlToText(doc.content)
+  }
+
   return note
 }
 

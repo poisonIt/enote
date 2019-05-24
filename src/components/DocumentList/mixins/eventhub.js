@@ -10,6 +10,7 @@ export default {
     this.$hub.hookHub('renameListFile', 'FileCard', (file) => this.handleFileRename(file))
     this.$hub.hookHub('updateFile', 'FileHandler', (params) => this.handleFileUpdate(params))
     this.$hub.hookHub('removeFile', 'FileHandler', (file) => this.handleFileRemove(file))
+    this.$hub.hookHub('updateDoc', 'Editor', (file) => this.handleDocUpdate(file))
   },
 
   methods: {
@@ -23,6 +24,14 @@ export default {
       let f = _.find(this.fileList, { _id: file.id })
       if (f) {
         f.title = file.title
+      }
+    },
+
+    handleDocUpdate (file) {
+      let f = _.find(this.fileList, { _id: file.id })
+      console.log('handleDocUpdate', file, f)
+      if (f) {
+        this.$set(f, 'summary', file.summary)
       }
     },
 

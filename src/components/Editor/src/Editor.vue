@@ -155,7 +155,14 @@ export default {
     saveData (id, content) {
       fetchLocal('updateLocalDoc', {
         id: id,
-        content: content,
+        content: content
+      }).then(res => {
+        console.log('saveData', res)
+        let req = {
+          id: this.currentFile._id,
+          summary: res
+        }
+        this.$hub.dispatchHub('updateDoc', this, req)
       })
     }
   }

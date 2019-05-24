@@ -491,14 +491,16 @@ export default {
         id: fileId,
         trash: 'NORMAL'
       }).then(res => {
+        console.log('handleResume', res)
         this.refreshList()
 
         const _self = this
 
         function resumeNode (node) {
           _self.$set(node, 'hidden', false)
-          let pNode = folderMap[res.pid]
-          if (pNode && pNode.hidden) {
+          let pNode = folderMap[node.pid]
+          console.log('resumeNode', node, node.id, pNode, pNode.id, pNode.hidden)
+          if (pNode && pNode.id !== '0' && pNode.hidden) {
             resumeNode(pNode)
           }
         }

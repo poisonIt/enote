@@ -623,15 +623,6 @@ function execPromise (id, tasks, arg) {
 function showHomeWindow () {
   win && win.show()
   win && win.webContents.send('login-ready')
-  LocalService.getAllLocalFolder().then(res1 => {
-    LocalService.getAllLocalTag().then(res2 => {
-      sendLocalDataRes({
-        tasks: ['getAllLocalFolder', 'getAllLocalTag'],
-        res: [res1, res2],
-        from: ['NavBar']
-      })
-    })
-  })
   if (!isDevelopment) {
     loginWin && loginWin.destroy()
   } else {

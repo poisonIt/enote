@@ -238,10 +238,12 @@ async function update (req) {
 
     // may cause performce issure
     if (req.trash === 'NORMAL') {
-      await update({
-        id: newFolder.pid,
-        trash: 'NORMAL'
-      })
+      if (newFolder.pid !== '0') {
+        await update({
+          id: newFolder.pid,
+          trash: 'NORMAL'
+        })
+      }
     }
     return newFolder
   }

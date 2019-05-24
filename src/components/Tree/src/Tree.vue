@@ -210,6 +210,7 @@ export default {
   created () {
     this.model.instance = this
     this.id = this.model.data ? this.model.id : '0'
+    this.$set(this.model, 'hidden', !!this.model.hidden)
     this.$on('select', (params) => {
       if (this.model.id === params.id) {
         this.click()

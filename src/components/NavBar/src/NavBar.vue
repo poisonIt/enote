@@ -161,11 +161,30 @@ export default {
 
   computed: {
     ...mapGetters({
+      isDBReady: 'GET_DB_READY',
       viewType: 'GET_VIEW_TYPE',
       viewFileType: 'GET_VIEW_FILE_TYPE',
       currentFile: 'GET_CURRENT_FILE',
       duplicateFile: 'GET_DUPLICATE_FILE'
     })
+  },
+
+  watch: {
+    isDBReady (val) {
+      if (val) {
+        fetchLocal('getLocalFolderByQuery', [
+          { trash: 'NORMAL' },
+          { trash: 'TRASH' }
+        ],
+        {
+          multi: true
+        }).then(folders => {
+          fetchLocal('getAllLocalTag').then(tags => {
+            this.$worker.postMessage(['calcLocalData', [folders, tags]])
+          })
+        })
+      }
+    }
   },
 
   mounted () {
@@ -191,9 +210,9 @@ export default {
     ipcRenderer.on('fetch-local-data-response', (event, arg) => {
       if (arg.from[0] === 'NavBar') {
         console.log('fetch-local-data-response', arg)
-        if (arg.tasks[0] === 'getAllLocalFolder' && arg.tasks[1] === 'getAllLocalTag') {
-          this.$worker.postMessage(['calcLocalData', arg.res])
-        }
+        // if (arg.tasks[0] === 'getAllLocalFolder' && arg.tasks[1] === 'getAllLocalTag') {
+        //   this.$worker.postMessage(['calcLocalData', arg.res])
+        // }
 
         // update tag
         if (arg.tasks.indexOf('updateLocalTag') > -1) {

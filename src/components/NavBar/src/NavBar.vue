@@ -340,6 +340,7 @@ export default {
       let tag = {}
       tag.type = 'select'
       tag.isSelected = false
+      tag.dragDisabled = true
       tag.data = {
         type: 'select',
         name: tagData.name,

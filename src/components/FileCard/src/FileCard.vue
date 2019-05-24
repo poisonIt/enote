@@ -228,7 +228,13 @@ export default {
         id: this.file_id,
         title: this.titleValue
       }).then(res => {
-        this.$hub.dispatchHub('handleFileRename', this, res)
+        this.$hub.dispatchHub('renameListFile', this, res)
+        if (res.type === 'folder') {
+          this.$hub.dispatchHub('updateFile', this, {
+            id: res._id,
+            name: res.title
+          })
+        }
       })
     },
 

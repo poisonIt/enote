@@ -10,6 +10,7 @@
       @contextmenu="handleContextmenu"
       @set-current="handleSetCurrentFolder"
       @select="handleSelect"
+      @add-node="handleNodeAdded"
       @change-name-blur="handleChangeNodeName"
       @drop="handleNodeDrop">
     </Tree>
@@ -276,18 +277,25 @@ export default {
       this.handleNewNote(true)
     },
 
-    handleNewFolder (isCurrent) {
+    handleNewFolder (isCurrent, nodeId) {
       let node
-      if (isCurrent) {
-        let currentNode = this.$refs.tree.model.store.currentNode.instance
-        if (!currentNode.model.parent.parent && currentNode.id !== '0') {
-          return
-        }
-        node = currentNode
+      let nodeData
+      if (nodeId) {
+        let map = this.$refs.tree.model.store.map
+        nodeData = map[nodeId]
+        node = nodeData.instance
       } else {
-        node = this.popupedNode
+        if (isCurrent) {
+          let currentNode = this.$refs.tree.model.store.currentNode.instance
+          if (!currentNode.model.parent.parent && currentNode.id !== '0') {
+            return
+          }
+          node = currentNode
+        } else {
+          node = this.popupedNode
+        }
+        nodeData = node.model.data
       }
-      let nodeData = node.model.data
 
       fetchLocal('addLocalFolder', {
         pid: nodeData.id || nodeData._id || '0'
@@ -295,7 +303,15 @@ export default {
         node.addChild({
           id: res._id,
           type: 'folder'
-        }, true)
+        })
+      })
+    },
+
+    handleNodeAdded (node) {
+      this.$nextTick(() => {
+        if (node.instance) {
+          node.instance.setEditable()
+        }
       })
     },
 
@@ -357,6 +373,7 @@ export default {
     },
 
     handleFolderUpdate (params) {
+      console.log('handleFolderUpdate', params)
       this.$refs.tree.updateNodeModel(params)
     },
 
@@ -386,15 +403,23 @@ export default {
 
     handlePaste () {
       let data = this.popupedNode.model.data
+      let pid = data.id || data._id
       let shouldUpdateList = (this.popupedNode.model === this.$refs.tree.model.store.currentNode)
 
       if (this.duplicateFile.type === 'note') {
         fetchLocal('duplicateLocalNote', {
           id: this.duplicateFile._id,
-          pid: data.id || data._id
+          pid: pid
         }).then(res => {
+          let fileTypeCN = res.type === 'folder' ? '文件夹' : '笔记'
+          this.$Message.success({
+            content: `复制了${fileTypeCN} ${res.title} 至目录 ${data.title}！`
+          })
+          this.$hub.dispatchHub('setSelectFileId', this, res._id)
           if (shouldUpdateList) {
             this.$hub.dispatchHub('refreshList', this)
+          } else {
+            this.setCurrentFolder(pid)
           }
         })
       }

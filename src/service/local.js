@@ -76,7 +76,7 @@ export function getLatesLocalNote () {
       multi: true,
       limit: 20,
       sort: { update_at: -1 },
-      width_parent_folder: true
+      with_parent_folder: true
     }
   )
 }

@@ -76,6 +76,7 @@ self.addEventListener('message', (e) => {
         tag.id = tag._id
         tag.type = 'select'
         tag.isSelected = false
+        tag.dragDisabled = true
         tag.data = {
           type: 'select',
           name: tag.name,

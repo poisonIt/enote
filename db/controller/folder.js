@@ -192,6 +192,7 @@ function updateP (query, req, multi) {
 // update
 async function update (req) {
   const { id } = req
+  console.log('update', req)
   req.update_at = new Date().valueOf()
 
   if (!req.hasOwnProperty('need_push')) {
@@ -233,12 +234,14 @@ async function update (req) {
         query: { pid: newFolder._id },
         data: childData
       })
-      if (req.trash === 'NORMAL' && old_trash !== newFolder.trash) {
-        await update({
-          id: newFolder.pid,
-          trash: 'NORMAL'
-        })
-      }
+    }
+
+    // may cause performce issure
+    if (req.trash === 'NORMAL') {
+      await update({
+        id: newFolder.pid,
+        trash: 'NORMAL'
+      })
     }
     return newFolder
   }

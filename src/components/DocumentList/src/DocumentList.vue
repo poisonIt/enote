@@ -289,6 +289,7 @@ export default {
     },
 
     selectFile (index) {
+      console.log('selectFile', index)
       const file = this.fileList[index]
       if (file) {
         if (this.currentFile && file._id === this.currentFile._id) return
@@ -405,6 +406,12 @@ export default {
       })
     },
 
+    handleNewFolder () {
+      let pid = this.popupedFile.file_id
+
+      this.$hub.dispatchHub('newFolder', this, pid)
+    },
+
     handleNewNote (isTemp) {
       let pid = this.popupedFile.file_id
 
@@ -423,6 +430,8 @@ export default {
     },
 
     handleRename () {
+      let idx = _.findIndex(this.fileList, { _id: this.popupedFile.file_id })
+      this.selectFile(idx)
       this.$hub.dispatchHub('renameFileCard', this, this.popupedFile.file_id)
     },
 
@@ -483,6 +492,19 @@ export default {
         trash: 'NORMAL'
       }).then(res => {
         this.refreshList()
+
+        const _self = this
+
+        function resumeNode (node) {
+          _self.$set(node, 'hidden', false)
+          let pNode = folderMap[res.pid]
+          if (pNode && pNode.hidden) {
+            resumeNode(pNode)
+          }
+        }
+        let folderMap = this.$root.$navTree.model.store.map
+        let node = folderMap[res._id]
+        resumeNode(node)
       })
     },
 

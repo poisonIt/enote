@@ -5,6 +5,7 @@ export default {
   created () {
     this.$hub.hookHub('addFile', 'NavBar', (file) => this.handleFileAdded(file))
     this.$hub.hookHub('renameListFile', 'NavBar', (file) => this.handleFileRename(file))
+    this.$hub.hookHub('setSelectFileId', 'NavBar', (selectId) => this.selectedIdCache = selectId)
     this.$hub.hookHub('refreshList', 'NavBar', () => this.refreshList())
     this.$hub.hookHub('renameListFile', 'FileCard', (file) => this.handleFileRename(file))
     this.$hub.hookHub('updateFile', 'FileHandler', (params) => this.handleFileUpdate(params))
@@ -13,7 +14,6 @@ export default {
 
   methods: {
     handleFileAdded (file) {
-      console.log('handleFileAdded', file)
       this.noteList.unshift(file)
       this.selectedIdCache = file._id
       this.updateFileList()

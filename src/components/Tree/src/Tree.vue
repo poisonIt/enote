@@ -234,9 +234,9 @@ export default {
         vm.editable = false
       }
     })
-    if (this.model.editable) {
-      this.setEditable()
-    }
+    // if (this.editable) {
+    //   this.setEditable()
+    // }
 
     // let root = this.getRootNode()
     // if (this.model.id === '0' && this.model.name !== 'root') {
@@ -341,7 +341,7 @@ export default {
       root.$emit('click', this.model)
     },
 
-    addChild (data, editable, isLeaf) {
+    addChild (data, isLeaf) {
       if (data.type === 'select') {
         var node = new TreeNode({
           id: data.data._id,
@@ -362,7 +362,6 @@ export default {
         id: data.id,
         name,
         isLeaf,
-        editable,
         data: data
       }, this.model.store)
       this.model.addChildren(node, true)

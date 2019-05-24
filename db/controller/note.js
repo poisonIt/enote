@@ -1,5 +1,6 @@
 import * as _ from 'lodash'
-import { getValid } from '../tools'
+import { promisifyAll } from '../promisify'
+import { htmlToText, isIllegal } from '../tools'
 import noteModel from '../models/note'
 import folderCtr from './folder'
 import docCtr from './doc'
@@ -7,6 +8,7 @@ import docTemp from '../docTemplate'
 import { LinvoDB } from '../index'
 import doc from './doc';
 
+let schemaKeys = Object.keys(noteModel({}))
 let Note = {}
 
 function createCollection (path) {
@@ -54,6 +56,7 @@ function createCollection (path) {
       default: false
     }
   })
+  promisifyAll(Note)
 }
 
 
@@ -72,19 +75,19 @@ function saveAll (req) {
 async function add (req) {
   let data = noteModel(req)
 
-  if (req.hasOwnProperty('pid') && !req.hasOwnProperty('remote_pid')) {
-    let folder = await folderCtr.getById({ id: req.pid })
-    data.remote_pid = folder ? folder.remote_id : '0'
-  }
-
   return new Promise((resolve, reject) => {
-    Note.insert(data, (err, note) => {
-      docCtr.add({
-        note_id: note._id,
-        content: req.isTemp ? docTemp : (req.content || '')
-      }).then(() => {
-        folderCtr.getById({ id: note.pid }).then(folder => {
-          note.folder_title = folder ? folder.title : '我的文件夹'
+    folderCtr.getById({ id: req.pid }).then(pFolder => {
+      if (pFolder && pFolder.remote_id) {
+        data.remote_pid = pFolder.remote_id
+      }
+      Note.insert(data, (err, note) => {
+        if (err) {
+          reject(err)
+        }
+        docCtr.add({
+          note_id: note._id,
+          content: req.isTemp ? docTemp : (req.content || '')
+        }).then(() => {
           resolve(note)
         })
       })
@@ -93,7 +96,6 @@ async function add (req) {
 }
 
 function diffAdd (req) {
-  console.log('note-diffAdd', req)
   Note.findOne({ remote_id: req.remote_id }, (err, note) => {
     if (note) {
       req.id = note._id
@@ -109,7 +111,6 @@ function diffAdd (req) {
 }
 
 function diffAddMulti (reqs) {
-  console.log('note-diffAddMulti', reqs)
   return new Promise((resolve, reject) => {
     let p = reqs.map(req => {
       return diffAdd(req)
@@ -176,21 +177,16 @@ function removeById (req) {
   })
 }
 
-function removeAllDeleted () {
-  return new Promise((resolve, reject) => {
-    Note.find({ trash: 'DELETED' }, (err, notes) => {
-      let p = notes.map(note => {
-        return new Promise((resolve, reject) => {
-          docCtr.removeByNoteId({ note_id: note._id }).then(() => {
-            note.remove()
-          })
-        })
-      })
-      Promise.all(p).then(() => {
-        resolve(p.length)
-      })
-    })
+async function removeAllDeleted () {
+  let notes = await getByQuery({ trash: 'DELETED' }, { multi: true })
+  let p = notes.map(note => {
+    return (async () => {
+      await docCtr.removeByNoteId({ note_id: note._id })
+      note.remove()
+      return note
+    })(note)
   })
+  return await Promise.all(p)
 }
 
 function deleteAll () {
@@ -211,8 +207,8 @@ function deleteAll () {
 
 // update
 async function update (req) {
-  console.log('note-update', req)
   const { id } = req
+  req.update_at = new Date().valueOf()
 
   if (!req.hasOwnProperty('need_push')) {
     req.need_push = true
@@ -361,145 +357,38 @@ function addTag (req) {
 }
 
 // get
-function getAll () {
-  return new Promise((resolve, reject) => {
-    Note.find({}, (err, notes) => {
-      let p = notes.map(note => {
-        return new Promise((resolve, reject) => {
-          folderCtr.getById({ id: note.pid }).then(folder => {
-            if (!folder) {
-              if (note.remote_pid) {
-                folderCtr.findOne({ remote_id: note.remote_pid }, (err, p) => {
-                  if (p) {
-                    update({ id: note._id, pid: p._id }).then(() => {
-                      note.folder_title = p.title
-                      note.pid = p._id
-                      resolve(note)
-                    })
-                  } else {
-                    if (folder.pid !== '0') {
-                      update({ id: note._id, pid: '0' }).then(() => {
-                        note.folder_title = '我的文件夹'
-                        note.pid = '0'
-                        resolve(note)
-                      })
-                    } else {
-                      note.folder_title = '我的文件夹'
-                      resolve(note)
-                    }
-                  }
-                })
-              } else {
-                if (note.pid !== '0') {
-                  update({ id: note._id, pid: '0' }).then(() => {
-                    note.folder_title = '我的文件夹'
-                    note.pid = '0'
-                    resolve(note)
-                  })
-                } else {
-                  note.folder_title = '我的文件夹'
-                  resolve(note)
-                }
-              }
-            } else {
-              note.folder_title = folder.title
-              resolve(note)
-            }
-          })
-        })
-      })
-      Promise.all(p).then(res => {
-        resolve(res)
-      })
-    })
-  })
-}
-
-function getAllByQuery (req) {
-  const { query, with_doc } = req
-
-  return new Promise((resolve, reject) => {
-    Note.find(query, (err, notes) => {
-      if (with_doc) {
-        let p = notes.map(note => {
-          return docCtr.getByNoteId({ note_id: note._id })
-        })
-        Promise.all(p).then(docs => {
-          notes.forEach((note, index) => {
-            note.content = docs[index] ? docs[index].content : ''
-          })
-          resolve(notes)
-        })
-      } else {
-        resolve(notes)
-      }
-    })
-  })
-}
-
-function getAllByPid (req) {
+async function getAllByPid (req, opts) {
   const { pid, remote_pid } = req
 
-  return new Promise((resolve, reject) => {
-    folderCtr.getById({ id: pid }).then(pFolder => {
-      let folder_title = pFolder ? pFolder.title : '我的文件夹'
-      if (remote_pid) {
-        Note.find({ remote_pid: remote_pid }, (err, notes) => {
-          if (Object.prototype.toString.call(notes) === `[object Array]`) {
-            notes.forEach(note => {
-              note.folder_title = folder_title
-            })
-          } else {
-            if (notes) {
-              notes.folder_title = folder_title
-            }
-          }
-          resolve(notes)
-        })
-      } else {
-        Note.find({ pid: pid }, (err, notes) => {
-          if (Object.prototype.toString.call(notes) === `[object Array]`) {
-            notes.forEach(note => {
-              note.folder_title = folder_title
-            })
-          } else {
-            if (notes) {
-              notes.folder_title = folder_title
-            }
-          }
-          resolve(notes)
-        })
-      }
-    })
-  })
+  let querys = []
+  if (!_.isUndefined(pid)) {
+    querys.push({ pid: pid })
+  }
+  if (!_.isUndefined(remote_pid)) {
+    querys.push({ remote_pid: remote_pid })
+  }
+
+  opts = opts || {}
+  opts.multi = true
+
+  return await getByQuery(
+    querys,
+    opts
+  )
 }
 
-function getById (req) {
+async function getById (req) {
   const { id } = req
 
-  return new Promise((resolve, reject) => {
-    Note.findOne({ _id: id }, (err, note) => {
-      resolve(note)
-    })
-  })
+  let note = await getByQuery({ _id: id })
+  return note
 }
 
-function getTrash () {
-  return new Promise((resolve, reject) => {
-    Note.find({ trash: 'TRASH' }, (err, notes) => {
-      let p = notes.map(note => {
-        return new Promise((resolve, reject) => {
-          folderCtr.getById({ id: note.pid }).then(pfolder => {
-            note.folder_title = pfolder ? pfolder.title : '我的文件夹'
-            resolve(note)
-          })
-        })
-      })
-      Promise.all(p).then(res => {
-        resolve(res)
-      })
-    })
-  })
+async function getTrash (opts) {
+  opts = opts || {}
+  opts.multi = true
+
+  return await getByQuery({ trash: 'TRASH' }, opts)
 }
 
 function getByTags (req) {
@@ -513,6 +402,92 @@ function getByTags (req) {
       resolve(notes)
     })
   })
+}
+
+async function getByQuery (params, opts) {
+  opts = opts || {
+    multi: false,
+    with_parent_folder: false,
+    with_summary: false
+  }
+  const isReqArr = _.isArray(params)
+  const query = isReqArr ? { $or: params } : params
+  
+  let notes = []
+  if (opts.multi) {
+    let queryFunc = Note.find(query)
+    if (opts.sort) {
+      queryFunc = queryFunc.sort(opts.sort)
+    }
+    if (typeof opts.limit === 'number') {
+      queryFunc = queryFunc.limit(opts.limit)
+    }
+    notes = await queryFunc.execAsync()
+  } else {
+    let note = await Note.findOne(query).execAsync()
+    if (note) {
+      notes.push(note)
+    }
+  }
+
+  if (opts.with_summary) {
+    notes = await Promise.all(notes.map(note => {
+      return patchSummary(note)
+    }))
+  }
+
+  if (opts.with_parent_folder) {
+    notes = await Promise.all(notes.map(note => {
+      return patchParentFolder(note)
+    }))
+  }
+
+  if (opts.with_doc) {
+    notes = await Promise.all(notes.map(note => {
+      return (async () => {
+        let doc = await docCtr.getByNoteId({ note_id: note._id })
+        note.content = doc.content
+        return note
+      })(note)
+    }))
+  }
+  
+  return opts.multi ? notes : notes[0]
+}
+
+async function patchParentFolder (note) {
+  let pFolder
+  if (_.isUndefined(note.remote_pid)) {
+    pFolder = await folderCtr.getByQuery({ _id: note.pid })
+  } else {
+    pFolder = await folderCtr.getByQuery([
+      { _id: note.pid },
+      { remote_id: note.remote_pid }]
+    )
+  }
+  if (pFolder) {
+    note.parent_folder = pFolder
+    if (note.pid !== pFolder._id) {
+      note.pid = pFolder._id
+      await update({ id: note._id, pid: pFolder._id })
+    }
+  } else {
+    note.parent_folder = null
+    if (note.pid !== '0') {
+      note.pid = '0'
+      await update({ id: note._id, pid: '0' })
+    }
+  }
+  return note
+}
+
+async function patchSummary (note) {
+  let doc = await docCtr.getByNoteId({ note_id: note._id })
+  if (doc) {
+    note.summary = htmlToText(doc.content)
+  }
+
+  return note
 }
 
 export default {
@@ -532,10 +507,9 @@ export default {
   updateRemoteTagIds,
   trashAll,
   addTag,
-  getAll,
-  getAllByQuery,
   getAllByPid,
   getById,
   getTrash,
-  getByTags
+  getByTags,
+  getByQuery
 }

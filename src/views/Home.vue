@@ -57,6 +57,7 @@ import LocalDAO from '../../db/api'
 import * as LocalService from '../service/local'
 import { getLocalUserById } from '@/service/local'
 import { getAppConf, saveAppConf } from '@/tools/appConf'
+import fetchLocal from '../utils/fetchLocal'
 
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
@@ -168,9 +169,10 @@ export default {
       if (arg.from === 'Home') {
         this.SET_USER_INFO(arg.res)
         this.SET_TOKEN(arg.res.id_token)
+        this.SET_NOTE_VER(this.$remote.app.appConf.note_ver || 1)
+        this.SET_DB_READY(true)
       }
     })
-    // this.handleDBLoaded()
   },
 
   mounted () {
@@ -283,14 +285,10 @@ export default {
       ipcRenderer.send('fetch-user-data', {
         from: 'Home'
       })
-      this.SET_DB_READY(true)
     },
 
     deleteAll () {
-      ipcRenderer.send('fetch-local-data', {
-        tasks: ['deleteAll'],
-        from: 'Home',
-      })
+      fetchLocal('deleteAll')
     }
   }
 }

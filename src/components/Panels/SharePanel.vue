@@ -121,7 +121,7 @@
 </template>
 
 <script>
-import { clipboard, ipcRenderer } from 'electron'
+import { clipboard } from 'electron'
 import { mapActions, mapGetters } from 'vuex'
 import LocalDAO from '../../../db/api'
 import {
@@ -130,6 +130,7 @@ import {
   getShareInfo
 } from '../../service'
 import Loading from '@/components/Loading'
+import fetchLocal from '../../utils/fetchLocal';
 
 export default {
   name: 'SharePanel',
@@ -204,12 +205,24 @@ export default {
     isSharePanelShowed (val) {
       if (val) {
         this.isFirstData = true
-        console.log('watch-isSharePanelShowed', val, this.currentFile)
         if (!this.currentFile.remote_id) {
-          ipcRenderer.send('fetch-local-data', {
-            tasks: ['getLocalNoteById'],
-            params: [{ id: this.currentFile._id }],
-            from: 'SharePanel'
+          fetchLocal('getLocalNoteById', {
+            id: this.currentFile._id
+          }).then(res => {
+            let remote_id = res.remote_id
+            if (remote_id) {
+              this.remoteId = remote_id
+              getShareInfo(remote_id).then(res => {
+                if (res.data.body && res.data.body) {
+                  this.handleShareFinished(res)
+                } else {
+                  this.createShare(remote_id)
+                }
+              })
+            } else {
+              this.$Message.warning('请先同步')
+              this.closeSharePanel()
+            }
           })
         } else {
           this.remoteId = this.currentFile.remote_id
@@ -246,42 +259,8 @@ export default {
     },
 
     entitledType (val) {
-      // console.log('entitledType', val)
       this.modifyShare()
-    },
-
-    // friendChecked (val) {
-    //   // console.log('friendChecked', val)
-    // },
-
-    // entitledUser (val) {
-    //   // console.log('entitledUser', val)
-    // }
-  },
-
-  created () {
-    ipcRenderer.on('fetch-local-data-response', (event, arg) => {
-      if (arg.from === 'SharePanel') {
-        if (arg.tasks.indexOf('getLocalNoteById') > -1) {
-          let remote_id = arg.res[0].remote_id
-          if (remote_id) {
-            this.remoteId = remote_id
-            console.log('getLocalNoteById', arg.res)
-            getShareInfo(remote_id).then(res => {
-              console.log('getShareInfo', res, this.remoteId, remote_id)
-              if (res.data.body && res.data.body) {
-                this.handleShareFinished(res)
-              } else {
-                this.createShare(remote_id)
-              }
-            })
-          } else {
-            this.$Message.warning('请先同步')
-            this.closeSharePanel()
-          }
-        }
-      }
-    })
+    }
   },
 
   methods: {
@@ -307,7 +286,6 @@ export default {
 
     async modifyShare () {
       if (this.isFirstData) {
-        // this.isFirstData = false
         return
       }
       this.isLoading = true
@@ -320,14 +298,12 @@ export default {
         entitledUser: this.entitledUser
       }
 
-      console.log('modifyShare', data)
       let shareResp = await publishShare(data)
 
       this.handleShareFinished(shareResp)
     },
 
     handleShareFinished (shareResp) {
-      console.log('handleShareFinished', shareResp, this.remoteId)
       this.isLoading = false
       if (shareResp.data.returnCode === 200) {
         this.shareInfo = shareResp.data.body

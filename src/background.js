@@ -26,6 +26,7 @@ let win
 let loginWin
 let previewWin
 let youdaoWin
+let testWin
 
 let taskId = 0
 
@@ -235,7 +236,6 @@ function createLoginWindow (user) {
 
 function createHomeWindow () {
   // Create the browser window.
-  console.log('createHomeWindow')
   win = new BrowserWindow({
     id: 'home',
     width: app.appConf.size.width,
@@ -244,7 +244,7 @@ function createHomeWindow () {
     show: false,
     title: '添富云笔记',
     // frame: false,
-    titleBarStyle: isDevelopment ? 'default' : 'hidden',
+    titleBarStyle: isDevelopment ? 'hidden' : 'hidden',
     icon: path.join(__static, 'icon.png'),
     webPreferences: {
       webSecurity: false
@@ -331,6 +331,39 @@ function createYoudaoAsyncWindow (event, url) {
 
   youdaoWin.on('closed', () => {
     youdaoWin = null
+  })
+}
+
+function createTestWindow () {
+  if (testWin) return
+  testWin = new BrowserWindow({
+    id: 'test',
+    width: app.appConf.size.width,
+    height: app.appConf.size.height,
+    backgroundColor: '#fcfbf7',
+    show: true,
+    title: 'TestGround',
+    // frame: false,
+    titleBarStyle: 'default',
+    webPreferences: {
+      webSecurity: false
+    }
+  })
+
+  testWin.setMinimumSize(960, 640)
+
+  if (process.env.WEBPACK_DEV_SERVER_URL) {
+    // Load the url of the dev server if in development mode
+    testWin.loadURL(process.env.WEBPACK_DEV_SERVER_URL + '#/test')
+    testWin.webContents.openDevTools()
+  } else {
+    createProtocol('app')
+    // Load the index.html when not in development
+    testWin.loadURL('app://./index.html#/test')
+  }
+
+  testWin.on('closed', (event) => {
+    testWin = null
   })
 }
 
@@ -444,40 +477,17 @@ ipcMain.on('showWindow', (event, arg) => {
 })
 
 ipcMain.on('login-ready', (event, arg) => {
-  console.log('login-ready')
   connectDatabase().then(() => {
-    win && win.show()
-    win && win.webContents.send('login-ready')
-    LocalService.getAllLocalFolder().then(res1 => {
-      LocalService.getAllLocalTag().then(res2 => {
-        sendLocalDataRes({
-          tasks: ['getAllLocalFolder', 'getAllLocalTag'],
-          res: [res1, res2],
-          from: ['NavBar']
-        })
-      })
-    })
-    if (!isDevelopment) {
-      loginWin && loginWin.destroy()
-    }
+    showHomeWindow()
   })
 })
 
 ipcMain.on('pull-finished', (event, arg) => {
+  console.log('pull-finished')
   if (!isDevelopment) {
     loginWin && loginWin.hide()
   }
-  win && win.show()
-  win && win.webContents.send('login-ready')
-  LocalService.getAllLocalFolder().then(res1 => {
-    LocalService.getAllLocalTag().then(res2 => {
-      sendLocalDataRes({
-        tasks: ['getAllLocalFolder', 'getAllLocalTag'],
-        res: [res1, res2],
-        from: ['NavBar']
-      })
-    })
-  })
+  showHomeWindow()
 })
 
 ipcMain.on('create-home-window', (event, arg) => {
@@ -498,14 +508,13 @@ ipcMain.on('create-youdao-window', (event, arg) => {
 })
 
 ipcMain.on('update-user-data', (event, arg) => {
+  console.log('update-user-data')
   LocalService.updateLocalUser(arg).then(res => {
     app.appConf.user = res._id
     saveAppConf(app.getAppPath('appData'), {
       user: res._id
     })
-    connectDatabase().then(() => {
-      loginWin.webContents.send('update-user-data-response')
-    })
+    loginWin.webContents.send('update-user-data-response')
   })
 })
 
@@ -518,16 +527,31 @@ ipcMain.on('fetch-user-data', (event, arg) => {
   })
 })
 
+ipcMain.on('fetch-local', (event, arg) => {
+  taskId++
+  let option = arg.options || {}
+  let args = [option]
+  if (arg.params) {
+    args.unshift(arg.params)
+  }
+
+  LocalService[arg.taskName].call(this, ...args).then(res => {
+    arg.res = res
+    event.sender.send('fetch-local-response', arg)
+  })
+})
+
 ipcMain.on('fetch-local-data', (event, arg) => {
   taskId++
   let tasks = arg.tasks.map((item, index) => {
+    let option = arg.options ? arg.options[index] : {}
     if (arg.params) {
-      return LocalService[item](arg.params[index])
+      return LocalService[item](arg.params[index], option)
     } else {
-      return LocalService[item]()
+      return LocalService[item](option)
     }
   })
-  execPromise(taskId, tasks, arg)  
+  execPromise(taskId, tasks, arg)
 })
 
 ipcMain.on('communicate', (event, arg) => {
@@ -546,6 +570,7 @@ function connectDatabase () {
       createCollection('state', p)
   
       LocalService.getLocalState().then(res => {
+        console.log('getLocalState', res)
         app.appConf.note_ver = res.note_ver
         resolve()
       })
@@ -558,20 +583,26 @@ function sendLocalDataRes (arg) {
     previewWin && previewWin.webContents.send('fetch-local-data-response', arg)
     return
   }
+  if (arg.from === 'Test') {
+    testWin && testWin.webContents.send('fetch-local-data-response', arg)
+    return
+  }
   win && win.webContents.send('fetch-local-data-response', arg)
   loginWin && loginWin.webContents.send('fetch-local-data-response', arg)
 }
 
 function execPromise (id, tasks, arg) {
   let tid = id
+  let options = arg.options || []
   if (arg.queue) {
-    LocalService[arg.tasks[0]](arg.params[0]).then((res0) => {
-      LocalService[arg.tasks[1]](arg.params[1]).then((res1) => {
+    LocalService[arg.tasks[0]](arg.params[0], options[0]).then((res0) => {
+      LocalService[arg.tasks[1]](arg.params[1], options[1]).then((res1) => {
         sendLocalDataRes({
           res: [res0, res1],
           from: arg.from,
           queue: true,
-          tasks: arg.tasks
+          tasks: arg.tasks,
+          fid: arg.fid
         })
       })
     })
@@ -581,10 +612,21 @@ function execPromise (id, tasks, arg) {
         sendLocalDataRes({
           res: res,
           from: arg.from,
-          tasks: arg.tasks
+          tasks: arg.tasks,
+          fid: arg.fid
         })
       }
     })
+  }
+}
+
+function showHomeWindow () {
+  win && win.show()
+  win && win.webContents.send('login-ready')
+  if (!isDevelopment) {
+    loginWin && loginWin.destroy()
+  } else {
+    createTestWindow()
   }
 }
 

@@ -30,8 +30,8 @@
         <div class="need_push local" v-if="need_push_local"></div>
       </div>
     </div>
-    <div class="body" v-if="content.length > 0 && !mini && type === 'doc'">
-      <span class="content ellipsis">{{ content }}</span>
+    <div class="body" v-if="content.length > 0 && !mini && type === 'note'">
+      <p class="content">{{ content }}</p>
     </div>
     <div class="footer">
       <div class="path" v-if="!mini && selected && viewFileType === 'latest'">
@@ -46,9 +46,10 @@
 <script>
 import { mapGetters, mapActions } from 'vuex'
 import mixins from '../mixins'
-import {
-  updateLocalFolder
-} from '@/service/local'
+import fetchLocal from '../../../utils/fetchLocal'
+// import {
+//   updateLocalFolder
+// } from '@/service/local'
 
 export default {
   name: 'FileCard',
@@ -221,14 +222,19 @@ export default {
 
     handleTitleInputBlur () {
       this.showTitleInput = false
-      updateLocalFolder({
+      let taskName = this.type === 'folder' ? 'updateLocalFolder' : 'updateLocalNote'
+
+      fetchLocal(taskName, {
         id: this.file_id,
         title: this.titleValue
       }).then(res => {
-        this.$hub.dispatchHub('updateFile', this, {
-          id: this.file_id,
-          name: this.titleValue
-        })
+        this.$hub.dispatchHub('renameListFile', this, res)
+        if (res.type === 'folder') {
+          this.$hub.dispatchHub('updateFile', this, {
+            id: res._id,
+            name: res.title
+          })
+        }
       })
     },
 
@@ -352,8 +358,15 @@ export default {
   .content
     display inline-block
     width 100%
-    height 18px
+    height 36px
     font-size 12px
+    overflow hidden
+    text-overflow ellipsis
+    word-break break-all
+    display -webkit-box
+    -webkit-box-orient vertical
+    -webkit-line-clamp 2
+
 
 .footer
   margin 10px 0 0

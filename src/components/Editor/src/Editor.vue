@@ -12,6 +12,7 @@ import mixins from '../mixins'
 import uploadAdapter from './upload'
 import '../../../assets/styles/editor.css'
 import { getLocalDoc, updateLocalDoc } from '@/service/local'
+import fetchLocal from '../../../utils/fetchLocal'
 
 export default {
   name: 'EditorComp',
@@ -56,10 +57,15 @@ export default {
             this.saveData(this.cachedDoc._id, editorData)
           }
         }
-        ipcRenderer.send('fetch-local-data', {
-          tasks: ['getLocalDoc'],
-          params: [{ note_id: val._id }],
-          from: 'Editor'
+        fetchLocal('getLocalDoc', {
+          note_id: val._id
+        }).then(res => {
+          this.currentDoc = res
+          this.cachedDoc = {
+            _id: res._id,
+            content: res.content
+          }
+          this.initEditor(res.content)
         })
       }
     },
@@ -70,20 +76,6 @@ export default {
   },
 
   created () {
-    ipcRenderer.on('fetch-local-data-response', (event, arg) => {
-      if (arg.from === 'Editor') {
-        console.log('fetch-local-data-response', event, arg)
-        if (arg.tasks.indexOf('getLocalDoc') > -1) {
-          let res = arg.res[arg.tasks.indexOf('getLocalDoc')]
-          this.currentDoc = res
-          this.cachedDoc = {
-            _id: res._id,
-            content: res.content
-          }
-          this.initEditor(res.content)
-        }
-      }
-    })
     ipcRenderer.on('communicate', (event, arg) => {
       console.log('fetch-local-data-response', event, arg)
       if (arg.from === 'Preview' && arg.tasks.indexOf('updateEditorDoc') > -1) {
@@ -157,17 +149,20 @@ export default {
 
     handleResize () {
       let space = this.viewType === 'expanded' ? 540 : 390
-      document.getElementsByClassName('ck-content')[0].style.width = document.body.clientWidth - space + 'px'
+      document.getElementsByClassName('ck ck-editor__main')[0].style.width = document.body.clientWidth - space + 'px'
     },
 
     saveData (id, content) {
-      ipcRenderer.send('fetch-local-data', {
-        tasks: ['updateLocalDoc'],
-        params: [{
-          id: id,
-          content: content,
-        }],
-        from: 'Editor'
+      fetchLocal('updateLocalDoc', {
+        id: id,
+        content: content
+      }).then(res => {
+        console.log('saveData', res)
+        let req = {
+          id: this.currentFile._id,
+          summary: res
+        }
+        this.$hub.dispatchHub('updateDoc', this, req)
       })
     }
   }

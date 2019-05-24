@@ -76,7 +76,7 @@ export default {
     }
 
     ipcRenderer.on('update-user-data-response', (event, arg) => {
-      this.handleFetch()
+      ipcRenderer.send('login-ready')
     })
   },
 
@@ -98,6 +98,7 @@ export default {
       if (this.isLoading) return
       this.isLoading = true
       const { username, password } = this
+      console.log('postInput', username, password)
 
       let authenticateResp = await authenticate({
         username: username,
@@ -105,7 +106,6 @@ export default {
       }).catch(err => {
         console.error(err)
         this.$Message.error(err)
-        this.handleDataFinished()
         this.isLoading = false
         return
       })
@@ -117,8 +117,8 @@ export default {
           .catch(err => {
             console.error(err)
             this.$Message.error(err)
-            if (this.autoLogin) {
-              this.handleDataFinished()
+            if (this.autoLogin === '1') {
+              ipcRenderer.send('login-ready')
             }
             this.isLoading = false
             return
@@ -129,19 +129,6 @@ export default {
       } else {
         this.$Message.error(authenticateResp.data.returnMsg)
         this.isLoading = false
-      }
-    },
-
-    async handleFetch () {
-      let { note_ver } = remote.app.appConf
-      console.log('handleFetch', remote.app.appConf)
-      let pullResp = await this.pullData(note_ver || 1)
-    },
-
-    handleDataFinished () {
-      console.log('handleDataFinished', this.autoLogin)
-      if (this.autoLogin === '1') {
-        ipcRenderer.send('login-ready')
       }
     },
 

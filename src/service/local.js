@@ -22,8 +22,12 @@ export function getAllLocalFolder () {
   return LocalDAO.folder.getAll()
 }
 
-export function getAllLocalFolderByQuery (params) {
-  return LocalDAO.folder.getAllByQuery(params)
+export function getLocalFolderByQuery (params, option) {
+  return LocalDAO.folder.getByQuery(params, option)
+}
+
+export function getLocalFolderById (params) {
+  return LocalDAO.folder.getById(params)
 }
 
 export function getLocalFolderByPid (params) {
@@ -56,7 +60,26 @@ export function removeAllDeletedFolder () {
 
 // note
 export function getAllLocalNote () {
-  return LocalDAO.note.getAll()
+  return LocalDAO.note.getByQuery(
+    { trash: 'NORMAL' },
+    {
+      multi: true,
+      width_parent_folder: true
+    }
+  )
+}
+
+export function getLatesLocalNote () {
+  return LocalDAO.note.getByQuery(
+    { trash: 'NORMAL' },
+    {
+      multi: true,
+      limit: 20,
+      sort: { update_at: -1 },
+      with_summary: true,
+      with_parent_folder: true
+    }
+  )
 }
 
 export function getLocalNoteById (params) {
@@ -64,15 +87,19 @@ export function getLocalNoteById (params) {
 }
 
 export function getAllLocalNoteByQuery (params) {
-  return LocalDAO.note.getAllByQuery(params)
+  return LocalDAO.note.getByQuery(params, )
 }
 
-export function getLocalNoteByPid (params) {
-  return LocalDAO.note.getAllByPid(params)
+export function getLocalNoteByQuery (params, option) {
+  return LocalDAO.folder.getByQuery(params, option)
 }
 
-export function getLocalTrashNote () {
-  return LocalDAO.note.getTrash()
+export function getLocalNoteByPid (params, option) {
+  return LocalDAO.note.getAllByPid(params, option)
+}
+
+export function getLocalTrashNote (option) {
+  return LocalDAO.note.getTrash(option)
 }
 
 export function addLocalNote (params) {
@@ -134,12 +161,13 @@ export function deleteAllTrash () {
     LocalDAO.folder.updateByQuery({
       query: { trash: 'TRASH' },
       data: { trash: 'DELETED' }
-    }).then(() => {
+    }).then((folders) => {
       LocalDAO.note.updateByQuery({
         query: { trash: 'TRASH' },
         data: { trash: 'DELETED' }
-      }).then(() => {
-        resolve()
+      }).then((notes) => {
+        console.log('deleteAllTrash-res', folders, notes)
+        resolve([...folders, ...notes])
       })
     })
   })
@@ -232,6 +260,7 @@ export function removeLocalImageById (params) {
 
 // version
 export function updateState (params) {
+  console.log('updateState', params)
   return LocalDAO.state.update(params)
 }
 
@@ -240,11 +269,30 @@ export function getLocalState () {
 }
 
 // danger
-export function deleteAll (params) {
+export function deleteAll () {
   return LocalDAO.folder.deleteAll().then(() => {
     LocalDAO.note.deleteAll().then(() => {
       LocalDAO.doc.deleteAll().then(() => {
         LocalDAO.img.deleteAll()
+      })
+    })
+  })
+}
+
+export function removeAll () {
+  return new Promise ((resolve, reject) => {
+    LocalDAO.folder.removeAll().then((f) => {
+      LocalDAO.note.removeAll().then((n) => {
+        LocalDAO.doc.removeAll().then((d) => {
+          LocalDAO.img.removeAll().then((i) => {
+            resolve({
+              f: f,
+              n: n,
+              d: d,
+              i: i
+            })
+          })
+        })
       })
     })
   })

@@ -1,4 +1,5 @@
-import { getValid } from '../tools'
+import { htmlToText, getValid } from '../tools'
+import { promisifyAll } from '../promisify'
 import docModel from '../models/doc'
 import { LinvoDB } from '../index'
 import noteCtr from './note'
@@ -29,6 +30,7 @@ function createCollection (path) {
       default: true
     }
   })
+  promisifyAll(Doc)
 }
 
 // save
@@ -44,12 +46,10 @@ function saveAll (req) {
 
 // add
 function add (req) {
-  console.log('add-doc', req)
   let data = docModel(req)
 
   return new Promise((resolve, reject) => {
     Doc.insert(data, (err, docs) => {
-      console.log('add-doc-res', docs)
       resolve(docs)
     })
   })
@@ -99,9 +99,7 @@ function deleteAll () {
         })
       })
       Promise.all(p).then(() => {
-        // removeAll().then(() => {
-          resolve(docs.length)
-        // })
+        resolve(docs.length)
       })
     })
   })
@@ -110,7 +108,7 @@ function deleteAll () {
 // update
 function update (req) {
   const { id } = req
-  console.log('update-doc', req)
+  req.update_at = new Date().valueOf()
 
   return new Promise((resolve, reject) => {
     Doc.findOne({ _id: id })
@@ -125,7 +123,7 @@ function update (req) {
             size: newDoc.content.length,
             need_push: true
           }).then(note => {
-            resolve(newDoc)
+            resolve(htmlToText(newDoc.content))
           })
         }
       )
@@ -134,8 +132,6 @@ function update (req) {
 }
 
 function updateImg (reqs) {
-  console.log('updateImg', reqs)
-
   return new Promise((resolve, reject) => {
     let p = reqs.map((req, index) => {
         return new Promise((resolve, reject) => {
@@ -172,7 +168,6 @@ function getAll () {
 
 function getByNoteId (req) {
   const { note_id } = req
-  console.log('getByNoteId', note_id, req)
   return new Promise((resolve, reject) => {
     Doc.findOne({ note_id: note_id }).exec((err, doc) => {
       resolve(doc)

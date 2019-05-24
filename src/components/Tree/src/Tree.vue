@@ -210,6 +210,7 @@ export default {
   created () {
     this.model.instance = this
     this.id = this.model.data ? this.model.id : '0'
+    this.$set(this.model, 'hidden', !!this.model.hidden)
     this.$on('select', (params) => {
       if (this.model.id === params.id) {
         this.click()
@@ -234,9 +235,9 @@ export default {
         vm.editable = false
       }
     })
-    if (this.model.editable) {
-      this.setEditable()
-    }
+    // if (this.editable) {
+    //   this.setEditable()
+    // }
 
     // let root = this.getRootNode()
     // if (this.model.id === '0' && this.model.name !== 'root') {
@@ -341,13 +342,14 @@ export default {
       root.$emit('click', this.model)
     },
 
-    addChild (data, editable, isLeaf) {
+    addChild (data, isLeaf) {
       if (data.type === 'select') {
         var node = new TreeNode({
           id: data.data._id,
           name: data.data.name,
           type: 'select',
           data: data.data,
+          dragDisabled: data.dragDisabled,
           isSelected: false
         }, this.model.store)
         this.model.addChildren(node, true)
@@ -362,7 +364,6 @@ export default {
         id: data.id,
         name,
         isLeaf,
-        editable,
         data: data
       }, this.model.store)
       this.model.addChildren(node, true)
@@ -404,6 +405,7 @@ export default {
     drop(e) {
       if (!fromComp) return
       const oldParent = fromComp.model.parent
+      fromComp.editable = false
       fromComp.model.moveInto(this.model)
       this.isDragEnterNode = false
       var node = this.getRootNode()

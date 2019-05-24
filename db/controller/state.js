@@ -28,6 +28,8 @@ function remove () {
 
 // update
 async function update (req) {
+  req.update_at = new Date().valueOf()
+
   return new Promise((resolve, reject) => {
     State.find({})
     .exec((err, states) => {

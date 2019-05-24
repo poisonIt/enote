@@ -5,7 +5,7 @@
         <div class="icon-new"></div>
         <span>新建</span>
       </div>
-      <div class="item sync" :class="{ 'grey': isOffline }" @click="syncData(0)">
+      <div class="item sync" :class="{ 'grey': isOffline }" @click="syncData(30)">
         <div class="icon-sync infinite rotate" :class="{ animated: isSyncing }"></div>
         <span>同步</span>
       </div>
@@ -30,6 +30,7 @@ import {
   getUserInfo,
   getFriendList
 } from '../../../service'
+import fetchLocal from '../../../utils/fetchLocal'
 
 export default {
   name: 'FileTool',
@@ -56,6 +57,8 @@ export default {
 
   computed: {
     ...mapGetters({
+      isDBReady: 'GET_DB_READY',
+      noteVer: 'GET_NOTE_VER',
       userInfo: 'GET_USER_INFO',
       viewType: 'GET_VIEW_TYPE',
       isEditorFocused: 'GET_IS_EDITOR_FOCUSED',
@@ -64,6 +67,15 @@ export default {
   },
 
   watch: {
+    isDBReady (val) {
+      console.log('watch-isDBReady', val)
+      if (val) {
+        this.pushData().then(() => {
+          this.pullData(this.noteVer)
+        })
+      }
+    },
+
     network_status (val) {
       this.isOffline = (val === 'offline')
       if (!this.isOffline && this.$remote.getCurrentWindow().isVisible()) {
@@ -93,6 +105,7 @@ export default {
     ...mapActions([
       'SET_TOKEN'
     ]),
+
     toggleMenu () {
       this.isMenuVisible = !this.isMenuVisible
     },
@@ -138,7 +151,6 @@ export default {
         delay = 1000
       }
       // if (isAuto) return
-      this.SET_IS_SYNCING(true)
       setTimeout(() => {
         this.pushData()
         .catch(err => {
@@ -174,11 +186,7 @@ export default {
         let userResp = await this.pullUserInfo(id_token, username, password)
         console.log('userResp', userResp)
         if (!userResp.userData) return
-        ipcRenderer.send('fetch-local-data', {
-          tasks: ['updateLocalUser'],
-          params: [userResp.userData],
-          from: 'FileTool'
-        })
+        fetchLocal('updateLocalUser', userResp.userData)
       } else {
         this.$Message.error(authenticateResp.data.returnMsg)
       }

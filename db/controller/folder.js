@@ -1,9 +1,11 @@
-// import { folderDB } from './index.js'
-import { getValid } from '../tools'
+import * as _ from 'lodash'
+import { promisifyAll } from '../promisify'
+import { isIllegal } from '../tools'
 import folderModel from '../models/folder'
 import { LinvoDB } from '../index'
 import noteCtr from './note'
 
+let schemaKeys = Object.keys(folderModel({}))
 let Folder = {}
 
 function createCollection (path) {
@@ -47,6 +49,7 @@ function createCollection (path) {
       default: false
     }
   })
+  promisifyAll(Folder)
 }
 
 
@@ -61,43 +64,66 @@ function saveAll (req) {
 }
 
 // add
-function add (req) {
+async function add (req) {
   let data = folderModel(req)
-  
+
   return new Promise((resolve, reject) => {
     getById({ id: req.pid }).then(pFolder => {
       if (pFolder && pFolder.remote_id) {
         data.remote_pid = pFolder.remote_id
       }
-      Folder.insert(data, function (err, folders) {
+      Folder.insert(data, function (err, newFolder) {
         if (err) {
           reject(err)
         }
-        resolve(folders)
+        resolve(newFolder)
       })
     })
   })
 }
 
-function diffAdd (req) {
-  return new Promise((resolve, reject) => {
-    Folder.findOne({ remote_id: req.remote_id }, (err, folder) => {
-      if (folder) {
-        req.id = folder._id
-        update(req).then(res => {
-          resolve(res)
-        })
-      } else {
-        add(req).then(res => {
-          resolve(res)
-        })
-      }
-    })
+async function diffAdd (req) {
+  let folders = await getByQuery({ remote_id: req.remote_id }, { multi: true })
+
+  let folder = folders.shift()
+
+  let p = folders.map(f => {
+    return removeById({ id: f._id })
   })
+
+  await Promise.all(p)
+
+  if (folder) {
+    req.id = folder._id
+    return await update(req)
+  } else {
+    return await add(req)
+  }
 }
 
-function diffAddMulti (reqs) {
-  return Promise.all(reqs.map(req => diffAdd(req)))
+async function diffAddMulti (reqs) {
+  let newFolders = await Promise.all(reqs.map(req => diffAdd(req)))
+  let p = newFolders.map((folder, index) => {
+    return (async () => {
+      return folder
+      let newFolder = folder
+      let pL = await getByQuery({ id: folder.pid })
+      let pR = await getByQuery({ remote_id: folder.remote_pid })
+      if (pR) {
+        if (pL) {
+          if (pL._id !== pR._id) {
+            newFolder = await update({ id: folder._id, pid: pR._id })
+          }
+        } else {
+          newFolder = await update({ id: folder._id, pid: pR._id })
+        }
+      } else {
+        newFolder = await update({ id: folder._id, pid: '0' })
+      }
+      return newFolder
+    })(folder, index)
+  })
+  return await Promise.all(p)
 }
 
 // remove
@@ -112,31 +138,23 @@ function removeAll () {
   })
 }
 
-function removeById (req) {
+async function removeById (req) {
   const { id } = req
-
-  return new Promise((resolve, reject) => {
-    Folder.findOne({ _id: id }, (err, folder) => {
-      folder.remove()
-      resolve()
-    })
-  })
+  let folder = await getById({ id: id })
+  folder && folder.remove()
 }
 
-function removeAllDeleted () {
-  return new Promise((resolve, reject) => {
-    Folder.find({ trash: 'DELETED' }, (err, folders) => {
-      let p = folders.map(folder => {
-        return new Promise((resolve, reject) => {
-          folder.remove()
-          resolve()
-        })
-      })
-      Promise.all(p).then(() => {
-        resolve(p.length)
-      })
-    })
+async function removeAllDeleted () {
+  let folders = await getByQuery({ trash: 'DELETED' }, { multi: true })
+
+  let p = folders.map(folder => {
+    return (async () => {
+      await folder.remove()
+      return folder
+    })(folder)
   })
+
+  return await Promise.all(p)
 }
 
 function deleteAll () {
@@ -149,236 +167,223 @@ function deleteAll () {
         })
       })
       Promise.all(p).then(() => {
-        // removeAll().then(() => {
-          resolve(folders.length)
-        // })
+        resolve(folders.length)
       })
     })
+  })
+}
+
+function updateP (query, req, multi) {
+  return new Promise((resolve, reject) => {
+    Folder.update(
+      query,
+      req,
+      { multi: true },
+      (err, num, newFolders) => {
+        if (err) {
+          reject(err)
+        }
+        resolve(newFolders)
+      }
+    )
   })
 }
 
 // update
 async function update (req) {
   const { id } = req
+  console.log('update', req)
+  req.update_at = new Date().valueOf()
 
   if (!req.hasOwnProperty('need_push')) {
     req.need_push = true
   }
 
   if (req.hasOwnProperty('pid')) {
-    let folder = await getById({ id: req.pid })
-    req.remote_pid = folder ? folder.remote_id : '0'
+    let pFolder = await getById({ id: req.pid })
+    req.remote_pid = pFolder ? pFolder.remote_id : '0'
   }
 
-  return new Promise((resolve, reject) => {
-    Folder.findOne({ _id: id })
-    .exec((err, folder) => {
-      if (!folder) {
-        updateByQuery({
-          query: { remote_id: id },
-          data: req
-        }).then((res) => {
-          resolve(res)
-        })
-        return
-      }
-      let old_remote_id = folder.remote_id
-      let old_trash = folder.trash
-      
-      Folder.update(
-        { _id: id },
-        { $set: req},
-        { multi: true },
-        (err, num, newFolder) => {
-          let childData = {}
-          if (req.trash === 'DELETED') {
-            childData.trash = 'DELETED'
-          }
-          if (newFolder.remote_id !== old_remote_id) {
-            childData.remote_pid = newFolder.remote_id
-          }
-          if (childData.hasOwnProperty('trash') || childData.hasOwnProperty('remote_pid')) {
-            updateByQuery({
-              query: { pid: newFolder._id },
-              data: childData
-            }).then(() => {
-              noteCtr.updateByQuery({
-                query: { pid: newFolder._id },
-                data: childData
-              }).then(() => {
-                if (req.trash === 'NORMAL' && old_trash !== newFolder.trash) {
-                  console.log('update-p', newFolder)
-                  update({
-                    id: newFolder.pid,
-                    trash: 'NORMAL'
-                  }).then(() => {
-                    resolve(newFolder)
-                  })
-                } else {
-                  resolve(newFolder)
-                }
-              })
-            })
-          } else {
-            resolve(newFolder)
-          }
-        }
-      )
+  let folder = await getById({ id: id })
+  if (!folder) {
+    return await updateByQuery({
+      query: { remote_id: id },
+      data: req
     })
-  })
+  } else {
+    let old_remote_id = folder.remote_id
+    let old_trash = folder.trash
+    let newFolder = await updateP(
+      { _id: id },
+      { $set: req }
+    )
+
+    let childData = {}
+    if (req.trash === 'DELETED') {
+      childData.trash = 'DELETED'
+    }
+    if (newFolder.remote_id !== old_remote_id) {
+      childData.remote_pid = newFolder.remote_id
+    }
+    if (childData.hasOwnProperty('trash') || childData.hasOwnProperty('remote_pid')) {
+      await updateByQuery({
+        query: { pid: newFolder._id },
+        data: childData
+      })
+      await noteCtr.updateByQuery({
+        query: { pid: newFolder._id },
+        data: childData
+      })
+    }
+
+    // may cause performce issure
+    if (req.trash === 'NORMAL') {
+      if (newFolder.pid !== '0') {
+        await update({
+          id: newFolder.pid,
+          trash: 'NORMAL'
+        })
+      }
+    }
+    return newFolder
+  }
 }
 
-function updateByQuery (req) {
+async function updateByQuery (req) {
   const { query, data } = req
   data.need_push = true
 
-  return new Promise((resolve, reject) => {
-    Folder.find(query, (err, folders) => {
-      let p = folders.map(folder => {
-        let r = {}
-        for (let i in data) {
-          r[i] = data[i]
-        }
-        r.id = folder._id
-        return update(r)
-      })
-      Promise.all(p).then(res => {
-        resolve(res)
-      })
-    })
+  let folders = await getByQuery(query, { multi: true })
+
+  let p = folders.map(folder => {
+    let r = {}
+    for (let i in data) {
+      r[i] = data[i]
+    }
+    r.id = folder._id
+    return update(r)
   })
+
+  return await Promise.all(p)
 }
 
-function updateMulti (reqs) {
-  return new Promise((resolve, reject) => {
-    let p = reqs.map(req => {
-      return update(req)
-    })
-    Promise.all(p).then(res => {
-      resolve(res)
-    })
+async function updateMulti (reqs) {
+  let p = reqs.map(req => {
+    return update(req)
   })
+
+  return await Promise.all(p)
 }
 
 // get
-function getAll () {
+async function getAll () {
   return new Promise((resolve, reject) => {
     Folder.find({}, (err, folders) => {
-      let p = folders.map(folder => {
-        return new Promise((resolve, reject) => {
-          getById({ id: folder.pid }).then(pFolder => {
-            if (!pFolder) {
-              if (folder.remote_pid) {
-                Folder.findOne({ remote_id: folder.remote_pid }, (err, p) => {
-                  pFolder = p
-                  if (pFolder) {
-                    update({ id: folder._id, pid: p._id }).then(() => {
-                      folder.folder_title = pFolder.title
-                      folder.pid = p._id
-                      resolve(folder)
-                    })
-                  } else {
-                    if (folder.pid !== '0') {
-                      update({ id: folder._id, pid: '0' }).then(() => {
-                        folder.folder_title = '我的文件夹'
-                        folder.pid = '0'
-                        resolve(folder)
-                      })
-                    } else {
-                      folder.folder_title = '我的文件夹'
-                      resolve(folder)
-                    }
-                  }
-                })
-              } else {
-                if (folder.pid !== '0') {
-                  update({ id: folder._id, pid: '0' }).then(() => {
-                    folder.folder_title = '我的文件夹'
-                    folder.pid = '0'
-                    resolve(folder)
-                  })
-                } else {
-                  folder.folder_title = '我的文件夹'
-                  resolve(folder)
-                }
-              }
-            } else {
-              folder.folder_title = pFolder.title
-              resolve(folder)
-            }
-          })
-        })
-      })
-      Promise.all(p).then(res => {
-        resolve(res)
-      })
-    })
-  })
-}
-
-function getAllByQuery (req) {
-  const { query } = req
-
-  return new Promise((resolve, reject) => {
-    Folder.find(query, (err, folders) => {
       resolve(folders)
     })
   })
+  // return await getByQuery({}, { multi: true })
 }
 
-function getAllByPid (req) {
+async function getAllByPid (req) {
   const { pid, remote_pid } = req
 
-  return new Promise((resolve, reject) => {
-    getById({ id: pid }).then(pFolder => {
-      let folder_title = pFolder ? pFolder.title : '我的文件夹'
-      if (remote_pid) {
-        Folder.find({ remote_pid: remote_pid }, (err, folders) => {
-          if (Object.prototype.toString.call(folders) === `[object Array]`) {
-            folders.forEach(folder => {
-              folder.folder_title = folder_title
-            })
-          } else {
-            if (folders) {
-              folders.folder_title = folder_title
-            }
-          }
-          resolve(folders)
-        })
-      } else {
-        Folder.find({ pid: pid }, (err, folders) => {
-          if (Object.prototype.toString.call(folders) === `[object Array]`) {
-            folders.forEach(folder => {
-              folder.folder_title = folder_title
-            })
-          } else {
-            if (folders) {
-              folders.folder_title = folder_title
-            }
-          }
-          resolve(folders)
-        })
-      }
-    })
-  })
+  let querys = []
+  if (!_.isUndefined(pid)) {
+    querys.push({ pid: pid })
+  }
+  if (!_.isUndefined(remote_pid)) {
+    querys.push({ remote_pid: remote_pid })
+  }
+
+  return await getByQuery(
+    querys,
+    { multi: true, with_parent_folder: true }
+  )
 }
 
-function getById (req) {
+async function getById (req) {
   const { id } = req
 
-  return new Promise((resolve, reject) => {
-    Folder.findOne({ _id: id }, (err, folder) => {
-      resolve(folder)
-    })
-  })
+  let folder = await getByQuery({ _id: id })
+  return folder
 }
 
-function getTrash () {
-  return new Promise((resolve, reject) => {
-    Folder.find({ trash: 'TRASH' }, (err, folders) => {
-      resolve(folders)
-    })
-  })
+async function getTrash () {
+  let folders = await getByQuery(
+    { trash: 'TRASH' },
+    { multi: true, with_parent_folder: true }
+  )
+  return folders
+}
+
+async function getByQuery (params, opts) {
+  opts = opts || {
+    multi: false,
+    with_parent_folder: false
+  }
+  const isReqArr = _.isArray(params)
+  const query = isReqArr ? { $or: params } : params
+  
+  let folders = []
+  if (opts.multi) {
+    let queryFunc = Folder.find(query)
+    if (opts.sort) {
+      queryFunc = queryFunc.sort(opts.sort)
+    }
+    if (typeof opts.limit === 'number') {
+      queryFunc = queryFunc.limit(opts.limit)
+    }
+    folders = await queryFunc.execAsync()
+  } else {
+    let folder = await Folder.findOne(query).execAsync()
+    if (folder) {
+      folders.push(folder)
+    }
+  }
+
+  // clear illegal data
+  // folders.forEach((folder, index) => {
+  //   if (isIllegal(schemaKeys, folder)) {
+  //     console.log('isIllegal', folder)
+  //     folder.remove()
+  //     _.remove(folders, folder)
+  //   }
+  // })
+
+  if (opts.with_parent_folder) {
+    folders = await Promise.all(folders.map(folder => {
+      return patchParentFolder(folder)
+    }))
+  }
+  
+  return opts.multi ? folders : folders[0]
+}
+
+async function patchParentFolder (folder) {
+  let pFolder
+  if (_.isUndefined(folder.remote_pid)) {
+    pFolder = await getByQuery({ _id: folder.pid })
+  } else {
+    pFolder = await getByQuery([
+      { _id: folder.pid },
+      { remote_id: folder.remote_pid }]
+    )
+  }
+  if (pFolder) {
+    folder.parent_folder = pFolder
+    if (folder.pid !== pFolder._id) {
+      folder.pid = pFolder._id
+      await update({ id: folder._id, pid: pFolder._id })
+    }
+  } else {
+    folder.parent_folder = null
+    if (folder.pid !== '0') {
+      folder.pid = '0'
+      await update({ id: folder._id, pid: '0' })
+    }
+  }
+  return folder
 }
 
 export default {
@@ -395,8 +400,8 @@ export default {
   updateByQuery,
   updateMulti,
   getAll,
-  getAllByQuery,
   getAllByPid,
   getById,
+  getByQuery,
   getTrash
 }

@@ -9,13 +9,12 @@
 <script>
 import { ipcRenderer } from 'electron'
 import { mapGetters, mapActions } from 'vuex'
+import fetchLocal from '../utils/fetchLocal'
 import uploadAdapter from '../components/Editor/src/upload'
 import '../assets/styles/editor.css'
-import { getLocalDoc, updateLocalDoc } from '@/service/local'
 
 export default {
   name: 'EditorComp',
-
 
   data () {
     return {
@@ -29,28 +28,17 @@ export default {
 
   created () {
     let query = this.$router.currentRoute.query
-    console.log('query', query)
     let noteId = query.note_id
     this.title = query.title
     this.SET_CURRENT_FILE({
       _id: noteId
     })
 
-    ipcRenderer.on('fetch-local-data-response', (event, arg) => {
-      if (arg.from === 'Preview') {
-        console.log('fetch-local-data-response', event, arg)
-        if (arg.tasks.indexOf('getLocalDoc') > -1) {
-          let res = arg.res[arg.tasks.indexOf('getLocalDoc')]
-          this.doc = res
-          this.initEditor(res.content)
-        }
-      }
-    })
-    
-    ipcRenderer.send('fetch-local-data', {
-      tasks: ['getLocalDoc'],
-      params: [{ note_id: noteId }],
-      from: 'Preview'
+    fetchLocal('getLocalDoc', {
+      note_id: noteId
+    }).then(res => {
+      this.doc = res
+      this.initEditor(res.content)
     })
   },
 
@@ -63,15 +51,10 @@ export default {
       const _self = this
       if (this.editor) {
         this.editor.setData(content || '')
-        console.log('22222')
         this.showMask = false
       } else {
         ClassicEditor
           .create(this.$refs.editor, {
-            // language: 'zh-cn',
-            // toolbar: [ 'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor'],
-            // // toolbar: [ 'bulletedList' ],
-            // // toolbar: [ 'undo', 'redo', 'heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', 'highlight:yellowMarker', 'Image' ],
             extraPlugins: [ uploadAdapter ],
             autosave: {
               save (editor) {
@@ -85,22 +68,12 @@ export default {
                   from: 'Preview'
                 })
                 _self.saveData(_self.doc._id, _self.editorData)
-
-                // if (_self.currentDoc._id === _self.cachedDoc._id
-                //   && editorData !== _self.cachedDoc.content) {
-                //   _self.saveData(_self.currentDoc._id, editorData)
-                //   _self.cachedDoc.content = editorData
-                // }
               }
             },
           })
           .then(editor => {
             this.editor = editor
             this.editor.setData(content || '')
-            // this.cachedDoc = {
-            //   _id: this.currentDoc._id,
-            //   content: content
-            // }
             this.handleEditorReady()
             this.showMask = false
           })
@@ -122,13 +95,9 @@ export default {
     },
 
     saveData (id, content) {
-      ipcRenderer.send('fetch-local-data', {
-        tasks: ['updateLocalDoc'],
-        params: [{
-          id: id,
-          content: content,
-        }],
-        from: 'Preview'
+      fetchLocal('updateLocalDoc', {
+        id: id,
+        content: content
       })
     }
   }

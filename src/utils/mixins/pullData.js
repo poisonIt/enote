@@ -5,7 +5,7 @@ import {
   pullTags
 } from '@/service'
 import LocalDAO from '../../../db/api'
-import { mapActions } from 'vuex'
+import { mapGetters, mapActions } from 'vuex'
 
 let allTagLocalMap = {}
 
@@ -16,18 +16,24 @@ export default {
     }
   },
 
+  computed: {
+    ...mapGetters({
+      noteVer: 'GET_NOTE_VER',
+    })
+  },
+
   created () {
     this.hookPullMsgHandler()
   },
 
   methods: {
     ...mapActions([
-      'SET_TOKEN'
+      'SET_TOKEN',
+      'SET_NOTE_VER'
     ]),
 
     hookPullMsgHandler () {
       ipcRenderer.on('fetch-local-data-response', (event, arg) => {
-        console.log('fetch-local-data-response', arg)
         if (arg.from === 'pullData') {
           console.log('pullData-res', arg)
           if (arg.tasks.indexOf('diffAddMultiLocalTag') > -1) {
@@ -42,6 +48,21 @@ export default {
           if (arg.tasks.indexOf('diffAddMultiLocalFolder') > -1) {
             console.log('diffAddMultiLocalFolder-res', arg.res)
             this.diffAddNote(this.pullResp[1].data.body)
+            if (this.pullResp[1].data.body.length > 0) {
+              let usnArr = this.pullResp[1].data.body.map(item => item.usn)
+              let usnMax = Math.max(...usnArr)
+              console.log('updateState-usnMax', usnArr, usnMax)
+              if (usnMax > this.noteVer) {
+                this.SET_NOTE_VER(usnMax)
+                ipcRenderer.send('fetch-local-data', {
+                  tasks: ['updateState'],
+                  params: [{
+                    note_ver: usnMax
+                  }],
+                  from: 'pullData'
+                })
+              }
+            }
           }
           if (arg.tasks.indexOf('diffAddMultiLocalNote') > -1) {
             console.log('diffAddMultiLocalNote-res', arg.res)
@@ -53,6 +74,7 @@ export default {
 
     async pullData (noteVer) {
       console.log('pullData', noteVer)
+      return
       return new Promise((resolve, reject) => {
         let resp = this.runPullTasks(noteVer)
         console.log('pullData-resp', resp)
@@ -67,60 +89,24 @@ export default {
         pullTags()
       ])
       console.log('runPullTasks', this.pullResp)
-      // await LocalDAO.folder.removeAll()
-      // await LocalDAO.note.removeAll()
-      // await LocalDAO.doc.removeAll()
-      // await LocalDAO.tag.removeAll()
 
       if (this.pullResp[0].data.returnMsg !== 'success') {
-        // alert(`获取笔记本：${this.pullResp[1].data.returnMsg}`)
         this.isLoading = false
         return
       }
 
       if (this.pullResp[1].data.returnMsg !== 'success') {
-        // alert(`获取笔记：${this.pullResp[2].data.returnMsg}`)
         this.isLoading = false
         return
       }
 
       if (this.pullResp[2].data.returnMsg !== 'success') {
-        // alert(`获取标签：${this.pullResp[3].data.returnMsg}`)
         this.isLoading = false
         return
       }
 
-      // const saveTagTask = (pullResp[2].data.body || [])
-      //   .map(item => LocalDAO.tag.diffAdd(this.transTagData(item)))
-
       this.diffAddTag(this.pullResp[2].data.body || [])
       return
-
-      // let tagResp = await Promise.all(saveTagTask)
-      // allTagLocalMap = {}
-      // tagResp.forEach(item => {
-      //   allTagLocalMap[item.remote_id] = item._id
-      // })
-
-      // const saveNoteBooksTask = pullResp[0].data.body
-      //   .map(item => LocalDAO.folder.diffAdd(this.transNoteBookData(item)))
-
-      // const saveNoteTask = pullResp[1].data.body
-      //   .map(item => {
-      //     return LocalDAO.note.diffAdd(this.transNoteData(item)
-      //   )})
-
-      if (pullResp[1].data.body[0]) {
-        console.log('saveState', pullResp[1].data.body[0])
-        await LocalDAO.state.update({
-          note_ver: pullResp[1].data.body[0].usn
-        })
-      }
-
-      let saveLocalRes = await Promise.all([...saveNoteBooksTask, ...saveNoteTask])
-      console.log('saveLocalRes', saveLocalRes)
-
-      return saveLocalRes
     },
 
     diffAddTag (data) {
@@ -179,6 +165,7 @@ export default {
         tags: obj.tagId ? obj.tagId.map(item => allTagLocalMap[item]) : [],
         need_push: false,
         top: obj.top,
+        share: obj.share,
         usn: obj.usn
       }
     },

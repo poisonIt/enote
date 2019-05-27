@@ -352,15 +352,21 @@ export default {
           id: node.data._id || node.data.id || node.id,
           name: node.name
         }).then(res => {
-          if (res.name !== node.name) {
-            node.name = res.name
-            node.data.name = res.name
+          if (!res) {
+            console.log('handleChangeNodeName-tag-1', node)
+            node.name = node.data.name
           } else {
-            if (this.isTagShowed) {
-              this.TOGGLE_SHOW_TAG_HANDLER(false)
-              this.$nextTick(() => {
-                this.TOGGLE_SHOW_TAG_HANDLER(true)
-              })
+            console.log('handleChangeNodeName-tag-2', node)
+            if (res.name !== node.name) {
+              node.name = res.name
+              node.data.name = res.name
+            } else {
+              if (this.isTagShowed) {
+                this.TOGGLE_SHOW_TAG_HANDLER(false)
+                this.$nextTick(() => {
+                  this.TOGGLE_SHOW_TAG_HANDLER(true)
+                })
+              }
             }
           }
         })

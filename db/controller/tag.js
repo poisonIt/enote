@@ -199,14 +199,27 @@ async function update (req) {
   let tag = await getById({ id: id })
 
   if (tag) {
+    if (req.hasOwnProperty('name')) {
+      let sameNameTag = await getByQuery({ name: req.name })
+      if (sameNameTag && sameNameTag._id !== tag._id) {
+        if (sameNameTag.trash === 'NORMAL') {
+          return null
+        } else {
+          await updateP(
+            { _id: sameNameTag._id },
+            { $set: { name: sameNameTag.name + sameNameTag._id } }
+          )
+        }
+      }
+    }
+
     let newTag = await updateP(
       { _id: id },
       { $set: req }
     )
     return newTag
-    resolve(newTag)
   } else {
-    throwError(`tag ${id} is not exist`)
+    return null
   }
 }
 

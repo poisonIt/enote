@@ -193,19 +193,6 @@ export default {
     }
   },
 
-  created () {
-    ipcRenderer.on('fetch-local-data-response', (event, arg) => {
-      if (arg.from[0] === 'DocumentList') {
-        console.log('fetch-local-data-response', event, arg)
-        if (this.popupedFile) {
-          if (arg.from[1] === 'remove-1') {
-            this.refreshList()
-          }
-        }
-      }
-    })
-  },
-
   methods: {
     ...mapActions([
       'SET_CURRENT_FILE',

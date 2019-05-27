@@ -485,7 +485,6 @@ ipcMain.on('login-ready', (event, arg) => {
 })
 
 ipcMain.on('pull-finished', (event, arg) => {
-  console.log('pull-finished')
   if (!isDevelopment) {
     loginWin && loginWin.hide()
   }
@@ -510,7 +509,6 @@ ipcMain.on('create-youdao-window', (event, arg) => {
 })
 
 ipcMain.on('update-user-data', (event, arg) => {
-  console.log('update-user-data')
   LocalService.updateLocalUser(arg).then(res => {
     app.appConf.user = res._id
     saveAppConf(app.getAppPath('appData'), {
@@ -543,19 +541,6 @@ ipcMain.on('fetch-local', (event, arg) => {
   })
 })
 
-ipcMain.on('fetch-local-data', (event, arg) => {
-  taskId++
-  let tasks = arg.tasks.map((item, index) => {
-    let option = arg.options ? arg.options[index] : {}
-    if (arg.params) {
-      return LocalService[item](arg.params[index], option)
-    } else {
-      return LocalService[item](option)
-    }
-  })
-  execPromise(taskId, tasks, arg)
-})
-
 ipcMain.on('communicate', (event, arg) => {
   win && win.webContents.send('communicate', arg)
 })
@@ -578,48 +563,6 @@ function connectDatabase () {
       })
     })
   })
-}
-
-function sendLocalDataRes (arg) {
-  if (arg.from === 'Preview') {
-    previewWin && previewWin.webContents.send('fetch-local-data-response', arg)
-    return
-  }
-  if (arg.from === 'Test') {
-    testWin && testWin.webContents.send('fetch-local-data-response', arg)
-    return
-  }
-  win && win.webContents.send('fetch-local-data-response', arg)
-  loginWin && loginWin.webContents.send('fetch-local-data-response', arg)
-}
-
-function execPromise (id, tasks, arg) {
-  let tid = id
-  let options = arg.options || []
-  if (arg.queue) {
-    LocalService[arg.tasks[0]](arg.params[0], options[0]).then((res0) => {
-      LocalService[arg.tasks[1]](arg.params[1], options[1]).then((res1) => {
-        sendLocalDataRes({
-          res: [res0, res1],
-          from: arg.from,
-          queue: true,
-          tasks: arg.tasks,
-          fid: arg.fid
-        })
-      })
-    })
-  } else {
-    Promise.all(tasks).then(res => {
-      if (tid === taskId) {
-        sendLocalDataRes({
-          res: res,
-          from: arg.from,
-          tasks: arg.tasks,
-          fid: arg.fid
-        })
-      }
-    })
-  }
 }
 
 function showHomeWindow () {

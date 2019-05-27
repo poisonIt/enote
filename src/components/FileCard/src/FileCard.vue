@@ -347,7 +347,7 @@ export default {
   background-position center
 
 .body
-  margin: 12px 0
+  margin: 6px 0
   display flex
   align-items center
   color #696969

@@ -422,17 +422,21 @@ function getByTags (req) {
   const { tags } = req
 
   return new Promise((resolve, reject) => {
-    Note.find({}).filter(x => {
-      return _.intersection(x.tags, tags).length === tags.length
-    }).exec((err, notes) => {
+  Note.find({}).filter(x => {
+    return _.intersection(x.tags, tags).length === tags.length
+  }).exec((err, notes) => {
+    let result = (async () => {
       if (err) reject(err)
-      let p = notes.map(note => {
+      notes = await Promise.all(notes.map(note => {
         return patchSummary(note)
-      })
-      Promise.all(p).then(res => {
-        resolve(res)
-      })
-    })
+      }))
+      notes = await Promise.all(notes.map(note => {
+        return patchParentFolder(note)
+      }))
+      return notes
+    })(notes)
+    resolve(result)
+  })
   })
 }
 

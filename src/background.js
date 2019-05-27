@@ -399,8 +399,10 @@ app.on('ready', async () => {
   let dbPath = path.resolve(app.getAppPath('userData'), `../`)
   // let dbPath = '/Users/bowiego/Documents/workspace/enote/temp'
   let serviceUrl = isDevelopment
-    ? 'http://122.152.201.59:8000/api'
-    : 'http://10.50.115.9:8000/api'
+    ? 'https://122.152.201.59:8000/api'
+    : 'https://iapp.htffund.com/note/api'
+    // : 'http://10.50.115.9:8000/api'
+    
   getAppConf(app.getAppPath('userData')).then(appConf => {
     if (!appConf.serviceUrl || appConf.serviceUrl === '') {
       saveAppConf(app.getAppPath('userData'), {

@@ -50,7 +50,10 @@ function createCollection (path) {
       type: Number,
       default: 0
     },
-    tags: [String],
+    tags: {
+      type: [String],
+      default: []
+    },
     top: {
       type: Boolean,
       default: false
@@ -356,6 +359,30 @@ function addTag (req) {
   })
 }
 
+function removeTag (req) {
+  const { id, tag_id } = req
+
+  return new Promise((resolve, reject) => {
+    Note.findOne({ _id: id }, (err, note) => {
+      if (err) reject(err)
+      if (!note) reject(`note ${id} not exist`)
+      let newTags = [...note.tags]
+      newTags.splice(note.tags.indexOf(tag_id), 1)
+      Note.update(
+        { _id: id },
+        { $set: {
+          tags: newTags,
+          need_push: true 
+        }},
+        { multi: true },
+        (err, num, newNote) => {
+          resolve(newNote)
+        }
+      )
+    })
+  })
+}
+
 // get
 async function getAllByPid (req, opts) {
   const { pid, remote_pid } = req
@@ -399,7 +426,12 @@ function getByTags (req) {
       return _.intersection(x.tags, tags).length === tags.length
     }).exec((err, notes) => {
       if (err) reject(err)
-      resolve(notes)
+      let p = notes.map(note => {
+        return patchSummary(note)
+      })
+      Promise.all(p).then(res => {
+        resolve(res)
+      })
     })
   })
 }
@@ -507,6 +539,7 @@ export default {
   updateRemoteTagIds,
   trashAll,
   addTag,
+  removeTag,
   getAllByPid,
   getById,
   getTrash,

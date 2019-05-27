@@ -219,6 +219,7 @@ export default {
     ]),
 
     refreshList () {
+      console.log('refreshList')
       let nav = this.currentNav
       this.isListLoading = true
       this.selectFile(-1)
@@ -240,10 +241,12 @@ export default {
             this.handleDataFetched([folders, notes])
           })
         })
-      } else if (nav.type === 'tag') {
+      } else if (nav.type === 'tag' || nav.type === 'select') {
+        console.log('refreshList-tag')
         fetchLocal('getLocalTagNote', {
           tags: this.selectedTags
         }).then(notes => {
+          console.log('refreshList-tag-notes', notes)
           this.handleDataFetched([[], notes])
         })
       } else if (nav.type === 'bin') {
@@ -271,8 +274,9 @@ export default {
     },
 
     updateFileList () {
-      let notes = this.fileListSortFunc(this.noteList.filter(file => file.title.indexOf(this.searchKeyword) > -1))
-      let folders = this.folderList.filter(file => file.title.indexOf(this.searchKeyword) > -1)
+      let re = new RegExp(this.searchKeyword, 'g')
+      let notes = this.fileListSortFunc(this.noteList.filter(file => file.title.search(re) > -1))
+      let folders = this.folderList.filter(file => file.title.search(re) > -1)
 
       this.fileList = _.flatten([folders, notes])
       let idx = _.findIndex(this.fileList, { _id: this.selectedIdCache })
@@ -540,6 +544,7 @@ export default {
         pid: file.pid,
         remote_id: file.remote_id,
         remote_pid: file.remote_pid,
+        tags: file.tags,
         seq: file.seq,
         trash: file.trash,
         update_at: file.update_at,

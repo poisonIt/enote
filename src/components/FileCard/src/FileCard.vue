@@ -145,11 +145,25 @@ export default {
     },
 
     titleStrArr () {
+      let title = this.titleEllipsis
+      let arr = []
+      let re = new RegExp(this.searchKeyword, 'g')
+      let matchResult = this.titleEllipsis.search(re)
       if (this.searchKeyword === '') {
-        return [this.titleEllipsis]
-      } else {
-        return this.searchSubStr(this.titleEllipsis, this.searchKeyword)
+        return [title]
       }
+      while (title.search(re) > -1) {
+
+        let idx = title.search(re)
+        let strPre = title.substring(0, idx)
+        if (strPre !== '') {
+          arr.push(strPre)
+        }
+        arr.push(this.searchKeyword)
+        title = title.slice(idx + this.searchKeyword.length, title.length)
+      }
+      arr.push(title)
+      return arr
     }
   },
 
@@ -236,24 +250,6 @@ export default {
           })
         }
       })
-    },
-
-    searchSubStr (str, subStr) {
-      let positions = []
-      let arr = []
-      let start = 0
-      let end = 0
-      let pos = str.indexOf(subStr)
-      while (pos > -1) {
-        positions.push(pos)
-        end = pos
-        arr.push(str.slice(start, end))
-        arr.push(subStr)
-        start = pos
-        pos = str.indexOf(subStr, pos + 1)
-      }
-      arr.push(str.slice(positions[positions.length - 1] + subStr.length, str.length))
-      return arr.filter(item => item !== '')
     }
   }
 }

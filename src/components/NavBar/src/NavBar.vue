@@ -165,7 +165,9 @@ export default {
       viewType: 'GET_VIEW_TYPE',
       viewFileType: 'GET_VIEW_FILE_TYPE',
       currentFile: 'GET_CURRENT_FILE',
-      duplicateFile: 'GET_DUPLICATE_FILE'
+      duplicateFile: 'GET_DUPLICATE_FILE',
+      selectedTags: 'GET_SELECTED_TAGS',
+      isTagShowed: 'GET_SHOW_TAG_HANDLER'
     })
   },
 
@@ -177,6 +179,7 @@ export default {
           { trash: 'TRASH' }
         ],
         {
+          sort: { seq: 1 },
           multi: true
         }).then(folders => {
           fetchLocal('getAllLocalTag').then(tags => {
@@ -206,29 +209,6 @@ export default {
         }
       }
     }
-
-    ipcRenderer.on('fetch-local-data-response', (event, arg) => {
-      if (arg.from[0] === 'NavBar') {
-        console.log('fetch-local-data-response', arg)
-        // if (arg.tasks[0] === 'getAllLocalFolder' && arg.tasks[1] === 'getAllLocalTag') {
-        //   this.$worker.postMessage(['calcLocalData', arg.res])
-        // }
-
-        // update tag
-        if (arg.tasks.indexOf('updateLocalTag') > -1) {
-          if (arg.from[1] === 'renameTag') {
-            console.log('renameTag', this.popupedNode.model, this.$refs.tree)
-            if (arg.res[0].name !== this.popupedNode.model.name) {
-              this.popupedNode.model.name = arg.res[0].name
-              this.popupedNode.model.data.name = arg.res[0].name
-            } else {
-              this.TOGGLE_SHOW_TAG_HANDLER(false)
-            }
-          }
-          this.$hub.dispatchHub('pushData', this)
-        }
-      }
-    })
   },
 
   methods: {
@@ -315,9 +295,11 @@ export default {
         }
         nodeData = node.model.data
       }
+      console.log('handleNewFolder', node)
 
       fetchLocal('addLocalFolder', {
-        pid: nodeData.id || nodeData._id || '0'
+        pid: nodeData.id || nodeData._id || '0',
+        seq: node.model.children.length
       }).then(res => {
         node.addChild({
           id: res._id,
@@ -374,7 +356,12 @@ export default {
             node.name = res.name
             node.data.name = res.name
           } else {
-            this.TOGGLE_SHOW_TAG_HANDLER(false)
+            if (this.isTagShowed) {
+              this.TOGGLE_SHOW_TAG_HANDLER(false)
+              this.$nextTick(() => {
+                this.TOGGLE_SHOW_TAG_HANDLER(true)
+              })
+            }
           }
         })
       } else {
@@ -398,10 +385,12 @@ export default {
     },
 
     handleNodeDrop ({node, oldParent}) {
+      console.log('handleNodeDrop', node, node.getIndex())
       if (node.pid !== oldParent.id) {
         fetchLocal('updateLocalFolder', {
           id: node.data._id || node.data.id || node.id,
-          pid: node.pid
+          pid: node.pid,
+          seq: node.getIndex()
         })
       }
     },
@@ -486,26 +475,20 @@ export default {
     },
 
     handleDeleteTag () {
-      console.log('handleDeleteTag', this.popupedNode)
-      // if (this.popupedNode.data.remote_id) {
-      //   ipcRenderer.send('fetch-local-data', {
-      //     tasks: ['updateLocalTag'],
-      //     params: [{
-      //       id: node.data._id || node.data.id || node.id,
-      //       trash: 'DELETED'
-      //     }],
-      //     from: ['NavBar', 'deleteTag']
-      //   })
-      // } else {
-      //   ipcRenderer.send('fetch-local-data', {
-      //     tasks: ['deleteLocalTag'],
-      //     params: [{
-      //       id: node.data._id || node.data.id || node.id,
-      //       trash: 'DELETED'
-      //     }],
-      //     from: ['NavBar', 'deleteTag']
-      //   })
-      // }
+      let node = this.popupedNode.model
+      let id = node.data._id || node.data.id || node.id
+      fetchLocal('updateLocalTag', {
+        id: id,
+        trash: 'DELETED'
+      }).then(res => {
+        if (this.selectedTags.indexOf(id) > -1) {
+          this.TOGGLE_SELECTED_TAG({
+            id: id
+          })
+        }
+        node.remove()
+        this.setCurrentFolder('tag')
+      })
     },
 
     iconClassComputed (node) {

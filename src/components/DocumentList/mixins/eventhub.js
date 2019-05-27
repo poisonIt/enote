@@ -10,6 +10,7 @@ export default {
     this.$hub.hookHub('renameListFile', 'FileCard', (file) => this.handleFileRename(file))
     this.$hub.hookHub('updateFile', 'FileHandler', (params) => this.handleFileUpdate(params))
     this.$hub.hookHub('removeFile', 'FileHandler', (file) => this.handleFileRemove(file))
+    this.$hub.hookHub('refreshList', 'TagHandler', () => this.refreshList())
     this.$hub.hookHub('updateDoc', 'Editor', (file) => this.handleDocUpdate(file))
   },
 

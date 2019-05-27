@@ -626,7 +626,7 @@ function showHomeWindow () {
   if (!isDevelopment) {
     loginWin && loginWin.destroy()
   } else {
-    createTestWindow()
+    // createTestWindow()
   }
 }
 

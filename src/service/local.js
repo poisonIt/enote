@@ -203,7 +203,10 @@ export function resumeAllTrash () {
 
 // tag
 export function getAllLocalTag () {
-  return LocalDAO.tag.getAll()
+  return LocalDAO.tag.getByQuery(
+    { trash: 'NORMAL' },
+    { multi: true }
+  )
 }
 
 export function getAllLocalTagByQuery (params) {
@@ -211,26 +214,9 @@ export function getAllLocalTagByQuery (params) {
 }
 
 export function addLocalTag (params) {
-  let { note_ids } = params
+  let { note_id } = params
 
-  return new Promise((resolve, reject) => {
-    LocalDAO.tag.add(params).then(tag => {
-      if (note_ids && note_ids.length > 0) {
-        let p = note_ids.map(id => {
-          return LocalDAO.note.addTag({
-            id: id,
-            tags: [tag._id]
-          })
-        })
-        Promise.all(p).then(res => {
-          console.log('addLocalTag-res-111', res)
-          resolve(tag)
-        })
-      } else {
-        resolve(tag)
-      }
-    })
-  })
+  return LocalDAO.tag.add(params)
 }
 
 export function updateLocalTag (params) {
@@ -285,11 +271,14 @@ export function removeAll () {
       LocalDAO.note.removeAll().then((n) => {
         LocalDAO.doc.removeAll().then((d) => {
           LocalDAO.img.removeAll().then((i) => {
-            resolve({
-              f: f,
-              n: n,
-              d: d,
-              i: i
+            LocalDAO.tag.removeAll().then((t) => {
+              resolve({
+                f: f,
+                n: n,
+                d: d,
+                i: i,
+                t: t
+              })
             })
           })
         })

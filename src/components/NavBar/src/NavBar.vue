@@ -261,7 +261,6 @@ export default {
     handleNewNote (isTemp) {
       let s = false
       let currentNode = this.$refs.tree.model.store.currentNode
-      console.log('handleNewNote', currentNode)
       if (!currentNode.parent.parent && currentNode.id !== '0') {
         currentNode = this.$refs.tree.model.store.map['0']
         s = true
@@ -295,7 +294,6 @@ export default {
         if (isCurrent) {
           let currentNode = this.$refs.tree.model.store.currentNode.instance
           if (!currentNode.model.parent.parent && currentNode.id !== '0') {
-            console.log('handleNewFolder-node', map)
             node = map['0'].instance
           } else {
             node = currentNode

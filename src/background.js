@@ -1,6 +1,7 @@
 'use strict'
 import path from 'path'
 import fs from 'fs'
+import os from 'os'
 import {
   app,
   protocol,
@@ -25,10 +26,12 @@ const isDevelopment = process.env.NODE_ENV !== 'production'
 let win
 let loginWin
 let previewWin
+let pdfWin
 let youdaoWin
 let testWin
 
 let taskId = 0
+let pdfPath
 
 let template = [{
   label: app.getName(),
@@ -288,6 +291,7 @@ function createPreviewWindow (event, arg) {
     width: 960,
     height: 640,
     title: '笔记预览',
+    show: arg.isPdf !== '1',
     backgroundColor: '#fcfbf7',
     titleBarStyle: 'hidden',
     webPreferences: {
@@ -298,7 +302,7 @@ function createPreviewWindow (event, arg) {
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode
-    previewWin.loadURL(process.env.WEBPACK_DEV_SERVER_URL + `#/preview?note_id=${arg.noteId}&title=${arg.title}`)
+    previewWin.loadURL(process.env.WEBPACK_DEV_SERVER_URL + `#/preview?note_id=${arg.noteId}&title=${arg.title}&isPdf=${arg.isPdf}`)
     // previewWin.webContents.openDevTools()
   } else {
     createProtocol('app')
@@ -312,6 +316,35 @@ function createPreviewWindow (event, arg) {
       from: 'Preview',
       tasks: ['pushData']
     })
+  })
+}
+
+function createPdfWin (event, arg) {
+  pdfWin = new BrowserWindow({
+    id: 'preview',
+    width: 960,
+    height: 640,
+    title: 'PDF',
+    show: isDevelopment,
+    backgroundColor: '#fcfbf7',
+    titleBarStyle: 'hidden',
+    webPreferences: {
+      webSecurity: false
+    }
+  })
+
+  if (process.env.WEBPACK_DEV_SERVER_URL) {
+    // Load the url of the dev server if in development mode
+    pdfWin.loadURL(process.env.WEBPACK_DEV_SERVER_URL + `#/pdf?note_id=${arg.noteId}&title=${arg.title}`)
+    // pdfWin.webContents.openDevTools()
+  } else {
+    createProtocol('app')
+    // Load the index.html when not in development
+    pdfWin.loadURL(`app://./index.html#/pdf?note_id=${arg.noteId}&title=${arg.title}`)
+  }
+
+  pdfWin.on('closed', () => {
+    pdfWin = null
   })
 }
 
@@ -419,8 +452,10 @@ app.on('ready', async () => {
     app.appConf = {
       user: appConf.user,
       dbPath: p,
+      resourcePath: dbPath + '/resource',
       serviceUrl: appConf.serviceUrl || serviceUrl,
       note_ver: 1,
+      dev_url: process.env.WEBPACK_DEV_SERVER_URL,
       size: {
         x: 0,
         y: 0,
@@ -543,6 +578,42 @@ ipcMain.on('fetch-local', (event, arg) => {
 
 ipcMain.on('communicate', (event, arg) => {
   win && win.webContents.send('communicate', arg)
+})
+
+ipcMain.on('print-to-pdf', (event, arg) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+
+  // const pdfPath = path.join(os.tmpdir(), 'print.pdf')
+  // console.log('pdfPath', pdfPath)
+  dialog.showSaveDialog(win, { title: 'pdf.pdf' }, path => {
+    console.log('path', path)
+    pdfPath = path
+    createPreviewWindow(event, arg)
+    // event.sender.send('wrote-pdf', targetPath)
+  })
+
+  // win.webContents.printToPDF({}, function (error, data) {
+  //   if (error) throw error
+  //   fs.writeFile(pdfPath, data, function (error) {
+  //     if (error) {
+  //       throw error
+  //     }
+  //     shell.openExternal('file://' + pdfPath)
+  //   })
+  // })
+})
+
+ipcMain.on('wrote-pdf', (event, arg) => {
+  previewWin.webContents.printToPDF({}, (err, data) => {
+    if (err) throw err
+    fs.writeFile(pdfPath, data, function (error) {
+      if (error) {
+        throw error
+      }
+      previewWin && previewWin.destroy()
+      shell.openExternal('file://' + pdfPath)
+    })
+  })
 })
 
 function connectDatabase () {

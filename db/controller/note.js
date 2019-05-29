@@ -448,7 +448,7 @@ async function getByQuery (params, opts) {
   }
   const isReqArr = _.isArray(params)
   const query = isReqArr ? { $or: params } : params
-  
+
   let notes = []
   if (opts.multi) {
     let queryFunc = Note.find(query)

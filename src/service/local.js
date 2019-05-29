@@ -51,6 +51,7 @@ export function updateLocalFolder (params) {
 }
 
 export function updateMultiLocalFolder (params) {
+  console.log('updateMultiLocalFolder', params)
   return LocalDAO.folder.updateMulti(params)
 }
 
@@ -69,7 +70,7 @@ export function getAllLocalNote () {
   )
 }
 
-export function getLatesLocalNote () {
+export function getLatestLocalNote () {
   return LocalDAO.note.getByQuery(
     { trash: 'NORMAL' },
     {
@@ -86,12 +87,12 @@ export function getLocalNoteById (params) {
   return LocalDAO.note.getById(params)
 }
 
-export function getAllLocalNoteByQuery (params) {
-  return LocalDAO.note.getByQuery(params, )
-}
+// export function getAllLocalNoteByQuery (params) {
+//   return LocalDAO.note.getByQuery(params, option)
+// }
 
 export function getLocalNoteByQuery (params, option) {
-  return LocalDAO.folder.getByQuery(params, option)
+  return LocalDAO.note.getByQuery(params, option)
 }
 
 export function getLocalNoteByPid (params, option) {
@@ -217,6 +218,10 @@ export function addLocalTag (params) {
   let { note_id } = params
 
   return LocalDAO.tag.add(params)
+}
+
+export function removeLocalTag (params) {
+  return LocalDAO.tag.removeByQuery(params)
 }
 
 export function updateLocalTag (params) {

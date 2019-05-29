@@ -1,4 +1,5 @@
 const state = {
+  is_user_ready: false,
   is_db_ready: false,
   network_status: 'online',
   view_type: 'expanded',
@@ -25,6 +26,10 @@ const state = {
 }
 
 const mutations = {
+  SET_USER_READY (state, val) {
+    state.is_user_ready = val
+  },
+
   SET_DB_READY (state, val) {
     state.is_db_ready = val
   },
@@ -112,6 +117,10 @@ const mutations = {
 }
 
 const actions = {
+  SET_USER_READY({ commit }, val) {
+    commit('SET_USER_READY', val)
+  },
+
   SET_DB_READY({ commit }, val) {
     commit('SET_DB_READY', val)
   },
@@ -198,6 +207,10 @@ const actions = {
 }
 
 const getters = {
+  GET_USER_READY (state) {
+    return state.is_user_ready
+  },
+
   GET_DB_READY (state) {
     return state.is_db_ready
   },

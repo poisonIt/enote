@@ -161,7 +161,9 @@ export default {
     }
 
     ipcRenderer.on('login-ready', (event, arg) => {
-      this.handleDBLoaded()
+      ipcRenderer.send('fetch-user-data', {
+        from: 'Home'
+      })
     })
 
     ipcRenderer.on('fetch-user-data-response', (event, arg) => {
@@ -170,7 +172,7 @@ export default {
         this.SET_USER_INFO(arg.res)
         this.SET_TOKEN(arg.res.id_token)
         this.SET_NOTE_VER(this.$remote.app.appConf.note_ver || 1)
-        this.SET_DB_READY(true)
+        this.SET_USER_READY(true)
       }
     })
   },
@@ -190,6 +192,7 @@ export default {
       'TOGGLE_SHOW_SHARE_PANEL',
       'SET_FILE_PUSH_FINISHED',
       'SET_VIEW_TYPE',
+      'SET_USER_READY',
       'SET_DB_READY',
       'SET_NOTE_VER'
     ]),
@@ -249,16 +252,6 @@ export default {
       this.handleFriendStateChange()
     },
 
-    resetData () {
-      // LocalDAO.folder.removeAll()
-      LocalDAO.note.removeAll()
-      LocalDAO.doc.removeAll()
-    },
-
-    removeTags () {
-      LocalDAO.tag.removeAll()
-    },
-
     hideBackground () {
       ipcRenderer.send('hideWindow', {
         name: 'background'
@@ -277,13 +270,6 @@ export default {
       })
       ipcRenderer.send('changeWindow', {
         name: 'login'
-      })
-    },
-
-    handleDBLoaded () {
-      console.log('handleDBLoaded')
-      ipcRenderer.send('fetch-user-data', {
-        from: 'Home'
       })
     },
 

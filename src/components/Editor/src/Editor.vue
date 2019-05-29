@@ -2,10 +2,12 @@
   <div id="editor-container">
     <textarea name="content" ref="editor" id="editor"></textarea>
     <div class="mask" v-show="showMask"></div>
+    <webview id="pdf-path"></webview>
   </div>
 </template>
 
 <script>
+import fs from 'fs'
 import { ipcRenderer } from 'electron'
 import { mapGetters, mapActions } from 'vuex'
 import mixins from '../mixins'
@@ -83,6 +85,28 @@ export default {
         this.editor.setData(res.content)
       }
     })
+
+    ipcRenderer.on('wrote-pdf', (event, path) => {
+      let webviewPDF = document.getElementById('pdf-path')
+      let tempPath = this.$remote.app.appConf.resourcePath + `/${this.currentFile._id}.html`
+
+      let dev_url = this.$remote.app.appConf.dev_url
+      console.log('process.env.WEBPACK_DEV_SERVER_URL', dev_url)
+
+      fs.writeFile(tempPath, this.editor.getData(), (err, data) => {
+        let url = dev_url
+          ? dev_url + `#/pdf?note_id=${this.currentFile._id}`
+          : `app://./index.html#/pdf?note_id=${this.currentFile._id}`
+        webviewPDF.src = url
+        webviewPDF.printToPDF({}, (error, data) => {
+          fs.writeFile(path, data, function (error) {
+            if (error) {
+              throw error
+            }
+          })
+        })
+      })
+    })
   },
 
   methods: {
@@ -110,7 +134,7 @@ export default {
                 if (_self.currentDoc._id === _self.cachedDoc._id
                   && editorData !== _self.cachedDoc.content) {
                   _self.saveData(_self.currentDoc._id, editorData)
-                  _self.cachedDoc.content = editorData
+                  // _self.cachedDoc.content = editorData
                 }
               }
             },
@@ -119,17 +143,18 @@ export default {
             this.editor = editor
             this.editor.ui.focusTracker.on('change:isFocused', (val) => {
               if (!this.editor.ui.view.editable.isFocused) {
-                if (this.currentDoc._id === this.cachedDoc._id
-                && this.editor.getData() !== this.cachedDoc.content) {
+                if (this.currentDoc._id === this.cachedDoc._id &&
+                  this.editor.getData() !== this.cachedDoc.content) {
                   this.$hub.dispatchHub('pushData', this)
                 }
               }
             })
             this.editor.setData(content || '')
-            this.cachedDoc = {
-              _id: this.currentDoc._id,
-              content: content
-            }
+            this.cachedDoc._id = this.currentDoc._id
+            // this.cachedDoc = {
+            //   _id: this.currentDoc._id,
+            //   content: content
+            // }
             this.handleEditorReady()
             this.showMask = false
           })

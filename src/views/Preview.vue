@@ -1,6 +1,6 @@
 <template>
   <div id="preview">
-    <div class="header">{{ title }}</div>
+    <div class="header" v-if="isPdf !== '1'">{{ title }}</div>
     <textarea name="content" ref="editor" id="editor"></textarea>
     <div class="mask" v-show="showMask"></div>
   </div>
@@ -30,6 +30,8 @@ export default {
     let query = this.$router.currentRoute.query
     let noteId = query.note_id
     this.title = query.title
+    this.isPdf = query.isPdf
+
     this.SET_CURRENT_FILE({
       _id: noteId
     })
@@ -40,6 +42,7 @@ export default {
       this.doc = res
       this.initEditor(res.content)
     })
+
   },
 
   methods: {
@@ -76,6 +79,12 @@ export default {
             this.editor.setData(content || '')
             this.handleEditorReady()
             this.showMask = false
+            if (this.isPdf === '1') {
+              document.getElementsByClassName('ck-editor__top')[0].style = 'display: none;'
+              setTimeout(() => {
+                ipcRenderer.send('wrote-pdf')
+              }, 3000)
+            }
           })
           .catch(error => {
             console.error(error)

@@ -33,6 +33,10 @@ function createCollection (path) {
       type: Number,
       default: 0
     },
+    depth: {
+      type: Number,
+      default: 0
+    },
     create_at: Date,
     update_at: Date,
     trash: {
@@ -53,7 +57,7 @@ function createCollection (path) {
 }
 
 
-function saveAll (req) {
+function saveAll (req) { 
   const { data } = req
 
   return new Promise((resolve, reject) => {

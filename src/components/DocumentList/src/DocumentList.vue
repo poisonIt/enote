@@ -170,7 +170,6 @@ export default {
     },
 
     selectedTags (val) {
-      console.log('watch-selectedTags', val)
       if (this.currentNav.type === 'tag' || this.currentNav.type === 'select') {
         fetchLocal('getLocalTagNote', {
           tags: val
@@ -206,13 +205,12 @@ export default {
     ]),
 
     refreshList () {
-      console.log('refreshList')
       let nav = this.currentNav
       this.isListLoading = true
       this.selectFile(-1)
       let localFiles = [[], []]
       if (nav.type === 'latest') {
-        fetchLocal('getLatesLocalNote').then(notes => {
+        fetchLocal('getLatestLocalNote').then(notes => {
           this.handleDataFetched([[], notes])
         })
       } else if (nav.type === 'folder') {
@@ -229,11 +227,9 @@ export default {
           })
         })
       } else if (nav.type === 'tag' || nav.type === 'select') {
-        console.log('refreshList-tag')
         fetchLocal('getLocalTagNote', {
           tags: this.selectedTags
         }).then(notes => {
-          console.log('refreshList-tag-notes', notes)
           this.handleDataFetched([[], notes])
         })
       } else if (nav.type === 'bin') {
@@ -286,8 +282,8 @@ export default {
     },
 
     selectFile (index) {
-      console.log('selectFile', index)
       const file = this.fileList[index]
+      console.log('selectFile', index, file)
       if (file) {
         if (this.currentFile && file._id === this.currentFile._id) return
         this.SET_CURRENT_FILE(this.copyFile(file))
@@ -390,6 +386,7 @@ export default {
         top: true
       }).then(res => {
         this.refreshList()
+        this.$hub.dispatchHub('pushData', this)
       })
     },
 
@@ -400,6 +397,17 @@ export default {
         top: false
       }).then(res => {
         this.refreshList()
+        this.$hub.dispatchHub('pushData', this)
+      })
+    },
+
+    handleExportPDF () {
+      return
+      let data = this.popupedFile.rawData
+      ipcRenderer.send('print-to-pdf', {
+        noteId: data._id,
+        title: data.title,
+        isPdf: '1'
       })
     },
 
@@ -419,6 +427,7 @@ export default {
       }).then(res => {
         this.selectedIdCache = res._id
         this.$root.$navTree.select(pid)
+        this.$hub.dispatchHub('pushData', this)
       })
     },
 
@@ -460,6 +469,7 @@ export default {
           this.$hub.dispatchHub('deleteNavNode', this, fileId)
         }
         this.refreshList()
+        this.$hub.dispatchHub('pushData', this)
       })
     },
     
@@ -488,7 +498,6 @@ export default {
         id: fileId,
         trash: 'NORMAL'
       }).then(res => {
-        console.log('handleResume', res)
         this.refreshList()
 
         const _self = this
@@ -496,7 +505,6 @@ export default {
         function resumeNode (node) {
           _self.$set(node, 'hidden', false)
           let pNode = folderMap[node.pid]
-          console.log('resumeNode', node, node.id, pNode, pNode.id, pNode.hidden)
           if (pNode && pNode.id !== '0' && pNode.hidden) {
             resumeNode(pNode)
           }
@@ -504,6 +512,7 @@ export default {
         let folderMap = this.$root.$navTree.model.store.map
         let node = folderMap[res._id]
         resumeNode(node)
+        this.$hub.dispatchHub('pushData', this)
       })
     },
 
@@ -518,6 +527,7 @@ export default {
         trash: 'DELETED'
       }).then(res => {
         this.refreshList()
+        this.$hub.dispatchHub('pushData', this)
       })
     },
 

@@ -199,6 +199,7 @@ export default {
         if (this.shouldUpdateTagNav) {
           this.$hub.dispatchHub('addTagNode', this, newTag)
         }
+        this.$hub.dispatchHub('pushData', this)
       })
     },
 
@@ -227,6 +228,7 @@ export default {
         if (this.currentNav.type === 'select' || this.currentNav.type === 'tag') {
           this.$hub.dispatchHub('refreshList', this)
         }
+        this.$hub.dispatchHub('pushData', this)
       })
     },
 
@@ -243,6 +245,7 @@ export default {
       }).then(res => {
         this.currentTags = this.allTags
           .filter(item => res.tags.indexOf(item._id) > -1)
+        this.$hub.dispatchHub('pushData', this)
       })
     }
   }

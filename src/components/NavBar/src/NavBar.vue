@@ -267,8 +267,8 @@ export default {
         pid: currentNode.id || currentNode._id || currentNode.data._id || '0',
         isTemp: isTemp
       }).then(res => {
-        console.log('addLocalNote', res)
         this.$hub.dispatchHub('addFile', this, res)
+        this.$hub.dispatchHub('pushData', this)
       })
     },
 
@@ -295,16 +295,18 @@ export default {
         }
         nodeData = node.model.data
       }
-      console.log('handleNewFolder', node)
 
       fetchLocal('addLocalFolder', {
         pid: nodeData.id || nodeData._id || '0',
-        seq: node.model.children.length
+        seq: node.model.children.length,
+        depth: node.model.getDepth()
       }).then(res => {
         node.addChild({
           id: res._id,
-          type: 'folder'
+          type: 'folder',
+          name: res.title
         })
+        this.$hub.dispatchHub('pushData', this)
       })
     },
 
@@ -317,7 +319,6 @@ export default {
     },
 
     handleAddTagNode (tagData) {
-      console.log('handleAddTagNode', tagData)
       let tagRootNode = this.$refs.tree.model.store.root.children[2]
       let tag = {}
       tag.type = 'select'
@@ -329,7 +330,6 @@ export default {
         _id: tagData._id,
         remote_id: tagData.remote_id
       }
-      console.log('handleAddTagNode-tag', tag)
       tagRootNode.instance.addChild(tag)
     },
 
@@ -353,10 +353,8 @@ export default {
           name: node.name
         }).then(res => {
           if (!res) {
-            console.log('handleChangeNodeName-tag-1', node)
             node.name = node.data.name
           } else {
-            console.log('handleChangeNodeName-tag-2', node)
             if (res.name !== node.name) {
               node.name = res.name
               node.data.name = res.name
@@ -369,6 +367,7 @@ export default {
               }
             }
           }
+          this.$hub.dispatchHub('pushData', this)
         })
       } else {
         fetchLocal('updateLocalFolder', {
@@ -381,22 +380,23 @@ export default {
               title: node.model.name
             })
           }
+          this.$hub.dispatchHub('pushData', this)
         })
       }
     },
 
     handleFolderUpdate (params) {
-      console.log('handleFolderUpdate', params)
       this.$refs.tree.updateNodeModel(params)
     },
 
     handleNodeDrop ({node, oldParent}) {
-      console.log('handleNodeDrop', node, node.getIndex())
       if (node.pid !== oldParent.id) {
         fetchLocal('updateLocalFolder', {
           id: node.data._id || node.data.id || node.id,
           pid: node.pid,
           seq: node.getIndex()
+        }).then(() => {
+          this.$hub.dispatchHub('pushData', this)
         })
       }
     },
@@ -417,7 +417,9 @@ export default {
     },
 
     handlePaste () {
-      let data = this.popupedNode.model.data
+      console.log('handlePaste', this.popupedNode)
+      let node = this.popupedNode.model
+      let data = node.data
       let pid = data.id || data._id
       let shouldUpdateList = (this.popupedNode.model === this.$refs.tree.model.store.currentNode)
 
@@ -428,7 +430,7 @@ export default {
         }).then(res => {
           let fileTypeCN = res.type === 'folder' ? '文件夹' : '笔记'
           this.$Message.success({
-            content: `复制了${fileTypeCN} ${res.title} 至目录 ${data.title}！`
+            content: `复制了${fileTypeCN} ${res.title} 至目录 ${node.name}！`
           })
           this.$hub.dispatchHub('setSelectFileId', this, res._id)
           if (shouldUpdateList) {
@@ -436,6 +438,7 @@ export default {
           } else {
             this.setCurrentFolder(pid)
           }
+          this.$hub.dispatchHub('pushData', this)
         })
       }
     },
@@ -449,6 +452,7 @@ export default {
       }).then(res => {
         node.hidden = true
         this.setCurrentFolder('bin')
+        this.$hub.dispatchHub('pushData', this)
       })
     },
 
@@ -462,6 +466,7 @@ export default {
         nodes.forEach(node => {
           map[node._id].remove()
         })
+        this.$hub.dispatchHub('pushData', this)
       })
     },
 
@@ -473,6 +478,7 @@ export default {
         nodes.forEach(node => {
           this.$set(map[node._id], 'hidden', false)
         })
+        this.$hub.dispatchHub('pushData', this)
       })
     },
 
@@ -494,6 +500,7 @@ export default {
         }
         node.remove()
         this.setCurrentFolder('tag')
+        this.$hub.dispatchHub('pushData', this)
       })
     },
 
@@ -535,21 +542,6 @@ export default {
         _id: file._id
       }
     }
-
-    // updateTags (allTags) {
-    //   console.log('allTags', allTags)
-    //   this.$set(
-    //     this.nav[2],
-    //     'children',
-    //     allTags.map(item => {
-    //       return {
-    //         id: item._id,
-    //         title: item.name,
-    //         type: 'select'
-    //       }
-    //     })
-    //   )
-    // }
   }
 }
 </script>

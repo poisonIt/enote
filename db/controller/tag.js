@@ -23,6 +23,10 @@ function createCollection (path) {
     trash: {
       type: String,
       default: 'NORMAL'
+    },
+    need_push: {
+      type: Boolean,
+      default: true
     }
   })
 
@@ -147,11 +151,19 @@ function removeById (req) {
   })
 }
 
+async function removeByQuery (req) {
+  let tag = await getByQuery(req)
+  console.log('removeByQuery', req, tag)
+
+  tag.remove()
+}
+
 function deleteAll () {
   Tag.find({}).exec((err, tags) => {
     let p = tags.map(tag => {
       return update({
         id: tag._id,
+        need_push: true,
         trash: 'DELETED'
       })
     })
@@ -306,6 +318,7 @@ export default {
   diffAddMulti,
   removeAll,
   removeById,
+  removeByQuery,
   deleteAll,
   update,
   updateMulti,

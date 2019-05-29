@@ -5,7 +5,7 @@
         <div class="icon-new"></div>
         <span>新建</span>
       </div>
-      <div class="item sync" :class="{ 'grey': isOffline }" @click="syncData(30)">
+      <div class="item sync" :class="{ 'grey': isOffline }" @click="pushLocalData(30)">
         <div class="icon-sync infinite rotate" :class="{ animated: isSyncing }"></div>
         <span>同步</span>
       </div>
@@ -57,7 +57,7 @@ export default {
 
   computed: {
     ...mapGetters({
-      isDBReady: 'GET_DB_READY',
+      isUserReady: 'GET_USER_READY',
       noteVer: 'GET_NOTE_VER',
       userInfo: 'GET_USER_INFO',
       viewType: 'GET_VIEW_TYPE',
@@ -67,11 +67,11 @@ export default {
   },
 
   watch: {
-    isDBReady (val) {
-      console.log('watch-isDBReady', val)
+    isUserReady (val) {
+      console.log('watch-isUserReady', val)
       if (val) {
-        this.pushData().then(() => {
-          this.pullData(this.noteVer)
+        this.syncData().then(() => {
+         this.SET_DB_READY(true)
         })
       }
     },
@@ -93,7 +93,7 @@ export default {
   mounted () {
     ipcRenderer.on('communicate', (event, arg) => {
       if (arg.from === 'Preview' && arg.tasks.indexOf('pushData') > -1) {
-        this.syncData()
+        this.pushLocalData()
       }
     })
     if (this.isOffline) {
@@ -103,7 +103,8 @@ export default {
 
   methods: {
     ...mapActions([
-      'SET_TOKEN'
+      'SET_TOKEN',
+      'SET_DB_READY'
     ]),
 
     toggleMenu () {
@@ -136,7 +137,7 @@ export default {
         this.checkIsEditorFocused()
         console.log('isEditorFocused', this.isEditorFocused)
         if(this.isEditorFocused || this.isSyncing) return
-        this.syncData()
+        this.pushLocalData()
       }, 5000)
     },
 
@@ -144,8 +145,13 @@ export default {
       clearInterval(this.asyncItv)
     },
 
-    syncData (delay, isAuto) {
-      console.log('syncData', this.network_status, window.navigator.onLine)
+    async syncData () {
+      await this.pullData(this.noteVer)
+      await this.pushData()
+    },
+
+    pushLocalData (delay, isAuto) {
+      console.log('pushLocalData', this.network_status, window.navigator.onLine)
       if (!window.navigator.onLine) return
       if (!delay) {
         delay = 1000

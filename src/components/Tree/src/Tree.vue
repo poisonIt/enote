@@ -355,7 +355,7 @@ export default {
         this.model.addChildren(node, true)
         return
       }
-      const name = isLeaf ? this.defaultLeafNodeName : this.defaultTreeNodeName
+      let name = isLeaf ? this.defaultLeafNodeName : this.defaultTreeNodeName
       if (data.name) {
         name = data.name
       }

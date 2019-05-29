@@ -45,10 +45,7 @@ export default {
         }).then(res => {
           this.selectedIdCache = res._id
           this.refreshList()
-          // let file = _.find(this.fileList, { _id: res._id })
-          // let idx = this.fileList.indexOf(file)
-          // file.title = res.title
-          // this.$set(this.fileList, idx, file)
+          this.$hub.dispatchHub('pushData', this)
         })
       })
     },
@@ -60,6 +57,7 @@ export default {
         trash: 'TRASH'
       }).then(res => {
         this.refreshList()
+        this.$hub.dispatchHub('pushData', this)
       })
     },
 

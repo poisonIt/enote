@@ -55,7 +55,6 @@
 </template>
 
 <script>
-import { ipcRenderer } from 'electron'
 import { mapActions, mapGetters } from 'vuex'
 import {
   folderMenu,
@@ -66,7 +65,7 @@ import {
 } from '../Menu'
 import fetchLocal from '../../../utils/fetchLocal'
 import mixins from '../mixins'
-import { Tree, TreeStore, TreeNode } from '@/components/Tree'
+import { Tree, TreeStore } from '@/components/Tree'
 
 const latestNav = {
   name: '最新文档',
@@ -95,21 +94,6 @@ const rootFolder = {
   children: [],
   data: {
     type: 'folder'
-  }
-}
-
-const tagNav = {
-  name: '标签',
-  id: 'tag',
-  pid: null,
-  dragDisabled: true,
-  addTreeNodeDisabled: true,
-  addLeafNodeDisabled: true,
-  editNodeDisabled: true,
-  delNodeDisabled: true,
-  children: [],
-  data: {
-    type: 'tag'
   }
 }
 
@@ -397,7 +381,7 @@ export default {
       this.$refs.tree.updateNodeModel(params)
     },
 
-    handleNodeDrop ({node, oldParent}) {
+    handleNodeDrop ({ node, oldParent }) {
       if (node.pid !== oldParent.id) {
         fetchLocal('updateLocalFolder', {
           id: node.data._id || node.data.id || node.id,
@@ -464,8 +448,6 @@ export default {
     },
 
     handleClearBin () {
-      let node = this.popupedNode.model
-
       fetchLocal('deleteAllTrash').then(res => {
         this.$hub.dispatchHub('refreshList', this)
         let nodes = res.filter(item => item.type === 'folder')

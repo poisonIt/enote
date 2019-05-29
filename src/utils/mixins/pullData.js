@@ -43,12 +43,23 @@ export default {
 
       let returnMsgs = pullResp.map(item => item.data.returnMsg)
 
-      if (returnMsgs !== ['success', 'success', 'success']) {
+      let isSuccess = true
+
+      for (let i = 0, len = returnMsgs.length; i < len; i++) {
+        if (returnMsgs[i] !== 'success') {
+          isSuccess = false
+          break
+        }
+      }
+
+      if (!isSuccess) {
         this.isLoading = false
+        console.log('llllll', returnMsgs)
         return
       }
 
       let tagsData = (pullResp[2].data.body || []).map(item => this.transTagData(item))
+      await fetchLocal('diffAddMultiLocalTag', tagsData)
       let tagLocalResp = await fetchLocal('diffAddMultiLocalTag', tagsData)
       allTagLocalMap = {}
       tagLocalResp.forEach(item => {
@@ -56,9 +67,11 @@ export default {
       })
 
       let folderData = (pullResp[0].data.body || []).map(item => this.transNoteBookData(item))
+      console.log('folderData', folderData)
       await fetchLocal('diffAddMultiLocalFolder', folderData)
 
       let noteData = (pullResp[1].data.body || []).map(item => this.transNoteData(item))
+      console.log('folderData', noteData)
       await fetchLocal('diffAddMultiLocalNote', noteData)
 
       if (noteData.length > 0) {

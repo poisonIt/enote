@@ -5,7 +5,6 @@ let fid = 0
 let cbPool = Object.create(null)
 
 ipcRenderer.on('fetch-local-response', (event, arg) => {
-  console.log('cbPool', cbPool, arg)
   cbPool[arg.fid] && cbPool[arg.fid].call(this, null, arg.res)
   delete cbPool[arg.fid]
 })

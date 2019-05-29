@@ -158,7 +158,6 @@ export default {
 
   data () {
     const validateStrLen = (rule, value, callback) => {
-      console.log('validateStrLen', rule, value)
       if (value === '') {
         callback(new Error('Please enter your password'))
       } else {
@@ -236,11 +235,9 @@ export default {
     },
 
     uploadList (val) {
-      console.log('watch-uploadList', val)
     },
 
     largeType (val) {
-      console.log('watch-largeType', val)
       getReportSubclass({
         columnid: val
       }).then(resp => {
@@ -301,13 +298,11 @@ export default {
 
     searchStock (query) {
       this.loadingStock = true
-      console.log('searchStock'. query)
       getReportStock({
         searchname: query.trim()
       }).then(resp => {
         this.loadingStock = false
         if (resp.data.returnCode === 200) {
-          console.log('getReportStock', resp.data.body)
           this.stockMenuData = resp.data.body.body.map(item => {
             return {
               value: item.scode,
@@ -342,7 +337,6 @@ export default {
     },
 
     handleStockMenuClick (value) {
-      console.log('handleStockMenuClick', value)
     },
 
     handleTitleBlur () {

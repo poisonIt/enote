@@ -51,7 +51,6 @@ export function updateLocalFolder (params) {
 }
 
 export function updateMultiLocalFolder (params) {
-  console.log('updateMultiLocalFolder', params)
   return LocalDAO.folder.updateMulti(params)
 }
 
@@ -167,7 +166,6 @@ export function deleteAllTrash () {
         query: { trash: 'TRASH' },
         data: { trash: 'DELETED' }
       }).then((notes) => {
-        console.log('deleteAllTrash-res', folders, notes)
         resolve([...folders, ...notes])
       })
     })
@@ -251,7 +249,6 @@ export function removeLocalImageById (params) {
 
 // version
 export function updateState (params) {
-  console.log('updateState', params)
   return LocalDAO.state.update(params)
 }
 

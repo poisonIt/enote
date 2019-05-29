@@ -181,7 +181,6 @@ export default {
         id: id,
         content: content
       }).then(res => {
-        console.log('saveData', res)
         let req = {
           id: this.currentFile._id,
           summary: res

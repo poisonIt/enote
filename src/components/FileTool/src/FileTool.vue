@@ -68,7 +68,6 @@ export default {
 
   watch: {
     isUserReady (val) {
-      console.log('watch-isUserReady', val)
       if (val) {
         this.syncData().then(() => {
          this.SET_DB_READY(true)
@@ -135,7 +134,6 @@ export default {
     createSyncItv () {
       this.asyncItv = setInterval(() => {
         this.checkIsEditorFocused()
-        console.log('isEditorFocused', this.isEditorFocused)
         if(this.isEditorFocused || this.isSyncing) return
         this.pushLocalData()
       }, 5000)
@@ -151,7 +149,6 @@ export default {
     },
 
     pushLocalData (delay, isAuto) {
-      console.log('pushLocalData', this.network_status, window.navigator.onLine)
       if (!window.navigator.onLine) return
       if (!delay) {
         delay = 1000
@@ -171,7 +168,6 @@ export default {
     },
 
     async authenticate () {
-      console.log('authenticate', this.userInfo)
       const username = this.userInfo.local_name
       const password = this.userInfo.password
 
@@ -190,7 +186,6 @@ export default {
         const id_token = authenticateResp.data.body.id_token
         this.SET_TOKEN(id_token)
         let userResp = await this.pullUserInfo(id_token, username, password)
-        console.log('userResp', userResp)
         if (!userResp.userData) return
         fetchLocal('updateLocalUser', userResp.userData)
       } else {
@@ -224,7 +219,6 @@ export default {
       userDataTransed.password = password
       userDataTransed.id_token = id_token
       userDataTransed.friend_list = friendResp.data.body
-      console.log('userDataTransed', userDataTransed)
       return {
         userData: userDataTransed,
         returnMsg: friendResp.data.returnMsg

@@ -204,7 +204,6 @@ export default {
           _self.$nextTick(() => {
             _self.$refs.tree.$children[0].click()
             _self.SET_IS_HOME_READY(true)
-            // ipcRenderer.send('show-home-window')
           })
         }
       }
@@ -260,7 +259,13 @@ export default {
     },
 
     handleNewNote (isTemp) {
+      let s = false
       let currentNode = this.$refs.tree.model.store.currentNode
+      console.log('handleNewNote', currentNode)
+      if (!currentNode.parent.parent && currentNode.id !== '0') {
+        currentNode = this.$refs.tree.model.store.map['0']
+        s = true
+      }
 
       fetchLocal('addLocalNote', {
         title: '无标题笔记',
@@ -268,6 +273,9 @@ export default {
         isTemp: isTemp
       }).then(res => {
         this.$hub.dispatchHub('addFile', this, res)
+        if (s) {
+          this.setCurrentFolder('0')
+        }
         this.$hub.dispatchHub('pushData', this)
       })
     },
@@ -279,17 +287,19 @@ export default {
     handleNewFolder (isCurrent, nodeId) {
       let node
       let nodeData
+      let map = this.$refs.tree.model.store.map
       if (nodeId) {
-        let map = this.$refs.tree.model.store.map
         nodeData = map[nodeId]
         node = nodeData.instance
       } else {
         if (isCurrent) {
           let currentNode = this.$refs.tree.model.store.currentNode.instance
           if (!currentNode.model.parent.parent && currentNode.id !== '0') {
-            return
+            console.log('handleNewFolder-node', map)
+            node = map['0'].instance
+          } else {
+            node = currentNode
           }
-          node = currentNode
         } else {
           node = this.popupedNode
         }
@@ -417,7 +427,6 @@ export default {
     },
 
     handlePaste () {
-      console.log('handlePaste', this.popupedNode)
       let node = this.popupedNode.model
       let data = node.data
       let pid = data.id || data._id

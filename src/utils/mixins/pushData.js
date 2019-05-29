@@ -43,7 +43,6 @@ export default {
 
     async pushImgs () {
       let iNeedPush = await fetchLocal('getAllLocalImage')
-      console.log('pushImgs-iNeedPush', iNeedPush)
 
       if (iNeedPush.length === 0) {
         return []

@@ -30,7 +30,6 @@ export default {
 
     handleDocUpdate (file) {
       let f = _.find(this.fileList, { _id: file.id })
-      console.log('handleDocUpdate', file, f)
       if (f) {
         this.$set(f, 'summary', file.summary)
       }

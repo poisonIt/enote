@@ -37,7 +37,7 @@ export default {
 
   computed: {
     ...mapGetters({
-      isMovePanelShowed: 'GET_SHOW_MOVE_PANEL',
+      isMovePanelShowed: 'GET_SHOW_MOVE_PANEL'
     })
   },
 
@@ -54,11 +54,10 @@ export default {
 
   methods: {
     ...mapActions([
-      'TOGGLE_SHOW_MOVE_PANEL',
+      'TOGGLE_SHOW_MOVE_PANEL'
     ]),
 
     showMovePanel (params) {
-      console.log('showMovePanel', params)
       let { file, tree } = params
       this.$refs.move.init(tree, file)
       this.TOGGLE_SHOW_MOVE_PANEL()
@@ -83,7 +82,3 @@ export default {
   }
 }
 </script>
-
-<style lang="stylus" scoped>
-
-</style>

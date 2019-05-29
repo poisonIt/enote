@@ -83,74 +83,13 @@ export default {
     Loading
   },
 
-  data () {
-    return {
-      isDev: isDevelopment,
-      isSyncPanelShowed: false,
-      isFrdPanelShowed: false,
-      syncProgress: 0,
-      fdSearchKey: '',
-      selectedFd: null,
-      fdList: [],
-      friendChecked: [],
-      validity: '000',
-      validities: [
-        {
-          name: '永久有效',
-          id: '000',
-          children: []
-        },
-        {
-          name: '1天',
-          id: '001',
-          children: []
-        },
-        {
-          name: '7天',
-          id: '002',
-          children: []
-        }
-      ],
-      authorities: [
-        {
-          name: '公开-所有人可查看',
-          id: '000',
-          children: []
-        },
-        {
-          name: '私密-指定成员可查看',
-          id: '001',
-          children: []
-        }
-      ]
-    }
-  },
-
   computed: {
     ...mapGetters({
       viewFileType: 'GET_VIEW_FILE_TYPE',
       viewType: 'GET_VIEW_TYPE',
       currentFile: 'GET_CURRENT_FILE',
-      isUserPanelShowed: 'GET_SHOW_USER_PANEL',
-      isSharePanelShowed: 'GET_SHOW_SHARE_PANEL',
-      userInfo: 'GET_USER_INFO',
       isHomeReady: 'GET_IS_HOME_READY'
     })
-  },
-
-  watch: {
-    validity (val) {
-      console.log('watch-validity', val)
-    },
-
-    fdSearchKey (val) {
-      if (val === '') {
-        this.fdList = this.userInfo.friend_list
-      }
-
-      this.fdList = this.userInfo.friend_list
-        .filter(item => item.username.indexOf(val) > -1)
-    }
   },
 
   created () {
@@ -167,7 +106,6 @@ export default {
     })
 
     ipcRenderer.on('fetch-user-data-response', (event, arg) => {
-      console.log('fetch-user-data-response-1111', arg)
       if (arg.from === 'Home') {
         this.SET_USER_INFO(arg.res)
         this.SET_TOKEN(arg.res.id_token)
@@ -177,104 +115,17 @@ export default {
     })
   },
 
-  mounted () {
-    if (this.userInfo.friend_list && this.userInfo.friend_list.length > 0) {
-      this.selectedFd = this.userInfo.friend_list[0]
-    }
-  },
-
   methods: {
     ...mapActions([
-      'SET_FILES_FROM_LOCAL',
       'SET_USER_INFO',
       'SET_TOKEN',
-      'TOGGLE_SHOW_USER_PANEL',
-      'TOGGLE_SHOW_SHARE_PANEL',
-      'SET_FILE_PUSH_FINISHED',
       'SET_VIEW_TYPE',
       'SET_USER_READY',
-      'SET_DB_READY',
       'SET_NOTE_VER'
     ]),
 
-    // closeUserPanel () {
-    //   this.TOGGLE_SHOW_USER_PANEL(false)
-    // },
-
-    asyncUser () {
-      this.isSyncPanelShowed = true
-
-      const itvCb = () => {
-        if (this.syncProgress < 100) {
-          this.syncProgress++
-        } else {
-          clearInterval(itvCb)
-          setTimeout(() => {
-            this.isSyncPanelShowed = false
-            this.TOGGLE_SHOW_USER_PANEL(false)
-          }, 1000)
-        }
-      }
-      setInterval(itvCb, 30)
-    },
-
-    // closeSyncPanel () {
-    //   this.isSyncPanelShowed = false
-    // },
-
-    closeSharePanel () {
-      this.TOGGLE_SHOW_SHARE_PANEL(false)
-    },
-
-    showFrdPanel () {
-      console.log('showFrdPanel', this.isFrdPanelShowed)
-      this.isFrdPanelShowed = true
-    },
-
-    closeFrdPanel () {
-      this.isFrdPanelShowed = false
-    },
-
     changeViewType () {
       this.SET_VIEW_TYPE(this.viewType === 'unexpanded' ? 'expanded' : 'unexpanded')
-    },
-
-    selectFdItem (item) {
-      this.selectedFd = item
-    },
-
-    handleFriendStateChange () {
-      this.friendChecked = this.userInfo.friend_list.filter(item => item.state)
-    },
-
-    handleFriendUnChecked (fd) {
-      fd.state = false
-      this.handleFriendStateChange()
-    },
-
-    hideBackground () {
-      ipcRenderer.send('hideWindow', {
-        name: 'background'
-      })
-    },
-
-    showBackground () {
-      ipcRenderer.send('showWindow', {
-        name: 'background'
-      })
-    },
-
-    goLogin () {
-      saveAppConf(this.$remote.app.getAppPath('appData'), {
-        user: null
-      })
-      ipcRenderer.send('changeWindow', {
-        name: 'login'
-      })
-    },
-
-    deleteAll () {
-      fetchLocal('deleteAll')
     }
   }
 }

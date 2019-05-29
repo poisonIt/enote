@@ -57,7 +57,7 @@
           </div>
           <div class="item">
             <span>位置：</span>
-            <span>{{ currentFile | path }}</span>
+            <span>{{ path }}</span>
           </div>
         </div>
       </transition>
@@ -101,6 +101,18 @@ export default {
 
     isTrash () {
       return this.currentFile && this.currentFile.trash !== 'NORMAL'
+    },
+
+    path () {
+      let result = ''
+      let pNode
+      let folderMap = this.$root.$navTree.model.store.map
+      pNode = folderMap[this.currentFile.pid]
+      while (pNode !== null && pNode !== undefined) {
+        result = '/' + pNode.name + result
+        pNode = folderMap[pNode.pid]
+      }
+      return result
     }
   },
 
@@ -111,8 +123,9 @@ export default {
 
     currentFile: {
       handler: function (val) {
+        this.isInfoShowed = false
+        this.isMoreShowed = false
         if (val) {
-          console.log('currentFile', val)
           this.titleValue = val.title
           this.currentFileTitle = val.title
         }
@@ -136,19 +149,6 @@ export default {
         return (parseInt(val) / 1000000).toFixed(2) + ' MB'
       } else if (val.length <= 12) {
         return (parseInt(val) / 1000000000).toFixed(2) + ' GB'
-      }
-    },
-
-    path (val) {
-      return '/'
-      let ancestorFolders = val.ancestor_folders
-      if (val.parentFolder === null) {
-        return '/'
-      }
-      if (val.type === 'folder') {
-        return ancestorFolders.length === 0 ? '/我的文件夹' : '/' + ancestorFolders.map(file => file.title).join('/')
-      } else if (val.type === 'doc') {
-        return '/' + ancestorFolders.map(file => file.title).join('/')
       }
     }
   },
@@ -185,7 +185,6 @@ export default {
 
     async handleInputBlur () {
       this.isInputFocused = false
-      console.log('handleInputBlur', this.titleValue, this.currentFileTitle)
       if (this.titleValue === this.currentFileTitle) return
       this.currentFileTitle = this.titleValue
       this.$hub.dispatchHub('updateFile', this, {
@@ -195,7 +194,6 @@ export default {
     },
 
     handleResize () {
-      console.log('handleResize-filehandler')
       this.$nextTick(() => {
         let space = this.viewType === 'expanded' ? 540 : 390
         this.containerWidth = document.body.clientWidth - space + 'px'
@@ -209,9 +207,6 @@ export default {
       }
       if (dataAttr !== 'FileHandler-more') {
         this.isMoreShowed = false
-      }
-      if (dataAttr !== 'FileHandler-tag') {
-        // this.TOGGLE_SHOW_TAG_HANDLER(false)
       }
     },
 
@@ -256,12 +251,10 @@ export default {
     },
 
     fetch () {
-      console.log('fetch')
       this.TOGGLE_SHOW_RESEARCH_PANEL(true)
     },
 
     search () {
-      console.log('search')
     },
 
     share () {
@@ -277,7 +270,6 @@ export default {
     },
 
     newWindow () {
-      console.log('newWindow')
       ipcRenderer.send('create-preview-window', {
         noteId: this.currentFile._id,
         title: this.currentFileTitle
@@ -289,18 +281,15 @@ export default {
     },
 
     handleExport () {
-      console.log('handleExport')
     },
 
     handleRemove () {
-      console.log('handleRemove')
       this.$hub.dispatchHub('removeFile', this, {
         id: this.currentFile._id
       })
     },
 
     showHistory () {
-      console.log('showHistory')
     },
 
     handleHeaderDbClick () {

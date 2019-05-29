@@ -38,7 +38,6 @@ export default {
 
   watch: {
     searchText (val) {
-      console.log('watch-searchText', val)
       this.SET_SEARCH_KEYWORD(val)
     }
   },

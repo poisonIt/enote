@@ -165,7 +165,6 @@ export default {
 
   watch: {
     async currentNav (val) {
-      console.log('currentNav', val)
       this.refreshList()
     },
 
@@ -283,7 +282,6 @@ export default {
 
     selectFile (index) {
       const file = this.fileList[index]
-      console.log('selectFile', index, file)
       if (file) {
         if (this.currentFile && file._id === this.currentFile._id) return
         this.SET_CURRENT_FILE(this.copyFile(file))

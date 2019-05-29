@@ -98,7 +98,6 @@ export default {
       if (this.isLoading) return
       this.isLoading = true
       const { username, password } = this
-      console.log('postInput', username, password)
 
       let authenticateResp = await authenticate({
         username: username,

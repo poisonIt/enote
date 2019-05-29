@@ -90,7 +90,6 @@ export default {
 
     removeAllData () {
       fetchLocal('removeAll').then((res) => {
-        console.log('removeAll', res)
         this.$Message.success('清空成功')
       })
     }

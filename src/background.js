@@ -30,6 +30,8 @@ let pdfWin
 let youdaoWin
 let testWin
 
+let isHomeVisible = false
+
 let taskId = 0
 let pdfPath
 
@@ -202,6 +204,7 @@ function createLoginWindow (user) {
     console.log('createLoginWindow', user, autoLogin, data)
     if (autoLogin === '1') {
       win && win.show()
+      isHomeVisible = true
     }
     loginWin = new BrowserWindow({
       id: 'login',
@@ -209,7 +212,7 @@ function createLoginWindow (user) {
       height: 490,
       // frame: false,
       resizable: isDevelopment ? true : false,
-      show: isDevelopment,
+      show: false,
       titleBarStyle: 'hidden',
       icon: path.join(__static, 'icon.png'),
       webPreferences: {
@@ -227,10 +230,14 @@ function createLoginWindow (user) {
       // Load the index.html when not in development
       loginWin.loadURL(`app://./index.html#/?autoLogin=${autoLogin}&username=${data.username}&password=${data.password}`)
     }
+
+    loginWin.on('show', (event) => {
+      loginWin.focus()
+    })
   
     loginWin.on('closed', () => {
       loginWin = null
-      if (!isDevelopment && (win && !win.isVisible())) {
+      if (win && !win.isVisible()) {
         app.quit()
       }
     })
@@ -238,6 +245,7 @@ function createLoginWindow (user) {
 }
 
 function createHomeWindow () {
+  isHomeVisible = false
   // Create the browser window.
   win = new BrowserWindow({
     id: 'home',
@@ -413,8 +421,11 @@ app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
 
-  if (win && !win.isVisible()) {
+  if (win && !win.isVisible() && isHomeVisible) {
     win.show()
+  }
+  if (loginWin && !loginWin.isVisible() && !isHomeVisible) {
+    loginWin.show()
   }
 })
 
@@ -522,16 +533,16 @@ ipcMain.on('login-ready', (event, arg) => {
 })
 
 ipcMain.on('pull-finished', (event, arg) => {
-  if (!isDevelopment) {
-    loginWin && loginWin.hide()
-  }
+  // if (!isDevelopment) {
+  loginWin && loginWin.hide()
+  // }
   showHomeWindow()
 })
 
 ipcMain.on('create-home-window', (event, arg) => {
-  if (!isDevelopment) {
-    loginWin && loginWin.hide()
-  }
+  // if (!isDevelopment) {
+  loginWin && loginWin.hide()
+  // }
   createHomeWindow()
 })
 
@@ -640,12 +651,15 @@ function connectDatabase () {
 
 function showHomeWindow () {
   win && win.show()
+  isHomeVisible = true
   win && win.webContents.send('login-ready')
-  if (!isDevelopment) {
-    loginWin && loginWin.destroy()
-  } else {
-    // createTestWindow()
-  }
+  loginWin && loginWin.destroy()
+
+  // if (!isDevelopment) {
+  //   loginWin && loginWin.destroy()
+  // } else {
+  //   // createTestWindow()
+  // }
 }
 
 function beforeQuit () {

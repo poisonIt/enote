@@ -111,9 +111,13 @@ async function diffAdd (req) {
 
   if (note) {
     req.id = note._id
-    return await update(req).then(newNote => {
-      docCtr.getByNoteId({ id: newNote._id }).then(doc => {
-        docCtr.update({ id: doc._id, content: req.content })
+    return await new Promise((resolve, reject) => {
+      update(req).then(newNote => {
+        docCtr.getByNoteId({ id: newNote._id }).then(doc => {
+          docCtr.update({ id: doc._id, content: req.content }).then(() => {
+            resolve(newNote)
+          })
+        })
       })
     })
   } else {

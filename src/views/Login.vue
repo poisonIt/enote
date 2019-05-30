@@ -67,6 +67,12 @@ export default {
   },
 
   created () {
+    window.onbeforeunload = (e) => {
+      e.returnValue = false
+      let curWin = this.$remote.getCurrentWindow()
+      curWin.hide()
+    }
+
     let { autoLogin, username, password } = this.$router.currentRoute.query
     this.autoLogin = autoLogin
     if (this.autoLogin === '1') {

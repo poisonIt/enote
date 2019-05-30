@@ -2,7 +2,7 @@
   <div>
     <modal
       width="363px"
-      :height="userInfo.is_sync ? '301px' : '250px'"
+      :height="'281px'"
       top="30vh"
       transition-name="fade-in-down"
       @close="closeUserPanel"
@@ -31,9 +31,9 @@
           <span>{{ userInfo.position_name }}</span>
         </div>
       </div>
-      <div class="button-group" slot="footer" v-if="userInfo.is_sync">
-        <div class="button primary">开始同步</div>
-        <div class="button">取消</div>
+      <div class="button-group" slot="footer">
+        <div class="button primary" @click="syncYoudao">开始同步</div>
+        <div class="button" @click="closeUserPanel">取消</div>
       </div>
     </modal>
     <modal
@@ -75,6 +75,7 @@ import {
   syncSate
 } from '../../service'
 import Loading from '@/components/Loading'
+import fetchLocal from '../../utils/fetchLocal'
 
 export default {
   name: 'UserPanel',
@@ -127,11 +128,9 @@ export default {
         alert('userCode empty!')
         return
       }
-      let redirect_uri = `https://www.htffund.com/rest/note/api/youdao/callBack`
-      let url = `https://note.youdao.com/oauth/authorize2?client_id=838948a8e2be4d35f253cb82f2687d15&response_type=code&redirect_uri=${redirect_uri}/&state=${this.userInfo.usercode}`
-      // let url = `https://note.youdao.com/signIn/index.html?back_url=https%3A%2F%2Fnote.youdao.com%2Foauth%2Fauthorize2%3Fredirect_uri%3Dhttps%253A%252F%252Fiapp.htffund.com%252F%26client_id%3D838948a8e2be4d35f253cb82f2687d15%26state%3D123%26response_type%3Dcode`
+      let redirect_uri = `https://iapp.htffund.com/note/api/youdao/callBack`
+      let url = `https://note.youdao.com/oauth/authorize2?client_id=838948a8e2be4d35f253cb82f2687d15&response_type=code&redirect_uri=${redirect_uri}/?state=${this.userInfo.usercode}`
       console.log('url', url)
-      // window.open('https://note.youdao.com/oauth/authorize2?client_id=838948a8e2be4d35f253cb82f2687d15&response_type=code&redirect_uri=https://iapp.htffund.com')
       // return
       ipcRenderer.send('create-youdao-window', {
         name: 'youdao',
@@ -142,10 +141,25 @@ export default {
     },
 
     async checkYoudaoSyncState () {
-      let youdaoSync = await getSync()
       let syncState = await syncSate()
+        console.log('syncSate', syncSate)
+      //   console.log('youdaoSync', youdaoSync)
+      // if (youdaoSync.data.returnCode === 200) {
+      //   let syncState = await syncSate()
+      //   console.log('syncSate', syncSate)
+      // } else {
+      //   this.$Message.warning(youdaoSync.data.returnMsg)
+      // }
+    },
+
+    async syncYoudao () {
+      let youdaoSync = await getSync()
       console.log('youdaoSync', youdaoSync)
-      console.log('syncSate', syncSate)
+      if (youdaoSync.data.returnCode === 200) {
+        await fetchLocal('removeAll')
+      } else {
+        this.$Message.warning(youdaoSync.data.returnMsg)
+      }
     }
   }
 }

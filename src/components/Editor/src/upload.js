@@ -3,7 +3,6 @@ import { copyFile, existsSync, mkdir } from 'fs'
 import { uploadFile } from '../../../service'
 import LocalDAO from '../../../../db/api'
 import { GenNonDuplicateID } from '@/utils/utils'
-import { newError } from 'builder-util-runtime';
 const { remote, ipcRenderer } = require('electron')
 const path = require('path')
 

@@ -629,6 +629,10 @@ ipcMain.on('wrote-pdf', (event, arg) => {
   })
 })
 
+ipcMain.on('open-external', (event, url) => {
+  shell.openExternal(url)
+})
+
 function connectDatabase () {
   return new Promise((resolve, reject) => {
     let p = app.appConf.dbPath + '/' + app.appConf.user

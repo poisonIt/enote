@@ -67,11 +67,9 @@ export default {
       })
 
       let folderData = (pullResp[0].data.body || []).map(item => this.transNoteBookData(item))
-      console.log('folderData', folderData)
       await fetchLocal('diffAddMultiLocalFolder', folderData)
 
       let noteData = (pullResp[1].data.body || []).map(item => this.transNoteData(item))
-      console.log('folderData', noteData)
       await fetchLocal('diffAddMultiLocalNote', noteData)
 
       if (noteData.length > 0) {

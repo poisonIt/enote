@@ -164,7 +164,7 @@ export default {
   },
 
   watch: {
-    async currentNav (val) {
+    currentNav (val) {
       this.refreshList()
     },
 
@@ -214,8 +214,10 @@ export default {
         })
       } else if (nav.type === 'folder') {
         let params = {
-          pid: nav._id || nav.id || '0',
-          remote_pid: nav.remote_id
+          pid: nav._id || nav.id || '0'
+        }
+        if (nav.remote_id !== undefined) {
+          params.remote_pid = nav.remote_id
         }
         fetchLocal('getLocalFolderByPid', params).then(folders => {
           fetchLocal('getLocalNoteByPid', params, {

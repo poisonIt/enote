@@ -264,6 +264,7 @@ function createHomeWindow () {
     createProtocol('app')
     // Load the index.html when not in development
     win.loadURL('app://./index.html#/home')
+    win.webContents.openDevTools()
   }
 
   win.on('show', (event) => {
@@ -432,8 +433,10 @@ app.on('ready', async () => {
   let dbPath = path.resolve(app.getAppPath('userData'), `../`)
   // let dbPath = '/Users/bowiego/Documents/workspace/enote/temp'
   let serviceUrl = isDevelopment
-    ? 'https://122.152.201.59:8000/api'
-    : 'https://iapp.htffund.com/note/api'
+    // ? 'https://122.152.201.59:8000/api'
+    ? 'https://iapp.htffund.com/note/api'
+    : 'https://10.50.144.83:8000/api'
+    // : 'https://iapp.htffund.com/note/api'
     // : 'http://10.50.115.9:8000/api'
     
   getAppConf(app.getAppPath('userData')).then(appConf => {

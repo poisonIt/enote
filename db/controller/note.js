@@ -98,30 +98,67 @@ async function add (req) {
   })
 }
 
-function diffAdd (req) {
-  Note.findOne({ remote_id: req.remote_id }, (err, note) => {
-    if (note) {
-      req.id = note._id
-      return update(req).then(newNote => {
-        docCtr.getByNoteId({ id: newNote._id }).then(doc => {
-          docCtr.update({ id: doc._id, content: req.content })
-        })
-      })
-    } else {
-      return add(req)
-    }
+async function diffAdd (req) {
+  let notes = await getByQuery({ remote_id: req.remote_id }, { multi: true })
+
+  let note = notes.shift()
+
+  let p = notes.map(n => {
+    return removeById({ id: n._id })
   })
+
+  await Promise.all(p)
+
+  if (note) {
+    req.id = note._id
+    return await update(req).then(newNote => {
+      docCtr.getByNoteId({ id: newNote._id }).then(doc => {
+        docCtr.update({ id: doc._id, content: req.content })
+      })
+    })
+  } else {
+    return await add(req)
+  }
 }
 
-function diffAddMulti (reqs) {
-  return new Promise((resolve, reject) => {
-    let p = reqs.map(req => {
-      return diffAdd(req)
-    })
-    Promise.all(p).then(res => {
-      resolve(res)
-    })
+// function diffAdd (req) {
+//   Note.findOne({ remote_id: req.remote_id }, (err, note) => {
+//     if (note) {
+//       req.id = note._id
+//       return update(req).then(newNote => {
+//         docCtr.getByNoteId({ id: newNote._id }).then(doc => {
+//           docCtr.update({ id: doc._id, content: req.content })
+//         })
+//       })
+//     } else {
+//       return add(req)
+//     }
+//   })
+// }
+
+async function diffAddMulti (reqs) {
+  let newNotes = await Promise.all(reqs.map(req => diffAdd(req)))
+
+  let p = newNotes.map((note, index) => {
+    return (async () => {
+      let newNote = note
+      let pL = await getByQuery({ id: note.pid })
+      let pR = await getByQuery({ remote_id: note.remote_pid })
+      if (pR) {
+        if (pL) {
+          if (pL._id !== pR._id) {
+            newNote = await update({ id: note._id, pid: pR._id })
+          }
+        } else {
+          newNote = await update({ id: note._id, pid: pR._id })
+        }
+      } else {
+        newNote = await update({ id: note._id, pid: '0' })
+      }
+      return newNote
+    })(note, index)
   })
+  return await Promise.all(p)
 }
 
 function duplicate (req) {

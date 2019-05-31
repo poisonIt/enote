@@ -150,9 +150,11 @@ export default {
             this.editor = editor
             this.editor.ui.focusTracker.on('change:isFocused', (val) => {
               if (!this.editor.ui.view.editable.isFocused) {
+                let editorData = this.editor.getData()
                 if (this.currentDoc._id === this.cachedDoc._id &&
-                  this.editor.getData() !== this.cachedDoc.content) {
+                  editorData !== this.cachedDoc.content) {
                   this.$hub.dispatchHub('pushData', this)
+                  this.cachedDoc.content = editorData
                 }
               }
             })

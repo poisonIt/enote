@@ -67,20 +67,7 @@
         </div>
         <div class="form-item small" v-if="largeType != 100031">
           <div class="form-label">选择行业</div>
-          <Select
-            class="stock-select"
-            v-model="trade"
-            :remote-method="tradeMenuMethod"
-            filterable
-            :loading="loadingTrade"
-            remote>
-            <Option
-              v-for="(option, index) in tradeMenuData"
-              :value="option.value"
-              :key="index">
-              {{option.label}}
-            </Option>
-          </Select>
+          <input type="text" v-model="tradeName" disabled="disabled">
         </div>
         <div class="form-item">
           <div class="form-label">报告标题</div>
@@ -138,7 +125,7 @@
 </template>
 
 <script>
-import { debounce } from 'lodash'
+import * as _ from 'lodash'
 import { mapActions, mapGetters } from 'vuex'
 import LocalDAO from '../../../db/api'
 import {
@@ -175,7 +162,9 @@ export default {
       largeType: '',
       smallType: '',
       stock: '',
+      stockItem: null,
       trade: '',
+      tradeName: '',
       titleFrom: {
         title: ''
       },
@@ -255,6 +244,19 @@ export default {
       if (val.length > 100) {
         
       }
+    },
+
+    stock (val) {
+      let item = _.find(this.stockMenuData, { value: val })
+      if (item) {
+        this.stockItem = item
+        this.trade = item.trade
+        this.tradeName = item.tradeName
+      } else {
+        this.stockItem = null
+        this.trade = ''
+        this.tradeName = ''
+      }
     }
   },
 
@@ -288,11 +290,11 @@ export default {
       this.isStockMenuVisible = false
     },
 
-    stockMenuMethod: debounce(function (query) {
+    stockMenuMethod: _.debounce(function (query) {
       this.searchStock(query)
     }, 300),
 
-    tradeMenuMethod: debounce(function (query) {
+    tradeMenuMethod: _.debounce(function (query) {
       this.searchTrade(query)
     }, 300),
 
@@ -306,37 +308,16 @@ export default {
           this.stockMenuData = resp.data.body.body.map(item => {
             return {
               value: item.scode,
-              label: item.sname,
-              mktcode: item.mktcode
+              label: `${item.sname} ${item.scode}`,
+              mktcode: item.mktcode,
+              trade: item.industrycode,
+              tradeName: item.industryname
             }
           })
         } else {
           this.stockMenuData = []
         }
       })
-    },
-
-    searchTrade (query) {
-      this.loadingTrade = true
-      getReportTrade({
-        searchname: query.trim()
-      }).then(resp => {
-        this.loadingTrade = false
-        if (resp.data.returnCode === 200) {
-          this.tradeMenuData = resp.data.body.map(item => {
-            return {
-              value: item.id,
-              label: item.name,
-              mktcode: item.mktcode
-            }
-          })
-        } else {
-          this.tradeMenuData = []
-        }
-      })
-    },
-
-    handleStockMenuClick (value) {
     },
 
     handleTitleBlur () {
@@ -364,23 +345,42 @@ export default {
     },
 
     postReport () {
-      let stockItem = this.stockMenuData.filter(item => item.value === this.stock)[0]
-      let tradeItem = this.tradeMenuData.filter(item => item.value === this.trade)[0]
-      addReport({
+      if (!this.stockItem) {
+        this.$Message.error('请选择股票')
+        return
+      }
+      let data = {
         indcode: this.trade,
-        indname: tradeItem.label,
+        indname: this.tradeName,
         isupdatepeandeps: 0,
-        mktcode: stockItem.mktcode,
+        mktcode: this.stockItem.mktcode,
         reporttypeid: this.smallType,
         scode: this.stock,
-        scodename: stockItem.label,
+        scodename: this.stockItem.label,
         status: 50,
         stype: 2,
         keywords: this.keywords,
         summary: this.summary,
         title: this.title,
         username: this.userInfo.usercode
-      }).then(res => {
+      }
+      if (data.reporttypeid === '') {
+        this.$Message.error('请选择报告类别')
+        return
+      }
+      if (data.title === '') {
+        this.$Message.error('请填写标题')
+        return
+      }
+      if (data.keywords === '') {
+        this.$Message.error('请填写关键字')
+        return
+      }
+      if (data.summary === '') {
+        this.$Message.error('请填写摘要')
+        return
+      }
+      addReport(data).then(res => {
         if (res.data.returnCode === 200) {
           this.closeResearchPanel()
         } else (
@@ -424,7 +424,7 @@ export default {
   textarea
     width 85%
     height 46px
-    line-height 24px
+    line-height 22px
     margin-left 9px
     padding-left 10px
     margin-bottom 10px

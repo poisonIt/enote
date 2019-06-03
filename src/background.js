@@ -32,7 +32,6 @@ let testWin
 
 let isHomeVisible = false
 
-let taskId = 0
 let pdfPath
 
 let template = [{
@@ -576,7 +575,6 @@ ipcMain.on('fetch-user-data', (event, arg) => {
 })
 
 ipcMain.on('fetch-local', (event, arg) => {
-  taskId++
   let option = arg.options || {}
   let args = [option]
   if (arg.params) {

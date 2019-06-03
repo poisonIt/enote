@@ -54,7 +54,6 @@ export default {
 
       if (!isSuccess) {
         this.isLoading = false
-        console.log('llllll', returnMsgs)
         return
       }
 

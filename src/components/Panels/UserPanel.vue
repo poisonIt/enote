@@ -98,13 +98,6 @@ export default {
     })
   },
 
-  mounted () {
-    console.log('userInfo', this.userInfo)
-    ipcRenderer.on('youdao-reply', (event, arg) => {
-      console.log('youdao-reply', arg)
-    })
-  },
-
   methods: {
     ...mapActions([
       'TOGGLE_SHOW_USER_PANEL'
@@ -123,15 +116,12 @@ export default {
     },
 
     openYoudaoWindow () {
-      console.log('openYoudaoWindow', this.userInfo)
       if (!this.userInfo.usercode) {
         alert('userCode empty!')
         return
       }
       let redirect_uri = `https://iapp.htffund.com/note/api/youdao/callBack`
       let url = `https://note.youdao.com/oauth/authorize2?client_id=838948a8e2be4d35f253cb82f2687d15&response_type=code&redirect_uri=${redirect_uri}/?state=${this.userInfo.usercode}`
-      console.log('url', url)
-      // return
       ipcRenderer.send('create-youdao-window', {
         name: 'youdao',
         userCode: this.userInfo,
@@ -141,15 +131,13 @@ export default {
     },
 
     async checkYoudaoSyncState () {
-      let syncState = await syncSate()
-        console.log('syncSate', syncSate)
-      //   console.log('youdaoSync', youdaoSync)
-      // if (youdaoSync.data.returnCode === 200) {
-      //   let syncState = await syncSate()
-      //   console.log('syncSate', syncSate)
-      // } else {
-      //   this.$Message.warning(youdaoSync.data.returnMsg)
-      // }
+      syncSate().then(resp => {
+        if (resp.data.returnCode === 200) {
+          this.closeOauthPanel()
+        } else {
+          this.$Message.warning(resp.data.returnMsg)
+        }
+      })
     },
 
     async syncYoudao () {

@@ -17,6 +17,8 @@ import '../../../assets/styles/editor.css'
 import { getLocalDoc, updateLocalDoc } from '@/service/local'
 import fetchLocal from '../../../utils/fetchLocal'
 
+const ClassicEditor = window.ClassicEditor
+
 export default {
   name: 'EditorComp',
 
@@ -128,6 +130,12 @@ export default {
       } else {
         ClassicEditor
           .create(this.$refs.editor, {
+            // fontFamily: {
+            //   options: [
+            //     'default',
+            //     '微软雅黑'
+            //   ]
+            // },
             extraPlugins: [ uploadAdapter, linkShell ],
             autosave: {
               save (editor) {

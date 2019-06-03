@@ -11,7 +11,10 @@ import { ipcRenderer } from 'electron'
 import { mapGetters, mapActions } from 'vuex'
 import fetchLocal from '../utils/fetchLocal'
 import uploadAdapter from '../components/Editor/src/upload'
+import linkShell from '../components/Editor/src/linkShell'
 import '../assets/styles/editor.css'
+
+const ClassicEditor = window.ClassicEditor
 
 export default {
   name: 'EditorComp',
@@ -42,7 +45,6 @@ export default {
       this.doc = res
       this.initEditor(res.content)
     })
-
   },
 
   methods: {
@@ -58,7 +60,7 @@ export default {
       } else {
         ClassicEditor
           .create(this.$refs.editor, {
-            extraPlugins: [ uploadAdapter ],
+            extraPlugins: [ uploadAdapter, linkShell ],
             autosave: {
               save (editor) {
                 _self.editorData = editor.getData()
@@ -66,13 +68,19 @@ export default {
                   tasks: ['updateEditorDoc'],
                   params: [{
                     id: _self.doc._id,
-                    content: _self.editorData,
+                    content: _self.editorData
                   }],
                   from: 'Preview'
                 })
                 _self.saveData(_self.doc._id, _self.editorData)
               }
             },
+            link: {
+              click (href) {
+                // console.log(href.match(/^(?:(?:https?|ftps?|mailto):|[^a-z]|[a-z+.-]+(?:[^a-z+.:-]|$))/i))
+                ipcRenderer.send('open-external', href)
+              }
+            }
           })
           .then(editor => {
             this.editor = editor

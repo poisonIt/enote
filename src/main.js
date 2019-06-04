@@ -21,8 +21,6 @@ const isDevelopment = process.env.NODE_ENV !== 'production'
 const { remote, shell, webFrame } = require('electron')
 console.log(remote.app.getAppPath('userData'))
 
-shell.openExternal('www.baidu.com')
-
 let serviceUrl = ''
 
 Vue.use(CollapseTransition)

@@ -1,6 +1,7 @@
 <template>
   <div id="navbar" ref="navbar">
     <Tree
+      :style="{ opacity: viewType === 'unexpanded' ? 0 : 1 }"
       ref="tree"
       :dark="true"
       :model="folderTree"

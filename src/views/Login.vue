@@ -195,7 +195,7 @@ export default {
   height 100%
   background #fff
   background-image url('../assets/images/lanhu/login_bg@1x.png')
-  background-size contain
+  background-size cover
   background-repeat no-repeat
   -webkit-app-region drag
 
@@ -207,7 +207,7 @@ export default {
   left 50%
   transform translateX(-50%)
   background-image url('../assets/images/lanhu/logo_white@1x.png')
-  background-size contain
+  background-size cover
   background-repeat no-repeat
 
 .title
@@ -221,7 +221,7 @@ export default {
 
 .form
   position absolute
-  bottom 113px
+  bottom 80px
   left 50%
   transform translateX(-50%)
 

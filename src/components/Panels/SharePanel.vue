@@ -2,7 +2,7 @@
   <div>
     <modal
       width="465px"
-      height="317px"
+      height="347px"
       top="20vh"
       transition-name="fade-in-down"
       title="分享链接"
@@ -64,6 +64,16 @@
               添加可查看成员
             </div>
           </div>
+
+          <!-- 添加app图标，mouseover出现二维码 -->
+
+          <div class="iapp">
+            分享至：
+            <poptip trigger="hover" placement="right">
+                <img class="app" src="@/assets/images/iapp.png"/>
+                <div id="qrcode" slot="content"></div>
+            </poptip>
+          </div>
           <div class="footer">
             <span class="cancel-button"
               v-show="!isLoading"
@@ -121,6 +131,7 @@
 </template>
 
 <script>
+import QRCode from 'qrcodejs2'  //二维码插件
 import { clipboard } from 'electron'
 import { mapActions, mapGetters } from 'vuex'
 import LocalDAO from '../../../db/api'
@@ -267,7 +278,7 @@ export default {
     ...mapActions([
       'TOGGLE_SHOW_SHARE_PANEL'
     ]),
-
+   
     closeSharePanel () {
       this.remoteId = ''
       this.TOGGLE_SHOW_SHARE_PANEL(false)
@@ -299,7 +310,6 @@ export default {
       }
 
       let shareResp = await publishShare(data)
-
       this.handleShareFinished(shareResp)
     },
 
@@ -335,7 +345,10 @@ export default {
 
         this.$nextTick(() => {
           this.isFirstData = false
+          this.qrcode()
         })
+
+
       } else {
         this.closeSharePanel()
       }
@@ -343,10 +356,10 @@ export default {
 
     async cancelShare () {
       this.isLoading = true
-
       let cancelResp = await unPublishShare({
         noteId: this.currentFile.remote_id
       })
+
 
       this.isLoading = false
 
@@ -354,7 +367,17 @@ export default {
         this.closeSharePanel()
       }
     },
-
+    // 二维码
+    qrcode () {
+      document.getElementById("qrcode").innerHTML = "";
+      let qrcode = new QRCode('qrcode', {
+        width: 100,
+        height: 100,
+        text: this.shareUrl,
+        colorDark : "#000",
+        colorLight : "#fff",
+      })
+    },
     handleLinkFocus () {
       this.$refs.linkInput.select()
     },
@@ -388,9 +411,11 @@ export default {
     },
 
     copyShareUrl () {
+      console.log(this.shareUrl)
       clipboard.writeText(this.shareUrl)
       this.$Message.success('复制成功')
-    }
+    },
+   
   }
 }
 </script>
@@ -422,11 +447,17 @@ export default {
   .validity, .authority
     display flex
     align-items center
+  .iapp 
+    .app
+      width 30px
+      height 30px
+      vertical-align middle
+      display inline-block
   .footer
     // display flex
     // flex 1
     // justify-content space-between
-    margin-top 30px
+    margin-top 15px
   .cancel-button
     width 70px
     height 28px

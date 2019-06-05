@@ -107,6 +107,7 @@ export default {
 
     ipcRenderer.on('fetch-user-data-response', (event, arg) => {
       if (arg.from === 'Home') {
+        console.log('userInfo', arg.res)
         this.SET_USER_INFO(arg.res)
         this.SET_TOKEN(arg.res.id_token)
         this.SET_NOTE_VER(this.$remote.app.appConf.note_ver || 0)

@@ -21,10 +21,7 @@ function createCollection (path) {
     department_id: String,
     department_name: String,
     friend_list: [String],
-    is_sync: {
-      type: Boolean,
-      default: false
-    },
+    sync_state: String,
     access_token: String,
     id_token: String
   })

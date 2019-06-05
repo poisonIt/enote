@@ -165,16 +165,16 @@ ipcMain.on('login-ready', (event, arg) => {
 })
 
 ipcMain.on('pull-finished', (event, arg) => {
-  // if (!isDevelopment) {
-  loginWin && loginWin.hide()
-  // }
+  if (!isDevelopment) {
+    loginWin && loginWin.hide()
+  }
   isHomeVisible = showHomeWindow()
 })
 
 ipcMain.on('create-home-window', (event, arg) => {
-  // if (!isDevelopment) {
-  loginWin && loginWin.hide()
-  // }
+  if (!isDevelopment) {
+    loginWin && loginWin.hide()
+  }
   createHomeWindow()
 })
 
@@ -303,7 +303,7 @@ function createLoginWindow (user) {
       height: 490,
       // frame: false,
       resizable: isDevelopment,
-      show: false,
+      show: isDevelopment,
       frame: isDevelopment,
       titleBarStyle: 'hidden',
       icon: path.join(__static, 'icon.png'),
@@ -504,7 +504,9 @@ function createTestWindow () {
 function showHomeWindow () {
   win && win.show()
   win && win.webContents.send('login-ready')
-  loginWin && loginWin.destroy()
+  if (!isDevelopment) {
+    loginWin && loginWin.destroy()
+  }
   return true
   // if (!isDevelopment) {
   //   loginWin && loginWin.destroy()
@@ -558,11 +560,16 @@ function appQuit () {
 }
 
 function logout () {
-  console.log('logout', win)
   if (win) {
     saveAppConf(app.getAppPath('appData'), {
       user: null
     })
+    restart()
+  }
+}
+
+function restart () {
+  if (win) {
     win && win.hide()
     loginWin && loginWin.destroy()
     createLoginWindow()

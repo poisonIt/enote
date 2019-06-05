@@ -178,7 +178,7 @@ export default {
         department_id: obj.departmentId,
         department_name: obj.departmentName,
         image_url: obj.imageUrl,
-        is_sync: obj.isSync,
+        sync_state: obj.syncState,
         oa_id: obj.oaId,
         position_id: obj.positionId,
         position_name: obj.positionName

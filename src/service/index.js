@@ -78,8 +78,10 @@ export function deleteTag (params) {
   })
 }
 
-export function getSync () {
-  return axios.get('/youdao/sync')
+export function getSync (params) {
+  return axios.get('/youdao/sync', {
+    params: params
+  })
 }
 
 export function syncSate () {

@@ -162,7 +162,7 @@ export default {
     },
 
     async syncYoudao () {
-      let youdaoSync = await getSync()
+      let youdaoSync = await getSync({ deviceId: this.$remote.app.appConf.clientId })
       if (youdaoSync.data.returnCode === 200) {
         await fetchLocal('removeAll')
         this.$hub.dispatchHub('pullData', this)

@@ -87,10 +87,10 @@ app.on('ready', async () => {
   // let dbPath = '/Users/bowiego/Documents/workspace/enote/temp'
   let serviceUrl = isDevelopment
     ? 'http://122.152.201.59:8001/api'
-    : 'https://10.50.144.83:8000/api'
+    // : 'https://10.50.144.83:8000/api'
     // ? 'https://122.152.201.59:8000/api'
     // ? 'https://iapp.htffund.com/note/api'
-    // : 'https://iapp.htffund.com/note/api'
+    : 'https://iapp.htffund.com/note/api'
     // : 'http://10.50.115.9:8000/api'
 
   getAppConf(app.getAppPath('userData')).then(appConf => {

@@ -163,6 +163,24 @@ const contextMenuTemplate = [
     type: 'separator'
   },
   {
+    label: '切换开发者工具',
+    accelerator: (() => {
+      if (process.platform === 'darwin') {
+        return 'Alt+Command+I'
+      } else {
+        return 'Ctrl+Shift+I'
+      }
+    })(),
+    click: (item, focusedWindow) => {
+      BrowserWindow.getAllWindows().forEach(win => {
+        win.toggleDevTools()
+      })
+    }
+  },
+  {
+    type: 'separator'
+  },
+  {
     label: '注销',
     click: (item, focusedWindow) => {
       logout()

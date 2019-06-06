@@ -134,15 +134,42 @@ const applicationMenuTemplate = [{
 
 const contextMenuTemplate = [
   {
-    label: '退出',
+    label: '最小化',
     click: (item, focusedWindow) => {
-      appQuit()
+      BrowserWindow.getAllWindows().forEach(win => {
+        win.minimize()
+      })
     }
+  },
+  {
+    label: '最大化',
+    click: (item, focusedWindow) => {
+      BrowserWindow.getAllWindows().forEach(win => {
+        win.maximize()
+      })
+    }
+  },
+  {
+    label: '还原窗口',
+    click: (item, focusedWindow) => {
+      BrowserWindow.getAllWindows().forEach(win => {
+        win.restore()
+      })
+    }
+  },
+  {
+    type: 'separator'
   },
   {
     label: '注销',
     click: (item, focusedWindow) => {
       logout()
+    }
+  },
+  {
+    label: '退出',
+    click: (item, focusedWindow) => {
+      appQuit()
     }
   }
 ]

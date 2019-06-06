@@ -170,16 +170,16 @@ ipcMain.on('login-ready', (event, arg) => {
 })
 
 ipcMain.on('pull-finished', (event, arg) => {
-  if (!isDevelopment) {
-    loginWin && loginWin.hide()
-  }
+  // if (!isDevelopment) {
+  loginWin && loginWin.hide()
+  // }
   isHomeVisible = showHomeWindow()
 })
 
 ipcMain.on('create-home-window', (event, arg) => {
-  if (!isDevelopment) {
-    loginWin && loginWin.hide()
-  }
+  // if (!isDevelopment) {
+  loginWin && loginWin.hide()
+  // }
   createHomeWindow()
 })
 
@@ -306,10 +306,9 @@ function createLoginWindow (user) {
       id: 'login',
       width: isDevelopment ? 1024 : 442,
       height: 490,
-      // frame: false,
+      frame: false,
       resizable: isDevelopment,
       show: isDevelopment,
-      frame: isDevelopment,
       titleBarStyle: 'hidden',
       icon: path.join(__static, 'icon.png'),
       webPreferences: {
@@ -350,9 +349,8 @@ function createHomeWindow () {
     height: app.appConf.size.height,
     backgroundColor: '#fcfbf7',
     show: false,
-    frame: isDevelopment,
     title: productName,
-    // frame: false,
+    frame: false,
     titleBarStyle: isDevelopment ? 'hidden' : 'hidden',
     icon: path.join(__static, 'icon.png'),
     webPreferences: {
@@ -509,9 +507,9 @@ function createTestWindow () {
 function showHomeWindow () {
   win && win.show()
   win && win.webContents.send('login-ready')
-  if (!isDevelopment) {
-    loginWin && loginWin.destroy()
-  }
+  // if (!isDevelopment) {
+  loginWin && loginWin.destroy()
+  // }
   return true
   // if (!isDevelopment) {
   //   loginWin && loginWin.destroy()

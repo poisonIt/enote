@@ -104,13 +104,14 @@ export default {
       if (this.isLoading) return
       this.isLoading = true
       const { username, password } = this
+      console.log('postInput', username, password)
 
       let authenticateResp = await authenticate({
         username: username,
         password: password
       }).catch(err => {
+        this.$Message.error(String(err))
         console.error(err)
-        this.$Message.error(err)
         this.isLoading = false
         return
       })

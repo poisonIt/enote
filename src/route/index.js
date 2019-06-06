@@ -6,6 +6,7 @@ import Home from '@/views/Home'
 import TestGround from '@/views/TestGround'
 import Login from '@/views/Login'
 import Preview from '@/views/Preview'
+import Pdf from '@/views/Pdf'
 
 Vue.use(Router)
 
@@ -27,6 +28,11 @@ export default new Router({
       path: '/preview',
       name: 'Preview',
       component: Preview
+    },
+    {
+      path: '/pdf',
+      name: 'PDF',
+      component: Pdf
     },
     {
       path: '/test',

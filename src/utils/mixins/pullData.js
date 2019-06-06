@@ -6,6 +6,7 @@ import {
 } from '@/service'
 import LocalDAO from '../../../db/api'
 import { mapGetters, mapActions } from 'vuex'
+import fetchLocal from '../fetchLocal'
 
 let allTagLocalMap = {}
 
@@ -22,119 +23,74 @@ export default {
     })
   },
 
-  created () {
-    this.hookPullMsgHandler()
-  },
-
   methods: {
     ...mapActions([
       'SET_TOKEN',
       'SET_NOTE_VER'
     ]),
 
-    hookPullMsgHandler () {
-      ipcRenderer.on('fetch-local-data-response', (event, arg) => {
-        if (arg.from === 'pullData') {
-          console.log('pullData-res', arg)
-          if (arg.tasks.indexOf('diffAddMultiLocalTag') > -1) {
-            console.log('diffAddMultiLocalTag', arg.res)
-            let tagResp = arg.res
-            allTagLocalMap = {}
-            tagResp.forEach(item => {
-              allTagLocalMap[item.remote_id] = item._id
-            })
-            this.diffAddNoteBook(this.pullResp[0].data.body || [])
-          }
-          if (arg.tasks.indexOf('diffAddMultiLocalFolder') > -1) {
-            console.log('diffAddMultiLocalFolder-res', arg.res)
-            this.diffAddNote(this.pullResp[1].data.body)
-            if (this.pullResp[1].data.body.length > 0) {
-              let usnArr = this.pullResp[1].data.body.map(item => item.usn)
-              let usnMax = Math.max(...usnArr)
-              console.log('updateState-usnMax', usnArr, usnMax)
-              if (usnMax > this.noteVer) {
-                this.SET_NOTE_VER(usnMax)
-                ipcRenderer.send('fetch-local-data', {
-                  tasks: ['updateState'],
-                  params: [{
-                    note_ver: usnMax
-                  }],
-                  from: 'pullData'
-                })
-              }
-            }
-          }
-          if (arg.tasks.indexOf('diffAddMultiLocalNote') > -1) {
-            console.log('diffAddMultiLocalNote-res', arg.res)
-            ipcRenderer.send('pull-finished')
-          }
-        }
-      })
-    },
-
     async pullData (noteVer) {
-      console.log('pullData', noteVer)
-      return
-      return new Promise((resolve, reject) => {
-        let resp = this.runPullTasks(noteVer)
-        console.log('pullData-resp', resp)
-        resolve(resp)
-      })
+      let resp = await this.runPullTasks(noteVer)
+      return resp
     },
 
     async runPullTasks (noteVer) {
-      this.pullResp = await Promise.all([
+      const { client_id, deviceName, platform } = this.$remote.app.appConf
+      let pullResp = await Promise.all([
         pullNotebooks(),
-        pullNote({ version: noteVer }),
+        pullNote({
+          deviceId: client_id,
+          deviceName: deviceName,
+          deviceType: platform
+        }),
         pullTags()
       ])
-      console.log('runPullTasks', this.pullResp)
 
-      if (this.pullResp[0].data.returnMsg !== 'success') {
+      let returnMsgs = pullResp.map(item => item.data.returnMsg)
+
+      let isSuccess = true
+
+      for (let i = 0, len = returnMsgs.length; i < len; i++) {
+        if (returnMsgs[i] !== 'success') {
+          isSuccess = false
+          break
+        }
+      }
+
+      if (!isSuccess) {
         this.isLoading = false
         return
       }
 
-      if (this.pullResp[1].data.returnMsg !== 'success') {
-        this.isLoading = false
-        return
+      let tagsData = (pullResp[2].data.body || []).map(item => this.transTagData(item))
+      await fetchLocal('diffAddMultiLocalTag', tagsData)
+      let tagLocalResp = await fetchLocal('diffAddMultiLocalTag', tagsData)
+      allTagLocalMap = {}
+      tagLocalResp.forEach(item => {
+        allTagLocalMap[item.remote_id] = item._id
+      })
+
+      let folderData = (pullResp[0].data.body || []).map(item => this.transNoteBookData(item))
+      await fetchLocal('diffAddMultiLocalFolder', folderData)
+
+      let noteData = (pullResp[1].data.body || []).map(item => this.transNoteData(item))
+      await fetchLocal('diffAddMultiLocalNote', noteData)
+
+      if (noteData.length > 0) {
+        let usnArr = noteData.map(item => item.usn)
+        let usnMax = Math.max(...usnArr)
+        if (usnMax > this.noteVer) {
+          this.SET_NOTE_VER(usnMax)
+          await fetchLocal('updateState', {
+            note_ver: usnMax
+          })
+        }
       }
 
-      if (this.pullResp[2].data.returnMsg !== 'success') {
-        this.isLoading = false
-        return
-      }
-
-      this.diffAddTag(this.pullResp[2].data.body || [])
-      return
-    },
-
-    diffAddTag (data) {
-      ipcRenderer.send('fetch-local-data', {
-        tasks: ['diffAddMultiLocalTag'],
-        params: [data.map(item => this.transTagData(item))],
-        from: 'pullData'
-      })
-    },
-
-    diffAddNoteBook (data) {
-      ipcRenderer.send('fetch-local-data', {
-        tasks: ['diffAddMultiLocalFolder'],
-        params: [data.map(item => this.transNoteBookData(item))],
-        from: 'pullData'
-      })
-    },
-
-    diffAddNote (data) {
-      ipcRenderer.send('fetch-local-data', {
-        tasks: ['diffAddMultiLocalNote'],
-        params: [data.map(item => this.transNoteData(item))],
-        from: 'pullData'
-      })
+      ipcRenderer.send('pull-finished')
     },
 
     transNoteBookData (obj) {
-      console.log('transNoteBookData', obj)
       let pid = obj.parentId
       return {
         type: 'folder',

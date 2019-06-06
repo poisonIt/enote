@@ -43,6 +43,9 @@
   height: 100%;
   overflow: scroll !important;
 }
+#preview .ck-editor__main {
+  overflow: visible !important;
+}
 .ck-content {
   /* width: 100%; */
   /* min-width: 800px; */

@@ -78,9 +78,7 @@ export default {
         saveAppConf(this.$remote.app.getAppPath('appData'), {
           user: null
         })
-        ipcRenderer.send('changeWindow', {
-          name: 'login'
-        })
+        ipcRenderer.send('logout')
       }
       if (value === 'setting') {
         this.TOGGLE_SHOW_SETTING_PANEL(true)

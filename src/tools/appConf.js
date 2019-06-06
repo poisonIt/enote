@@ -26,7 +26,6 @@ export function saveAppConf (appPath, conf) {
       Object.keys(conf).forEach(key => {
         c[key] = conf[key]
       })
-      console.log('saveAppConf', conf, c)
       writeFile(path.resolve(appPath,
         `../appConfig.json`),
         JSON.stringify(c)

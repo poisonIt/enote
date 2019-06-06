@@ -1,7 +1,6 @@
 self.addEventListener('message', (e) => {
   var command = e.data[0]
   if (command === 'calcLocalData') {
-    console.log('calcLocalData', e)
     let folderFiles = e.data[1][0]
     let tags = e.data[1][1]
 
@@ -21,40 +20,28 @@ self.addEventListener('message', (e) => {
       }
     }
 
-    let rootChildren = folderFiles
-      .filter(item => item.pid === '0')
-      .map((item, index) => {
-        return {
-          id: item._id,
-          pid: item.pid,
-          remote_id: item.remote_id,
-          remote_pid: item.remote_pid,
-          name: item.title,
-          data: item,
-          hidden: item.trash !== 'NORMAL',
-          children: []
-        }
-      }).sort((a, b) => {
-        return a.seq - b.seq
-      })
-
     let remotePidMap = {}
     let pidMap = {}
 
-    folderFiles.forEach(file => {
-      if (file.remote_pid) {
+    for (let i = 0, len = folderFiles.length; i < len; i++) {
+      let file = folderFiles[i]
+      if (file.remote_pid !== undefined) {
         if (!remotePidMap[file.remote_pid]) {
           remotePidMap[file.remote_pid] = []
         }
         remotePidMap[file.remote_pid].push(file)
-      } else {
-        if (file.pid) {
-          if (!pidMap[file.pid]) {
-            pidMap[file.pid] = []
-          }
-          pidMap[file.pid].push(file)
-        }
+        continue
       }
+      if (file.pid !== undefined) {
+        if (!pidMap[file.pid]) {
+          pidMap[file.pid] = []
+        }
+        pidMap[file.pid].push(file)
+      }
+    }
+
+    let rootChildren = (remotePidMap['0'] || []).concat(pidMap['0'] || []).sort((a, b) => a.seq - b.seq).map(item => {
+      return transFile(item)
     })
 
     rootChildren.forEach((item, index) => {

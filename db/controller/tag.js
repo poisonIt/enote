@@ -1,6 +1,8 @@
-import { getValid } from '../tools'
-import tagModel from '../models/tag'
 import { LinvoDB } from '../index'
+import { promisifyAll } from '../promisify'
+// import { getValid } from '../tools'
+import tagModel from '../models/tag'
+import noteCtr from './note'
 
 let Tag = {}
 
@@ -19,8 +21,12 @@ function createCollection (path) {
       type: String
     },
     trash: {
-      type: Boolean,
+      type: String,
       default: 'NORMAL'
+    },
+    need_push: {
+      type: Boolean,
+      default: true
     }
   })
 
@@ -28,6 +34,8 @@ function createCollection (path) {
     fieldName: 'name',
     unique: true
   })
+
+  promisifyAll(Tag)
 }
 
 
@@ -43,20 +51,52 @@ function saveAll (req) {
 }
 
 // add
-function add (req) {
-  const { name } = req
+async function add (req) {
+  const { note_id, name } = req
   let data = tagModel(req)
+  let note
+
+  if (req.hasOwnProperty('note_id')) {
+    note = await noteCtr.getById({ id: note_id })
+  }
 
   return new Promise((resolve, reject) => {
     Tag.findOne({ name: name }).exec((err, tag) => {
       if (tag) {
-        resolve(tag)
+        if (tag.trash === 'DELETED') {
+          update({ id: tag._id, trash: 'NORMAL' }).then(res => {
+            handleAddTag(tag, note).then(t => {
+              resolve(t)
+            })
+          })
+        } else {
+          handleAddTag(tag, note).then(t => {
+            resolve(t)
+          })
+        }
       } else {
-        Tag.insert(data, (err, tags) => {
-          resolve(tags)
+        Tag.insert(data, (err, newTag) => {
+          handleAddTag(newTag, note).then(t => {
+            resolve(t)
+          })
         })
       }
     })
+  })
+}
+
+function handleAddTag (tag, note) {
+  return new Promise((resolve, reject) => {
+    if (note) {
+      noteCtr.addTag({
+        id: note._id,
+        tags: [tag._id]
+      }).then(res => {
+        resolve(tag)
+      })
+    } else {
+      resolve(tag)
+    }
   })
 }
 
@@ -111,11 +151,19 @@ function removeById (req) {
   })
 }
 
+async function removeByQuery (req) {
+  let tag = await getByQuery(req)
+  console.log('removeByQuery', req, tag)
+
+  tag.remove()
+}
+
 function deleteAll () {
   Tag.find({}).exec((err, tags) => {
     let p = tags.map(tag => {
       return update({
         id: tag._id,
+        need_push: true,
         trash: 'DELETED'
       })
     })
@@ -126,7 +174,24 @@ function deleteAll () {
 }
 
 // update
-function update (req) {
+function updateP (query, req, multi) {
+  return new Promise((resolve, reject) => {
+    Tag.update(
+      query,
+      req,
+      { multi: true },
+      (err, num, newTags) => {
+        if (err) {
+          reject(err)
+        }
+        resolve(newTags)
+      }
+    )
+  })
+}
+
+async function update (req) {
+  console.log('update-tag', req)
   const { id } = req
   req.update_at = new Date().valueOf()
 
@@ -134,24 +199,40 @@ function update (req) {
     req.need_push = true
   }
 
-  return new Promise((resolve, reject) => {
-    Tag.findOne({ _id: id })
-    .exec((err, tag) => {
-      Tag.update(
-        { _id: id },
-        { $set: req },
-        { multi: true },
-        (err, num, newTag) => {
-          reject(err)
-          if (!newTag) {
-            resolve(tag)
-          } else {
-            resolve(newTag)
-          }
+  if (req.hasOwnProperty('trash')) {
+    if (req.trash === 'DELETED') {
+      let notes = await noteCtr.getByTags({ tags: [id] })
+      await Promise.all(notes.map(note => {
+        return noteCtr.removeTag({ id: note._id, tag_id: id })
+      }))
+    }
+  }
+
+  let tag = await getById({ id: id })
+
+  if (tag) {
+    if (req.hasOwnProperty('name')) {
+      let sameNameTag = await getByQuery({ name: req.name })
+      if (sameNameTag && sameNameTag._id !== tag._id) {
+        if (sameNameTag.trash === 'NORMAL') {
+          return null
+        } else {
+          await updateP(
+            { _id: sameNameTag._id },
+            { $set: { name: sameNameTag.name + sameNameTag._id } }
+          )
         }
-      )
-    })
-  })
+      }
+    }
+
+    let newTag = await updateP(
+      { _id: id },
+      { $set: req }
+    )
+    return newTag
+  } else {
+    return null
+  }
 }
 
 function updateMulti (reqs) {
@@ -202,6 +283,33 @@ function getTrash () {
   })
 }
 
+async function getByQuery (params, opts) {
+  opts = opts || {
+    multi: false
+  }
+  const isReqArr = _.isArray(params)
+  const query = isReqArr ? { $or: params } : params
+  
+  let tags = []
+  if (opts.multi) {
+    let queryFunc = Tag.find(query)
+    if (opts.sort) {
+      queryFunc = queryFunc.sort(opts.sort)
+    }
+    if (typeof opts.limit === 'number') {
+      queryFunc = queryFunc.limit(opts.limit)
+    }
+    tags = await queryFunc.execAsync()
+  } else {
+    let tag = await Tag.findOne(query).execAsync()
+    if (tag) {
+      tags.push(tag)
+    }
+  }
+  
+  return opts.multi ? tags : tags[0]
+}
+
 export default {
   createCollection,
   saveAll,
@@ -210,11 +318,13 @@ export default {
   diffAddMulti,
   removeAll,
   removeById,
+  removeByQuery,
   deleteAll,
   update,
   updateMulti,
   getAll,
   getById,
   getAllByQuery,
+  getByQuery,
   getTrash
 }

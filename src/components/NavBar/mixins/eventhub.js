@@ -12,7 +12,6 @@ export default {
     // this.$hub.hookHub('goBin', 'FileCard', () => this.setCurrentFolder('bin'))
     this.$hub.hookHub('deleteNavNode', 'DocumentList', (id) => {
       let node = this.$refs.tree.model.store.map[id]
-      console.log('deleteNavNode', id, node)
       if (node) {
         this.$set(node, 'hidden', true)
       }

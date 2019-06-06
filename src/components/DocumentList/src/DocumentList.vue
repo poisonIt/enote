@@ -164,13 +164,11 @@ export default {
   },
 
   watch: {
-    async currentNav (val) {
-      console.log('currentNav', val)
+    currentNav (val) {
       this.refreshList()
     },
 
     selectedTags (val) {
-      console.log('watch-selectedTags', val)
       if (this.currentNav.type === 'tag' || this.currentNav.type === 'select') {
         fetchLocal('getLocalTagNote', {
           tags: val
@@ -193,19 +191,6 @@ export default {
     }
   },
 
-  created () {
-    ipcRenderer.on('fetch-local-data-response', (event, arg) => {
-      if (arg.from[0] === 'DocumentList') {
-        console.log('fetch-local-data-response', event, arg)
-        if (this.popupedFile) {
-          if (arg.from[1] === 'remove-1') {
-            this.refreshList()
-          }
-        }
-      }
-    })
-  },
-
   methods: {
     ...mapActions([
       'SET_CURRENT_FILE',
@@ -224,13 +209,15 @@ export default {
       this.selectFile(-1)
       let localFiles = [[], []]
       if (nav.type === 'latest') {
-        fetchLocal('getLatesLocalNote').then(notes => {
+        fetchLocal('getLatestLocalNote').then(notes => {
           this.handleDataFetched([[], notes])
         })
       } else if (nav.type === 'folder') {
         let params = {
-          pid: nav._id || nav.id || '0',
-          remote_pid: nav.remote_id
+          pid: nav._id || nav.id || '0'
+        }
+        if (nav.remote_id !== undefined) {
+          params.remote_pid = nav.remote_id
         }
         fetchLocal('getLocalFolderByPid', params).then(folders => {
           fetchLocal('getLocalNoteByPid', params, {
@@ -240,7 +227,7 @@ export default {
             this.handleDataFetched([folders, notes])
           })
         })
-      } else if (nav.type === 'tag') {
+      } else if (nav.type === 'tag' || nav.type === 'select') {
         fetchLocal('getLocalTagNote', {
           tags: this.selectedTags
         }).then(notes => {
@@ -271,8 +258,9 @@ export default {
     },
 
     updateFileList () {
-      let notes = this.fileListSortFunc(this.noteList.filter(file => file.title.indexOf(this.searchKeyword) > -1))
-      let folders = this.folderList.filter(file => file.title.indexOf(this.searchKeyword) > -1)
+      let re = new RegExp(this.searchKeyword, 'g')
+      let notes = this.fileListSortFunc(this.noteList.filter(file => file.title.search(re) > -1))
+      let folders = this.folderList.filter(file => file.title.search(re) > -1)
 
       this.fileList = _.flatten([folders, notes])
       let idx = _.findIndex(this.fileList, { _id: this.selectedIdCache })
@@ -295,7 +283,6 @@ export default {
     },
 
     selectFile (index) {
-      console.log('selectFile', index)
       const file = this.fileList[index]
       if (file) {
         if (this.currentFile && file._id === this.currentFile._id) return
@@ -399,6 +386,7 @@ export default {
         top: true
       }).then(res => {
         this.refreshList()
+        this.$hub.dispatchHub('pushData', this)
       })
     },
 
@@ -409,6 +397,17 @@ export default {
         top: false
       }).then(res => {
         this.refreshList()
+        this.$hub.dispatchHub('pushData', this)
+      })
+    },
+
+    handleExportPDF () {
+      return
+      let data = this.popupedFile.rawData
+      ipcRenderer.send('print-to-pdf', {
+        noteId: data._id,
+        title: data.title,
+        isPdf: '1'
       })
     },
 
@@ -428,6 +427,7 @@ export default {
       }).then(res => {
         this.selectedIdCache = res._id
         this.$root.$navTree.select(pid)
+        this.$hub.dispatchHub('pushData', this)
       })
     },
 
@@ -469,6 +469,7 @@ export default {
           this.$hub.dispatchHub('deleteNavNode', this, fileId)
         }
         this.refreshList()
+        this.$hub.dispatchHub('pushData', this)
       })
     },
     
@@ -497,7 +498,6 @@ export default {
         id: fileId,
         trash: 'NORMAL'
       }).then(res => {
-        console.log('handleResume', res)
         this.refreshList()
 
         const _self = this
@@ -505,7 +505,6 @@ export default {
         function resumeNode (node) {
           _self.$set(node, 'hidden', false)
           let pNode = folderMap[node.pid]
-          console.log('resumeNode', node, node.id, pNode, pNode.id, pNode.hidden)
           if (pNode && pNode.id !== '0' && pNode.hidden) {
             resumeNode(pNode)
           }
@@ -513,6 +512,7 @@ export default {
         let folderMap = this.$root.$navTree.model.store.map
         let node = folderMap[res._id]
         resumeNode(node)
+        this.$hub.dispatchHub('pushData', this)
       })
     },
 
@@ -527,6 +527,7 @@ export default {
         trash: 'DELETED'
       }).then(res => {
         this.refreshList()
+        this.$hub.dispatchHub('pushData', this)
       })
     },
 
@@ -540,6 +541,7 @@ export default {
         pid: file.pid,
         remote_id: file.remote_id,
         remote_pid: file.remote_pid,
+        tags: file.tags,
         seq: file.seq,
         trash: file.trash,
         update_at: file.update_at,

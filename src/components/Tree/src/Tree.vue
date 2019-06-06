@@ -355,7 +355,7 @@ export default {
         this.model.addChildren(node, true)
         return
       }
-      const name = isLeaf ? this.defaultLeafNodeName : this.defaultTreeNodeName
+      let name = isLeaf ? this.defaultLeafNodeName : this.defaultTreeNodeName
       if (data.name) {
         name = data.name
       }
@@ -405,6 +405,10 @@ export default {
     drop(e) {
       if (!fromComp) return
       const oldParent = fromComp.model.parent
+      if (this.model === oldParent) {
+        this.isDragEnterNode = false
+        return
+      }
       fromComp.editable = false
       fromComp.model.moveInto(this.model)
       this.isDragEnterNode = false

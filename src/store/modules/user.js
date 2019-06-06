@@ -10,7 +10,6 @@ const mutations = {
 
   SET_USER_INFO (state, obj) {
     state.user_info = obj
-    console.log('SET_USER_INFO', state.user_info)
   }
 }
 

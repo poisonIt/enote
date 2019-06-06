@@ -1,6 +1,6 @@
 <template>
   <div id="preview">
-    <div class="header">{{ title }}</div>
+    <div class="header" v-if="isPdf !== '1'">{{ title }}</div>
     <textarea name="content" ref="editor" id="editor"></textarea>
     <div class="mask" v-show="showMask"></div>
   </div>
@@ -11,7 +11,10 @@ import { ipcRenderer } from 'electron'
 import { mapGetters, mapActions } from 'vuex'
 import fetchLocal from '../utils/fetchLocal'
 import uploadAdapter from '../components/Editor/src/upload'
+import linkShell from '../components/Editor/src/linkShell'
 import '../assets/styles/editor.css'
+
+const ClassicEditor = window.ClassicEditor
 
 export default {
   name: 'EditorComp',
@@ -30,6 +33,8 @@ export default {
     let query = this.$router.currentRoute.query
     let noteId = query.note_id
     this.title = query.title
+    this.isPdf = query.isPdf
+
     this.SET_CURRENT_FILE({
       _id: noteId
     })
@@ -55,7 +60,7 @@ export default {
       } else {
         ClassicEditor
           .create(this.$refs.editor, {
-            extraPlugins: [ uploadAdapter ],
+            extraPlugins: [ uploadAdapter, linkShell ],
             autosave: {
               save (editor) {
                 _self.editorData = editor.getData()
@@ -63,19 +68,31 @@ export default {
                   tasks: ['updateEditorDoc'],
                   params: [{
                     id: _self.doc._id,
-                    content: _self.editorData,
+                    content: _self.editorData
                   }],
                   from: 'Preview'
                 })
                 _self.saveData(_self.doc._id, _self.editorData)
               }
             },
+            link: {
+              click (href) {
+                // console.log(href.match(/^(?:(?:https?|ftps?|mailto):|[^a-z]|[a-z+.-]+(?:[^a-z+.:-]|$))/i))
+                ipcRenderer.send('open-external', href)
+              }
+            }
           })
           .then(editor => {
             this.editor = editor
             this.editor.setData(content || '')
             this.handleEditorReady()
             this.showMask = false
+            if (this.isPdf === '1') {
+              document.getElementsByClassName('ck-editor__top')[0].style = 'display: none;'
+              setTimeout(() => {
+                ipcRenderer.send('wrote-pdf')
+              }, 3000)
+            }
           })
           .catch(error => {
             console.error(error)

@@ -33,6 +33,10 @@ function createCollection (path) {
       type: Number,
       default: 0
     },
+    depth: {
+      type: Number,
+      default: 0
+    },
     create_at: Date,
     update_at: Date,
     trash: {
@@ -53,7 +57,7 @@ function createCollection (path) {
 }
 
 
-function saveAll (req) {
+function saveAll (req) { 
   const { data } = req
 
   return new Promise((resolve, reject) => {
@@ -105,7 +109,6 @@ async function diffAddMulti (reqs) {
   let newFolders = await Promise.all(reqs.map(req => diffAdd(req)))
   let p = newFolders.map((folder, index) => {
     return (async () => {
-      return folder
       let newFolder = folder
       let pL = await getByQuery({ id: folder.pid })
       let pR = await getByQuery({ remote_id: folder.remote_pid })
@@ -192,7 +195,6 @@ function updateP (query, req, multi) {
 // update
 async function update (req) {
   const { id } = req
-  console.log('update', req)
   req.update_at = new Date().valueOf()
 
   if (!req.hasOwnProperty('need_push')) {

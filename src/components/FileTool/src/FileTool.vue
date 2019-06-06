@@ -5,7 +5,7 @@
         <div class="icon-new"></div>
         <span>新建</span>
       </div>
-      <div class="item sync" :class="{ 'grey': isOffline }" @click="syncData(30)">
+      <div class="item sync" :class="{ 'grey': isOffline }" @click="pushLocalData(30)">
         <div class="icon-sync infinite rotate" :class="{ animated: isSyncing }"></div>
         <span>同步</span>
       </div>
@@ -57,7 +57,7 @@ export default {
 
   computed: {
     ...mapGetters({
-      isDBReady: 'GET_DB_READY',
+      isUserReady: 'GET_USER_READY',
       noteVer: 'GET_NOTE_VER',
       userInfo: 'GET_USER_INFO',
       viewType: 'GET_VIEW_TYPE',
@@ -67,16 +67,16 @@ export default {
   },
 
   watch: {
-    isDBReady (val) {
-      console.log('watch-isDBReady', val)
+    isUserReady (val) {
       if (val) {
-        this.pushData().then(() => {
-          this.pullData(this.noteVer)
+        this.syncData().then(() => {
+         this.SET_DB_READY(true)
         })
       }
     },
 
     network_status (val) {
+      return // 密码错误3次账号会被锁住
       this.isOffline = (val === 'offline')
       if (!this.isOffline && this.$remote.getCurrentWindow().isVisible()) {
         setTimeout(() => {
@@ -93,7 +93,7 @@ export default {
   mounted () {
     ipcRenderer.on('communicate', (event, arg) => {
       if (arg.from === 'Preview' && arg.tasks.indexOf('pushData') > -1) {
-        this.syncData()
+        this.pushLocalData()
       }
     })
     if (this.isOffline) {
@@ -103,7 +103,8 @@ export default {
 
   methods: {
     ...mapActions([
-      'SET_TOKEN'
+      'SET_TOKEN',
+      'SET_DB_READY'
     ]),
 
     toggleMenu () {
@@ -134,9 +135,8 @@ export default {
     createSyncItv () {
       this.asyncItv = setInterval(() => {
         this.checkIsEditorFocused()
-        console.log('isEditorFocused', this.isEditorFocused)
         if(this.isEditorFocused || this.isSyncing) return
-        this.syncData()
+        this.pushLocalData()
       }, 5000)
     },
 
@@ -144,8 +144,12 @@ export default {
       clearInterval(this.asyncItv)
     },
 
-    syncData (delay, isAuto) {
-      console.log('syncData', this.network_status, window.navigator.onLine)
+    async syncData () {
+      await this.pullData(this.noteVer)
+      await this.pushData()
+    },
+
+    pushLocalData (delay, isAuto) {
       if (!window.navigator.onLine) return
       if (!delay) {
         delay = 1000
@@ -165,7 +169,6 @@ export default {
     },
 
     async authenticate () {
-      console.log('authenticate', this.userInfo)
       const username = this.userInfo.local_name
       const password = this.userInfo.password
 
@@ -184,7 +187,6 @@ export default {
         const id_token = authenticateResp.data.body.id_token
         this.SET_TOKEN(id_token)
         let userResp = await this.pullUserInfo(id_token, username, password)
-        console.log('userResp', userResp)
         if (!userResp.userData) return
         fetchLocal('updateLocalUser', userResp.userData)
       } else {
@@ -218,7 +220,6 @@ export default {
       userDataTransed.password = password
       userDataTransed.id_token = id_token
       userDataTransed.friend_list = friendResp.data.body
-      console.log('userDataTransed', userDataTransed)
       return {
         userData: userDataTransed,
         returnMsg: friendResp.data.returnMsg

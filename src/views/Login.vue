@@ -67,6 +67,12 @@ export default {
   },
 
   created () {
+    window.onbeforeunload = (e) => {
+      e.returnValue = false
+      let curWin = this.$remote.getCurrentWindow()
+      curWin.hide()
+    }
+
     let { autoLogin, username, password } = this.$router.currentRoute.query
     this.autoLogin = autoLogin
     if (this.autoLogin === '1') {
@@ -98,7 +104,6 @@ export default {
       if (this.isLoading) return
       this.isLoading = true
       const { username, password } = this
-      console.log('postInput', username, password)
 
       let authenticateResp = await authenticate({
         username: username,
@@ -127,13 +132,13 @@ export default {
         if (!userResp.userData) return
         ipcRenderer.send('update-user-data', userResp.userData)
       } else {
-        this.$Message.error(authenticateResp.data.returnMsg)
+        this.$Message.error('请输入正确的用户名、密码')
         this.isLoading = false
       }
     },
 
-    async pullUserInfo (id_token, username, password) {
-      const userInfoResp = await getUserInfo(id_token).catch(err => {
+    async pullUserInfo (idToken, username, password) {
+      const userInfoResp = await getUserInfo(idToken).catch(err => {
         this.isLoading = false
         return
       })
@@ -143,7 +148,7 @@ export default {
         }
       }
 
-      const friendResp = await getFriendList(id_token).catch(err => {
+      const friendResp = await getFriendList(idToken).catch(err => {
         this.isLoading = false
         return
       })
@@ -156,7 +161,7 @@ export default {
       const userDataTransed = this.transUserData(userInfoResp.data.body)
       userDataTransed.local_name = username
       userDataTransed.password = password
-      userDataTransed.id_token = id_token
+      userDataTransed.id_token = idToken
       userDataTransed.friend_list = friendResp.data.body
       return {
         userData: userDataTransed,
@@ -173,7 +178,7 @@ export default {
         department_id: obj.departmentId,
         department_name: obj.departmentName,
         image_url: obj.imageUrl,
-        is_sync: obj.isSync,
+        sync_state: obj.syncState,
         oa_id: obj.oaId,
         position_id: obj.positionId,
         position_name: obj.positionName

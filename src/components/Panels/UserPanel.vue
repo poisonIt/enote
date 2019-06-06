@@ -2,7 +2,7 @@
   <div>
     <modal
       width="363px"
-      :height="userInfo.is_sync ? '301px' : '250px'"
+      :height="'281px'"
       top="30vh"
       transition-name="fade-in-down"
       @close="closeUserPanel"
@@ -21,19 +21,19 @@
           <span>所属岗位</span>
           <span>{{ userInfo.position_name }}</span>
         </div>
-        <div class="item" v-if="!userInfo.is_sync">
+        <div class="item">
           <span>有道云账号</span>
-          <span>尚未绑定有道云账号</span>
-          <span class="async" @click="openYoudaoWindow">绑定账号</span>
+          <span>{{ syncState }}</span>
+          <span v-if="userInfo.sync_state === 'UNBIND'" class="async" @click="openYoudaoWindow">绑定账号</span>
         </div>
-        <div class="item" v-if="userInfo.is_sync">
+        <!-- <div class="item" v-if="userInfo.is_sync">
           <span>同步时间</span>
           <span>{{ userInfo.position_name }}</span>
-        </div>
+        </div> -->
       </div>
-      <div class="button-group" slot="footer" v-if="userInfo.is_sync">
-        <div class="button primary">开始同步</div>
-        <div class="button">取消</div>
+      <div class="button-group" slot="footer" v-if="userInfo.sync_state !== 'PULL_SUCCESS'">
+        <div class="button primary" @click="syncYoudao">开始同步</div>
+        <div class="button" @click="closeUserPanel">取消</div>
       </div>
     </modal>
     <modal
@@ -65,7 +65,8 @@
 </template>
 
 <script>
-import { ipcRenderer, BrowserWindow } from 'electron'
+import * as _ from 'lodash'
+import { ipcRenderer } from 'electron'
 import { mapActions, mapGetters } from 'vuex'
 import LocalDAO from '../../../db/api'
 import {
@@ -75,6 +76,7 @@ import {
   syncSate
 } from '../../service'
 import Loading from '@/components/Loading'
+import fetchLocal from '../../utils/fetchLocal'
 
 export default {
   name: 'UserPanel',
@@ -85,6 +87,7 @@ export default {
 
   data () {
     return {
+      isOauthed: false,
       isOauthPanelShowed: false,
       isSyncPanelShowed: false
     }
@@ -94,19 +97,28 @@ export default {
     ...mapGetters({
       isUserPanelShowed: 'GET_SHOW_USER_PANEL',
       userInfo: 'GET_USER_INFO'
-    })
-  },
+    }),
 
-  mounted () {
-    console.log('userInfo', this.userInfo)
-    ipcRenderer.on('youdao-reply', (event, arg) => {
-      console.log('youdao-reply', arg)
-    })
+    syncState () {
+      switch (this.userInfo.sync_state) {
+        case 'UNBIND':
+          return '未绑定'
+        case 'BIND':
+          return '已经绑定'
+        case 'PULL_ERROR':
+          return '同步失败'
+        case 'PULL_SUCCESS':
+          return '同步完成'
+        default:
+          return '未绑定'
+      }
+    }
   },
 
   methods: {
     ...mapActions([
-      'TOGGLE_SHOW_USER_PANEL'
+      'TOGGLE_SHOW_USER_PANEL',
+      'SET_USER_INFO'
     ]),
 
     closeUserPanel () {
@@ -122,17 +134,12 @@ export default {
     },
 
     openYoudaoWindow () {
-      console.log('openYoudaoWindow', this.userInfo)
       if (!this.userInfo.usercode) {
         alert('userCode empty!')
         return
       }
-      let redirect_uri = `https://www.htffund.com/rest/note/api/youdao/callBack`
-      let url = `https://note.youdao.com/oauth/authorize2?client_id=838948a8e2be4d35f253cb82f2687d15&response_type=code&redirect_uri=${redirect_uri}/&state=${this.userInfo.usercode}`
-      // let url = `https://note.youdao.com/signIn/index.html?back_url=https%3A%2F%2Fnote.youdao.com%2Foauth%2Fauthorize2%3Fredirect_uri%3Dhttps%253A%252F%252Fiapp.htffund.com%252F%26client_id%3D838948a8e2be4d35f253cb82f2687d15%26state%3D123%26response_type%3Dcode`
-      console.log('url', url)
-      // window.open('https://note.youdao.com/oauth/authorize2?client_id=838948a8e2be4d35f253cb82f2687d15&response_type=code&redirect_uri=https://iapp.htffund.com')
-      // return
+      let redirect_uri = `https://iapp.htffund.com/note/api/youdao/callBack`
+      let url = `https://note.youdao.com/oauth/authorize2?client_id=838948a8e2be4d35f253cb82f2687d15&response_type=code&redirect_uri=${redirect_uri}/?state=${this.userInfo.usercode}`
       ipcRenderer.send('create-youdao-window', {
         name: 'youdao',
         userCode: this.userInfo,
@@ -142,10 +149,29 @@ export default {
     },
 
     async checkYoudaoSyncState () {
+      syncSate().then(resp => {
+        if (resp.data.returnCode === 200) {
+          let userInfo = _.clone(this.userInfo)
+          userInfo.sync_state = resp.data.body.state
+          this.SET_USER_INFO(userInfo)
+          this.closeOauthPanel()
+        } else {
+          this.$Message.warning(resp.data.returnMsg)
+        }
+      })
+    },
+
+    async syncYoudao () {
       let youdaoSync = await getSync()
-      let syncState = await syncSate()
-      console.log('youdaoSync', youdaoSync)
-      console.log('syncSate', syncSate)
+      if (youdaoSync.data.returnCode === 200) {
+        await fetchLocal('removeAll')
+        this.$hub.dispatchHub('pullData', this)
+        let userInfo = _.clone(this.userInfo)
+        userInfo.sync_state = 'PULL_SUCCESS'
+        this.SET_USER_INFO(userInfo)
+      } else {
+        this.$Message.warning(youdaoSync.data.returnMsg)
+      }
     }
   }
 }

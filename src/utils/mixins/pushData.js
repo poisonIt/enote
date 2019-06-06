@@ -1,4 +1,3 @@
-// import pReduce from 'p-reduce'
 import { readFileSync, createReadStream } from 'fs'
 import { ipcRenderer } from 'electron'
 import { mapGetters, mapActions } from 'vuex'
@@ -10,7 +9,7 @@ import {
   deleteTag,
   uploadFile
 } from '@/service'
-import LocalDAO from '../../../db/api'
+import fetchLocal from '../fetchLocal'
 import { saveAppConf } from '@/tools/appConf'
 
 const mimes = ['image/png', 'image/gif','image/jpeg']
@@ -24,15 +23,232 @@ export default {
     })
   },
 
-  created () {
-    this.hookMsgHandler()
-  },
-
   methods: {
     ...mapActions([
       'SET_IS_SYNCING',
       'SET_FILE_PUSH_FINISHED'
     ]),
+
+    async pushData () {
+      if (this.isSyncing) return
+      this.SET_IS_SYNCING(true)
+      await this.pushImgs()
+      await this.pushTags()
+      await this.pushFolders()
+      await this.pushNotes()
+      setTimeout(() => {
+        this.SET_IS_SYNCING(false)
+      }, 1000)
+    },
+
+    async pushImgs () {
+      let iNeedPush = await fetchLocal('getAllLocalImage')
+
+      if (iNeedPush.length === 0) {
+        return []
+      }
+      let docsNeedSave = []
+      let imgResp = await Promise.all(iNeedPush.filter(img => mimes.indexOf(img.mime) > -1 && img.path).map(img => {
+        let buffer = readFileSync(img.path.replace('file:///', ''))
+        let blob = new Blob([buffer])
+        let file = new window.File([blob], img.name, {type: img.mime})
+        return uploadFile(file).then(res => {
+          docsNeedSave.push({
+            note_id: img.note_id,
+            img: {
+              path: img.path,
+              id: img._id,
+              url: res.data.body[0].url
+            }
+          })
+        }).catch(err => {
+          return
+        })
+      })).catch(err => {
+        return
+      })
+
+      await fetchLocal('updateLocalDocImg', docsNeedSave)
+
+      return imgResp
+    },
+
+    async pushTags () {
+      let allTags = await fetchLocal('getAllLocalTagByQuery', {})
+
+      allTagRemoteMap = {}
+      allTags.forEach(item => {
+        allTagRemoteMap[item._id] = item.remote_id
+      })
+
+      let tNeedPush = allTags.filter(item => item.need_push)
+      if (tNeedPush.length === 0) {
+        return []
+      }
+
+      // modify tag
+      let tModify = tNeedPush.filter(tag => tag.remote_id && tag.trash === 'NORMAL')
+      let tModifyData = tModify.map(tag => this.tranData(tag))
+      let modifyP = tModifyData.map(item => {
+        return modifyTag(item)
+      })
+      let modifyResp = await Promise.all(modifyP)
+      let t = tModify.map(item => {
+        return {
+          id: item._id,
+          need_push: false
+        }
+      })
+
+      await fetchLocal('updateMultiLocalTag', t)
+
+      // delete tag
+      let tDelete = tNeedPush.filter(tag => tag.trash === 'DELETED' && tag.remote_id)
+
+      let tDeleteData = tDelete.map(tag => tag.remote_id)
+
+      let deleteResp
+      if (tDeleteData.length > 0) {
+        deleteResp = await deleteTag({ tags: tDeleteData })
+      }
+
+      let deleteP = tDeleteData.map(item => {
+        return fetchLocal('removeLocalTag', {
+          remote_id: item
+        })
+      })
+      let deleteLocalResp = await Promise.all(deleteP)
+
+      // create tag
+      let tCreate = tNeedPush.filter(tag => !tag.remote_id)
+      if (tCreate.length === 0) {
+        return []
+      }
+      let tCreateData = tCreate.map(tag => tag.name)
+      let createResp = await createTag({
+        tags: tCreateData
+      })
+      
+      // // update note tag ids to remote_id
+      let saveCreateData = createResp.data.body.map((tag, idx) => {
+        allTagRemoteMap[tCreate[idx]._id] = tag.tagId
+        return {
+          id: tCreate[idx]._id,
+          remote_id: tag.tagId,
+          need_push: false
+        }
+      })
+      await fetchLocal('updateMultiLocalTag', saveCreateData)
+    },
+    
+    async pushFolders () {
+      const _self = this
+      let fNeedPush = await fetchLocal('getAllLocalFolder')
+
+      if (fNeedPush.length === 0) {
+        return []
+      }
+
+      let { fDepthed, fSorted } = this.getFoldersPrepared(fNeedPush)
+      let fDepthedTransed = fDepthed.map((files, index) => {
+        return files.map(file => {
+          return this.tranData(file)
+        })
+      })
+
+      let taskCol = 0
+
+      async function runTask () {
+        if (taskCol >= fDepthedTransed.length) {
+          let localFoldersRemoved = await fetchLocal('removeAllDeletedFolder')
+          return
+        } else {
+          let resp = await pushNotebook(fDepthedTransed[taskCol])
+          if (resp.data.returnCode === 200) {
+            let fileResolved = resp.data.body
+            let saveFolderData = fileResolved.map((file, idx) => {
+              return {
+                id: fDepthed[taskCol][idx]._id,
+                remote_id: file.noteBookId,
+                remote_pid: file.parentId,
+                need_push: false
+              }
+            })
+            await fetchLocal('updateMultiLocalFolder', saveFolderData)
+  
+            if (fDepthedTransed[taskCol + 1]) {
+              fDepthedTransed[taskCol + 1].forEach(file => {
+                let pFileIdx = _.findIndex(fDepthed[taskCol], { _id: file.parentId })
+                if (pFileIdx > -1) {
+                  file.parentId = fileResolved[pFileIdx].noteBookId
+                }
+              })
+            }
+            taskCol++
+            runTask()
+          } else {
+            _self.$Message.error(resp.data.returnMsg)
+            if (resp.data.returnCode === 403) {
+              saveAppConf(_self.$remote.app.getAppPath('appData'), {
+                user: null
+              })
+            }
+          }
+        }
+      }
+
+      runTask()
+    },
+
+    async pushNotes () {
+      const { client_id, deviceName, platform } = this.$remote.app.appConf
+
+      let nNeedPush = await fetchLocal('getLocalNoteByQuery',
+        { need_push: true },
+        { multi: true, with_doc: true }
+      )
+
+      if (nNeedPush.length === 0) {
+        return
+      }
+
+      let nTransed = nNeedPush.map(note => {
+        return this.tranData(note)
+      })
+
+      let resp = await pushNote({
+        deviceId: client_id,
+        deviceName: deviceName,
+        deviceType: platform,
+        notes: nTransed
+      })
+
+      if (resp.data.returnCode === 200) {
+        let noteResolved = resp.data.body
+        if (noteResolved.length > 0) {
+          let usnArr = noteResolved.map(item => item.usn)
+          let usnMax = Math.max(...usnArr)
+          if (usnMax > this.noteVer) {
+            await fetchLocal('updateState', {
+              note_ver: usnMax
+            })
+          }
+        }
+
+        let saveNoteData = noteResolved.map((file, index) => {
+          return {
+            id: nNeedPush[index]._id,
+            usn: file.usn,
+            remote_id: file.noteId,
+            need_push: false
+          }
+        })
+        await fetchLocal('updateMultiLocalNote', saveNoteData)
+        await fetchLocal('removeAllDeletedNote')
+      } else {
+        this.$Message.error(resp.data.returnMsg)
+      }
+    },
 
     tranData (file) {
       if (file.type === 'folder') {
@@ -60,323 +276,6 @@ export default {
           tagsName: file.name
         }
       }
-    },
-
-    async hookMsgHandler () {
-      ipcRenderer.on('fetch-local-data-response', (event, arg) => {
-        if (arg.from === 'pushImgs') {
-          console.log('push-res', arg)
-          if (arg.tasks.indexOf('getAllLocalImage') > -1) {
-            console.log('pushImgs', arg.res)
-            this.runPushImgs(arg.res[0]).catch(err => this.pushTags())
-          }
-          if (arg.tasks.indexOf('updateLocalDocImg') > -1) {
-            console.log('updateLocalDocImg-res', arg.res)
-            this.pushTags()
-          }
-        }
-        if (arg.from === 'pushTags') {
-          if (arg.tasks.indexOf('getAllLocalTag') > -1) {
-            console.log('pushTags-allTags', arg.res)
-            this.runPushTags(arg.res[0]).then(() => {
-              this.pushFolders()
-            })
-          }
-        }
-        if (arg.from === 'pushFolders') {
-          if (arg.tasks.indexOf('getAllLocalFolder') > -1) {
-            console.log('pushFolders', arg.res)
-            this.runPushFolders(arg.res[0]).then(() => {
-              console.log('runPushFolders-res')
-              this.pushNotes()
-            })
-          }
-        }
-        if (arg.from === 'pushNotes') {
-          console.log('pushNotes-res', arg)
-          if (arg.tasks.indexOf('getLocalNoteByQuery') > -1) {
-            console.log('pushNotes', arg.res)
-            this.runPushNotes(arg.res[0])
-          }
-          if (arg.tasks[0] === 'updateMultiLocalNote' &&
-            arg.tasks[1] === 'removeAllDeletedNote') {
-            // this.$Message.success('同步成功')
-            this.SET_IS_SYNCING(false)
-          }
-        }
-      })
-    },
-
-    pushTags () {
-      ipcRenderer.send('fetch-local-data', {
-        tasks: ['getAllLocalTag'],
-        from: 'pushTags'
-      })
-    },
-
-    pushFolders () {
-      ipcRenderer.send('fetch-local-data', {
-        tasks: ['getAllLocalFolder'],
-        from: 'pushFolders'
-      })
-    },
-
-    pushNotes () {
-      ipcRenderer.send('fetch-local-data', {
-        tasks: ['getLocalNoteByQuery'],
-        params: [{ need_push: true }],
-        options: [{ multi: true, with_doc: true }],
-        from: 'pushNotes'
-      })
-    },
-
-    pushImgs () {
-      ipcRenderer.send('fetch-local-data', {
-        tasks: ['getAllLocalImage'],
-        from: 'pushImgs'
-      })
-    },
-
-    async runPushTags (allTags) {
-      allTagRemoteMap = {}
-      allTags.forEach(item => {
-        allTagRemoteMap[item._id] = item.remote_id
-      })
-
-      let tNeedPush = allTags.filter(item => item.need_push)
-      if (tNeedPush.length === 0) {
-        return new Promise((resolve, reject) => {
-          resolve()
-        })
-      }
-
-      // modify tag
-      let tModify = tNeedPush.filter(tag => tag.remote_id)
-      let tModifyData = tModify.map(tag => this.tranData(tag))
-      let modifyP = tModifyData.map(item => {
-        return modifyTag(item)
-      })
-      let modifyResp = await Promise.all(modifyP)
-
-      ipcRenderer.send('fetch-local-data', {
-        tasks: ['updateMultiLocalTag'],
-        params: [tModify.map(item => {
-          return {
-            id: item._id,
-            need_push: false
-          }
-        })],
-        from: 'pushFolders'
-      })
-
-      // let saveModifyTask = modifyResp.map((tag, idx) => {
-      //   return LocalDAO.tag.update({
-      //     id: tModify[idx]._id,
-      //     need_push: false
-      //   })
-      // })
-      // await Promise.all(saveModifyTask)
-
-      // create tag
-      let tCreate = tNeedPush.filter(tag => !tag.remote_id)
-      if (tCreate.length === 0) {
-        return new Promise((resolve, reject) => {
-          resolve()
-        })
-      }
-      let tCreateData = tCreate.map(tag => tag.name)
-      let createResp = await createTag({
-        tags: tCreateData
-      })
-      console.log('createResp', createResp)
-      
-      // // update note tag ids to remote_id
-      let saveCreateData = createResp.data.body.map((tag, idx) => {
-        allTagRemoteMap[tCreate[idx]._id] = tag.tagId
-        return {
-          id: tCreate[idx]._id,
-          remote_id: tag.tagId,
-          need_push: false
-        }
-      })
-      ipcRenderer.send('fetch-local-data', {
-        tasks: ['updateMultiLocalTag'],
-        params: [saveCreateData],
-        from: 'pushFolders'
-      })
-
-      return new Promise((resolve, reject) => {
-        resolve()
-      })
-    },
-    
-    async runPushFolders (fNeedPush) {
-      const _self = this
-      return new Promise ((resolve, reject) => {
-        if (fNeedPush.length === 0) {
-          resolve()
-          return
-        }
-        let { fDepthed, fSorted } = this.getFoldersPrepared(fNeedPush)
-        let fDepthedTransed = fDepthed.map((files, index) => {
-          return files.map(file => {
-            return this.tranData(file)
-          })
-        })
-    
-        let taskCol = 0
-        function runTask () {
-          console.log('runTask', taskCol, fDepthedTransed)
-          if (taskCol >= fDepthedTransed.length) {
-            console.log('runTask-1111')
-            ipcRenderer.send('fetch-local-data', {
-              tasks: ['removeAllDeletedFolder'],
-              from: 'pushFolders'
-            })
-            resolve()
-            return
-          } else {
-            pushNotebook(fDepthedTransed[taskCol]).then(resp => {
-              if (resp.data.returnCode === 200) {
-                let fileResolved = resp.data.body
-                let saveFolderData = fileResolved.map((file, idx) => {
-                  return {
-                    id: fDepthed[taskCol][idx]._id,
-                    remote_id: file.noteBookId,
-                    remote_pid: file.parentId,
-                    need_push: false
-                  }
-                })
-                ipcRenderer.send('fetch-local-data', {
-                  tasks: ['updateMultiLocalFolder'],
-                  params: [saveFolderData],
-                  from: 'pushFolders'
-                })
-      
-                if (fDepthedTransed[taskCol + 1]) {
-                  fDepthedTransed[taskCol + 1].forEach(file => {
-                    let pFileIdx = _.findIndex(fDepthed[taskCol], { _id: file.parentId })
-                    if (pFileIdx > -1) {
-                      file.parentId = fileResolved[pFileIdx].noteBookId
-                    }
-                  })
-                }
-                taskCol++
-                runTask()
-              } else {
-                _self.$Message.error(resp.data.returnMsg)
-                if (resp.data.returnCode === 403) {
-                  saveAppConf(_self.$remote.app.getAppPath('appData'), {
-                    user: null
-                  })
-                  // ipcRenderer.send('changeWindow', {
-                  //   name: 'login'
-                  // })
-                }
-              }
-            }).catch(err => {
-              _self.$Message.error(err)
-              reject(err)
-            })
-          }
-        }
-    
-        runTask()
-        // this.$Message.success('同步成功')
-      })
-    },
-
-    async runPushNotes (nNeedPush) {
-      if (nNeedPush.length === 0) {
-        this.SET_IS_SYNCING(false)
-        return
-      }
-      let nTransed = nNeedPush.map(note => {
-        return this.tranData(note)
-      })
-
-      let resp = await pushNote(nTransed)
-
-      if (resp.data.returnCode === 200) {
-        let noteResolved = resp.data.body
-        if (noteResolved.length > 0) {
-          let usnArr = noteResolved.map(item => item.usn)
-          let usnMax = Math.max(...usnArr)
-          if (usnMax > this.noteVer) {
-            ipcRenderer.send('fetch-local-data', {
-              tasks: ['updateState'],
-              params: [{
-                note_ver: usnMax
-              }],
-              from: 'pushNotes'
-            })
-          }
-        }
-
-        let saveNoteData = noteResolved.map((file, index) => {
-          return {
-            id: nNeedPush[index]._id,
-            usn: file.usn,
-            remote_id: file.noteId,
-            need_push: false
-          }
-        })
-        console.log('saveNoteData', saveNoteData)
-        ipcRenderer.send('fetch-local-data', {
-          tasks: ['updateMultiLocalNote', 'removeAllDeletedNote'],
-          params: [saveNoteData],
-          queue: true,
-          from: 'pushNotes'
-        })
-      } else {
-        this.$Message.error(resp.data.returnMsg)
-      }
-    },
-
-    async runPushImgs (iNeedPush) {
-      console.log('pushImgs-allImgs', iNeedPush)
-      if (iNeedPush.length === 0) {
-        this.pushTags()
-      }
-      let docsNeedSave = []
-      let imgResp = await Promise.all(
-        iNeedPush.filter(img => mimes.indexOf(img.mime) > -1 && img.path)
-      .map(img => {
-        let buffer = readFileSync(img.path.replace('file:///', ''))
-        let blob = new Blob([buffer])
-        let file = new window.File([blob], img.name, {type: img.mime})
-        return uploadFile(file).then(res => {
-          docsNeedSave.push({
-            note_id: img.note_id,
-            img: {
-              path: img.path,
-              id: img._id,
-              url: res.data.body[0].url
-            }
-          })
-        }).catch(err => {
-          return
-        })
-        // return this.createPromise({
-        //   img: img,
-        //   file: file
-        // }, 'img')
-      })).catch(err => {
-        return
-      })
-      console.log('imgResp', imgResp)
-      ipcRenderer.send('fetch-local-data', {
-        tasks: ['updateLocalDocImg'],
-        params: [docsNeedSave],
-        from: 'pushImgs'
-      })
-    },
-
-    async pushData () {
-      return
-      if (this.isSyncing) return
-      this.SET_IS_SYNCING(true)
-      this.pushImgs()
     },
 
     getFoldersPrepared (fNeedPush) {

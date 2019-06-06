@@ -1,6 +1,7 @@
 <template>
   <div id="navbar" ref="navbar">
     <Tree
+      :style="{ opacity: viewType === 'unexpanded' ? 0 : 1 }"
       ref="tree"
       :dark="true"
       :model="folderTree"
@@ -55,7 +56,6 @@
 </template>
 
 <script>
-import { ipcRenderer } from 'electron'
 import { mapActions, mapGetters } from 'vuex'
 import {
   folderMenu,
@@ -66,7 +66,7 @@ import {
 } from '../Menu'
 import fetchLocal from '../../../utils/fetchLocal'
 import mixins from '../mixins'
-import { Tree, TreeStore, TreeNode } from '@/components/Tree'
+import { Tree, TreeStore } from '@/components/Tree'
 
 const latestNav = {
   name: '最新文档',
@@ -95,21 +95,6 @@ const rootFolder = {
   children: [],
   data: {
     type: 'folder'
-  }
-}
-
-const tagNav = {
-  name: '标签',
-  id: 'tag',
-  pid: null,
-  dragDisabled: true,
-  addTreeNodeDisabled: true,
-  addLeafNodeDisabled: true,
-  editNodeDisabled: true,
-  delNodeDisabled: true,
-  children: [],
-  data: {
-    type: 'tag'
   }
 }
 
@@ -165,7 +150,9 @@ export default {
       viewType: 'GET_VIEW_TYPE',
       viewFileType: 'GET_VIEW_FILE_TYPE',
       currentFile: 'GET_CURRENT_FILE',
-      duplicateFile: 'GET_DUPLICATE_FILE'
+      duplicateFile: 'GET_DUPLICATE_FILE',
+      selectedTags: 'GET_SELECTED_TAGS',
+      isTagShowed: 'GET_SHOW_TAG_HANDLER'
     })
   },
 
@@ -177,6 +164,7 @@ export default {
           { trash: 'TRASH' }
         ],
         {
+          sort: { seq: 1 },
           multi: true
         }).then(folders => {
           fetchLocal('getAllLocalTag').then(tags => {
@@ -201,34 +189,10 @@ export default {
           _self.$nextTick(() => {
             _self.$refs.tree.$children[0].click()
             _self.SET_IS_HOME_READY(true)
-            // ipcRenderer.send('show-home-window')
           })
         }
       }
     }
-
-    ipcRenderer.on('fetch-local-data-response', (event, arg) => {
-      if (arg.from[0] === 'NavBar') {
-        console.log('fetch-local-data-response', arg)
-        // if (arg.tasks[0] === 'getAllLocalFolder' && arg.tasks[1] === 'getAllLocalTag') {
-        //   this.$worker.postMessage(['calcLocalData', arg.res])
-        // }
-
-        // update tag
-        if (arg.tasks.indexOf('updateLocalTag') > -1) {
-          if (arg.from[1] === 'renameTag') {
-            console.log('renameTag', this.popupedNode.model, this.$refs.tree)
-            if (arg.res[0].name !== this.popupedNode.model.name) {
-              this.popupedNode.model.name = arg.res[0].name
-              this.popupedNode.model.data.name = arg.res[0].name
-            } else {
-              this.TOGGLE_SHOW_TAG_HANDLER(false)
-            }
-          }
-          this.$hub.dispatchHub('pushData', this)
-        }
-      }
-    })
   },
 
   methods: {
@@ -280,15 +244,23 @@ export default {
     },
 
     handleNewNote (isTemp) {
+      let s = false
       let currentNode = this.$refs.tree.model.store.currentNode
+      if (!currentNode.parent.parent && currentNode.id !== '0') {
+        currentNode = this.$refs.tree.model.store.map['0']
+        s = true
+      }
 
       fetchLocal('addLocalNote', {
         title: '无标题笔记',
         pid: currentNode.id || currentNode._id || currentNode.data._id || '0',
         isTemp: isTemp
       }).then(res => {
-        console.log('addLocalNote', res)
         this.$hub.dispatchHub('addFile', this, res)
+        if (s) {
+          this.setCurrentFolder('0')
+        }
+        this.$hub.dispatchHub('pushData', this)
       })
     },
 
@@ -299,17 +271,18 @@ export default {
     handleNewFolder (isCurrent, nodeId) {
       let node
       let nodeData
+      let map = this.$refs.tree.model.store.map
       if (nodeId) {
-        let map = this.$refs.tree.model.store.map
         nodeData = map[nodeId]
         node = nodeData.instance
       } else {
         if (isCurrent) {
           let currentNode = this.$refs.tree.model.store.currentNode.instance
           if (!currentNode.model.parent.parent && currentNode.id !== '0') {
-            return
+            node = map['0'].instance
+          } else {
+            node = currentNode
           }
-          node = currentNode
         } else {
           node = this.popupedNode
         }
@@ -317,12 +290,16 @@ export default {
       }
 
       fetchLocal('addLocalFolder', {
-        pid: nodeData.id || nodeData._id || '0'
+        pid: nodeData.id || nodeData._id || '0',
+        seq: node.model.children.length,
+        depth: node.model.getDepth()
       }).then(res => {
         node.addChild({
           id: res._id,
-          type: 'folder'
+          type: 'folder',
+          name: res.title
         })
+        this.$hub.dispatchHub('pushData', this)
       })
     },
 
@@ -335,7 +312,6 @@ export default {
     },
 
     handleAddTagNode (tagData) {
-      console.log('handleAddTagNode', tagData)
       let tagRootNode = this.$refs.tree.model.store.root.children[2]
       let tag = {}
       tag.type = 'select'
@@ -347,7 +323,6 @@ export default {
         _id: tagData._id,
         remote_id: tagData.remote_id
       }
-      console.log('handleAddTagNode-tag', tag)
       tagRootNode.instance.addChild(tag)
     },
 
@@ -370,12 +345,22 @@ export default {
           id: node.data._id || node.data.id || node.id,
           name: node.name
         }).then(res => {
-          if (res.name !== node.name) {
-            node.name = res.name
-            node.data.name = res.name
+          if (!res) {
+            node.name = node.data.name
           } else {
-            this.TOGGLE_SHOW_TAG_HANDLER(false)
+            if (res.name !== node.name) {
+              node.name = res.name
+              node.data.name = res.name
+            } else {
+              if (this.isTagShowed) {
+                this.TOGGLE_SHOW_TAG_HANDLER(false)
+                this.$nextTick(() => {
+                  this.TOGGLE_SHOW_TAG_HANDLER(true)
+                })
+              }
+            }
           }
+          this.$hub.dispatchHub('pushData', this)
         })
       } else {
         fetchLocal('updateLocalFolder', {
@@ -388,20 +373,23 @@ export default {
               title: node.model.name
             })
           }
+          this.$hub.dispatchHub('pushData', this)
         })
       }
     },
 
     handleFolderUpdate (params) {
-      console.log('handleFolderUpdate', params)
       this.$refs.tree.updateNodeModel(params)
     },
 
-    handleNodeDrop ({node, oldParent}) {
+    handleNodeDrop ({ node, oldParent }) {
       if (node.pid !== oldParent.id) {
         fetchLocal('updateLocalFolder', {
           id: node.data._id || node.data.id || node.id,
-          pid: node.pid
+          pid: node.pid,
+          seq: node.getIndex()
+        }).then(() => {
+          this.$hub.dispatchHub('pushData', this)
         })
       }
     },
@@ -422,7 +410,8 @@ export default {
     },
 
     handlePaste () {
-      let data = this.popupedNode.model.data
+      let node = this.popupedNode.model
+      let data = node.data
       let pid = data.id || data._id
       let shouldUpdateList = (this.popupedNode.model === this.$refs.tree.model.store.currentNode)
 
@@ -433,7 +422,7 @@ export default {
         }).then(res => {
           let fileTypeCN = res.type === 'folder' ? '文件夹' : '笔记'
           this.$Message.success({
-            content: `复制了${fileTypeCN} ${res.title} 至目录 ${data.title}！`
+            content: `复制了${fileTypeCN} ${res.title} 至目录 ${node.name}！`
           })
           this.$hub.dispatchHub('setSelectFileId', this, res._id)
           if (shouldUpdateList) {
@@ -441,6 +430,7 @@ export default {
           } else {
             this.setCurrentFolder(pid)
           }
+          this.$hub.dispatchHub('pushData', this)
         })
       }
     },
@@ -454,12 +444,11 @@ export default {
       }).then(res => {
         node.hidden = true
         this.setCurrentFolder('bin')
+        this.$hub.dispatchHub('pushData', this)
       })
     },
 
     handleClearBin () {
-      let node = this.popupedNode.model
-
       fetchLocal('deleteAllTrash').then(res => {
         this.$hub.dispatchHub('refreshList', this)
         let nodes = res.filter(item => item.type === 'folder')
@@ -467,6 +456,7 @@ export default {
         nodes.forEach(node => {
           map[node._id].remove()
         })
+        this.$hub.dispatchHub('pushData', this)
       })
     },
 
@@ -478,6 +468,7 @@ export default {
         nodes.forEach(node => {
           this.$set(map[node._id], 'hidden', false)
         })
+        this.$hub.dispatchHub('pushData', this)
       })
     },
 
@@ -486,26 +477,21 @@ export default {
     },
 
     handleDeleteTag () {
-      console.log('handleDeleteTag', this.popupedNode)
-      // if (this.popupedNode.data.remote_id) {
-      //   ipcRenderer.send('fetch-local-data', {
-      //     tasks: ['updateLocalTag'],
-      //     params: [{
-      //       id: node.data._id || node.data.id || node.id,
-      //       trash: 'DELETED'
-      //     }],
-      //     from: ['NavBar', 'deleteTag']
-      //   })
-      // } else {
-      //   ipcRenderer.send('fetch-local-data', {
-      //     tasks: ['deleteLocalTag'],
-      //     params: [{
-      //       id: node.data._id || node.data.id || node.id,
-      //       trash: 'DELETED'
-      //     }],
-      //     from: ['NavBar', 'deleteTag']
-      //   })
-      // }
+      let node = this.popupedNode.model
+      let id = node.data._id || node.data.id || node.id
+      fetchLocal('updateLocalTag', {
+        id: id,
+        trash: 'DELETED'
+      }).then(res => {
+        if (this.selectedTags.indexOf(id) > -1) {
+          this.TOGGLE_SELECTED_TAG({
+            id: id
+          })
+        }
+        node.remove()
+        this.setCurrentFolder('tag')
+        this.$hub.dispatchHub('pushData', this)
+      })
     },
 
     iconClassComputed (node) {
@@ -546,21 +532,6 @@ export default {
         _id: file._id
       }
     }
-
-    // updateTags (allTags) {
-    //   console.log('allTags', allTags)
-    //   this.$set(
-    //     this.nav[2],
-    //     'children',
-    //     allTags.map(item => {
-    //       return {
-    //         id: item._id,
-    //         title: item.name,
-    //         type: 'select'
-    //       }
-    //     })
-    //   )
-    // }
   }
 }
 </script>

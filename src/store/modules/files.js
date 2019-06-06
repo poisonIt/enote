@@ -28,7 +28,6 @@ const mutations = {
   },
 
   SET_NOTE_VER (state, val) {
-    console.log('SET_NOTE_VER', val)
     state.note_ver = val
   },
 
@@ -41,7 +40,6 @@ const mutations = {
     } else {
       state.selected_tags.push(id)
     }
-    console.log('TOGGLE_SELECTED_TAG', id, state.selected_tags)
   }
 }
 

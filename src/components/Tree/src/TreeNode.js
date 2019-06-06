@@ -93,7 +93,7 @@ TreeNode.prototype.moveInto = function (target) {
   if (!target.children) {
     target.children = []
   }
-  target.children.unshift(this)
+  target.children.push(this)
 }
 
 TreeNode.prototype.findChildIndex = function (child) {

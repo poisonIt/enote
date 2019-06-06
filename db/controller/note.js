@@ -144,8 +144,8 @@ async function diffAddMulti (reqs) {
   let p = newNotes.map((note, index) => {
     return (async () => {
       let newNote = note
-      let pL = await getByQuery({ id: note.pid })
-      let pR = await getByQuery({ remote_id: note.remote_pid })
+      let pL = await folderCtr.getByQuery({ id: note.pid })
+      let pR = await folderCtr.getByQuery({ remote_id: note.remote_pid })
       if (pR) {
         if (pL) {
           if (pL._id !== pR._id) {

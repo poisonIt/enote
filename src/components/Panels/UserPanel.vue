@@ -32,7 +32,12 @@
         </div> -->
       </div>
       <div class="button-group" slot="footer" v-if="userInfo.sync_state !== 'PULL_SUCCESS'">
-        <div class="button primary" @click="syncYoudao">开始同步</div>
+        <div class="button primary" :class="{ disabled: isSyncing }" @click="syncYoudao">
+          <div class="loading" v-if="isSyncing">
+            <Loading :type="1" fill="#fff" style="transform: scale(0.6) translate(0px, -13px)"></Loading>
+          </div>
+          <span v-else>开始同步</span>
+        </div>
         <div class="button" @click="closeUserPanel">取消</div>
       </div>
     </modal>
@@ -87,9 +92,16 @@ export default {
 
   data () {
     return {
+      isSyncing: false,
       isOauthed: false,
       isOauthPanelShowed: false,
       isSyncPanelShowed: false
+    }
+  },
+
+  watch: {
+    userInfo (val) {
+      console.log('watch-userInfo', val)
     }
   },
 
@@ -162,15 +174,24 @@ export default {
     },
 
     async syncYoudao () {
+      if (this.isSyncing) {
+        return
+      }
+      this.isSyncing = true
       let youdaoSync = await getSync({ deviceId: this.$remote.app.appConf.clientId })
       if (youdaoSync.data.returnCode === 200) {
         await fetchLocal('removeAll')
         this.$hub.dispatchHub('pullData', this)
         let userInfo = _.clone(this.userInfo)
         userInfo.sync_state = 'PULL_SUCCESS'
-        this.SET_USER_INFO(userInfo)
+        fetchLocal('updateLocalUser', userInfo)
+        setTimeout(() => {
+          this.isSyncing = false
+          this.SET_USER_INFO(userInfo)
+        }, 3000)
       } else {
         this.$Message.warning(youdaoSync.data.returnMsg)
+        this.isSyncing = false
       }
     }
   }
@@ -204,6 +225,9 @@ export default {
   color #DDAF59
   float right
   margin-right 24px
+
+.disabled
+  background-color #a2a2a2 !important
 
 .button-group
   bottom 20px

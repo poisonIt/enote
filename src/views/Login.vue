@@ -1,6 +1,6 @@
 <template>
   <div id="login">
-    <div class="header" v-if="platform !== 'darwin'">
+    <div class="header" v-if="showHeader">
       <div class="minimize" @click="minimizeWindow"></div>
       <div class="close" @click="closeWindow"></div>
     </div>
@@ -62,6 +62,7 @@ export default {
 
   data () {
     return {
+      showHeader: false,
       platform: '',
       autoLogin: false,
       appState: {},
@@ -72,7 +73,9 @@ export default {
   },
 
   created () {
-    this.platform = this.$remote.app.appConf.platform
+    if (this.$remote.app.appConf.platform !== 'darwin') {
+      this.showHeader = true
+    }
     window.onbeforeunload = (e) => {
       e.returnValue = false
       let curWin = this.$remote.getCurrentWindow()

@@ -201,7 +201,7 @@ export default {
     },
 
     async pushNotes () {
-      const { client_id, deviceName, platform } = this.$remote.app.appConf
+      const { clientId, deviceName, platform } = this.$remote.app.appConf
 
       let nNeedPush = await fetchLocal('getLocalNoteByQuery',
         { need_push: true },
@@ -217,7 +217,7 @@ export default {
       })
 
       let resp = await pushNote({
-        deviceId: client_id,
+        deviceId: clientId,
         deviceName: deviceName,
         deviceType: platform,
         notes: nTransed

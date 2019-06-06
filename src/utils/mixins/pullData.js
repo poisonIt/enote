@@ -35,11 +35,11 @@ export default {
     },
 
     async runPullTasks (noteVer) {
-      const { client_id, deviceName, platform } = this.$remote.app.appConf
+      const { clientId, deviceName, platform } = this.$remote.app.appConf
       let pullResp = await Promise.all([
         pullNotebooks(),
         pullNote({
-          deviceId: client_id,
+          deviceId: clientId,
           deviceName: deviceName,
           deviceType: platform
         }),

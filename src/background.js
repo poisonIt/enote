@@ -14,6 +14,7 @@ import {
 import { createProtocol, installVueDevtools } from 'vue-cli-plugin-electron-builder/lib'
 import { getAppConf, saveAppConf } from './tools/appConf'
 import { createCollection } from '../db'
+import { GenNonDuplicateID } from './utils/utils'
 import * as LocalService from './service/local'
 import { applicationMenuTemplate, contextMenuTemplate } from './client/menu.js'
 
@@ -97,6 +98,12 @@ app.on('ready', async () => {
         appPath: dbPath
       })
     }
+    if (!appConf.clientId || appConf.clientId === '') {
+      let clientId = GenNonDuplicateID(6)
+      saveAppConf(app.getAppPath('userData'), {
+        clientId: clientId
+      })
+    }
     let defaultSize = [960, 640]
     if (appConf.size) {
       defaultSize[0] = appConf.size.width || 960
@@ -117,6 +124,7 @@ app.on('ready', async () => {
         width: defaultSize[0],
         height: defaultSize[1]
       },
+      clientId: clientId,
       deviceName: os.hostname(),
       platform: os.platform(),
       osUser: os.userInfo().username
@@ -536,7 +544,6 @@ function connectDatabase () {
 
       LocalService.getLocalState().then(res => {
         console.log('getLocalState', res)
-        app.appConf.client_id = res._id
         app.appConf.note_ver = res.note_ver
         resolve()
       })

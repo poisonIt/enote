@@ -151,7 +151,6 @@ export default {
     async checkYoudaoSyncState () {
       syncSate().then(resp => {
         if (resp.data.returnCode === 200) {
-          console.log(resp)
           let userInfo = _.clone(this.userInfo)
           userInfo.sync_state = resp.data.body.state
           this.SET_USER_INFO(userInfo)
@@ -164,7 +163,6 @@ export default {
 
     async syncYoudao () {
       let youdaoSync = await getSync()
-      console.log('youdaoSync', youdaoSync)
       if (youdaoSync.data.returnCode === 200) {
         await fetchLocal('removeAll')
         this.$hub.dispatchHub('pullData', this)

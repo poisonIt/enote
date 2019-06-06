@@ -11,13 +11,21 @@ const productName = require('../../vue.config.js').pluginOptions.electronBuilder
 
 const applicationMenuTemplate = [{
   label: productName,
-  submenu: [{
-    label: '退出',
-    accelerator: 'CmdOrCtrl+Q',
-    click: (item, focusedWindow) => {
-      appQuit()
+  submenu: [
+    {
+      label: '注销',
+      click: (item, focusedWindow) => {
+        logout()
+      }
+    },
+    {
+      label: '退出',
+      accelerator: 'CmdOrCtrl+Q',
+      click: (item, focusedWindow) => {
+        appQuit()
+      }
     }
-  }]
+  ]
 }, {
   label: '编辑',
   submenu: [{

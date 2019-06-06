@@ -1,4 +1,5 @@
 'use strict'
+import os from 'os'
 import path from 'path'
 import fs from 'fs'
 import {
@@ -82,9 +83,10 @@ app.on('ready', async () => {
   let dbPath = path.resolve(app.getAppPath('userData'), `../`)
   // let dbPath = '/Users/bowiego/Documents/workspace/enote/temp'
   let serviceUrl = isDevelopment
-    // ? 'https://122.152.201.59:8000/api'
-    ? 'https://iapp.htffund.com/note/api'
+    ? 'http://122.152.201.59:8001/api'
     : 'https://10.50.144.83:8000/api'
+    // ? 'https://122.152.201.59:8000/api'
+    // ? 'https://iapp.htffund.com/note/api'
     // : 'https://iapp.htffund.com/note/api'
     // : 'http://10.50.115.9:8000/api'
 
@@ -114,7 +116,10 @@ app.on('ready', async () => {
         y: 0,
         width: defaultSize[0],
         height: defaultSize[1]
-      }
+      },
+      deviceName: os.hostname(),
+      platform: os.platform(),
+      osUser: os.userInfo().username
     }
 
     fs.mkdir(p, { recursive: true }, (err) => {
@@ -531,6 +536,7 @@ function connectDatabase () {
 
       LocalService.getLocalState().then(res => {
         console.log('getLocalState', res)
+        app.appConf.client_id = res._id
         app.appConf.note_ver = res.note_ver
         resolve()
       })
@@ -560,6 +566,7 @@ function appQuit () {
 }
 
 function logout () {
+  loginWin && loginWin.destroy()
   if (win) {
     saveAppConf(app.getAppPath('appData'), {
       user: null

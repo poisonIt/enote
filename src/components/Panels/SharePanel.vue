@@ -411,7 +411,6 @@ export default {
     },
 
     copyShareUrl () {
-      console.log(this.shareUrl)
       clipboard.writeText(this.shareUrl)
       this.$Message.success('复制成功')
     },

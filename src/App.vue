@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+  <div id="app" :style="appStyle">
     <router-view></router-view>
   </div>
 </template>
@@ -8,6 +8,16 @@
 import { mapActions } from 'vuex'
 
 export default {
+  computed: {
+    appStyle () {
+      let result = {}
+      if (this.$remote.app.appConf.platform !== 'darwin') {
+        result.border = '1px solid #f3f3f3'
+      }
+      return result
+    }
+  },
+
   mounted () {
     let network_status = window.navigator.onLine ? 'online' : 'offline'
     this.SET_NETWORK_STATUS(network_status)
@@ -32,6 +42,9 @@ export default {
 <style lang="stylus">
 ::-webkit-scrollbar
   display none
+
+*
+  -webkit-app-region no-drag
 
 #app
   font-family 'Avenir', Helvetica, Arial, sans-serif

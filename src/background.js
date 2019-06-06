@@ -14,6 +14,7 @@ import {
 import { createProtocol, installVueDevtools } from 'vue-cli-plugin-electron-builder/lib'
 import { getAppConf, saveAppConf } from './tools/appConf'
 import { createCollection } from '../db'
+import { GenNonDuplicateID } from './utils/utils'
 import * as LocalService from './service/local'
 import { applicationMenuTemplate, contextMenuTemplate } from './client/menu.js'
 
@@ -76,18 +77,20 @@ app.on('ready', async () => {
   tray.setToolTip(productName)
   tray.setContextMenu(contextMenu)
   tray.on('click', () => {
-    win && win.show()
-    loginWin && loginWin.show()    
+    if (isHomeVisible) {
+      win && win.show()
+    }
+    loginWin && loginWin.show()
   })
 
   let dbPath = path.resolve(app.getAppPath('userData'), `../`)
   // let dbPath = '/Users/bowiego/Documents/workspace/enote/temp'
   let serviceUrl = isDevelopment
     ? 'http://122.152.201.59:8001/api'
-    : 'https://10.50.144.83:8000/api'
+    // : 'https://10.50.144.83:8000/api'
     // ? 'https://122.152.201.59:8000/api'
     // ? 'https://iapp.htffund.com/note/api'
-    // : 'https://iapp.htffund.com/note/api'
+    : 'https://iapp.htffund.com/note/api'
     // : 'http://10.50.115.9:8000/api'
 
   getAppConf(app.getAppPath('userData')).then(appConf => {
@@ -95,6 +98,13 @@ app.on('ready', async () => {
       saveAppConf(app.getAppPath('userData'), {
         serviceUrl: serviceUrl,
         appPath: dbPath
+      })
+    }
+    if (!appConf.clientId || appConf.clientId === '') {
+      let clientId = GenNonDuplicateID(6)
+      appConf.clientId = clientId
+      saveAppConf(app.getAppPath('userData'), {
+        clientId: clientId
       })
     }
     let defaultSize = [960, 640]
@@ -117,6 +127,7 @@ app.on('ready', async () => {
         width: defaultSize[0],
         height: defaultSize[1]
       },
+      clientId: appConf.clientId,
       deviceName: os.hostname(),
       platform: os.platform(),
       osUser: os.userInfo().username
@@ -153,6 +164,10 @@ if (isDevelopment) {
 }
 
 // process communicate
+ipcMain.on('appQuit', (event, arg) => {
+  appQuit()
+})
+
 ipcMain.on('logout', (event, arg) => {
   logout()
 })
@@ -170,16 +185,16 @@ ipcMain.on('login-ready', (event, arg) => {
 })
 
 ipcMain.on('pull-finished', (event, arg) => {
-  if (!isDevelopment) {
-    loginWin && loginWin.hide()
-  }
+  // if (!isDevelopment) {
+  loginWin && loginWin.hide()
+  // }
   isHomeVisible = showHomeWindow()
 })
 
 ipcMain.on('create-home-window', (event, arg) => {
-  if (!isDevelopment) {
-    loginWin && loginWin.hide()
-  }
+  // if (!isDevelopment) {
+  loginWin && loginWin.hide()
+  // }
   createHomeWindow()
 })
 
@@ -269,7 +284,6 @@ ipcMain.on('open-external', (event, url) => {
   shell.openExternal(url)
 })
 
-
 function prepareCreateLogin (user) {
   return new Promise((resolve, reject) => {
     let autoLogin = '0'
@@ -306,10 +320,9 @@ function createLoginWindow (user) {
       id: 'login',
       width: isDevelopment ? 1024 : 442,
       height: 490,
-      // frame: false,
+      frame: false,
       resizable: isDevelopment,
       show: isDevelopment,
-      frame: isDevelopment,
       titleBarStyle: 'hidden',
       icon: path.join(__static, 'icon.png'),
       webPreferences: {
@@ -350,9 +363,8 @@ function createHomeWindow () {
     height: app.appConf.size.height,
     backgroundColor: '#fcfbf7',
     show: false,
-    frame: isDevelopment,
     title: productName,
-    // frame: false,
+    frame: false,
     titleBarStyle: isDevelopment ? 'hidden' : 'hidden',
     icon: path.join(__static, 'icon.png'),
     webPreferences: {
@@ -509,9 +521,9 @@ function createTestWindow () {
 function showHomeWindow () {
   win && win.show()
   win && win.webContents.send('login-ready')
-  if (!isDevelopment) {
-    loginWin && loginWin.destroy()
-  }
+  // if (!isDevelopment) {
+  loginWin && loginWin.destroy()
+  // }
   return true
   // if (!isDevelopment) {
   //   loginWin && loginWin.destroy()
@@ -536,7 +548,6 @@ function connectDatabase () {
 
       LocalService.getLocalState().then(res => {
         console.log('getLocalState', res)
-        app.appConf.client_id = res._id
         app.appConf.note_ver = res.note_ver
         resolve()
       })
@@ -566,7 +577,6 @@ function appQuit () {
 }
 
 function logout () {
-  loginWin && loginWin.destroy()
   if (win) {
     saveAppConf(app.getAppPath('appData'), {
       user: null
@@ -578,13 +588,27 @@ function logout () {
 function restart () {
   if (win) {
     win && win.hide()
-    loginWin && loginWin.destroy()
+    BrowserWindow.getAllWindows().forEach(window => {
+      if (window.id !== win.id) {
+        window.destroy()
+      }
+    })
     createLoginWindow()
     setTimeout(() => {
       win && win.destroy()
       createHomeWindow()
-      createLoginWindow()
+      // createLoginWindow()
     }, 500)
+  } else {
+    // if (!loginWin) {
+    //   createLoginWindow()
+    // }
+    BrowserWindow.getAllWindows().forEach(window => {
+      if (window.id !== loginWin.id) {
+        window.destroy()
+      }
+      loginWin.webContents.reload()
+    })
   }
 }
 

@@ -26,7 +26,8 @@ const applicationMenuTemplate = [{
       }
     }
   ]
-}, {
+},
+{
   label: '编辑',
   submenu: [{
     label: '撤销',
@@ -55,7 +56,8 @@ const applicationMenuTemplate = [{
     accelerator: 'CmdOrCtrl+A',
     role: 'selectall'
   }]
-}, {
+},
+{
   label: '查看',
   submenu: [{
     label: '重载',
@@ -134,15 +136,60 @@ const applicationMenuTemplate = [{
 
 const contextMenuTemplate = [
   {
-    label: '退出',
+    label: '最小化',
     click: (item, focusedWindow) => {
-      appQuit()
+      BrowserWindow.getAllWindows().forEach(win => {
+        win.minimize()
+      })
     }
+  },
+  {
+    label: '最大化',
+    click: (item, focusedWindow) => {
+      BrowserWindow.getAllWindows().forEach(win => {
+        win.maximize()
+      })
+    }
+  },
+  {
+    label: '还原窗口',
+    click: (item, focusedWindow) => {
+      BrowserWindow.getAllWindows().forEach(win => {
+        win.restore()
+      })
+    }
+  },
+  {
+    type: 'separator'
+  },
+  {
+    label: '切换开发者工具',
+    accelerator: (() => {
+      if (process.platform === 'darwin') {
+        return 'Alt+Command+I'
+      } else {
+        return 'Ctrl+Shift+I'
+      }
+    })(),
+    click: (item, focusedWindow) => {
+      BrowserWindow.getAllWindows().forEach(win => {
+        win.toggleDevTools()
+      })
+    }
+  },
+  {
+    type: 'separator'
   },
   {
     label: '注销',
     click: (item, focusedWindow) => {
       logout()
+    }
+  },
+  {
+    label: '退出',
+    click: (item, focusedWindow) => {
+      appQuit()
     }
   }
 ]

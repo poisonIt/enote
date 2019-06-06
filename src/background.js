@@ -77,8 +77,10 @@ app.on('ready', async () => {
   tray.setToolTip(productName)
   tray.setContextMenu(contextMenu)
   tray.on('click', () => {
-    win && win.show()
-    loginWin && loginWin.show()    
+    if (isHomeVisible) {
+      win && win.show()
+    }
+    loginWin && loginWin.show()
   })
 
   let dbPath = path.resolve(app.getAppPath('userData'), `../`)
@@ -100,6 +102,7 @@ app.on('ready', async () => {
     }
     if (!appConf.clientId || appConf.clientId === '') {
       let clientId = GenNonDuplicateID(6)
+      appConf.clientId = clientId
       saveAppConf(app.getAppPath('userData'), {
         clientId: clientId
       })
@@ -124,7 +127,7 @@ app.on('ready', async () => {
         width: defaultSize[0],
         height: defaultSize[1]
       },
-      clientId: clientId,
+      clientId: appConf.clientId,
       deviceName: os.hostname(),
       platform: os.platform(),
       osUser: os.userInfo().username
@@ -161,6 +164,10 @@ if (isDevelopment) {
 }
 
 // process communicate
+ipcMain.on('appQuit', (event, arg) => {
+  appQuit()
+})
+
 ipcMain.on('logout', (event, arg) => {
   logout()
 })
@@ -276,7 +283,6 @@ ipcMain.on('wrote-pdf', (event, arg) => {
 ipcMain.on('open-external', (event, url) => {
   shell.openExternal(url)
 })
-
 
 function prepareCreateLogin (user) {
   return new Promise((resolve, reject) => {
@@ -571,7 +577,6 @@ function appQuit () {
 }
 
 function logout () {
-  loginWin && loginWin.destroy()
   if (win) {
     saveAppConf(app.getAppPath('appData'), {
       user: null
@@ -583,13 +588,27 @@ function logout () {
 function restart () {
   if (win) {
     win && win.hide()
-    loginWin && loginWin.destroy()
+    BrowserWindow.getAllWindows().forEach(window => {
+      if (window.id !== win.id) {
+        window.destroy()
+      }
+    })
     createLoginWindow()
     setTimeout(() => {
       win && win.destroy()
       createHomeWindow()
-      createLoginWindow()
+      // createLoginWindow()
     }, 500)
+  } else {
+    // if (!loginWin) {
+    //   createLoginWindow()
+    // }
+    BrowserWindow.getAllWindows().forEach(window => {
+      if (window.id !== loginWin.id) {
+        window.destroy()
+      }
+      loginWin.webContents.reload()
+    })
   }
 }
 

@@ -1,5 +1,9 @@
 <template>
   <div id="login">
+    <div class="header" v-if="platform !== 'darwin'">
+      <div class="minimize" @click="minimizeWindow"></div>
+      <div class="close" @click="closeWindow"></div>
+    </div>
     <div class="logo"></div>
     <p class="title">添富云笔记</p>
     <div class="form">
@@ -58,6 +62,7 @@ export default {
 
   data () {
     return {
+      platform: '',
       autoLogin: false,
       appState: {},
       username: '',
@@ -67,6 +72,7 @@ export default {
   },
 
   created () {
+    this.platform = this.$remote.app.appConf.platform
     window.onbeforeunload = (e) => {
       e.returnValue = false
       let curWin = this.$remote.getCurrentWindow()
@@ -184,6 +190,14 @@ export default {
         position_id: obj.positionId,
         position_name: obj.positionName
       }
+    },
+
+    minimizeWindow () {
+      this.$remote.getCurrentWindow().minimize()
+    },
+
+    closeWindow () {
+      ipcRenderer.send('appQuit')
     }
   }
 }
@@ -199,6 +213,33 @@ export default {
   background-size contain
   background-repeat no-repeat
   -webkit-app-region drag
+
+.header
+  position fixed
+  width 100%
+  height 40px
+  display flex
+  justify-content flex-end
+  -webkit-app-region drag
+  .minimize
+    width 40px
+    height 36px
+    background-image url('../assets/images/lanhu/minimize_white.png')
+    background-size 60% 80%
+    background-position 50% -10%
+    background-repeat no-repeat
+    &:hover
+      background-color rgba(255, 255, 255, 0.3)
+  .close
+    width 40px
+    height 36px
+    margin-left 10px
+    background-image url('../assets/images/lanhu/close_white.png')
+    background-size 80%
+    background-position center
+    background-repeat no-repeat
+    &:hover
+      background-color #de323c
 
 .logo
   width 84px

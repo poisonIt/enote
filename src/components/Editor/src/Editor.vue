@@ -130,12 +130,27 @@ export default {
       } else {
         ClassicEditor
           .create(this.$refs.editor, {
-            // fontFamily: {
-            //   options: [
-            //     'default',
-            //     '微软雅黑'
-            //   ]
-            // },
+            fontFamily: {
+              options: [
+                //设置的字体名字？
+
+                // 'default',
+                // '微软雅黑/Microsoft YaHei',
+                '黑体',
+                '微软雅黑',
+                '宋体',
+                '仿宋',
+                '楷体',
+                '新仿宋',
+                'Arial',
+                'Arial Black',
+                'Courier BOLDITALIC',
+                'tahoma',
+                'Verdana',
+                'Times-Roman',
+                
+              ]
+            },
             extraPlugins: [ uploadAdapter, linkShell ],
             autosave: {
               save (editor) {

@@ -60,8 +60,7 @@
             <Option
               v-for="(option, index) in stockMenuData"
               :value="option.value"
-              :key="index">
-              {{option.label}}
+              :key="index">{{option.label}}
             </Option>
           </Select>
         </div>

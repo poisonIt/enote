@@ -194,6 +194,7 @@ export default {
     },
 
     saveData (id, content) {
+      console.log('saveData', id, content)
       fetchLocal('updateLocalDoc', {
         id: id,
         content: content

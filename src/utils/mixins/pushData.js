@@ -201,6 +201,8 @@ export default {
     },
 
     async pushNotes () {
+      const { clientId, deviceName, platform } = this.$remote.app.appConf
+
       let nNeedPush = await fetchLocal('getLocalNoteByQuery',
         { need_push: true },
         { multi: true, with_doc: true }
@@ -214,7 +216,12 @@ export default {
         return this.tranData(note)
       })
 
-      let resp = await pushNote(nTransed)
+      let resp = await pushNote({
+        deviceId: clientId,
+        deviceName: deviceName,
+        deviceType: platform,
+        notes: nTransed
+      })
 
       if (resp.data.returnCode === 200) {
         let noteResolved = resp.data.body

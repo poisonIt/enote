@@ -1,6 +1,6 @@
 <template>
   <div class="container" @dblclick="handleDbClick">
-    <div class="avatar" :class="{ expanded : viewType === 'expanded' }" @click="showUserPanel">
+    <div class="avatar" :class="{ expanded : viewType === 'expanded' }" @click="isMenuVisible = true">
       <!-- <img src="file:////Users/bowiego/Desktop/WechatIMG44.jpeg" alt=""> -->
       <img :src="userInfo.image_url" alt="">
     </div>
@@ -30,10 +30,10 @@ export default {
           label: '个人信息',
           value: 'info'
         },
-        {
-          label: '偏好设置',
-          value: 'setting'
-        },
+        // {
+        //   label: '偏好设置',
+        //   value: 'setting'
+        // },
         {
           label: '注销登录',
           value: 'logout'
@@ -78,9 +78,7 @@ export default {
         saveAppConf(this.$remote.app.getAppPath('appData'), {
           user: null
         })
-        ipcRenderer.send('changeWindow', {
-          name: 'login'
-        })
+        ipcRenderer.send('logout')
       }
       if (value === 'setting') {
         this.TOGGLE_SHOW_SETTING_PANEL(true)

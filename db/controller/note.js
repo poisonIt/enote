@@ -110,39 +110,37 @@ async function diffAdd (req) {
   await Promise.all(p)
 
   if (note) {
+    console.log('本地存在', req.remote_id)
     req.id = note._id
-    return await new Promise((resolve, reject) => {
-      update(req).then(newNote => {
-        docCtr.getByNoteId({ id: newNote._id }).then(doc => {
-          docCtr.update({ id: doc._id, content: req.content }).then(() => {
-            resolve(newNote)
+    if (req.usn !== note.usn) {
+      if (note.need_push) {
+        console.log('need_push', note)
+        return note
+      } else {
+        console.log('note_need_push', req)
+        req.need_push = false
+        return await new Promise((resolve, reject) => {
+          update(req).then(newNote => {
+            docCtr.getByNoteId({ id: newNote._id }).then(doc => {
+              docCtr.update({ id: doc._id, content: req.content }).then(() => {
+                resolve(newNote)
+              })
+            })
           })
         })
-      })
-    })
+      }
+    } else {
+      return note
+    }
   } else {
+    console.log('本地不存在', req.remote_id)
     return await add(req)
   }
 }
 
-// function diffAdd (req) {
-//   Note.findOne({ remote_id: req.remote_id }, (err, note) => {
-//     if (note) {
-//       req.id = note._id
-//       return update(req).then(newNote => {
-//         docCtr.getByNoteId({ id: newNote._id }).then(doc => {
-//           docCtr.update({ id: doc._id, content: req.content })
-//         })
-//       })
-//     } else {
-//       return add(req)
-//     }
-//   })
-// }
-
 async function diffAddMulti (reqs) {
   let newNotes = await Promise.all(reqs.map(req => diffAdd(req)))
-
+  console.log('newNotes', newNotes)
   let p = newNotes.map((note, index) => {
     return (async () => {
       let newNote = note
@@ -151,13 +149,13 @@ async function diffAddMulti (reqs) {
       if (pR) {
         if (pL) {
           if (pL._id !== pR._id) {
-            newNote = await update({ id: note._id, pid: pR._id })
+            newNote = await update({ id: note._id, pid: pR._id, need_push: false })
           }
         } else {
-          newNote = await update({ id: note._id, pid: pR._id })
+          newNote = await update({ id: note._id, pid: pR._id, need_push: false })
         }
       } else {
-        newNote = await update({ id: note._id, pid: '0' })
+        newNote = await update({ id: note._id, pid: '0', need_push: false })
       }
       return newNote
     })(note, index)

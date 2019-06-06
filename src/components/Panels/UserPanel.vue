@@ -21,17 +21,17 @@
           <span>所属岗位</span>
           <span>{{ userInfo.position_name }}</span>
         </div>
-        <div class="item" v-if="!userInfo.is_sync">
+        <div class="item">
           <span>有道云账号</span>
-          <span>尚未绑定有道云账号</span>
-          <span class="async" @click="openYoudaoWindow">绑定账号</span>
+          <span>{{ syncState }}</span>
+          <span v-if="userInfo.sync_state === 'UNBIND'" class="async" @click="openYoudaoWindow">绑定账号</span>
         </div>
-        <div class="item" v-if="userInfo.is_sync">
+        <!-- <div class="item" v-if="userInfo.is_sync">
           <span>同步时间</span>
           <span>{{ userInfo.position_name }}</span>
-        </div>
+        </div> -->
       </div>
-      <div class="button-group" slot="footer">
+      <div class="button-group" slot="footer" v-if="userInfo.sync_state !== 'PULL_SUCCESS'">
         <div class="button primary" @click="syncYoudao">开始同步</div>
         <div class="button" @click="closeUserPanel">取消</div>
       </div>
@@ -65,7 +65,8 @@
 </template>
 
 <script>
-import { ipcRenderer, BrowserWindow } from 'electron'
+import * as _ from 'lodash'
+import { ipcRenderer } from 'electron'
 import { mapActions, mapGetters } from 'vuex'
 import LocalDAO from '../../../db/api'
 import {
@@ -86,6 +87,7 @@ export default {
 
   data () {
     return {
+      isOauthed: false,
       isOauthPanelShowed: false,
       isSyncPanelShowed: false
     }
@@ -95,12 +97,28 @@ export default {
     ...mapGetters({
       isUserPanelShowed: 'GET_SHOW_USER_PANEL',
       userInfo: 'GET_USER_INFO'
-    })
+    }),
+
+    syncState () {
+      switch (this.userInfo.sync_state) {
+        case 'UNBIND':
+          return '未绑定'
+        case 'BIND':
+          return '已经绑定'
+        case 'PULL_ERROR':
+          return '同步失败'
+        case 'PULL_SUCCESS':
+          return '同步完成'
+        default:
+          return '未绑定'
+      }
+    }
   },
 
   methods: {
     ...mapActions([
-      'TOGGLE_SHOW_USER_PANEL'
+      'TOGGLE_SHOW_USER_PANEL',
+      'SET_USER_INFO'
     ]),
 
     closeUserPanel () {
@@ -133,6 +151,9 @@ export default {
     async checkYoudaoSyncState () {
       syncSate().then(resp => {
         if (resp.data.returnCode === 200) {
+          let userInfo = _.clone(this.userInfo)
+          userInfo.sync_state = resp.data.body.state
+          this.SET_USER_INFO(userInfo)
           this.closeOauthPanel()
         } else {
           this.$Message.warning(resp.data.returnMsg)
@@ -141,10 +162,13 @@ export default {
     },
 
     async syncYoudao () {
-      let youdaoSync = await getSync()
-      console.log('youdaoSync', youdaoSync)
+      let youdaoSync = await getSync({ deviceId: this.$remote.app.appConf.clientId })
       if (youdaoSync.data.returnCode === 200) {
         await fetchLocal('removeAll')
+        this.$hub.dispatchHub('pullData', this)
+        let userInfo = _.clone(this.userInfo)
+        userInfo.sync_state = 'PULL_SUCCESS'
+        this.SET_USER_INFO(userInfo)
       } else {
         this.$Message.warning(youdaoSync.data.returnMsg)
       }

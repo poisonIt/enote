@@ -71,7 +71,7 @@
             分享至：
             <poptip trigger="hover" placement="right">
                 <img class="app" src="@/assets/images/iapp.png"/>
-                <div id="qrcode" slot="content"></div>
+                <vue-qr  :text="config.value" :size="100" :dotScale="1" :margin="5"  slot="content"></vue-qr>
             </poptip>
           </div>
           <div class="footer">
@@ -131,7 +131,7 @@
 </template>
 
 <script>
-import QRCode from 'qrcodejs2'  //二维码插件
+import VueQr from 'vue-qr'  //二维码插件
 import { clipboard } from 'electron'
 import { mapActions, mapGetters } from 'vuex'
 import LocalDAO from '../../../db/api'
@@ -145,11 +145,10 @@ import fetchLocal from '../../utils/fetchLocal';
 
 export default {
   name: 'SharePanel',
-
   components: {
-    Loading
+    Loading,
+    VueQr 
   },
-
   data () {
     return {
       remoteId: '',
@@ -196,7 +195,10 @@ export default {
           children: []
         }
       ],
-      entitledUser: []
+      entitledUser: [],
+      config: {
+        value: ''
+      }
     }
   },
 
@@ -322,7 +324,7 @@ export default {
         this.entitledType = this.shareInfo.entitledType
         this.validity = String(this.shareInfo.validityType)
         this.entitledUser = this.shareInfo.entitledUser || []
-        
+        this.config.value = this.shareInfo.url
         this.friendChecked = this.fdList.filter(item => {
           if (this.entitledUser.indexOf(item.userCode) > -1) {
             item.state = true
@@ -345,7 +347,7 @@ export default {
 
         this.$nextTick(() => {
           this.isFirstData = false
-          this.qrcode()
+          // this.qrcode()
         })
 
 
@@ -366,17 +368,6 @@ export default {
       if (cancelResp.data.returnCode === 200) {
         this.closeSharePanel()
       }
-    },
-    // 二维码
-    qrcode () {
-      document.getElementById("qrcode").innerHTML = "";
-      let qrcode = new QRCode('qrcode', {
-        width: 100,
-        height: 100,
-        text: this.shareUrl,
-        colorDark : "#000",
-        colorLight : "#fff",
-      })
     },
     handleLinkFocus () {
       this.$refs.linkInput.select()

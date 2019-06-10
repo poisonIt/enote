@@ -24,7 +24,8 @@ import '@/assets/css/font-awesome.min.css'
 import 'iview/dist/styles/iview.css'
 import '@/assets/styles/iview.styl'
 import '@/assets/styles/common.styl'
-import '@/assets/css/font-family.css'
+// import '@/assets/css/font-family.css'
+import '@/assets/css/family.css'
 
 const isDevelopment = process.env.NODE_ENV !== 'production'
 

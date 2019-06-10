@@ -7101,10 +7101,6 @@ q@^1.1.2, q@~1.5.0:
   version "1.5.1"
   resolved "http://registry.npm.taobao.org/q/download/q-1.5.1.tgz#7e32f75b41381291d04611f1bf14109ac00651d7"
 
-qrcodejs2@^0.0.2:
-  version "0.0.2"
-  resolved "https://registry.npm.taobao.org/qrcodejs2/download/qrcodejs2-0.0.2.tgz#465afe5e39f19facecb932c11f7a186109146ae1"
-
 qs@6.5.2, qs@~6.5.2:
   version "6.5.2"
   resolved "http://registry.npm.taobao.org/qs/download/qs-6.5.2.tgz#cb3ae806e8740444584ef154ce8ee98d403f3e36"
@@ -8863,6 +8859,10 @@ vue-loader@^15.4.2:
     loader-utils "^1.1.0"
     vue-hot-reload-api "^2.3.0"
     vue-style-loader "^4.1.0"
+
+vue-qr@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.npm.taobao.org/vue-qr/download/vue-qr-2.1.0.tgz#82b642b93d86c9b8892c5e04cb0f9041d5372c75"
 
 vue-router@^3.0.4:
   version "3.0.4"

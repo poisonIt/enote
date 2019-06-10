@@ -121,6 +121,9 @@ export default {
       }).catch(err => {
         this.$Message.error(String(err))
         console.error(err)
+        if (this.autoLogin === '1') {
+          ipcRenderer.send('login-ready')
+        }
         this.isLoading = false
         return
       })

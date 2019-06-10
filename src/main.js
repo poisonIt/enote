@@ -10,7 +10,16 @@ import Modal from '@/components/Modal'
 import BSelect from '@/components/Select'
 import BOption from '@/components/Option'
 import Menu from '@/components/Menu'
-import { Message, Upload, Button, Select, Option, Form, FormItem, Poptip } from 'iview'
+import {
+  Message,
+  Upload,
+  Button,
+  Select,
+  Option,
+  Form,
+  FormItem,
+  Poptip
+} from 'iview'
 import '@/assets/css/font-awesome.min.css'
 import 'iview/dist/styles/iview.css'
 import '@/assets/styles/iview.styl'
@@ -18,7 +27,11 @@ import '@/assets/styles/common.styl'
 
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
-const { remote, shell, webFrame } = require('electron')
+const {
+  remote,
+  shell,
+  webFrame
+} = require('electron')
 console.log(remote.app.getAppPath('userData'))
 
 let serviceUrl = ''
@@ -33,8 +46,8 @@ Vue.component('Button', Button)
 Vue.component('Select', Select)
 Vue.component('Option', Option)
 Vue.component('Poptip', Poptip)
-    // Vue.component('Form', Form)
-    // Vue.component('FormItem', FormItem)
+// Vue.component('Form', Form)
+// Vue.component('FormItem', FormItem)
 Vue.prototype.$Message = Message
 Vue.prototype.$hub = EventHub
 
@@ -46,21 +59,21 @@ let worker = new Worker()
 Vue.prototype.$worker = new Worker()
 
 axios.interceptors.request.use(config => {
-    config.url = `${remote.app.appConf.serviceUrl}${config.url}`
-    if (store.state.user.id_token) {
-        config.headers['Authorization'] = 'Bearer' + store.state.user.id_token
-    }
-    if (config.method === 'delete' && config.url.indexOf('deleteTag') === -1) {
-        let formData = new FormData()
-        Object.keys(config.data).forEach(key => {
-            formData.append(key, config.data[key])
-        })
-        config.data = formData
-    }
-    return config
+  config.url = `${remote.app.appConf.serviceUrl}${config.url}`
+  if (store.state.user.id_token) {
+    config.headers['Authorization'] = 'Bearer' + store.state.user.id_token
+  }
+  if (config.method === 'delete' && config.url.indexOf('deleteTag') === -1) {
+    let formData = new FormData()
+    Object.keys(config.data).forEach(key => {
+      formData.append(key, config.data[key])
+    })
+    config.data = formData
+  }
+  return config
 }, error => {
-    Message.error(error)
-    return Promise.reject(error)
+  Message.error(error)
+  return Promise.reject(error)
 })
 
 // axios.interceptors.response.use(data => {
@@ -80,7 +93,7 @@ axios.interceptors.request.use(config => {
 Vue.config.productionTip = false
 
 new Vue({
-    router,
-    store,
-    render: h => h(App)
+  router,
+  store,
+  render: h => h(App)
 }).$mount('#app')

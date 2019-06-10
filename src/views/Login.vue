@@ -53,13 +53,10 @@ import Loading from '@/components/Loading'
 
 export default {
   name: 'Login',
-
   mixins: [ pullData ],
-
   components: {
     Loading
   },
-
   data () {
     return {
       showHeader: false,
@@ -71,7 +68,6 @@ export default {
       isLoading: false
     }
   },
-
   created () {
     if (this.$remote.app.appConf.platform !== 'darwin') {
       this.showHeader = true
@@ -81,7 +77,6 @@ export default {
       let curWin = this.$remote.getCurrentWindow()
       curWin.hide()
     }
-
     let { autoLogin, username, password } = this.$router.currentRoute.query
     this.autoLogin = autoLogin
     if (this.autoLogin === '1') {
@@ -89,12 +84,10 @@ export default {
       this.password = password
       this.postInput()
     }
-
     ipcRenderer.on('update-user-data-response', (event, arg) => {
       ipcRenderer.send('login-ready')
     })
   },
-
   mounted () {
     if (this.autoLogin !== '1') {
       setTimeout(() => {
@@ -102,13 +95,11 @@ export default {
       }, 300)
     }
   },
-
   methods: {
     ...mapActions([
       'SET_TOKEN',
       'SET_FILES_FROM_LOCAL'
     ]),
-
     async postInput () {
       if (this.isLoading) return
       this.isLoading = true

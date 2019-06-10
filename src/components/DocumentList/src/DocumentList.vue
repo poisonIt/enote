@@ -401,13 +401,15 @@ export default {
       })
     },
 
-    handleExportPDF () {
-      return
+    handleExportPDF () { //导出pdf功能
+      // return
       let data = this.popupedFile.rawData
+
       ipcRenderer.send('print-to-pdf', {
+
         noteId: data._id,
         title: data.title,
-        isPdf: '1'
+        isPdf: 1
       })
     },
 

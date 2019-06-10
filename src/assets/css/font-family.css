@@ -1,0 +1,108 @@
+@charset 'utf-8';
+@font-face {
+    font-family: '黑体';
+    src: url('../fonts/boldFace.eot');
+    src: url('../fonts/boldFace.eot?#font-spider') format('embedded-opentype'), url('../fonts/boldFace.woff') format('woff'), url('../fonts/boldFace.TTF') format('truetype'), url('../fonts/boldFace.svg') format('svg');
+    font-weight: normal;
+    font-style: normal;
+    /* 黑体 */
+}
+
+@font-face {
+    font-family: '宋体';
+    src: url('../fonts/Song.eot');
+    src: url('../fonts/Song.eot?#font-spider') format('embedded-opentype'), url('../fonts/Song.woff') format('woff'), url('../fonts/Song.TTF') format('truetype'), url('../fonts/Song.svg') format('svg');
+    font-weight: normal;
+    font-style: normal;
+    /* 宋体 */
+}
+
+@font-face {
+    font-family: '仿宋';
+    src: url('../fonts/ImitatedSung.eot');
+    src: url('../fonts/ImitatedSung.eot?#font-spider') format('embedded-opentype'), url('../fonts/ImitatedSung.woff') format('woff'), url('../fonts/ImitatedSung.TTF') format('truetype'), url('../fonts/ImitatedSung.svg') format('svg');
+    font-weight: normal;
+    font-style: normal;
+    /* 仿宋 */
+}
+
+@font-face {
+    font-family: '楷体';
+    src: url('../fonts/regularScript.eot');
+    src: url('../fonts/regularScript.eot?#font-spider') format('embedded-opentype'), url('../fonts/regularScript.woff2') format('woff2'), url('../fonts/regularScript.woff') format('woff'), url('../fonts/regularScript.ttf') format('truetype'), url('../fonts/regularScript.svg') format('svg');
+    font-weight: normal;
+    font-style: normal;
+    /* 楷体  */
+}
+
+@font-face {
+    font-family: '新仿宋';
+    src: url('../fonts/newSong.eot');
+    src: url('../fonts/newSong.eot?#font-spider') format('embedded-opentype'), url('../fonts/newSong.woff2') format('woff2'), url('../fonts/newSong.woff') format('woff'), url('../fonts/newSong.ttf') format('truetype'), url('../fonts/newSong.svg') format('svg');
+    font-weight: normal;
+    font-style: normal;
+    /* 新宋体 */
+}
+
+@font-face {
+    font-family: 'Arial';
+    src: url('../fonts/Arial.eot');
+    src: url('../fonts/Arial.eot?#font-spider') format('embedded-opentype'), url('../fonts/Arial.woff2') format('woff2'), url('../fonts/Arial.woff') format('woff'), url('../fonts/Arial.ttf') format('truetype'), url('../fonts/Arial.svg') format('svg');
+    font-weight: normal;
+    font-style: normal;
+    /* Arial */
+}
+
+@font-face {
+    font-family: 'Arial Black';
+    src: url('../fonts/ArialBlack.eot');
+    src: url('../fonts/ArialBlack.eot?#font-spider') format('embedded-opentype'), url('../fonts/ArialBlack.woff2') format('woff2'), url('../fonts/ArialBlack.woff') format('woff'), url('../fonts/ArialBlack.ttf') format('truetype'), url('../fonts/ArialBlack.svg') format('svg');
+    font-weight: normal;
+    font-style: normal;
+    /* ArialBlack*/
+}
+
+@font-face {
+    font-family: 'Courier BOLDITALIC';
+    src: url('../fonts/CourierBOLDITALIC.eot');
+    src: url('../fonts/CourierBOLDITALIC.eot?#font-spider') format('embedded-opentype'), url('../fonts/CourierBOLDITALIC.woff2') format('woff2'), url('../fonts/CourierBOLDITALIC.woff') format('woff'), url('../fonts/CourierBOLDITALIC.ttf') format('truetype'), url('../fonts/CourierBOLDITALIC.svg') format('svg');
+    font-weight: normal;
+    font-style: normal;
+    /* Courier BOLDITALIC */
+}
+
+@font-face {
+    font-family: 'tahoma';
+    src: url('../fonts/tahoma.eot');
+    src: url('../fonts/tahoma.eot?#font-spider') format('embedded-opentype'), url('../fonts/tahoma.woff2') format('woff2'), url('../fonts/tahoma.woff') format('woff'), url('../fonts/tahoma.ttf') format('truetype'), url('../fonts/tahoma.svg') format('svg');
+    font-weight: normal;
+    font-style: normal;
+    /* tahoma */
+}
+
+@font-face {
+    font-family: 'Verdana';
+    src: url('../fonts/Verdana.eot');
+    src: url('../fonts/Verdana.eot?#font-spider') format('embedded-opentype'), url('../fonts/Verdana.woff2') format('woff2'), url('../fonts/Verdana.woff') format('woff'), url('../fonts/Verdana.ttf') format('truetype'), url('../fonts/Verdana.svg') format('svg');
+    font-weight: normal;
+    font-style: normal;
+    /* Verdana */
+}
+
+@font-face {
+    font-family: 'Times-Roman';
+    src: url('../fonts/Times-Roman.eot');
+    src: url('../fonts/Times-Roman.eot?#font-spider') format('embedded-opentype'), url('../fonts/Times-Roman.woff2') format('woff2'), url('../fonts/Times-Roman.woff') format('woff'), url('../fonts/Times-Roman.ttf') format('truetype'), url('../fonts/Times-Roman.svg') format('svg');
+    font-weight: normal;
+    font-style: normal;
+    /* Times-Roman */
+}
+
+@font-face {
+    font-family: '微软雅黑';
+    src: url('../fonts/vista.eot');
+    src: url('../fonts/vista.eot?#font-spider') format('embedded-opentype'), url('../fonts/vista.woff2') format('woff2'), url('../fonts/vista.ttf') format('truetype'), url('../fonts/vista.svg') format('svg');
+    font-weight: normal;
+    font-style: normal;
+    /* 微软雅黑 */
+}

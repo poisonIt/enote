@@ -264,8 +264,8 @@ export default {
 
     updateFileList () {
       let re = new RegExp(this.searchKeyword, 'g')
-      let notes = this.fileListSortFunc(this.noteList.filter(file => file.title.search(re) > -1))
-      let folders = this.fileListSortFunc(this.folderList.filter(file => file.title.search(re) > -1))
+      let notes = this.fileListSortFunc(this.noteList.filter(file => file.title.search(re) > -1), 'note')
+      let folders = this.fileListSortFunc(this.folderList.filter(file => file.title.search(re) > -1), 'folder')
 
       this.fileList = _.flatten([folders, notes])
       let idx = _.findIndex(this.fileList, { _id: this.selectedIdCache })
@@ -321,7 +321,7 @@ export default {
       }
     },
 
-    fileListSortFunc (list) {
+    fileListSortFunc (list, type) {
       let order
       let sortKey
 
@@ -355,7 +355,9 @@ export default {
       }
       let topList = listTemp.filter(item => item.top)
       let downList = listTemp.filter(item => !item.top)
-      this.stickTopFiles = topList
+      if (type === 'note') {
+        this.stickTopFiles = topList
+      }
 
       return [...topList, ...downList]
     },

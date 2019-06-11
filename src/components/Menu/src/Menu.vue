@@ -162,7 +162,8 @@ export default {
 
     itemSortType (item, type) {
       if (item.type === 'sort') {
-        return type === 'down' ? !item.actived : item.actived
+        // return type === 'down' ? !item.actived : item.actived
+        return type === 'down' ? item.actived : !item.actived
       } else {
         return false
       }
@@ -182,6 +183,7 @@ export default {
         group.items.forEach(item => {
           item.actived = false
         })
+        item.actived = true
       }
       this.$emit('itemClick', item.value, item, index)
       this.handleClose()

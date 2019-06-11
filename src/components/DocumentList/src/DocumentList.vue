@@ -260,7 +260,7 @@ export default {
     updateFileList () {
       let re = new RegExp(this.searchKeyword, 'g')
       let notes = this.fileListSortFunc(this.noteList.filter(file => file.title.search(re) > -1))
-      let folders = this.folderList.filter(file => file.title.search(re) > -1)
+      let folders = this.fileListSortFunc(this.folderList.filter(file => file.title.search(re) > -1))
 
       this.fileList = _.flatten([folders, notes])
       let idx = _.findIndex(this.fileList, { _id: this.selectedIdCache })
@@ -307,11 +307,12 @@ export default {
     },
 
     handleMenuClick (value, item) {
+      let sortOrder = !item.actived ? 'up' : 'down'
       if (value === 'summary' || value === 'list') {
         this.SET_VIEW_FILE_LIST_TYPE(value)
       } else {
         this.SET_VIEW_FILE_SORT_TYPE(value)
-        this.SET_VIEW_FILE_SORT_ORDER(item.actived ? 'up' : 'down')
+        this.SET_VIEW_FILE_SORT_ORDER(sortOrder)
       }
     },
 

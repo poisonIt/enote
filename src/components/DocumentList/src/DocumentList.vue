@@ -486,7 +486,7 @@ export default {
     },
 
     handleShare () {
-      let idx = _.findIndex(this.fileList, { _id: this.popupedFile.file_id} )
+      let idx = _.findIndex(this.fileList, { _id: this.popupedFile.file_id})
       this.selectFile(idx)
       this.TOGGLE_SHOW_SHARE_PANEL(true)
     },

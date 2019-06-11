@@ -8,13 +8,29 @@
       @close="closeHistoryPanel"
       :visible.sync="isHistoryPanelShowed">
       <div class="container">
-        <div class="title">{{ title }}</div>
-        <div v-html="htmlDiff"></div>
+        <div id="history" class="content">
+          <div class="title">{{ title }}</div>
+          <div v-html="htmlDiff"></div>
+        </div>
+        <div class="list">
+          <ul>
+            <li v-for="(item, index) in histories"
+              :key="index"
+              :class="{ active: selectedItem === item }"
+              @click="handleClickItem(item)">
+              <span>{{ item.updateDt }}</span>
+            </li>
+          </ul>
+          <p class="no-history" v-if="histories.length === 0">暂无历史版本记录</p>
+        </div>
       </div>
       <div class="instruction">
         <div>绿色表示与前一版本比较的新增内容</div>
         <div>红色表示与前一版本比较的删除内容</div>
         <div>紫色表示与前一版本比较后样式更新</div>
+      </div>
+      <div class="loading" v-if="isLoading">
+        <Loading :type="1" fill="#DDAF59" style="position: absolute; top: 40%; left: 50%; transform: scale(1.5)"></Loading>
       </div>
     </modal>
   </div>
@@ -22,42 +38,95 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex'
+import * as _ from 'lodash'
 import htmlDiff from '../../tools/htmlDiff'
 import '../../tools/htmlDiff/style.css'
+import { getNoteHistory } from '../../service'
+import EventHub from '../../utils/eventhub'
+import fetchLocal from '../../utils/fetchLocal'
+import Loading from '@/components/Loading'
 
 export default {
   name: 'HistoryPanel',
 
+  mixins: [ EventHub ],
+
+  components: {
+    Loading
+  },
+
   data () {
     return {
-      title: '111111',
-      htmlFrom: `<div yne-bulb-block=\"paragraph\" style=\"white-space: pre-wrap;\"><br></div><div style=\"font-size: 12px; width: 100%; overflow: auto;font-family:  'Microsoft YaHei', '微软雅黑', '华文黑体',STHeiti,'Microsoft JhengHei',sans-serif;\"><table cellspacing=\"0\" cellpadding=\"0\" border=\"1\" style=\"table-layout:fixed; border-collapse:collapse; border: 1px solid #ccc; width:620px;\"><tbody><tr><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><div class=\"table-cell-line\">aa</div></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td></tr><tr><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><div class=\"table-cell-line\">aaa</div></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><div class=\"table-cell-line\">dd</div></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><div class=\"table-cell-line\">dd</div></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td></tr><tr><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><div class=\"table-cell-line\">aa</div></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><div class=\"table-cell-line\">aaa</div></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td></tr><tr><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><div class=\"table-cell-line\">aa</div></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td></tr><tr><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><div class=\"table-cell-line\">ddd</div></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><div class=\"table-cell-line\">dd</div></td></tr><tr><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td></tr></tbody></table></div><div yne-bulb-block=\"paragraph\" style=\"white-space: pre-wrap;\">测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试</div><div yne-bulb-block=\"paragraph\" style=\"white-space: pre-wrap;\"><br></div><div yne-bulb-block=\"paragraph\" style=\"white-space: pre-wrap;\"><span style=\"font-family:SimSun,STSong;\">测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试</span></div><div yne-bulb-block=\"paragraph\" style=\"white-space: pre-wrap;\"><br></div><div yne-bulb-block=\"heading\" yne-bulb-level=\"a\" id=\"9088-1550668870077\" style=\"white-space: pre-wrap;\"><span style=\"font-size:32px;font-weight:bold;\">测试测试测试测试测试测试测试测试测试测试</span></div><div yne-bulb-block=\"paragraph\" style=\"white-space: pre-wrap;\"><br></div><div yne-bulb-block=\"paragraph\" style=\"white-space: pre-wrap;\">哦哦哦哦哦哦<span style=\"text-decoration: line-through;\">测试测试测试测试测试测试测试测试测试测试测试测试测试</span></div><div yne-bulb-block=\"paragraph\" style=\"white-space: pre-wrap;\"><br></div><div yne-bulb-block=\"paragraph\" style=\"white-space: pre-wrap;\"><span style=\"text-decoration: line-through;\">范德萨发</span></div><div yne-bulb-block=\"paragraph\" style=\"white-space: pre-wrap;\"><br></div><div yne-bulb-block=\"image\" style=\"width:620;height:413;\"><img data-media-type=\"image\" src=\"https://note.youdao.com/yws/open/resource/download/1360/2A0A14591766486685BAF6884FC7F970?oauth_token=f19d5c3bd9b7587d8dc4c49f3550d352\" alt=\"\" style=\"width:620px;\"></div><div yne-bulb-block=\"paragraph\" style=\"white-space: pre-wrap;\"><br></div>`,
-      htmlTo: `<div yne-bulb-block=\"paragraph\"><br></div><div style=\"font-size: 12px; width: 100%; overflow: auto;font-family:  'Microsoft YaHei', '微软雅黑', '华文黑体',STHeiti,'Microsoft JhengHei',sans-serif;\"><table cellspacing=\"0\" cellpadding=\"0\" border=\"1\" style=\"table-layout:fixed; border-collapse:collapse; border: 1px solid #ccc; width:620px;\"><tbody><tr><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><div class=\"table-cell-line\">aafewf</div></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td></tr><tr><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><div class=\"table-cell-line\">aaaaaa</div></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><div class=\"table-cell-line\">dd</div></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><div class=\"table-cell-line\">dd</div></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td></tr><tr><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><div class=\"table-cell-line\">aa</div></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><div class=\"table-cell-line\">aaa</div></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td></tr><tr><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><div class=\"table-cell-line\">aa</div></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td></tr><tr><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><div class=\"table-cell-line\">ddd</div></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><div class=\"table-cell-line\">dd</div></td></tr><tr><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td><td style=\"word-wrap: break-word;width: 124px;height: 40px;\"><br></td></tr></tbody></table></div><div yne-bulb-block=\"paragraph\" style=\"white-space: pre-wrap;\">测试测试测试测试测aojfowjf试测试测试测试测试测试测试测试测试测试测试测试测试</div><div yne-bulb-block=\"paragraph\" style=\"white-space: pre-wrap;\"><br></div><div yne-bulb-block=\"paragraph\" style=\"white-space: pre-wrap;\"><span style=\"font-family:SimSun,STSong;\">测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试测试</span></div><div yne-bulb-block=\"paragraph\" style=\"white-space: pre-wrap;\"><br></div><div yne-bulb-block=\"heading\" yne-bulb-level=\"a\" id=\"9088-1550668870077\" style=\"white-space: pre-wrap;\"><span style=\"font-size:32px;font-weight:bold;\">测试测试测试测试测试测试测试测试测试测试</span></div><div yne-bulb-block=\"paragraph\" style=\"white-space: pre-wrap;\"><br></div><div yne-bulb-block=\"paragraph\" style=\"white-space: pre-wrap;\">哦哦哦哦哦哦<span style=\"text-decoration: line-through;\">测试测试测试测试测试测试测试测试测试测试测试测试测试</span></div><div yne-bulb-block=\"paragraph\" style=\"white-space: pre-wrap;\"><br></div><div yne-bulb-block=\"paragraph\" style=\"white-space: pre-wrap;\"><span style=\"text-decoration: line-through;\">范德萨发</span></div><div yne-bulb-block=\"paragraph\" style=\"white-space: pre-wrap;\"><br></div><div yne-bulb-block=\"image\" style=\"width:620;height:413;\"></div><div yne-bulb-block=\"paragraph\" style=\"white-space: pre-wrap;\"><br></div>`,
-      htmlDiff: ''
+      isLoading: true,
+      title: '',
+      htmlFrom: '',
+      htmlTo: '',
+      htmlDiff: '',
+      histories: [],
+      selectedItem: null
     }
   },
 
   computed: {
     ...mapGetters({
+      currentFile: 'GET_CURRENT_FILE',
       isHistoryPanelShowed: 'GET_SHOW_HISTORY_PANEL'
     })
   },
 
-  watch: {
-    isHistoryPanelShowed (val) {
-      if (val) {
-        this.htmlDiff = htmlDiff(this.htmlFrom, this.htmlTo)
-      }
-    }
-  },
-
   created () {
+    this.$hub.hookHub('diffHtml', 'DocumentList', (file) => this.handleDiff(file))
+    this.$hub.hookHub('diffHtml', 'FileHandler', (file) => this.handleDiff(file))
   },
 
   methods: {
     ...mapActions([
       'TOGGLE_SHOW_HISTORY_PANEL'
     ]),
+
+    handleDiff (file) {
+      this.isLoading = true
+      console.log('handleDiff', file)
+      fetchLocal('getLocalNoteByQuery', {
+        id: file.file_id || file._id
+      }, {
+        with_doc: true
+      }).then(res => {
+        if (!res.remote_id) {
+          this.$Message.warning('服务器暂无此文件')
+          return
+        }
+        this.htmlTo = res.content
+        this.title = res.title
+        getNoteHistory({ noteId: res.remote_id }).then(res => {
+          console.log('getNoteHistory-res', res)
+          if (res.data.returnCode === 200) {
+            this.TOGGLE_SHOW_HISTORY_PANEL(true)
+            if (!res.data.body[0]) {
+              this.histories = []
+              this.htmlFrom = this.htmlTo
+              this.htmlDiff = htmlDiff(this.htmlFrom, this.htmlTo)
+              this.isLoading = false
+              return
+            }
+            this.histories = _.reverse(res.data.body[0].histories)
+            this.selectedItem = this.histories[0]
+            this.htmlFrom = this.selectedItem.noteContent
+            this.htmlDiff = htmlDiff(this.htmlFrom, this.htmlTo)
+            this.isLoading = false
+          } else {
+            this.$Message.warning('服务器暂无此文件')
+          }
+        })
+      })
+    },
+
+    handleClickItem (item) {
+      console.log('handleClickItem', item)
+      this.htmlFrom = item.noteContent
+      this.selectedItem = item
+      this.htmlDiff = htmlDiff(this.htmlFrom, this.htmlTo)
+    },
 
     closeHistoryPanel () {
       this.TOGGLE_SHOW_HISTORY_PANEL()
@@ -74,14 +143,53 @@ export default {
   font-weight bold
   margin-bottom 10px
 
+.loading
+  width 100%
+  height 100%
+  position absolute
+  top 0
+  left 0
+  background-color #fff
+
 .container
   position relative
-  height 95%
-  overflow-y scroll
+  height 100%
+  display flex
+
+.content
+  flex 1
+  height 100%
   padding 20px
+  overflow-y scroll
+  padding-bottom 40px
+
+.list
+  width 280px
+  height 100%
+  top 0
+  right 0
+  position relative
+  background-color #fff
+  border-left 1px solid #eee
+  overflow-y scroll
+  padding-bottom 39px
+  li
+    height 44px
+    padding 10px 20px
+    border-bottom 1px solid #eee
+    &.active
+      background-color #f9f9f9
+
+.no-history
+  font-size 17px
+  top 30%
+  width 100%
+  position absolute
+  text-align center
 
 .instruction
   width 100%
+  height 40px
   padding 10px 20px
   background-color #fff
   border-top 1px solid #eee
@@ -105,10 +213,10 @@ export default {
       border-radius 50%
     &:nth-of-type(1)
       &::before
-        background-color #ffcccc
+        background-color #e0ffcc
     &:nth-of-type(2)
       &::before
-        background-color #e0ffcc
+        background-color #ffcccc
     &:nth-of-type(3)
       &::before
         background-color #e0e5ff

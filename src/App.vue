@@ -57,4 +57,8 @@ export default {
   // display flex
   // flex-direction row
   overflow hidden
+
+#history.content
+  img
+    width 90% !important
 </style>

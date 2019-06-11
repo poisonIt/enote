@@ -297,6 +297,7 @@ export default {
     },
 
     showHistory () {
+      this.$hub.dispatchHub('diffHtml', this, this.currentFile)
     },
 
     handleHeaderDbClick () {

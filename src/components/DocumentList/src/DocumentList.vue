@@ -495,7 +495,7 @@ export default {
     },
     
     handleHistory () {
-      this.TOGGLE_SHOW_HISTORY_PANEL(true)
+      this.$hub.dispatchHub('diffHtml', this, this.popupedFile)
     },
 
     handleResume () {

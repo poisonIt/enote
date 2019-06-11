@@ -1,0 +1,12 @@
+span {
+  display: inline-block;
+}
+.delete {
+  background-color: #ffcccc;
+}
+.insert {
+  background-color: #e0ffcc;
+}
+.style {
+  background-color: #e0e5ff;
+}

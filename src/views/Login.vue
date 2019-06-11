@@ -46,7 +46,7 @@ import {
 } from '../service'
 import * as LocalService from '../service/local'
 import { saveAppConf } from '../tools/appConf'
-import { mapActions } from 'vuex'
+import { mapActions, mapGetters } from 'vuex'
 import pullData from '@/utils/mixins/pullData'
 // import pushData from '@/utils/mixins/pushData'
 import Loading from '@/components/Loading'
@@ -117,8 +117,8 @@ export default {
       if (this.isLoading) return
       this.isLoading = true
       const { username, password } = this
-      console.log('postInput', username, password)
-      if (this.network_status === 'offline') {
+      console.log('postInput', username, password, window.navigator.onLine)
+      if (!window.navigator.onLine) {
         if (this.autoLogin === '1') {
           ipcRenderer.send('login-ready')
           return

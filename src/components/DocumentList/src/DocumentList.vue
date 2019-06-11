@@ -200,7 +200,8 @@ export default {
       'SET_VIEW_FILE_SORT_TYPE',
       'SET_VIEW_FILE_SORT_ORDER',
       'TOGGLE_SHOW_MOVE_PANEL',
-      'TOGGLE_SHOW_SHARE_PANEL'
+      'TOGGLE_SHOW_SHARE_PANEL',
+      'TOGGLE_SHOW_HISTORY_PANEL'
     ]),
 
     refreshList () {
@@ -487,6 +488,10 @@ export default {
       let idx = _.findIndex(this.fileList, { _id: this.popupedFile.file_id} )
       this.selectFile(idx)
       this.TOGGLE_SHOW_SHARE_PANEL(true)
+    },
+    
+    handleHistory () {
+      this.TOGGLE_SHOW_HISTORY_PANEL(true)
     },
 
     handleResume () {

@@ -5,8 +5,8 @@
       :height="'281px'"
       top="30vh"
       transition-name="fade-in-down"
-      @close="closeUserPanel"
-      :visible.sync="isUserPanelShowed">
+      @close="close"
+      :visible.sync="isShowed">
       <div slot="title" class="title">个人信息</div>
       <div class="user-info">
         <div class="item">
@@ -38,7 +38,7 @@
           </div>
           <span v-else>开始同步</span>
         </div>
-        <div class="button" @click="closeUserPanel">取消</div>
+        <div class="button" @click="close">取消</div>
       </div>
     </modal>
     <modal
@@ -84,7 +84,7 @@ import Loading from '@/components/Loading'
 import fetchLocal from '../../utils/fetchLocal'
 
 export default {
-  name: 'UserPanel',
+  name: '',
 
   components: {
     Loading
@@ -107,7 +107,7 @@ export default {
 
   computed: {
     ...mapGetters({
-      isUserPanelShowed: 'GET_SHOW_USER_PANEL',
+      isShowed: 'GET_SHOW_USER_PANEL',
       userInfo: 'GET_USER_INFO'
     }),
 
@@ -133,7 +133,7 @@ export default {
       'SET_USER_INFO'
     ]),
 
-    closeUserPanel () {
+    close () {
       this.TOGGLE_SHOW_USER_PANEL(false)
     },
 

@@ -110,11 +110,9 @@ export default {
         username: username,
         password: password
       }).catch(err => {
-        this.$Message.error(String(err))
+        // this.$Message.error('String(err)')
+        this.$Message.error('网络异常，请稍后重试')
         console.error(err)
-        if (this.autoLogin === '1') {
-          ipcRenderer.send('login-ready')
-        }
         this.isLoading = false
         return
       })
@@ -135,8 +133,11 @@ export default {
 
         if (!userResp.userData) return
         ipcRenderer.send('update-user-data', userResp.userData)
-      } else {
-        this.$Message.error('请输入正确的用户名、密码')
+      } else if (authenticateResp.data.returnCode === 401){ //添加状态判断 用户名或密码错误
+        this.$Message.error('用户名密码错误')
+        this.isLoading = false
+      }else{
+        this.$Message.error('请输入用户名和密码')
         this.isLoading = false
       }
     },

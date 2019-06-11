@@ -363,17 +363,27 @@ export default {
           this.$hub.dispatchHub('pushData', this)
         })
       } else {
-        fetchLocal('updateLocalFolder', {
-          id: node.data._id || node.data.id || node.id,
-          title: node.name
-        }).then(res => {
-          if (node.parent === this.$refs.tree.model.store.currentNode) {
-            this.$hub.dispatchHub('renameListFile', this, {
-              id: node.model.data._id,
-              title: node.model.name
+        fetchLocal('getLocalFolderByPid', {
+          pid: node.data.pid
+        }).then(folders => {
+          let foldersSameName = _.find(folders, { title: node.name })
+          if (foldersSameName) {
+            node.name = node.data.title
+            return
+          } else {
+            fetchLocal('updateLocalFolder', {
+              id: node.data._id || node.data.id || node.id,
+              title: node.name
+            }).then(res => {
+              if (node.parent === this.$refs.tree.model.store.currentNode) {
+                this.$hub.dispatchHub('renameListFile', this, {
+                  id: node.model.data._id,
+                  title: node.model.name
+                })
+              }
+              this.$hub.dispatchHub('pushData', this)
             })
           }
-          this.$hub.dispatchHub('pushData', this)
         })
       }
     },

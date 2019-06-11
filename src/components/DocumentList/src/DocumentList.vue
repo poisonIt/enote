@@ -191,6 +191,10 @@ export default {
     }
   },
 
+  mounted () {
+    this.$root.$documentList = this
+  },
+
   methods: {
     ...mapActions([
       'SET_CURRENT_FILE',

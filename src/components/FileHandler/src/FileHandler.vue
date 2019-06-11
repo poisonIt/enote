@@ -68,6 +68,7 @@
 <script>
 import { ipcRenderer } from 'electron'
 import dayjs from 'dayjs'
+import * as _ from 'lodash'
 import { mapGetters, mapActions } from 'vuex'
 // import {
 //   updateLocalFolder,
@@ -186,6 +187,12 @@ export default {
     async handleInputBlur () {
       this.isInputFocused = false
       if (this.titleValue === this.currentFileTitle) return
+      let fileList = this.$root.$documentList.fileList
+      let files = _.find(fileList, { title: this.titleValue, type: this.currentFile.type })
+      if (files) {
+        this.titleValue = this.currentFile.title
+        return
+      }
       this.currentFileTitle = this.titleValue
       this.$hub.dispatchHub('updateFile', this, {
         id: this.currentFile._id,

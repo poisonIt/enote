@@ -73,6 +73,7 @@
           <textarea type="text"
             v-model="title"
             :class="{ error: showTitleError }"
+            :maxlength="50"
             @blur="handleTitleBlur"/>
           <span class="tip-error" v-show="showTitleError">请不要超出50个中文字符长度</span>
         </div>
@@ -81,6 +82,7 @@
           <textarea type="text"
             v-model="keywords"
             :class="{ error: showKeywordError }"
+            :maxlength="50"
             @blur="handleKeywordBlur"/>
           <span class="tip-error" v-show="showKeywordError">请不要超出50个中文字符长度</span>
         </div>
@@ -89,6 +91,7 @@
           <textarea type="text"
             v-model="summary"
             :class="{ error: showSummaryError }"
+            :maxlength="50"
             @blur="handleSummaryBlur"/>
           <span class="tip-error" v-show="showSummaryError">请不要超出50个中文字符长度</span>
         </div>

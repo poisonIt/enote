@@ -11,6 +11,7 @@
         v-model="titleValue"
         :disabled="isTrash"
         @focus="handleInputFocus"
+        :maxlength="50"
         @blur="handleInputBlur"
         @keyup.enter="handleInputEnter">
       <p class="ellipsis">{{ titleValue }}</p>

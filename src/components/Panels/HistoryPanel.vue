@@ -221,4 +221,3 @@ export default {
       &::before
         background-color #e0e5ff
 </style>
-

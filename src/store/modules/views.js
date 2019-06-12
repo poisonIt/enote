@@ -22,6 +22,7 @@ const state = {
   cached_doc: '',
   // current_nav: null,
   is_syncing: false,
+  notes_pushing: [],
   is_editor_focused: false,
   is_home_ready: false
 }
@@ -110,6 +111,10 @@ const mutations = {
 
   SET_IS_SYNCING (state, val) {
     state.is_syncing = val
+  },
+
+  SET_NOTES_PUSHING (state, val) {
+    state.notes_pushing = val
   },
 
   SET_IS_EDITOR_FOCUSED (state, val) {
@@ -204,6 +209,11 @@ const actions = {
 
   SET_IS_SYNCING ({ commit }, val) {
     commit('SET_IS_SYNCING', val)
+  },
+
+  SET_NOTES_PUSHING ({ commit }, val) {
+    console.log('SET_NOTES_PUSHING', val)
+    commit('SET_NOTES_PUSHING', val)
   },
 
   SET_IS_EDITOR_FOCUSED ({ commit }, val) {
@@ -302,6 +312,10 @@ const getters = {
 
   GET_IS_SYNCING (state) {
     return state.is_syncing
+  },
+
+  GET_NOTES_PUSHING (state) {
+    return state.notes_pushing
   },
 
   GET_IS_EDITOR_FOCUSED (state) {

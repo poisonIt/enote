@@ -2,7 +2,7 @@
   <div>
     <modal
       width="465px"
-      height="317px"
+      height="347px"
       top="20vh"
       transition-name="fade-in-down"
       title="分享链接"
@@ -64,6 +64,16 @@
               添加可查看成员
             </div>
           </div>
+
+          <!-- 添加app图标，mouseover出现二维码 -->
+
+          <div class="iapp">
+            分享至：
+            <poptip trigger="hover" placement="right">
+                <img class="app" src="@/assets/images/iapp.png"/>
+                <vue-qr  :text="config.value" :size="100" :dotScale="1" :margin="5"  slot="content"></vue-qr>
+            </poptip>
+          </div>
           <div class="footer">
             <span class="cancel-button"
               v-show="!isLoading"
@@ -121,6 +131,7 @@
 </template>
 
 <script>
+import VueQr from 'vue-qr'  //二维码插件
 import { clipboard } from 'electron'
 import { mapActions, mapGetters } from 'vuex'
 import LocalDAO from '../../../db/api'
@@ -134,11 +145,10 @@ import fetchLocal from '../../utils/fetchLocal';
 
 export default {
   name: 'SharePanel',
-
   components: {
-    Loading
+    Loading,
+    VueQr 
   },
-
   data () {
     return {
       remoteId: '',
@@ -185,7 +195,10 @@ export default {
           children: []
         }
       ],
-      entitledUser: []
+      entitledUser: [],
+      config: {
+        value: ''
+      }
     }
   },
 
@@ -267,7 +280,7 @@ export default {
     ...mapActions([
       'TOGGLE_SHOW_SHARE_PANEL'
     ]),
-
+   
     closeSharePanel () {
       this.remoteId = ''
       this.TOGGLE_SHOW_SHARE_PANEL(false)
@@ -299,7 +312,6 @@ export default {
       }
 
       let shareResp = await publishShare(data)
-
       this.handleShareFinished(shareResp)
     },
 
@@ -312,7 +324,7 @@ export default {
         this.entitledType = this.shareInfo.entitledType
         this.validity = String(this.shareInfo.validityType)
         this.entitledUser = this.shareInfo.entitledUser || []
-        
+        this.config.value = this.shareInfo.url
         this.friendChecked = this.fdList.filter(item => {
           if (this.entitledUser.indexOf(item.userCode) > -1) {
             item.state = true
@@ -335,7 +347,10 @@ export default {
 
         this.$nextTick(() => {
           this.isFirstData = false
+          // this.qrcode()
         })
+
+
       } else {
         this.closeSharePanel()
       }
@@ -343,10 +358,10 @@ export default {
 
     async cancelShare () {
       this.isLoading = true
-
       let cancelResp = await unPublishShare({
         noteId: this.currentFile.remote_id
       })
+
 
       this.isLoading = false
 
@@ -354,7 +369,6 @@ export default {
         this.closeSharePanel()
       }
     },
-
     handleLinkFocus () {
       this.$refs.linkInput.select()
     },
@@ -390,7 +404,8 @@ export default {
     copyShareUrl () {
       clipboard.writeText(this.shareUrl)
       this.$Message.success('复制成功')
-    }
+    },
+   
   }
 }
 </script>
@@ -422,11 +437,17 @@ export default {
   .validity, .authority
     display flex
     align-items center
+  .iapp 
+    .app
+      width 30px
+      height 30px
+      vertical-align middle
+      display inline-block
   .footer
     // display flex
     // flex 1
     // justify-content space-between
-    margin-top 30px
+    margin-top 15px
   .cancel-button
     width 70px
     height 28px

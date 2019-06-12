@@ -10,15 +10,29 @@ import Modal from '@/components/Modal'
 import BSelect from '@/components/Select'
 import BOption from '@/components/Option'
 import Menu from '@/components/Menu'
-import { Message, Upload, Button, Select, Option, Form, FormItem } from 'iview'
+import {
+  Message,
+  Upload,
+  Button,
+  Select,
+  Option,
+  Form,
+  FormItem,
+  Poptip
+} from 'iview'
 import '@/assets/css/font-awesome.min.css'
 import 'iview/dist/styles/iview.css'
 import '@/assets/styles/iview.styl'
 import '@/assets/styles/common.styl'
+import '@/assets/css/font-family.css'
 
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
-const { remote, shell, webFrame } = require('electron')
+const {
+  remote,
+  shell,
+  webFrame
+} = require('electron')
 console.log(remote.app.getAppPath('userData'))
 
 let serviceUrl = ''
@@ -32,6 +46,7 @@ Vue.component('Upload', Upload)
 Vue.component('Button', Button)
 Vue.component('Select', Select)
 Vue.component('Option', Option)
+Vue.component('Poptip', Poptip)
 // Vue.component('Form', Form)
 // Vue.component('FormItem', FormItem)
 Vue.prototype.$Message = Message

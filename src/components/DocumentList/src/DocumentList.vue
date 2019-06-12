@@ -191,6 +191,10 @@ export default {
     }
   },
 
+  mounted () {
+    this.$root.$documentList = this
+  },
+
   methods: {
     ...mapActions([
       'SET_CURRENT_FILE',
@@ -200,7 +204,8 @@ export default {
       'SET_VIEW_FILE_SORT_TYPE',
       'SET_VIEW_FILE_SORT_ORDER',
       'TOGGLE_SHOW_MOVE_PANEL',
-      'TOGGLE_SHOW_SHARE_PANEL'
+      'TOGGLE_SHOW_SHARE_PANEL',
+      'TOGGLE_SHOW_HISTORY_PANEL'
     ]),
 
     refreshList () {
@@ -259,8 +264,8 @@ export default {
 
     updateFileList () {
       let re = new RegExp(this.searchKeyword, 'g')
-      let notes = this.fileListSortFunc(this.noteList.filter(file => file.title.search(re) > -1))
-      let folders = this.folderList.filter(file => file.title.search(re) > -1)
+      let notes = this.fileListSortFunc(this.noteList.filter(file => file.title.search(re) > -1), 'note')
+      let folders = this.fileListSortFunc(this.folderList.filter(file => file.title.search(re) > -1), 'folder')
 
       this.fileList = _.flatten([folders, notes])
       let idx = _.findIndex(this.fileList, { _id: this.selectedIdCache })
@@ -307,15 +312,16 @@ export default {
     },
 
     handleMenuClick (value, item) {
+      let sortOrder = !item.actived ? 'up' : 'down'
       if (value === 'summary' || value === 'list') {
         this.SET_VIEW_FILE_LIST_TYPE(value)
       } else {
         this.SET_VIEW_FILE_SORT_TYPE(value)
-        this.SET_VIEW_FILE_SORT_ORDER(item.actived ? 'up' : 'down')
+        this.SET_VIEW_FILE_SORT_ORDER(sortOrder)
       }
     },
 
-    fileListSortFunc (list) {
+    fileListSortFunc (list, type) {
       let order
       let sortKey
 
@@ -349,7 +355,9 @@ export default {
       }
       let topList = listTemp.filter(item => item.top)
       let downList = listTemp.filter(item => !item.top)
-      this.stickTopFiles = topList
+      if (type === 'note') {
+        this.stickTopFiles = topList
+      }
 
       return [...topList, ...downList]
     },
@@ -401,13 +409,15 @@ export default {
       })
     },
 
-    handleExportPDF () {
-      return
+    handleExportPDF () { //导出pdf功能
+      // return
       let data = this.popupedFile.rawData
+
       ipcRenderer.send('print-to-pdf', {
+
         noteId: data._id,
         title: data.title,
-        isPdf: '1'
+        isPdf: 1
       })
     },
 
@@ -484,6 +494,10 @@ export default {
       let idx = _.findIndex(this.fileList, { _id: this.popupedFile.file_id} )
       this.selectFile(idx)
       this.TOGGLE_SHOW_SHARE_PANEL(true)
+    },
+    
+    handleHistory () {
+      this.$hub.dispatchHub('diffHtml', this, this.popupedFile)
     },
 
     handleResume () {

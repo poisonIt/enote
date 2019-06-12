@@ -201,12 +201,15 @@ export default {
     },
 
     async pushNotes () {
+      console.log('pushNotes-0')
       const { clientId, deviceName, platform } = this.$remote.app.appConf
+      console.log('pushNotes-1', clientId, deviceName, platform)
 
       let nNeedPush = await fetchLocal('getLocalNoteByQuery',
         { need_push: true },
         { multi: true, with_doc: true }
       )
+      console.log('pushNotes-2', nNeedPush)
 
       if (nNeedPush.length === 0) {
         return

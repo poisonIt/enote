@@ -76,8 +76,8 @@ export default {
     },
 
     network_status (val) {
-      return // 密码错误3次账号会被锁住
       this.isOffline = (val === 'offline')
+      return // 密码错误3次账号会被锁住
       if (!this.isOffline && this.$remote.getCurrentWindow().isVisible()) {
         setTimeout(() => {
           this.authenticate()
@@ -145,8 +145,12 @@ export default {
     },
 
     async syncData () {
-      await this.pullData(this.noteVer)
-      await this.pushData()
+      if (!this.isOffline) {
+        await this.pullData(this.noteVer)
+        await this.pushData()
+      } else {
+        ipcRenderer.send('pull-finished')
+      }
     },
 
     pushLocalData (delay, isAuto) {

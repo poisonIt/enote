@@ -13,6 +13,7 @@ const state = {
   show_move_pannel: false,
   show_user_panel: false,
   show_share_panel: false,
+  show_history_panel: false,
   show_research_panel: false,
   show_setting_panel: false,
   show_tag_handler: false,
@@ -85,6 +86,10 @@ const mutations = {
 
   TOGGLE_SHOW_SHARE_PANEL (state, val) {
     state.show_share_panel = !!val
+  },
+
+  TOGGLE_SHOW_HISTORY_PANEL (state, val) {
+    state.show_history_panel = !!val
   },
 
   TOGGLE_SHOW_RESEARCH_PANEL (state, val) {
@@ -175,6 +180,10 @@ const actions = {
 
   TOGGLE_SHOW_SHARE_PANEL ({ commit }, val) {
     commit('TOGGLE_SHOW_SHARE_PANEL', val)
+  },
+
+  TOGGLE_SHOW_HISTORY_PANEL ({ commit }, val) {
+    commit('TOGGLE_SHOW_HISTORY_PANEL', val)
   },
 
   TOGGLE_SHOW_RESEARCH_PANEL ({ commit }, val) {
@@ -269,6 +278,10 @@ const getters = {
 
   GET_SHOW_SHARE_PANEL (state) {
     return state.show_share_panel
+  },
+
+  GET_SHOW_HISTORY_PANEL (state) {
+    return state.show_history_panel
   },
 
   GET_SHOW_RESEARCH_PANEL (state) {

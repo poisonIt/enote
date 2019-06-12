@@ -46,7 +46,7 @@ import {
 } from '../service'
 import * as LocalService from '../service/local'
 import { saveAppConf } from '../tools/appConf'
-import { mapActions } from 'vuex'
+import { mapActions, mapGetters } from 'vuex'
 import pullData from '@/utils/mixins/pullData'
 // import pushData from '@/utils/mixins/pushData'
 import Loading from '@/components/Loading'
@@ -72,6 +72,12 @@ export default {
     }
   },
 
+  computed: {
+    ...mapGetters({
+      network_status: 'GET_NETWORK_STATUS'
+    })
+  },
+
   created () {
     if (this.$remote.app.appConf.platform !== 'darwin') {
       this.showHeader = true
@@ -81,7 +87,6 @@ export default {
       let curWin = this.$remote.getCurrentWindow()
       curWin.hide()
     }
-
     let { autoLogin, username, password } = this.$router.currentRoute.query
     this.autoLogin = autoLogin
     if (this.autoLogin === '1') {
@@ -89,7 +94,6 @@ export default {
       this.password = password
       this.postInput()
     }
-
     ipcRenderer.on('update-user-data-response', (event, arg) => {
       ipcRenderer.send('login-ready')
     })
@@ -108,18 +112,25 @@ export default {
       'SET_TOKEN',
       'SET_FILES_FROM_LOCAL'
     ]),
-
+  
     async postInput () {
       if (this.isLoading) return
       this.isLoading = true
       const { username, password } = this
-      console.log('postInput', username, password)
+      console.log('postInput', username, password, window.navigator.onLine)
+      if (!window.navigator.onLine) {
+        if (this.autoLogin === '1') {
+          ipcRenderer.send('login-ready')
+          return
+        }
+      }
 
       let authenticateResp = await authenticate({
         username: username,
         password: password
       }).catch(err => {
-        this.$Message.error(String(err))
+        // this.$Message.error('String(err)')
+        this.$Message.error('网络异常，请稍后重试')
         console.error(err)
         this.isLoading = false
         return
@@ -141,8 +152,11 @@ export default {
 
         if (!userResp.userData) return
         ipcRenderer.send('update-user-data', userResp.userData)
-      } else {
-        this.$Message.error('请输入正确的用户名、密码')
+      } else if (authenticateResp.data.returnCode === 401){ //添加状态判断 用户名或密码错误
+        this.$Message.error('用户名密码错误')
+        this.isLoading = false
+      }else{
+        this.$Message.error('请输入用户名和密码')
         this.isLoading = false
       }
     },
@@ -213,7 +227,7 @@ export default {
   height 100%
   background #fff
   background-image url('../assets/images/lanhu/login_bg@1x.png')
-  background-size contain
+  background-size cover
   background-repeat no-repeat
   -webkit-app-region drag
 
@@ -252,7 +266,7 @@ export default {
   left 50%
   transform translateX(-50%)
   background-image url('../assets/images/lanhu/logo_white@1x.png')
-  background-size contain
+  background-size cover
   background-repeat no-repeat
 
 .title
@@ -266,7 +280,7 @@ export default {
 
 .form
   position absolute
-  bottom 113px
+  bottom 80px
   left 50%
   transform translateX(-50%)
 

@@ -104,6 +104,7 @@ export default {
 
     handleMove () {
       if (!this.targetFolder) {
+        this.$Message.error('请选择要移动的文件夹')  //添加移动文件夹提示
         return
       }
       if (!this.targetFolder.id) {

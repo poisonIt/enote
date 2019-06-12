@@ -521,7 +521,10 @@ async function getByQuery (params, opts) {
     notes = await Promise.all(notes.map(note => {
       return (async () => {
         let doc = await docCtr.getByNoteId({ note_id: note._id })
-        note.content = doc.content
+        note.content = doc ? doc.content : ''
+        if (!doc) {
+          note.illegal = 'DOC'
+        }
         return note
       })(note)
     }))

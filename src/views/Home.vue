@@ -23,6 +23,7 @@
     <MovePanel></MovePanel>
     <UserPanel></UserPanel>
     <SharePanel></SharePanel>
+    <HistoryPanel></HistoryPanel>
     <ResearchPanel></ResearchPanel>
     <SettingPanel></SettingPanel>
     <div class="home-loading" v-if="!isHomeReady">
@@ -48,6 +49,7 @@ import FolderComp from '@/components/FolderComp.vue'
 import MovePanel from '@/components/Panels/MovePanel'
 import UserPanel from '@/components/Panels/UserPanel'
 import SharePanel from '@/components/Panels/SharePanel'
+import HistoryPanel from '@/components/Panels/HistoryPanel'
 import ResearchPanel from '@/components/Panels/ResearchPanel'
 import SettingPanel from '@/components/Panels/SettingPanel'
 import Loading from '@/components/Loading'
@@ -78,6 +80,7 @@ export default {
     MovePanel,
     UserPanel,
     SharePanel,
+    HistoryPanel,
     ResearchPanel,
     SettingPanel,
     Loading

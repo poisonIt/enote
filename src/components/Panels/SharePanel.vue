@@ -411,7 +411,6 @@ export default {
 </script>
 
 <style lang="stylus" scoped>
-import '@/assets/css/family.css'
 .lucency
   opacity 0
 

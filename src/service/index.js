@@ -33,6 +33,10 @@ export function pullTags (params) {
   })
 }
 
+export function getNoteHistory (params) {
+  return axios.get(`/note/noteHistory/${params.noteId}`)
+}
+
 export function pushNotebook (params) {
   return axios.post('/noteBook/pushNotebook', params)
 }

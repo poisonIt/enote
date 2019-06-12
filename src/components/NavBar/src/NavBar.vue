@@ -52,8 +52,8 @@
         @click="handleClickMini('recycle')">
       </div>
     </div>
-    <modal 
-      :visible.sync="isShow"
+    <modal
+      :visible.sync="isDelShowed"
       width="300px"
       top="30vh"
       style="padding-bottom:20px "
@@ -141,7 +141,7 @@ export default {
 
   data () {
     return {
-      isShow: false,
+      isDelShowed: false,
       initFlag: true,
       typingNode: null,
       currentNode: null,
@@ -457,7 +457,7 @@ export default {
     handleDelete () {
       let node = this.popupedNode.model
       if (node.children.length > 0) {
-        this.isShow = true
+        this.isDelShowed = true
       } else {
         this.del(node)
       }
@@ -465,7 +465,7 @@ export default {
     delConfirm () {
       let node = this.popupedNode.model
       this.del(node)
-      this.isShow = false
+      this.isDelShowed = false
     },
     del (node) {
       fetchLocal('updateLocalFolder', {
@@ -478,7 +478,7 @@ export default {
       })
     },
     close () {
-      this.isShow = false
+      this.isDelShowed = false
     },
     handleClearBin () {
       fetchLocal('deleteAllTrash').then(res => {

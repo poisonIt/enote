@@ -91,7 +91,6 @@
           <textarea type="text"
             v-model="summary"
             :class="{ error: showSummaryError }"
-            :maxlength="50"
             @blur="handleSummaryBlur"/>
           <span class="tip-error" v-show="showSummaryError">请不要超出50个中文字符长度</span>
         </div>
@@ -205,7 +204,7 @@ export default {
       ruleCustom: {
         title: [
           // { required: true, message: '1111', trigger: 'blur' },
-          { type: 'string', max: 20, message: 'Introduce no less than 20 words', trigger: 'blur' },
+          { type: 'string', max: 20, message: 'Introduce no less than 20 words', trigger: 'blur' }
           // { validator: validateStrLen, trigger: 'blur' }
         ]
       }
@@ -243,9 +242,7 @@ export default {
     },
 
     title (val, oldVal) {
-      if (val.length > 100) {
-        
-      }
+      if (val.length > 100) {}
     },
 
     stock (val) {
@@ -274,7 +271,7 @@ export default {
     closeResearchPanel () {
       this.TOGGLE_SHOW_RESEARCH_PANEL(false)
     },
-    
+        
     handleUpload (file) {
       this.uploadList.push(file)
       this.$nextTick(() => {
@@ -345,10 +342,9 @@ export default {
         this.showSummaryError = false
       }
     },
-
     postReport () {
       if (!this.stockItem) {
-        this.$Message.error('请选择股票')
+        this.$Message.error('请选择报告大类')
         return
       }
       let data = {
@@ -367,15 +363,19 @@ export default {
         username: this.userInfo.usercode
       }
       if (data.reporttypeid === '') {
-        this.$Message.error('请选择报告类别')
+        this.$Message.error('请选择报告小类')
         return
       }
       if (data.title === '') {
-        this.$Message.error('请填写标题')
+        this.$Message.error('请输入报告标题')
         return
       }
       if (data.keywords === '') {
         this.$Message.error('请填写关键字')
+        return
+      }
+      if (data.scode === '') {
+        this.$Message.error('请选择股票')
         return
       }
       if (data.summary === '') {
@@ -516,4 +516,3 @@ export default {
   font-size 12px
   line-height 18px
 </style>
-

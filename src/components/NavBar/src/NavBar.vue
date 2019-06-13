@@ -100,6 +100,21 @@ const latestNav = {
   }
 }
 
+const shareNav = {
+  name: '与我分享',
+  id: 'share',
+  pid: null,
+  dragDisabled: true,
+  addTreeNodeDisabled: true,
+  addLeafNodeDisabled: true,
+  editNodeDisabled: true,
+  delNodeDisabled: true,
+  children: [],
+  data: {
+    type: 'share'
+  }
+}
+
 const rootFolder = {
   name: '我的文件夹',
   id: '0',
@@ -203,7 +218,7 @@ export default {
         if (e.data[0] === 'calcLocalData') {
           let newRootFolder = e.data[1]
           let newTagNav = e.data[2]
-          _self.folderTree = new TreeStore([latestNav, newRootFolder, newTagNav, binNav])
+          _self.folderTree = new TreeStore([latestNav, shareNav, newRootFolder, newTagNav, binNav])
           _self.$nextTick(() => {
             _self.$refs.tree.$children[0].click()
             _self.SET_IS_HOME_READY(true)
@@ -330,7 +345,7 @@ export default {
     },
 
     handleAddTagNode (tagData) {
-      let tagRootNode = this.$refs.tree.model.store.root.children[2]
+      let tagRootNode = this.$refs.tree.model.store.root.children[3]
       let tag = {}
       tag.type = 'select'
       tag.isSelected = false
@@ -388,6 +403,7 @@ export default {
           let foldersSameName = _.find(folders, { title: node.name })
           if (foldersSameName) {
             node.name = node.data.title
+            console.log('11111')
             return
           } else {
             fetchLocal('updateLocalFolder', {
@@ -411,15 +427,35 @@ export default {
       this.$refs.tree.updateNodeModel(params)
     },
 
-    handleNodeDrop ({ node, oldParent }) {
+    async handleNodeDrop ({ node, oldParent }) {
       if (node.pid !== oldParent.id) {
-        fetchLocal('updateLocalFolder', {
+        await fetchLocal('updateLocalFolder', {
           id: node.data._id || node.data.id || node.id,
-          pid: node.pid,
-          seq: node.getIndex()
-        }).then(() => {
-          this.$hub.dispatchHub('pushData', this)
+          pid: node.pid
         })
+        let oldBrothers = await fetchLocal('getLocalFolderByPid', {
+          pid: oldParent.id
+        })
+        let newBrothers = await fetchLocal('getLocalFolderByPid', {
+          pid: node.pid
+        })
+        let nodes = [...oldBrothers, ...newBrothers]
+        let map = this.$refs.tree.model.store.map
+
+        let p = nodes.map(folder => {
+          let node = map[folder._id]
+          return fetchLocal('updateLocalFolder', {
+            id: node.data._id || node.data.id || node.id,
+            seq: node.getIndex()
+          })
+        })
+
+        await Promise.all(p)
+        let curNode = this.$refs.tree.model.store.currentNode
+        if (curNode.data._id === oldParent.id || curNode.data._id === node.pid) {
+          this.$hub.dispatchHub('refreshList', this)
+        }
+        this.$hub.dispatchHub('pushData', this)
       }
     },
 
@@ -430,7 +466,7 @@ export default {
           id: this.popupedNode.model.id,
           title: this.popupedNode.model.name
         },
-        tree: this.$refs.tree.model.children[1]
+        tree: this.$refs.tree.model.children[2]
       })
     },
 

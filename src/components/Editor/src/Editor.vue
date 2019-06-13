@@ -12,9 +12,7 @@ import { ipcRenderer } from 'electron'
 import { mapGetters, mapActions } from 'vuex'
 import mixins from '../mixins'
 import uploadAdapter from './upload'
-import linkShell from './linkShell'
 import '../../../assets/styles/editor.css'
-import { getLocalDoc, updateLocalDoc } from '@/service/local'
 import fetchLocal from '../../../utils/fetchLocal'
 
 const ClassicEditor = window.ClassicEditor
@@ -84,8 +82,9 @@ export default {
     ipcRenderer.on('communicate', (event, arg) => {
       if (arg.from === 'Preview' && arg.tasks.indexOf('updateEditorDoc') > -1) {
         let res = arg.params[arg.tasks.indexOf('updateEditorDoc')]
-        if (this.currentDoc._id === res.id)
-        this.editor.setData(res.content)
+        if (this.currentDoc._id === res.id) {
+          this.editor.setData(res.content)
+        }
       }
     })
 
@@ -93,18 +92,24 @@ export default {
       let webviewPDF = document.getElementById('pdf-path')
       let tempPath = this.$remote.app.appConf.resourcePath + `/${this.currentFile._id}.html`
 
-      let dev_url = this.$remote.app.appConf.dev_url
-      console.log('process.env.WEBPACK_DEV_SERVER_URL', dev_url)
+      let devUrl = this.$remote.app.appConf.dev_url
+      console.log('process.env.WEBPACK_DEV_SERVER_URL', devUrl)
 
       fs.writeFile(tempPath, this.editor.getData(), (err, data) => {
-        let url = dev_url
-          ? dev_url + `#/pdf?note_id=${this.currentFile._id}`
+        if (err) {
+          console.warn(err)
+        }
+        let url = devUrl
+          ? devUrl + `#/pdf?note_id=${this.currentFile._id}`
           : `app://./index.html#/pdf?note_id=${this.currentFile._id}`
         webviewPDF.src = url
         webviewPDF.printToPDF({}, (error, data) => {
-          fs.writeFile(path, data, function (error) {
-            if (error) {
-              throw error
+          if (error) {
+            throw error
+          }
+          fs.writeFile(path, data, function (err) {
+            if (err) {
+              throw err
             }
           })
         })
@@ -132,8 +137,7 @@ export default {
           .create(this.$refs.editor, {
             fontFamily: {
               options: [
-                //设置的字体名字？
-
+                // 设置的字体名字？
                 // 'default',
                 // '微软雅黑/Microsoft YaHei',
                 '黑体',
@@ -147,16 +151,15 @@ export default {
                 'Courier BOLDITALIC',
                 'tahoma',
                 'Verdana',
-                'Times-Roman',
-                
+                'Times-Roman'
               ]
             },
-            extraPlugins: [ uploadAdapter, linkShell ],
+            extraPlugins: [ uploadAdapter ],
             autosave: {
               save (editor) {
                 let editorData = editor.getData()
-                if (_self.currentDoc._id === _self.cachedDoc._id
-                  && editorData !== _self.cachedDoc.content) {
+                if (_self.currentDoc._id === _self.cachedDoc._id &&
+                  editorData !== _self.cachedDoc.content) {
                   _self.saveData(_self.currentDoc._id, editorData)
                   // _self.cachedDoc.content = editorData
                 }
@@ -209,7 +212,6 @@ export default {
     },
 
     saveData (id, content) {
-      console.log('saveData', id, content)
       fetchLocal('updateLocalDoc', {
         id: id,
         content: content

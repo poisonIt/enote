@@ -26,7 +26,8 @@ export default {
   methods: {
     ...mapActions([
       'SET_IS_SYNCING',
-      'SET_FILE_PUSH_FINISHED'
+      'SET_FILE_PUSH_FINISHED',
+      'SET_NOTES_PUSHING'
     ]),
 
     async pushData () {
@@ -37,6 +38,7 @@ export default {
       await this.pushFolders()
       await this.pushNotes()
       setTimeout(() => {
+        this.SET_NOTES_PUSHING([])
         this.SET_IS_SYNCING(false)
       }, 1000)
     },
@@ -218,6 +220,8 @@ export default {
       let nTransed = nNeedPush.map(note => {
         return this.tranData(note)
       })
+
+      this.SET_NOTES_PUSHING(nNeedPush.map(item => item._id))
 
       let resp = await pushNote({
         deviceId: clientId,

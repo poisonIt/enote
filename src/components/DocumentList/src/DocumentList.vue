@@ -43,6 +43,7 @@
           :need_push="item.need_push_remotely"
           :need_push_local="item.need_push_locally"
           :rawData="item"
+          :isPushing="notesPushing.indexOf(item._id) > -1"
           @contextmenu="handleContextmenu"
           @dblclick="handleDbClick(item)">
         </FileCard>
@@ -74,9 +75,9 @@ import dayjs from 'dayjs'
 import mixins from '../mixins'
 import { mapGetters, mapState, mapActions } from 'vuex'
 import fetchLocal from '../../../utils/fetchLocal'
-
+import { getShareWithMe } from '../../../service'
 import SearchBar from '@/components/SearchBar'
-import Loading from '@/components/Loading'
+// import Loading from '@/components/Loading'
 import { FileCard, FileCardGroup } from '@/components/FileCard'
 import {
   docHandleMenu1,
@@ -98,7 +99,7 @@ export default {
 
   components: {
     SearchBar,
-    Loading,
+    // Loading,
     FileCard,
     FileCardGroup
   },
@@ -138,6 +139,7 @@ export default {
     ...mapGetters({
       currentNav: 'GET_CURRENT_NAV',
       currentFile: 'GET_CURRENT_FILE',
+      notesPushing: 'GET_NOTES_PUSHING',
       viewFileListType: 'GET_VIEW_FILE_LIST_TYPE',
       viewFileSortType: 'GET_VIEW_FILE_SORT_TYPE',
       viewFileSortOrder: 'GET_VIEW_FILE_SORT_ORDER',
@@ -165,7 +167,15 @@ export default {
 
   watch: {
     currentNav (val) {
-      this.refreshList()
+      if (val.type === 'share') {
+        this.fetchSharedFile()
+      } else {
+        this.refreshList()
+      }
+    },
+
+    notesPushing (val) {
+      console.log('watch-notesPushing', val)
     },
 
     selectedTags (val) {
@@ -203,11 +213,16 @@ export default {
       'TOGGLE_SHOW_SHARE_PANEL'
     ]),
 
+    fetchSharedFile () {
+      getShareWithMe().then(res => {
+        console.log('getShareWithMe-res', res)
+      })
+    },
+
     refreshList () {
       let nav = this.currentNav
       this.isListLoading = true
       this.selectFile(-1)
-      let localFiles = [[], []]
       if (nav.type === 'latest') {
         fetchLocal('getLatestLocalNote').then(notes => {
           this.handleDataFetched([[], notes])
@@ -259,16 +274,15 @@ export default {
 
     updateFileList () {
       let re = new RegExp(this.searchKeyword, 'g')
-      let notes = this.fileListSortFunc(this.noteList.filter(file => file.title.search(re) > -1))
-      // let folders = this.folderList.filter(file => file.title.search(re) > -1)
-      let folders = this.fileListSortFunc(this.folderList.filter(file => file.title.search(re) > -1))
+      let notes = this.fileListSortFunc(this.noteList.filter(file => file.title.search(re) > -1), 'note')
+      let folders = this.fileListSortFunc(this.folderList.filter(file => file.title.search(re) > -1), 'folder')
 
       this.fileList = _.flatten([folders, notes])
       let idx = _.findIndex(this.fileList, { _id: this.selectedIdCache })
       idx = (idx === -1 ? 0 : idx)
       this.selectFile(this.fileList.length > 0 ? idx : -1)
       this.isListLoading = false
-      
+
       if (this.navNeedUpdate) {
         let fileListIds = this.fileList.map(file => file._id)
         let resumedFileIds = _.difference(this.trashFileCache, fileListIds)
@@ -322,6 +336,12 @@ export default {
       let order
       let sortKey
 
+      if (type === 'folder') {
+        return list.sort((a, b) => {
+          return a.seq - b.seq
+        })
+      }
+
       if (this.currentNav.type === 'latest') {
         order = -1
         sortKey = 'update_at'
@@ -368,7 +388,7 @@ export default {
         return
       }
       if (props.type === 'note') {
-        let idx = _.findIndex(this.stickTopFiles, {_id: props.file_id})
+        let idx = _.findIndex(this.stickTopFiles, { _id: props.file_id })
         idx = idx === -1 ? 0 : 1
         this.popupNativeMenu(this.nativeMenus[idx])
       } else if (props.type === 'folder') {
@@ -404,7 +424,7 @@ export default {
       })
     },
 
-    handleExportPDF () { //导出pdf功能
+    handleExportPDF () { // 导出pdf功能
       // return
       let data = this.popupedFile.rawData
 
@@ -453,7 +473,7 @@ export default {
           id: this.popupedFile.file_id,
           title: this.popupedFile.title
         },
-        tree: this.$root.$navTree.model.children[1]
+        tree: this.$root.$navTree.model.children[2]
       })
     },
 
@@ -477,7 +497,7 @@ export default {
         this.$hub.dispatchHub('pushData', this)
       })
     },
-    
+
     handleNewWindow () {
       ipcRenderer.send('create-preview-window', {
         noteId: this.popupedFile.file_id,
@@ -486,9 +506,13 @@ export default {
     },
 
     handleShare () {
-      let idx = _.findIndex(this.fileList, { _id: this.popupedFile.file_id})
+      let idx = _.findIndex(this.fileList, { _id: this.popupedFile.file_id })
       this.selectFile(idx)
       this.TOGGLE_SHOW_SHARE_PANEL(true)
+    },
+
+    handleHistory () {
+      this.$hub.dispatchHub('diffHtml', this, this.popupedFile)
     },
 
     handleResume () {

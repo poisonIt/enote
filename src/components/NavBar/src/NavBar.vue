@@ -262,6 +262,7 @@ export default {
     ]),
 
     handleSetCurrentFolder (node) {
+      console.log('currentFolder', node)
       this.SET_CURRENT_NAV(_.clone(node.data))
     },
 

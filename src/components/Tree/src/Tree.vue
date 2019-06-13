@@ -202,6 +202,13 @@ export default {
         for (let i in this.model.store.cacheProperty) {
           if (i !== 'id') {
             this.model[i] = this.model.store.cacheProperty[i]
+            if (this.model.data) {
+              if (this.model.data.hasOwnProperty(i)) {
+                this.model.data[i] = this.model.store.cacheProperty[i]
+              } else if (i === 'name' && this.model.data.hasOwnProperty('title')) {
+                this.model.data.title = this.model.store.cacheProperty[i]
+              }
+            }
           }
         }
       }

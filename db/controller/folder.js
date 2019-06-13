@@ -74,9 +74,29 @@ async function add (req) {
   let data = folderModel(req)
 
   return new Promise((resolve, reject) => {
-    getById({ id: req.pid }).then(pFolder => {
+    let query
+    if (req.hasOwnProperty('pid')) {
+      query = { id: req.pid }
+      if (req.hasOwnProperty('remote_pid')) {
+        query = [
+          { id: req.pid },
+          { remote_id: req.remote_pid }
+        ]
+      }
+    } else {
+      if (req.hasOwnProperty('remote_pid')) {
+        query = { remote_id: req.remote_pid }
+      } else {
+        query = { id: '0' }
+      }
+    }
+    getByQuery(query).then(pFolder => {
       if (pFolder && pFolder.remote_id) {
         data.remote_pid = pFolder.remote_id
+      }
+      if (!pFolder) {
+        data.pid = '0'
+        data.remote_pid = '0'
       }
       Folder.insert(data, function (err, newFolder) {
         if (err) {

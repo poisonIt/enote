@@ -62,6 +62,24 @@
         总共 {{ fileList.length }} 项
       </div>
     </div>
+    <modal
+      :visible.sync="isDelConfirmShowed"
+      width="300px"
+      height="90px"
+      top="30vh"
+      style="padding-bottom:20px "
+      transition-name="fade-in-down"
+      @close="isDelConfirmShowed = false"
+      title="删除确认">
+        <div slot="header"><span>  </span></div>
+        <div style="text-align:center;padding:10px; 0">
+          <p>该文件夹下内容不为空，是否继续删除?</p>
+        </div>
+        <div class="button-group button-container" slot="footer">
+          <div class="button primary" @click="delConfirm">确认删除</div>
+          <div class="button" @click="isDelConfirmShowed = false">取消</div>
+        </div>
+    </modal>
     <!-- <div class="list-loading" v-if="isListLoading">
       <Loading :type="1" fill="#DDAF59" style="transform: scale(1.2) translateY(-60px)"></Loading>
     </div> -->
@@ -102,6 +120,7 @@ export default {
   },
   data () {
     return {
+      isDelConfirmShowed: false,
       selectedIdCache: null,
       trashFileCache: [],
       navNeedUpdate: false,
@@ -126,9 +145,6 @@ export default {
     }
   },
   computed: {
-    ...mapState({
-      views: state => state.views
-    }),
     ...mapGetters({
       currentNav: 'GET_CURRENT_NAV',
       currentFile: 'GET_CURRENT_FILE',
@@ -140,6 +156,7 @@ export default {
       selectedTags: 'GET_SELECTED_TAGS',
       searchKeyword: 'GET_SEARCH_KEYWORD'
     }),
+
     menuData () {
       if (this.currentNav) {
         let menu = this.currentNav.type !== 'latest' ? listtypeMenu1 : listtypeMenu2
@@ -156,6 +173,7 @@ export default {
       }
     }
   },
+
   watch: {
     currentNav (val) {
       if (val.type === 'share') {
@@ -164,9 +182,11 @@ export default {
         this.refreshList()
       }
     },
+
     notesPushing (val) {
       console.log('watch-notesPushing', val)
     },
+
     selectedTags (val) {
       if (this.currentNav.type === 'tag' || this.currentNav.type === 'select') {
         fetchLocal('getLocalTagNote', {
@@ -176,19 +196,24 @@ export default {
         })
       }
     },
+
     searchKeyword (val) {
       this.updateFileList()
     },
+
     viewFileSortType (val) {
       this.updateFileList()
     },
+
     viewFileSortOrder (val) {
       this.updateFileList()
     }
   },
+
   mounted () {
     this.$root.$documentList = this
   },
+
   methods: {
     ...mapActions([
       'SET_CURRENT_FILE',
@@ -201,11 +226,13 @@ export default {
       'TOGGLE_SHOW_SHARE_PANEL',
       'TOGGLE_SHOW_HISTORY_PANEL'
     ]),
+
     fetchSharedFile () {
       getShareWithMe().then(res => {
         console.log('getShareWithMe-res', res)
       })
     },
+
     refreshList () {
       let nav = this.currentNav
       this.isListLoading = true
@@ -246,6 +273,7 @@ export default {
         })
       }
     },
+
     handleDataFetched (localFiles) {
       if (this.currentNav.type !== 'bin') {
         this.folderList = localFiles[0].filter(file => file.trash === 'NORMAL')
@@ -257,6 +285,7 @@ export default {
       this.stickTopFiles = []
       this.updateFileList()
     },
+
     updateFileList () {
       let re = new RegExp(this.searchKeyword, 'g')
       let notes = this.fileListSortFunc(this.noteList.filter(file => file.title.search(re) > -1), 'note')
@@ -279,6 +308,7 @@ export default {
         this.navNeedUpdate = false
       }
     },
+
     selectFile (index) {
       const file = this.fileList[index]
       if (file) {
@@ -289,16 +319,20 @@ export default {
         this.SET_CURRENT_FILE(null)
       }
     },
+
     handleFileTitleClick (index) {
       let file = this.fileList[index]
       this.handleDbClick(file)
     },
+
     handleBack () {
       this.navUpHub()
     },
+
     handleList () {
       this.isMenuVisible = !this.isMenuVisible
     },
+
     handleMenuClick (value, item) {
       let sortOrder = !item.actived ? 'up' : 'down'
       if (value === 'summary' || value === 'list') {
@@ -308,6 +342,7 @@ export default {
         this.SET_VIEW_FILE_SORT_ORDER(sortOrder)
       }
     },
+
     fileListSortFunc (list, type) {
       let order
       let sortKey
@@ -349,9 +384,11 @@ export default {
       }
       return [...topList, ...downList]
     },
+
     newNote () {
       this.$hub.dispatchHub('newNote', this)
     },
+
     handleContextmenu (props) {
       this.popupedFile = props
       if (this.currentNav.type === 'bin') {
@@ -366,11 +403,13 @@ export default {
         this.popupNativeMenu(this.nativeMenus[2])
       }
     },
+
     handleDbClick (file) {
       if (file.type === 'folder') {
         this.$root.$navTree.select(file._id)
       }
     },
+
     handleStickTop () {
       this.selectedIdCache = this.popupedFile.rawData._id
       fetchLocal('updateLocalNote', {
@@ -381,6 +420,7 @@ export default {
         this.$hub.dispatchHub('pushData', this)
       })
     },
+
     handleCancelStickTop () {
       this.selectedIdCache = this.popupedFile.rawData._id
       fetchLocal('updateLocalNote', {
@@ -391,6 +431,7 @@ export default {
         this.$hub.dispatchHub('pushData', this)
       })
     },
+
     handleExportPDF () { // 导出pdf功能
       // return
       let data = this.popupedFile.rawData
@@ -400,10 +441,12 @@ export default {
         isPdf: 1
       })
     },
+
     handleNewFolder () {
       let pid = this.popupedFile.file_id
       this.$hub.dispatchHub('newFolder', this, pid)
     },
+
     handleNewNote (isTemp) {
       let pid = this.popupedFile.file_id
       fetchLocal('addLocalNote', {
@@ -416,14 +459,17 @@ export default {
         this.$hub.dispatchHub('pushData', this)
       })
     },
+
     handleNewTemplateNote () {
       this.handleNewNote(true)
     },
+
     handleRename () {
       let idx = _.findIndex(this.fileList, { _id: this.popupedFile.file_id })
       this.selectFile(idx)
       this.$hub.dispatchHub('renameFileCard', this, this.popupedFile.file_id)
     },
+
     handleMove () {
       this.$hub.dispatchHub('showMovePanel', this, {
         file: {
@@ -434,36 +480,66 @@ export default {
         tree: this.$root.$navTree.model.children[2]
       })
     },
+
     handleDuplicate () {
       this.SET_DUPLICATE_FILE(this.copyFile(this.popupedFile.rawData))
     },
+
     handleRemove () {
-      let fileId = this.popupedFile.file_id
+      if (this.popupedFile.type === 'folder') {
+        let params = {
+          pid: this.popupedFile.rawData._id
+        }
+        fetchLocal('getLocalFolderByPid', params).then(folders => {
+          fetchLocal('getLocalNoteByPid', params).then(notes => {
+            if (folders.length + notes.length > 0) {
+              this.isDelConfirmShowed = true
+              return
+            } else {
+              this.removeFile(this.popupedFile.rawData)
+            }
+          })
+        })
+      } else {
+        this.removeFile(this.popupedFile.rawData)
+      }
+    },
+
+    removeFile (file) {
       let taskName = this.popupedFile.type === 'folder'
         ? 'updateLocalFolder'
         : 'updateLocalNote'
+
       fetchLocal(taskName, {
-        id: fileId,
+        id: file._id,
         trash: 'TRASH'
       }).then(res => {
         if (taskName === 'updateLocalFolder') {
-          this.$hub.dispatchHub('deleteNavNode', this, fileId)
+          this.$hub.dispatchHub('deleteNavNode', this, file._id)
         }
         this.refreshList()
         this.$hub.dispatchHub('pushData', this)
       })
     },
+
+    delConfirm () {
+      this.removeFile(this.popupedFile.rawData)
+      this.isDelConfirmShowed = false
+    },
+
     handleNewWindow () {
       ipcRenderer.send('create-preview-window', {
         noteId: this.popupedFile.file_id,
         title: this.popupedFile.title
       })
     },
+
     handleShare () {
       let idx = _.findIndex(this.fileList, { _id: this.popupedFile.file_id })
       this.selectFile(idx)
       this.TOGGLE_SHOW_SHARE_PANEL(true)
     },
+
     handleHistory () {
       this.$hub.dispatchHub('diffHtml', this, this.popupedFile)
     },
@@ -494,6 +570,7 @@ export default {
         this.$hub.dispatchHub('pushData', this)
       })
     },
+
     handleDelete () {
       let fileId = this.popupedFile.file_id
       let taskName = this.popupedFile.type === 'folder'
@@ -507,6 +584,7 @@ export default {
         this.$hub.dispatchHub('pushData', this)
       })
     },
+
     copyFile (file) {
       return {
         type: file.type,
@@ -524,6 +602,7 @@ export default {
         _id: file._id
       }
     },
+
     handleHeaderDbClick () {
       let curWin = this.$remote.getCurrentWindow()
       let isMaximized = curWin.isMaximized()
@@ -592,37 +671,39 @@ export default {
     padding-left 20px
     font-size 12px
     letter-spacing 1px
-.button
-  position relative
-  width 40px
-  height 24px
-  border-radius 0
-  background-color inherit
-  border none
-  &::before
-    content ''
-    display block
-    width 28px
-    height 18px
-    position absolute
-    top 50%
-    left 50%
-    transform translate(-50%, -50%)
-    background-repeat no-repeat
-    background-size 100%
-    background-position center
-  &.button-back
+
+.header
+  .button
+    position relative
+    width 40px
+    height 24px
+    border-radius 0
+    background-color inherit
+    border none
     &::before
-      background-image url(../../../assets/images/lanhu/back@2x.png)
-    &.disable
+      content ''
+      display block
+      width 28px
+      height 18px
+      position absolute
+      top 50%
+      left 50%
+      transform translate(-50%, -50%)
+      background-repeat no-repeat
+      background-size 100%
+      background-position center
+    &.button-back
       &::before
-        background-image url(../../../assets/images/lanhu/back_dis@2x.png)
-  &.expand
-    &::before
-      background-image url(../../../assets/images/lanhu/view@2x.png)
-    &.summary
+        background-image url(../../../assets/images/lanhu/back@2x.png)
+      &.disable
+        &::before
+          background-image url(../../../assets/images/lanhu/back_dis@2x.png)
+    &.expand
       &::before
         background-image url(../../../assets/images/lanhu/view@2x.png)
+      &.summary
+        &::before
+          background-image url(../../../assets/images/lanhu/view@2x.png)
 .list-loading
   position absolute
   top 0

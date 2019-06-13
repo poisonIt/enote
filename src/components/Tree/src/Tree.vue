@@ -423,6 +423,7 @@ export default {
       const oldParent = fromComp.model.parent
       if (this.model === oldParent) {
         this.isDragEnterNode = false
+        node.$emit('drop-fail')
         return
       }
       fromComp.editable = false

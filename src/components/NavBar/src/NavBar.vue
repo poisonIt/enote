@@ -13,7 +13,8 @@
       @select="handleSelect"
       @add-node="handleNodeAdded"
       @change-name-blur="handleChangeNodeName"
-      @drop="handleNodeDrop">
+      @drop="handleNodeDrop"
+      @drop-fail="handleNodeDropFailed">
     </Tree>
     <div class="nav-mini" v-show="viewType === 'unexpanded'">
       <div class="icon icon-latest"
@@ -497,8 +498,11 @@ export default {
       this.$refs.tree.updateNodeModel(params)
     },
 
+    handleNodeDropFailed () {
+      this.$Message.error('移动失败')
+    },
+
     async handleNodeDrop ({ node, oldParent }) {
-      console.log('handleNodeDrop', node, oldParent)
       if (node.data.type !== 'folder') return
 
       let oldBrothers = []

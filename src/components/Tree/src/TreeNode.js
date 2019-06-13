@@ -74,16 +74,19 @@ TreeNode.prototype.isTargetChild = function (target) {
 
 TreeNode.prototype.moveInto = function (target) {
   if (this.name === 'root' || this === target) {
+    this.instance.getRootNode().$emit('drop-fail')
     return
   }
 
   // cannot move ancestor to child
   if (this.isTargetChild(target)) {
+    this.instance.getRootNode().$emit('drop-fail')
     return
   }
 
   // cannot move to leaf node
   if (target.isLeaf) {
+    this.instance.getRootNode().$emit('drop-fail')
     return
   }
 

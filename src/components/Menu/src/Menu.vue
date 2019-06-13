@@ -26,19 +26,15 @@
 <script>
 import mixins from '../mixins'
 import * as _ from 'lodash'
-
 export default {
   name: 'Menu',
-
   mixins: mixins,
-
   data () {
     return {
       trdata: [],
       groups: []
     }
   },
-
   props: {
     width: {
       type: Number,
@@ -71,7 +67,6 @@ export default {
       default: 'dropdown'
     }
   },
-
   computed: {
     itemStyle () {
       return {
@@ -82,19 +77,16 @@ export default {
       }
     }
   },
-
   watch: {
     data (val) {
       this.trdata = val
       this.initGroups()
     }
   },
-
   created () {
     this.trdata = this.data
     this.initGroups()
   },
-
   methods: {
     initGroups () {
       this.groups = {}
@@ -148,18 +140,15 @@ export default {
         }
       }
     },
-
     getGroupValue (item) {
       if (item.groupId !== null) {
         return this.groups[item.groupId].value
       }
       return false
     },
-
     isSelected (item) {
       return item.value === this.getGroupValue(item) && item.type !== 'default'
     },
-
     itemSortType (item, type) {
       if (item.type === 'sort') {
         return type === 'down' ? item.actived : !item.actived
@@ -167,11 +156,9 @@ export default {
         return false
       }
     },
-
     handleClose () {
       this.$emit('close')
     },
-
     handleItemClick (item, index) {
       if (item.type === 'separator') return
       let group = this.groups[item.groupId]

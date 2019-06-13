@@ -383,26 +383,26 @@ export default {
       return false
     },
 
-    dragEnd(e) {
+    dragEnd (e) {
       fromComp = null
     },
 
-    dragOver(e) {
+    dragOver (e) {
       e.preventDefault()
       return true
     },
 
-    dragEnter(e) {
+    dragEnter (e) {
       if (!fromComp) return
       if (this.model.isLeaf) return
       this.isDragEnterNode = true
     },
 
-    dragLeave(e) {
+    dragLeave (e) {
       this.isDragEnterNode = false
     },
 
-    drop(e) {
+    drop (e) {
       if (!fromComp) return
       const oldParent = fromComp.model.parent
       if (this.model === oldParent) {
@@ -413,6 +413,7 @@ export default {
       fromComp.model.moveInto(this.model)
       this.isDragEnterNode = false
       var node = this.getRootNode()
+      console.log(this.model)
       node.$emit('drop', {
         node: fromComp.model,
         oldParent: oldParent
@@ -424,7 +425,7 @@ export default {
       this.isDragEnterUp = true
     },
 
-    dragOverUp(e) {
+    dragOverUp (e) {
       e.preventDefault()
       return true
     },
@@ -436,10 +437,10 @@ export default {
 
     dropUp () {
       if (!fromComp) return
-      const oldParent = fromComp.model.parent;
+      const oldParent = fromComp.model.parent
       fromComp.model.insertBefore(this.model)
       this.isDragEnterUp = false
-      var node = this.getRootNode();
+      var node = this.getRootNode()
       node.$emit('drop-up', {
         node: fromComp.model,
         oldParent: oldParent
@@ -451,7 +452,7 @@ export default {
       this.isDragEnterBottom = true
     },
 
-    dragOverBottom(e) {
+    dragOverBottom (e) {
       e.preventDefault()
       return true
     },
@@ -463,7 +464,7 @@ export default {
 
     dropBottom () {
       if (!fromComp) return
-      const oldParent = fromComp.model.parent;
+      const oldParent = fromComp.model.parent
       fromComp.model.insertAfter(this.model)
       this.isDragEnterBottom = false
       var node = this.getRootNode()
@@ -605,10 +606,6 @@ export default {
   background-image url(../../../assets/images/lanhu/documents@2x.png)
   &.current
     background-image url(../../../assets/images/lanhu/documents_highlight@2x.png)
-.tn-icon-share
-  background-image url(../../../assets/images/lanhu/share_grey@2x.png)
-  &.current
-    background-image url(../../../assets/images/lanhu/share_highlight@2x.png)
 .tn-icon-folder
   background-image url(../../../assets/images/lanhu/folder_close_grey@2x.png)
   &.expanded

@@ -201,10 +201,6 @@ export default {
     }
   },
 
-  mounted () {
-    this.$root.$documentList = this
-  },
-
   methods: {
     ...mapActions([
       'SET_CURRENT_FILE',
@@ -214,8 +210,7 @@ export default {
       'SET_VIEW_FILE_SORT_TYPE',
       'SET_VIEW_FILE_SORT_ORDER',
       'TOGGLE_SHOW_MOVE_PANEL',
-      'TOGGLE_SHOW_SHARE_PANEL',
-      'TOGGLE_SHOW_HISTORY_PANEL'
+      'TOGGLE_SHOW_SHARE_PANEL'
     ]),
 
     fetchSharedFile () {
@@ -332,11 +327,12 @@ export default {
         this.SET_VIEW_FILE_LIST_TYPE(value)
       } else {
         this.SET_VIEW_FILE_SORT_TYPE(value)
+        // this.SET_VIEW_FILE_SORT_ORDER(item.actived ? 'up' : 'down')
         this.SET_VIEW_FILE_SORT_ORDER(sortOrder)
       }
     },
 
-    fileListSortFunc (list, type) {
+    fileListSortFunc (list) {
       let order
       let sortKey
 
@@ -376,9 +372,7 @@ export default {
       }
       let topList = listTemp.filter(item => item.top)
       let downList = listTemp.filter(item => !item.top)
-      if (type === 'note') {
-        this.stickTopFiles = topList
-      }
+      this.stickTopFiles = topList
 
       return [...topList, ...downList]
     },

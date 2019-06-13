@@ -46,7 +46,7 @@
 // import Tree from '@/components/Tree'
 import { Tree, TreeStore } from '@/components/Tree'
 import { mapGetters, mapActions } from 'vuex'
-import fetchLocal from '../../../utils/fetchLocal';
+import fetchLocal from '../../../utils/fetchLocal'
 
 const rootFolder = {
   name: '我的文件夹',
@@ -104,6 +104,7 @@ export default {
 
     handleMove () {
       if (!this.targetFolder) {
+        this.$Message.error('请选择要移动的文件夹')
         return
       }
       if (!this.targetFolder.id) {

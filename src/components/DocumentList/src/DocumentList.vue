@@ -261,10 +261,6 @@ export default {
       let re = new RegExp(this.searchKeyword, 'g')
       let notes = this.fileListSortFunc(this.noteList.filter(file => file.title.search(re) > -1), 'note')
       let folders = this.fileListSortFunc(this.folderList.filter(file => file.title.search(re) > -1), 'folder')
-<<<<<<< HEAD
-=======
-
->>>>>>> 3a8f7f84ec7a5fe1e0bca8263417cd61481bab8e
       this.fileList = _.flatten([folders, notes])
       let idx = _.findIndex(this.fileList, { _id: this.selectedIdCache })
       idx = (idx === -1 ? 0 : idx)
@@ -471,10 +467,7 @@ export default {
     handleHistory () {
       this.$hub.dispatchHub('diffHtml', this, this.popupedFile)
     },
-<<<<<<< HEAD
-=======
-
->>>>>>> 3a8f7f84ec7a5fe1e0bca8263417cd61481bab8e
+    
     handleResume () {
       this.trashFileCache = this.fileList.map(file => file._id)
       this.navNeedUpdate = true

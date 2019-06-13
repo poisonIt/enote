@@ -97,6 +97,7 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import { Tree, TreeStore, TreeNode } from '../index.js'
 import Emitter from '@/utils/mixins/emitter'
 import { addHandler, removeHandler } from './tools.js'
@@ -127,37 +128,35 @@ export default {
       type: Boolean,
       default: false
     },
-
     model: {
       type: Object
     },
-
     defaultLeafNodeName: {
       type: String,
       default: 'New leaf node'
     },
-
     defaultTreeNodeName: {
       type: String,
       default: 'New tree node'
     },
-
     defaultExpanded: {
       type: Boolean,
       default: true
     },
-
     flatIds: {
       type: Array,
       default: () => []
     },
-
     maskStyle: {
       type: Object
     }
   },
 
   computed: {
+     ...mapGetters({
+      draggingFile: 'GET_DRAGGING_FILE'
+    }),
+
     isCurrent () {
       return this.model === this.model.store.currentNode
     },
@@ -192,7 +191,6 @@ export default {
         isDragEnterNode
       } = this
       const isFat = this.flatIds.indexOf(this.model.id) > -1
-
       return {
         'tree-node': true,
         'tn-active': isDragEnterNode,
@@ -221,6 +219,13 @@ export default {
         for (let i in this.model.store.cacheProperty) {
           if (i !== 'id') {
             this.model[i] = this.model.store.cacheProperty[i]
+            if (this.model.data) {
+              if (this.model.data.hasOwnProperty(i)) {
+                this.model.data[i] = this.model.store.cacheProperty[i]
+              } else if (i === 'name' && this.model.data.hasOwnProperty('title')) {
+                this.model.data.title = this.model.store.cacheProperty[i]
+              }
+            }
           }
         }
       }
@@ -238,7 +243,6 @@ export default {
     // if (this.editable) {
     //   this.setEditable()
     // }
-
     // let root = this.getRootNode()
     // if (this.model.id === '0' && this.model.name !== 'root') {
     //   console.log('set', this.model)
@@ -278,7 +282,7 @@ export default {
 
     blur () {
       this.editable = false
-      var node = this.getRootNode();
+      var node = this.getRootNode()
       node.$emit('change-name-blur', this.model)
     },
 
@@ -371,7 +375,7 @@ export default {
       this.model.store.setCurrentNode(node, root)
       root.$emit('add-node', node)
     },
-
+    
     dragStart (e) {
       if (!(this.model.dragDisabled || this.model.disabled)) {
         fromComp = this
@@ -392,29 +396,59 @@ export default {
       return true
     },
 
-    dragEnter(e) {
+    dragEnter (e) {
+      if (this.draggingFile && this.model.data.type === 'folder') {
+        this.isDragEnterNode = true
+      }
       if (!fromComp) return
       if (this.model.isLeaf) return
       this.isDragEnterNode = true
     },
 
-    dragLeave(e) {
+    dragLeave (e) {
       this.isDragEnterNode = false
     },
 
-    drop(e) {
+    drop (e) {
+      var node = this.getRootNode()
+
+      if (this.draggingFile) {
+        this.isDragEnterNode = false
+        node.$emit('drop', {
+          node: this.model
+        })
+        return
+      }
       if (!fromComp) return
       const oldParent = fromComp.model.parent
       if (this.model === oldParent) {
         this.isDragEnterNode = false
+        node.$emit('drop-fail')
         return
       }
       fromComp.editable = false
       fromComp.model.moveInto(this.model)
       this.isDragEnterNode = false
-      var node = this.getRootNode()
       node.$emit('drop', {
         node: fromComp.model,
+        oldParent: oldParent
+      })
+    },
+
+    moveNode (f) {
+      var node = this.getRootNode()
+      let from = this.model.store.map[f.id].instance
+      if (!from) return
+      const oldParent = from.model.parent
+      if (this.model === oldParent) {
+        this.isDragEnterNode = false
+        return
+      }
+      from.editable = false
+      from.model.moveInto(this.model)
+      this.isDragEnterNode = false
+      node.$emit('drop', {
+        node: from.model,
         oldParent: oldParent
       })
     },
@@ -436,10 +470,10 @@ export default {
 
     dropUp () {
       if (!fromComp) return
-      const oldParent = fromComp.model.parent;
+      const oldParent = fromComp.model.parent
       fromComp.model.insertBefore(this.model)
       this.isDragEnterUp = false
-      var node = this.getRootNode();
+      var node = this.getRootNode()
       node.$emit('drop-up', {
         node: fromComp.model,
         oldParent: oldParent
@@ -463,7 +497,7 @@ export default {
 
     dropBottom () {
       if (!fromComp) return
-      const oldParent = fromComp.model.parent;
+      const oldParent = fromComp.model.parent
       fromComp.model.insertAfter(this.model)
       this.isDragEnterBottom = false
       var node = this.getRootNode()
@@ -490,7 +524,6 @@ export default {
 <style lang="stylus" scoped>
 .lucency
   opacity 0
-
 .tree-node
   display flex
   align-items center
@@ -540,7 +573,6 @@ export default {
   cursor pointer
 .tn-tree-margin
   margin-left 14px
-
 .tn-border
   display none
   position absolute
@@ -557,7 +589,6 @@ export default {
   &.tn-active
     border-bottom 3px dashed blue
     /*background-color blue;*/
-
 .tn-mask
   position absolute
   left 0
@@ -568,14 +599,12 @@ export default {
   &.current
     background-color #FFF5E2
     border-right 3px solid #DDAF59
-
 .tn-node-content
   height 30px
   line-height 33px
   z-index 1
   &.current
     color #DDAF59
-
 .tn-icon
   display block
   position relative
@@ -625,7 +654,6 @@ export default {
   background-image url(../../../assets/images/lanhu/recycle@2x.png)
   &.current
     background-image url(../../../assets/images/lanhu/recycle_highlight@2x.png)
-
 .dark
   .tree-node
     color #fff

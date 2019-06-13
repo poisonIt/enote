@@ -62,6 +62,24 @@
         总共 {{ fileList.length }} 项
       </div>
     </div>
+    <modal
+      :visible.sync="isDelConfirmShowed"
+      width="300px"
+      height="90px"
+      top="30vh"
+      style="padding-bottom:20px "
+      transition-name="fade-in-down"
+      @close="isDelConfirmShowed = false"
+      title="删除确认">
+        <div slot="header"><span>  </span></div>
+        <div style="text-align:center;padding:10px; 0">
+          <p>该文件夹下内容不为空，是否继续删除?</p>
+        </div>
+        <div class="button-group button-container" slot="footer">
+          <div class="button primary" @click="delConfirm">确认删除</div>
+          <div class="button" @click="isDelConfirmShowed = false">取消</div>
+        </div>
+    </modal>
     <!-- <div class="list-loading" v-if="isListLoading">
       <Loading :type="1" fill="#DDAF59" style="transform: scale(1.2) translateY(-60px)"></Loading>
     </div> -->
@@ -91,21 +109,18 @@ import {
   listtypeMenu1,
   listtypeMenu2
 } from './config'
-
 export default {
   name: 'DocumentList',
-
   mixins: mixins,
-
   components: {
     SearchBar,
     // Loading,
     FileCard,
     FileCardGroup
   },
-
   data () {
     return {
+      isDelConfirmShowed: false,
       selectedIdCache: null,
       trashFileCache: [],
       navNeedUpdate: false,
@@ -124,18 +139,12 @@ export default {
       ]
     }
   },
-
   filters: {
     yyyymmdd (timestamp) {
       return dayjs(Number(timestamp)).format('YYYY-MM-DD')
     }
   },
-
   computed: {
-    ...mapState({
-      views: state => state.views
-    }),
-
     ...mapGetters({
       currentNav: 'GET_CURRENT_NAV',
       currentFile: 'GET_CURRENT_FILE',
@@ -281,13 +290,11 @@ export default {
       let re = new RegExp(this.searchKeyword, 'g')
       let notes = this.fileListSortFunc(this.noteList.filter(file => file.title.search(re) > -1), 'note')
       let folders = this.fileListSortFunc(this.folderList.filter(file => file.title.search(re) > -1), 'folder')
-
       this.fileList = _.flatten([folders, notes])
       let idx = _.findIndex(this.fileList, { _id: this.selectedIdCache })
       idx = (idx === -1 ? 0 : idx)
       this.selectFile(this.fileList.length > 0 ? idx : -1)
       this.isListLoading = false
-
       if (this.navNeedUpdate) {
         let fileListIds = this.fileList.map(file => file._id)
         let resumedFileIds = _.difference(this.trashFileCache, fileListIds)
@@ -339,13 +346,11 @@ export default {
     fileListSortFunc (list, type) {
       let order
       let sortKey
-
       if (type === 'folder') {
         return list.sort((a, b) => {
           return a.seq - b.seq
         })
       }
-
       if (this.currentNav.type === 'latest') {
         order = -1
         sortKey = 'update_at'
@@ -357,13 +362,11 @@ export default {
       if (sortKey === 'title') {
         let en = list.filter(item => item.title[0].charCodeAt() <= 122 || !item.title[0])
         let zh = list.filter(item => item.title[0].charCodeAt() > 122)
-
         en = en.sort((a, b) => {
           let aCode = a.title[0] ? a.title[0].charCodeAt() : 32
           let bCode = b.title[0] ? b.title[0].charCodeAt() : 32
           return (aCode - bCode) * order
         })
-
         zh = zh.sort((a, b) => {
           return (a.title[0].localeCompare(b.title[0], 'zh')) * order
         })
@@ -379,7 +382,6 @@ export default {
       if (type === 'note') {
         this.stickTopFiles = topList
       }
-
       return [...topList, ...downList]
     },
 
@@ -433,9 +435,7 @@ export default {
     handleExportPDF () { // 导出pdf功能
       // return
       let data = this.popupedFile.rawData
-
       ipcRenderer.send('print-to-pdf', {
-
         noteId: data._id,
         title: data.title,
         isPdf: 1
@@ -444,13 +444,11 @@ export default {
 
     handleNewFolder () {
       let pid = this.popupedFile.file_id
-
       this.$hub.dispatchHub('newFolder', this, pid)
     },
 
     handleNewNote (isTemp) {
       let pid = this.popupedFile.file_id
-
       fetchLocal('addLocalNote', {
         title: '无标题笔记',
         pid: pid,
@@ -488,20 +486,45 @@ export default {
     },
 
     handleRemove () {
-      let fileId = this.popupedFile.file_id
+      if (this.popupedFile.type === 'folder') {
+        let params = {
+          pid: this.popupedFile.rawData._id
+        }
+        fetchLocal('getLocalFolderByPid', params).then(folders => {
+          fetchLocal('getLocalNoteByPid', params).then(notes => {
+            if (folders.length + notes.length > 0) {
+              this.isDelConfirmShowed = true
+              return
+            } else {
+              this.removeFile(this.popupedFile.rawData)
+            }
+          })
+        })
+      } else {
+        this.removeFile(this.popupedFile.rawData)
+      }
+    },
+
+    removeFile (file) {
       let taskName = this.popupedFile.type === 'folder'
         ? 'updateLocalFolder'
         : 'updateLocalNote'
+
       fetchLocal(taskName, {
-        id: fileId,
+        id: file._id,
         trash: 'TRASH'
       }).then(res => {
         if (taskName === 'updateLocalFolder') {
-          this.$hub.dispatchHub('deleteNavNode', this, fileId)
+          this.$hub.dispatchHub('deleteNavNode', this, file._id)
         }
         this.refreshList()
         this.$hub.dispatchHub('pushData', this)
       })
+    },
+
+    delConfirm () {
+      this.removeFile(this.popupedFile.rawData)
+      this.isDelConfirmShowed = false
     },
 
     handleNewWindow () {
@@ -520,7 +543,7 @@ export default {
     handleHistory () {
       this.$hub.dispatchHub('diffHtml', this, this.popupedFile)
     },
-
+    
     handleResume () {
       this.trashFileCache = this.fileList.map(file => file._id)
       this.navNeedUpdate = true
@@ -528,15 +551,12 @@ export default {
       let taskName = this.popupedFile.type === 'folder'
         ? 'updateLocalFolder'
         : 'updateLocalNote'
-
       fetchLocal(taskName, {
         id: fileId,
         trash: 'NORMAL'
       }).then(res => {
         this.refreshList()
-
         const _self = this
-
         function resumeNode (node) {
           _self.$set(node, 'hidden', false)
           let pNode = folderMap[node.pid]
@@ -556,7 +576,6 @@ export default {
       let taskName = this.popupedFile.type === 'folder'
         ? 'updateLocalFolder'
         : 'updateLocalNote'
-
       fetchLocal(taskName, {
         id: fileId,
         trash: 'DELETED'
@@ -616,7 +635,6 @@ export default {
       flex .85
       text-align center
       font-size 14px
-
 .body
   position relative
   height 100%
@@ -641,7 +659,6 @@ export default {
     font-weight 500
     text-align center
     line-height 36px
-
 .footer
   width 100%
   position absolute
@@ -655,38 +672,38 @@ export default {
     font-size 12px
     letter-spacing 1px
 
-.button
-  position relative
-  width 40px
-  height 24px
-  border-radius 0
-  background-color inherit
-  border none
-  &::before
-    content ''
-    display block
-    width 28px
-    height 18px
-    position absolute
-    top 50%
-    left 50%
-    transform translate(-50%, -50%)
-    background-repeat no-repeat
-    background-size 100%
-    background-position center
-  &.button-back
+.header
+  .button
+    position relative
+    width 40px
+    height 24px
+    border-radius 0
+    background-color inherit
+    border none
     &::before
-      background-image url(../../../assets/images/lanhu/back@2x.png)
-    &.disable
+      content ''
+      display block
+      width 28px
+      height 18px
+      position absolute
+      top 50%
+      left 50%
+      transform translate(-50%, -50%)
+      background-repeat no-repeat
+      background-size 100%
+      background-position center
+    &.button-back
       &::before
-        background-image url(../../../assets/images/lanhu/back_dis@2x.png)
-  &.expand
-    &::before
-      background-image url(../../../assets/images/lanhu/view@2x.png)
-    &.summary
+        background-image url(../../../assets/images/lanhu/back@2x.png)
+      &.disable
+        &::before
+          background-image url(../../../assets/images/lanhu/back_dis@2x.png)
+    &.expand
       &::before
         background-image url(../../../assets/images/lanhu/view@2x.png)
-
+      &.summary
+        &::before
+          background-image url(../../../assets/images/lanhu/view@2x.png)
 .list-loading
   position absolute
   top 0

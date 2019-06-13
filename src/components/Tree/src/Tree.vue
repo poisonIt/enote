@@ -252,7 +252,7 @@ export default {
     },
     blur () {
       this.editable = false
-      var node = this.getRootNode();
+      var node = this.getRootNode()
       node.$emit('change-name-blur', this.model)
     },
     setUnEditable () {

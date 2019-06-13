@@ -53,26 +53,43 @@
       </div>
     </div>
     <modal
-      :visible.sync="isDelShowed"
+      :visible.sync="isDelConfirmShowed"
       width="300px"
       top="30vh"
       style="padding-bottom:20px "
       transition-name="fade-in-down"
-      @close="close"
-      title="删除确认"
-    >
+      @close="closeDelConfirm"
+      title="删除确认">
         <div slot="header"><span>  </span></div>
         <div style="text-align:center;padding:10px; 0">
-            <p>该文件夹下内容不为空，是否继续删除?</p>
+          <p>该文件夹下内容不为空，是否继续删除?</p>
         </div>
         <div slot="footer" style="text-align:center; padding-bottom: 10px;">
-            <span class="del-button" @click="delConfirm">确认删除</span>
+          <span class="del-button" @click="delConfirm">确认删除</span>
+        </div>
+    </modal>
+    <modal
+      :visible.sync="isRenameConfirmShowed"
+      width="300px"
+      height="90px"
+      top="30vh"
+      style="padding-bottom:20px "
+      transition-name="fade-in-down"
+      @close="isRenameConfirmShowed = false"
+      title="重命名">
+        <div style="text-align:center;padding:10px; 0">
+          <p>目录中有重名文件夹，是否重命名为：{{ newTitle }}？</p>
+        </div>
+        <div class="button-group button-container" slot="footer">
+          <div class="button primary" @click="confirmRename">是</div>
+          <div class="button" @click="isRenameConfirmShowed = false">否</div>
         </div>
     </modal>
   </div>
 </template>
 
 <script>
+import * as _ from 'lodash'
 import { mapActions, mapGetters } from 'vuex'
 import {
   folderMenu,
@@ -82,6 +99,7 @@ import {
   tagMenu
 } from '../Menu'
 import fetchLocal from '../../../utils/fetchLocal'
+import { handleNameConflict } from '../../../utils/utils'
 import mixins from '../mixins'
 import { Tree, TreeStore } from '@/components/Tree'
 
@@ -156,7 +174,10 @@ export default {
 
   data () {
     return {
-      isDelShowed: false,
+      newTitle: '',
+      isDelConfirmShowed: false,
+      isRenameConfirmShowed: false,
+      renameNode: null,
       initFlag: true,
       typingNode: null,
       currentNode: null,
@@ -241,7 +262,7 @@ export default {
     ]),
 
     handleSetCurrentFolder (node) {
-      this.SET_CURRENT_NAV(node.data)
+      this.SET_CURRENT_NAV(_.clone(node.data))
     },
 
     handleSelect (node) {
@@ -373,7 +394,6 @@ export default {
     },
 
     handleChangeNodeName (node) {
-      console.log(node)
       if (node.type === 'select') {
         fetchLocal('updateLocalTag', {
           id: node.data._id || node.data.id || node.id,
@@ -400,27 +420,38 @@ export default {
         fetchLocal('getLocalFolderByPid', {
           pid: node.data.pid
         }).then(folders => {
-          let foldersSameName = _.find(folders, { title: node.name })
-          if (foldersSameName) {
-            node.name = node.data.title
-            console.log('11111')
-            return
+          let titles = folders.map(item => item.title)
+          if (titles.indexOf(node.name) > -1) {
+            this.newTitle = handleNameConflict(node.name, node.data.title, titles)
+            this.isRenameConfirmShowed = true
+            this.renameNode = node
           } else {
-            fetchLocal('updateLocalFolder', {
-              id: node.data._id || node.data.id || node.id,
-              title: node.name
-            }).then(res => {
-              if (node.parent === this.$refs.tree.model.store.currentNode) {
-                this.$hub.dispatchHub('renameListFile', this, {
-                  id: node.model.data._id,
-                  title: node.model.name
-                })
-              }
-              this.$hub.dispatchHub('pushData', this)
-            })
+            this.newTitle = node.name
+            this.updateFolderName(node)
           }
         })
       }
+    },
+
+    updateFolderName (node) {
+      fetchLocal('updateLocalFolder', {
+        id: node.data._id || node.data.id || node.id,
+        title: this.newTitle
+      }).then(res => {
+        node.name = node.data.title = this.newTitle
+        if (node.parent === this.$refs.tree.model.store.currentNode) {
+          this.$hub.dispatchHub('renameListFile', this, {
+            id: node.model.data._id,
+            title: this.newTitle
+          })
+        }
+        this.$hub.dispatchHub('pushData', this)
+      })
+    },
+
+    confirmRename () {
+      this.updateFolderName(this.renameNode)
+      this.isRenameConfirmShowed = false
     },
 
     handleFolderUpdate (params) {
@@ -502,18 +533,28 @@ export default {
 
     handleDelete () {
       let node = this.popupedNode.model
-      if (node.children.length > 0) {
-        this.isDelShowed = true
-      } else {
-        this.del(node)
+      let params = {
+        pid: node.data._id || node.data.id || node.id
       }
+
+      fetchLocal('getLocalFolderByPid', params).then(folders => {
+        fetchLocal('getLocalNoteByPid', params).then(notes => {
+          if (folders.length + notes.length === 0) {
+            this.delNode(node)
+          } else {
+            this.isDelConfirmShowed = true
+          }
+        })
+      })
     },
+
     delConfirm () {
       let node = this.popupedNode.model
-      this.del(node)
-      this.isDelShowed = false
+      this.delNode(node)
+      this.isDelConfirmShowed = false
     },
-    del (node) {
+
+    delNode (node) {
       fetchLocal('updateLocalFolder', {
         id: node.data._id || node.data.id || node.id,
         trash: 'TRASH'
@@ -523,9 +564,11 @@ export default {
         this.$hub.dispatchHub('pushData', this)
       })
     },
-    close () {
-      this.isDelShowed = false
+
+    closeDelConfirm () {
+      this.isDelConfirmShowed = false
     },
+
     handleClearBin () {
       fetchLocal('deleteAllTrash').then(res => {
         this.$hub.dispatchHub('refreshList', this)

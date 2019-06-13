@@ -63,6 +63,23 @@
         </div>
       </transition>
     </div>
+    <modal
+      :visible.sync="isConfirmShowed"
+      width="300px"
+      height="90px"
+      top="30vh"
+      style="padding-bottom:20px "
+      transition-name="fade-in-down"
+      @close="closeConfirm"
+      title="重命名">
+        <div style="text-align:center;padding:10px; 0">
+          <p>目录中有重名文件，是否重命名为：{{ newTitle }}？</p>
+        </div>
+        <div class="button-group button-container" slot="footer">
+          <div class="button primary" @click="confirmRename">是</div>
+          <div class="button" @click="closeConfirm">否</div>
+        </div>
+    </modal>
   </div>
 </template>
 
@@ -71,6 +88,7 @@ import { ipcRenderer } from 'electron'
 import dayjs from 'dayjs'
 import * as _ from 'lodash'
 import { mapGetters, mapActions } from 'vuex'
+import { handleNameConflict } from '../../../utils/utils'
 // import {
 //   updateLocalFolder,
 //   updateLocalNote
@@ -87,7 +105,9 @@ export default {
       isInputFocused: false,
       handlers: ['share', 'fetch', 'search', 'tag', 'more', 'window', 'info'],
       isMoreShowed: false,
-      isInfoShowed: false
+      isInfoShowed: false,
+      isConfirmShowed: false,
+      newTitle: ''
     }
   },
 
@@ -189,10 +209,11 @@ export default {
       this.isInputFocused = false
       if (this.titleValue === this.currentFileTitle) return
       let fileList = this.$root.$documentList.fileList
-      let files = _.find(fileList, { title: this.titleValue, type: this.currentFile.type })
-      if (files) {
-        this.titleValue = this.currentFile.title
-        this.$Message.error('相同笔记名冲突')
+      let fileTitleList = fileList.filter(item => item.type === this.currentFile.type).map(item => item.title)
+
+      if (fileTitleList.indexOf(this.titleValue) > -1) {
+        this.newTitle = handleNameConflict(this.titleValue, this.currentFile.title, fileTitleList)
+        this.isConfirmShowed = true
         return
       }
       this.currentFileTitle = this.titleValue
@@ -200,6 +221,20 @@ export default {
         id: this.currentFile._id,
         name: this.titleValue
       })
+    },
+
+    confirmRename () {
+      this.currentFileTitle = this.newTitle
+      this.$hub.dispatchHub('updateFile', this, {
+        id: this.currentFile._id,
+        name: this.newTitle
+      })
+      this.isConfirmShowed = false
+    },
+
+    closeConfirm () {
+      this.titleValue = this.currentFile.title
+      this.isConfirmShowed = false
     },
 
     handleResize () {

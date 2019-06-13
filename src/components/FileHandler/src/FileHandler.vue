@@ -11,6 +11,7 @@
         v-model="titleValue"
         :disabled="isTrash"
         @focus="handleInputFocus"
+        :maxlength="50"
         @blur="handleInputBlur"
         @keyup.enter="handleInputEnter">
       <p class="ellipsis">{{ titleValue }}</p>
@@ -191,6 +192,7 @@ export default {
       let files = _.find(fileList, { title: this.titleValue, type: this.currentFile.type })
       if (files) {
         this.titleValue = this.currentFile.title
+        this.$Message.error('相同笔记名冲突')
         return
       }
       this.currentFileTitle = this.titleValue
@@ -297,7 +299,6 @@ export default {
     },
 
     showHistory () {
-      this.$hub.dispatchHub('diffHtml', this, this.currentFile)
     },
 
     handleHeaderDbClick () {

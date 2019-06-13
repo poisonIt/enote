@@ -52,6 +52,23 @@
         @click="handleClickMini('recycle')">
       </div>
     </div>
+    <modal
+      :visible.sync="isDelShowed"
+      width="300px"
+      top="30vh"
+      style="padding-bottom:20px "
+      transition-name="fade-in-down"
+      @close="close"
+      title="删除确认"
+    >
+        <div slot="header"><span>  </span></div>
+        <div style="text-align:center;padding:10px; 0">
+            <p>该文件夹下内容不为空，是否继续删除?</p>
+        </div>
+        <div slot="footer" style="text-align:center; padding-bottom: 10px;">
+            <span class="del-button" @click="delConfirm">确认删除</span>
+        </div>
+    </modal>
   </div>
 </template>
 
@@ -139,6 +156,7 @@ export default {
 
   data () {
     return {
+      isDelShowed: false,
       initFlag: true,
       typingNode: null,
       currentNode: null,
@@ -355,6 +373,7 @@ export default {
     },
 
     handleChangeNodeName (node) {
+      console.log(node)
       if (node.type === 'select') {
         fetchLocal('updateLocalTag', {
           id: node.data._id || node.data.id || node.id,
@@ -384,6 +403,8 @@ export default {
           let foldersSameName = _.find(folders, { title: node.name })
           if (foldersSameName) {
             node.name = node.data.title
+            console.log('11111')
+            return
           } else {
             fetchLocal('updateLocalFolder', {
               id: node.data._id || node.data.id || node.id,
@@ -481,7 +502,18 @@ export default {
 
     handleDelete () {
       let node = this.popupedNode.model
-
+      if (node.children.length > 0) {
+        this.isDelShowed = true
+      } else {
+        this.del(node)
+      }
+    },
+    delConfirm () {
+      let node = this.popupedNode.model
+      this.del(node)
+      this.isDelShowed = false
+    },
+    del (node) {
       fetchLocal('updateLocalFolder', {
         id: node.data._id || node.data.id || node.id,
         trash: 'TRASH'
@@ -491,7 +523,9 @@ export default {
         this.$hub.dispatchHub('pushData', this)
       })
     },
-
+    close () {
+      this.isDelShowed = false
+    },
     handleClearBin () {
       fetchLocal('deleteAllTrash').then(res => {
         this.$hub.dispatchHub('refreshList', this)
@@ -612,4 +646,15 @@ export default {
   &.local
     left 0px
     background-color green
+.del-button
+  width 70px
+  height 28px
+  line-height 28px
+  font-size 13px
+  text-align center
+  display inline-block
+  color #666666
+  border 1px solid #E9E9E9
+  border-radius 4px
+
 </style>

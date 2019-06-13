@@ -44,6 +44,8 @@ self.addEventListener('message', (e) => {
       return transFile(item)
     })
 
+    console.log('rootChildren', rootChildren)
+
     rootChildren.forEach((item, index) => {
       getChildren(item, remotePidMap, pidMap)
     })

@@ -227,6 +227,7 @@ export default {
           multi: true
         }).then(folders => {
           fetchLocal('getAllLocalTag').then(tags => {
+            console.log('calcLocalData', [folders, tags])
             this.$worker.postMessage(['calcLocalData', [folders, tags]])
           })
         })

@@ -56,12 +56,14 @@ function createCollection (path) {
   promisifyAll(Folder)
 }
 
-
-function saveAll (req) { 
+function saveAll (req) {
   const { data } = req
 
   return new Promise((resolve, reject) => {
     Folder.save(data, (err, folders) => {
+      if (err) {
+        reject(err)
+      }
       resolve(folders)
     })
   })
@@ -91,6 +93,8 @@ async function diffAdd (req) {
 
   let folder = folders.shift()
 
+  let result
+
   let p = folders.map(f => {
     return removeById({ id: f._id })
   })
@@ -99,10 +103,12 @@ async function diffAdd (req) {
 
   if (folder) {
     req.id = folder._id
-    return await update(req)
+    result = await update(req)
   } else {
-    return await add(req)
+    result = await add(req)
   }
+
+  return result
 }
 
 async function diffAddMulti (reqs) {
@@ -126,13 +132,17 @@ async function diffAddMulti (reqs) {
       return newFolder
     })(folder, index)
   })
-  return await Promise.all(p)
+  let result = await Promise.all(p)
+  return result
 }
 
 // remove
 function removeAll () {
   return new Promise((resolve, reject) => {
     Folder.find({}, (err, folders) => {
+      if (err) {
+        reject(MediaError)
+      }
       folders.forEach(folder => {
         folder.remove()
       })
@@ -148,6 +158,7 @@ async function removeById (req) {
 }
 
 async function removeAllDeleted () {
+  let result
   let folders = await getByQuery({ trash: 'DELETED' }, { multi: true })
 
   let p = folders.map(folder => {
@@ -157,12 +168,16 @@ async function removeAllDeleted () {
     })(folder)
   })
 
-  return await Promise.all(p)
+  result = await Promise.all(p)
+  return result
 }
 
 function deleteAll () {
   return new Promise((resolve, reject) => {
     Folder.find({}).exec((err, folders) => {
+      if (err) {
+        reject(err)
+      }
       let p = folders.map(folder => {
         return update({
           id: folder._id,
@@ -195,6 +210,7 @@ function updateP (query, req, multi) {
 // update
 async function update (req) {
   const { id } = req
+  let newFolder
   req.update_at = new Date().valueOf()
 
   if (!req.hasOwnProperty('need_push')) {
@@ -208,14 +224,14 @@ async function update (req) {
 
   let folder = await getById({ id: id })
   if (!folder) {
-    return await updateByQuery({
+    newFolder = await updateByQuery({
       query: { remote_id: id },
       data: req
     })
   } else {
-    let old_remote_id = folder.remote_id
-    let old_trash = folder.trash
-    let newFolder = await updateP(
+    let oldRemoteId = folder.remote_id
+    let oldTrash = folder.trash
+    newFolder = await updateP(
       { _id: id },
       { $set: req }
     )
@@ -224,7 +240,7 @@ async function update (req) {
     if (req.trash === 'DELETED') {
       childData.trash = 'DELETED'
     }
-    if (newFolder.remote_id !== old_remote_id) {
+    if (newFolder.remote_id !== oldRemoteId) {
       childData.remote_pid = newFolder.remote_id
     }
     if (childData.hasOwnProperty('trash') || childData.hasOwnProperty('remote_pid')) {
@@ -239,7 +255,7 @@ async function update (req) {
     }
 
     // may cause performce issure
-    if (req.trash === 'NORMAL') {
+    if (req.trash === 'NORMAL' && oldTrash !== 'NORMAL') {
       if (newFolder.pid !== '0') {
         await update({
           id: newFolder.pid,
@@ -326,7 +342,7 @@ async function getByQuery (params, opts) {
   }
   const isReqArr = _.isArray(params)
   const query = isReqArr ? { $or: params } : params
-  
+
   let folders = []
   if (opts.multi) {
     let queryFunc = Folder.find(query)
@@ -358,7 +374,7 @@ async function getByQuery (params, opts) {
       return patchParentFolder(folder)
     }))
   }
-  
+
   return opts.multi ? folders : folders[0]
 }
 

@@ -345,6 +345,7 @@ export default {
       }
       return false
     },
+<<<<<<< HEAD
     dragEnd(e) {
       fromComp = null
     },
@@ -353,14 +354,36 @@ export default {
       return true
     },
     dragEnter(e) {
+=======
+
+    dragEnd (e) {
+      fromComp = null
+    },
+
+    dragOver (e) {
+      e.preventDefault()
+      return true
+    },
+
+    dragEnter (e) {
+>>>>>>> 3a8f7f84ec7a5fe1e0bca8263417cd61481bab8e
       if (!fromComp) return
       if (this.model.isLeaf) return
       this.isDragEnterNode = true
     },
+<<<<<<< HEAD
     dragLeave(e) {
       this.isDragEnterNode = false
     },
     drop(e) {
+=======
+
+    dragLeave (e) {
+      this.isDragEnterNode = false
+    },
+
+    drop (e) {
+>>>>>>> 3a8f7f84ec7a5fe1e0bca8263417cd61481bab8e
       if (!fromComp) return
       const oldParent = fromComp.model.parent
       if (this.model === oldParent) {
@@ -371,6 +394,7 @@ export default {
       fromComp.model.moveInto(this.model)
       this.isDragEnterNode = false
       var node = this.getRootNode()
+      console.log(this.model)
       node.$emit('drop', {
         node: fromComp.model,
         oldParent: oldParent
@@ -380,7 +404,12 @@ export default {
       if (!fromComp) return
       this.isDragEnterUp = true
     },
+<<<<<<< HEAD
     dragOverUp(e) {
+=======
+
+    dragOverUp (e) {
+>>>>>>> 3a8f7f84ec7a5fe1e0bca8263417cd61481bab8e
       e.preventDefault()
       return true
     },
@@ -390,10 +419,10 @@ export default {
     },
     dropUp () {
       if (!fromComp) return
-      const oldParent = fromComp.model.parent;
+      const oldParent = fromComp.model.parent
       fromComp.model.insertBefore(this.model)
       this.isDragEnterUp = false
-      var node = this.getRootNode();
+      var node = this.getRootNode()
       node.$emit('drop-up', {
         node: fromComp.model,
         oldParent: oldParent
@@ -403,7 +432,12 @@ export default {
       if (!fromComp) return
       this.isDragEnterBottom = true
     },
+<<<<<<< HEAD
     dragOverBottom(e) {
+=======
+
+    dragOverBottom (e) {
+>>>>>>> 3a8f7f84ec7a5fe1e0bca8263417cd61481bab8e
       e.preventDefault()
       return true
     },
@@ -413,7 +447,7 @@ export default {
     },
     dropBottom () {
       if (!fromComp) return
-      const oldParent = fromComp.model.parent;
+      const oldParent = fromComp.model.parent
       fromComp.model.insertAfter(this.model)
       this.isDragEnterBottom = false
       var node = this.getRootNode()
@@ -549,10 +583,6 @@ export default {
   background-image url(../../../assets/images/lanhu/documents@2x.png)
   &.current
     background-image url(../../../assets/images/lanhu/documents_highlight@2x.png)
-.tn-icon-share
-  background-image url(../../../assets/images/lanhu/share_grey@2x.png)
-  &.current
-    background-image url(../../../assets/images/lanhu/share_highlight@2x.png)
 .tn-icon-folder
   background-image url(../../../assets/images/lanhu/folder_close_grey@2x.png)
   &.expanded
@@ -601,4 +631,8 @@ export default {
     background-image url(../../../assets/images/lanhu/recycle@2x.png)
     &.current
       background-image url(../../../assets/images/lanhu/recycle_highlight@2x.png)
+<<<<<<< HEAD
 </style>
+=======
+</style>
+>>>>>>> 3a8f7f84ec7a5fe1e0bca8263417cd61481bab8e

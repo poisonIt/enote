@@ -564,6 +564,10 @@ export default {
   background-image url(../../../assets/images/lanhu/documents@2x.png)
   &.current
     background-image url(../../../assets/images/lanhu/documents_highlight@2x.png)
+.tn-icon-share
+  background-image url(../../../assets/images/lanhu/share_grey@2x.png)
+  &.current
+    background-image url(../../../assets/images/lanhu/share_highlight@2x.png)
 .tn-icon-folder
   background-image url(../../../assets/images/lanhu/folder_close_grey@2x.png)
   &.expanded

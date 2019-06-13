@@ -55,6 +55,7 @@
     <modal
       :visible.sync="isDelConfirmShowed"
       width="300px"
+      height="90px"
       top="30vh"
       style="padding-bottom:20px "
       transition-name="fade-in-down"
@@ -64,8 +65,9 @@
         <div style="text-align:center;padding:10px; 0">
           <p>该文件夹下内容不为空，是否继续删除?</p>
         </div>
-        <div slot="footer" style="text-align:center; padding-bottom: 10px;">
-          <span class="del-button" @click="delConfirm">确认删除</span>
+        <div class="button-group button-container" slot="footer">
+          <div class="button primary" @click="delConfirm">确认删除</div>
+          <div class="button" @click="closeDelConfirm">取消</div>
         </div>
     </modal>
     <modal

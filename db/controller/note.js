@@ -110,14 +110,14 @@ async function diffAdd (req) {
   await Promise.all(p)
 
   if (note) {
-    console.log('本地存在', req.remote_id)
+    // console.log('本地存在', req.remote_id)
     req.id = note._id
     if (req.usn !== note.usn) {
       if (note.need_push) {
-        console.log('need_push', note)
+        // console.log('need_push', note)
         return note
       } else {
-        console.log('note_need_push', req)
+        // console.log('note_need_push', req)
         req.need_push = false
         return await new Promise((resolve, reject) => {
           update(req).then(newNote => {
@@ -133,14 +133,14 @@ async function diffAdd (req) {
       return note
     }
   } else {
-    console.log('本地不存在', req.remote_id)
+    // console.log('本地不存在', req.remote_id)
     return await add(req)
   }
 }
 
 async function diffAddMulti (reqs) {
   let newNotes = await Promise.all(reqs.map(req => diffAdd(req)))
-  console.log('newNotes', newNotes)
+  // console.log('newNotes', newNotes)
   let p = newNotes.map((note, index) => {
     return (async () => {
       let newNote = note
@@ -409,12 +409,17 @@ function removeTag (req) {
       newTags.splice(note.tags.indexOf(tag_id), 1)
       Note.update(
         { _id: id },
-        { $set: {
-          tags: newTags,
-          need_push: true 
-        }},
+        { $set:
+          {
+            tags: newTags,
+            need_push: true
+          }
+        },
         { multi: true },
         (err, num, newNote) => {
+          if (err) {
+            console.error(err)
+          }
           resolve(newNote)
         }
       )
@@ -437,10 +442,9 @@ async function getAllByPid (req, opts) {
   opts = opts || {}
   opts.multi = true
 
-  return await getByQuery(
-    querys,
-    opts
-  )
+  let result = await getByQuery(querys, opts)
+
+  return result
 }
 
 async function getById (req) {
@@ -454,28 +458,31 @@ async function getTrash (opts) {
   opts = opts || {}
   opts.multi = true
 
-  return await getByQuery({ trash: 'TRASH' }, opts)
+  let result = await getByQuery({ trash: 'TRASH' }, opts)
+
+  return result
 }
 
 function getByTags (req) {
   const { tags } = req
 
   return new Promise((resolve, reject) => {
-  Note.find({}).filter(x => {
-    return _.intersection(x.tags, tags).length === tags.length
-  }).exec((err, notes) => {
-    let result = (async () => {
-      if (err) reject(err)
-      notes = await Promise.all(notes.map(note => {
-        return patchSummary(note)
-      }))
-      notes = await Promise.all(notes.map(note => {
-        return patchParentFolder(note)
-      }))
-      return notes
-    })(notes)
-    resolve(result)
-  })
+    Note.find({}).filter(x => {
+      return _.intersection(x.tags, tags).length === tags.length
+    }).exec((err, notes) => {
+      let result = (async () => {
+        if (err) reject(err)
+        notes = await Promise.all(notes.map(note => {
+          return patchSummary(note)
+        }))
+        notes = await Promise.all(notes.map(note => {
+          return patchParentFolder(note)
+        }))
+        return notes
+      })(notes)
+
+      resolve(result)
+    })
   })
 }
 
@@ -529,7 +536,7 @@ async function getByQuery (params, opts) {
       })(note)
     }))
   }
-  
+
   return opts.multi ? notes : notes[0]
 }
 

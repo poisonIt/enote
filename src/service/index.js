@@ -15,6 +15,10 @@ export function getFriendList () {
   return axios.get('/user/all')
 }
 
+export function getShareWithMe () {
+  return axios.get('/share/withme')
+}
+
 export function pullNotebooks (params) {
   return axios.get('/noteBook/notebooks', {
     params: params

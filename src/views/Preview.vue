@@ -8,10 +8,9 @@
 
 <script>
 import { ipcRenderer } from 'electron'
-import { mapGetters, mapActions } from 'vuex'
+import { mapActions } from 'vuex'
 import fetchLocal from '../utils/fetchLocal'
 import uploadAdapter from '../components/Editor/src/upload'
-import linkShell from '../components/Editor/src/linkShell'
 import '../assets/styles/editor.css'
 
 const ClassicEditor = window.ClassicEditor
@@ -60,7 +59,7 @@ export default {
       } else {
         ClassicEditor
           .create(this.$refs.editor, {
-            extraPlugins: [ uploadAdapter, linkShell ],
+            extraPlugins: [ uploadAdapter ],
             autosave: {
               save (editor) {
                 _self.editorData = editor.getData()

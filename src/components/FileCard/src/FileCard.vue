@@ -26,6 +26,7 @@
       <div class="icon-stack">
         <div class="icon stick-top" v-if="isTop"></div>
         <div class="isShared" v-if="isShared"></div>
+        <div class="isPushing infinite rotate animated" v-if="isPushing"></div>
         <div class="need_push" v-if="need_push"></div>
         <div class="need_push local" v-if="need_push_local"></div>
       </div>
@@ -112,6 +113,10 @@ export default {
       default: false
     },
     need_push_local: {
+      type: Boolean,
+      default: false
+    },
+    isPushing: {
       type: Boolean,
       default: false
     },
@@ -324,7 +329,7 @@ export default {
   div
     margin-left 10px
 
-.need_push
+.need_push, .isPushing
   right 50px
   width 16px
   height 16px

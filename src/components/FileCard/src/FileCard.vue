@@ -3,6 +3,8 @@
     :class="{ mini : mini, selected : selected }"
     @click="handleClick"
     @dblclick="handleDbClick"
+    :draggable="true"
+    @dragstart='dragStart'
     @contextmenu="handleContextmenu">
     <div class="header">
       <div class="icon" :class="type"></div>
@@ -66,6 +68,7 @@ import { mapGetters, mapActions } from 'vuex'
 import mixins from '../mixins'
 import fetchLocal from '../../../utils/fetchLocal'
 import { handleNameConflict } from '../../../utils/utils'
+import icon64 from '@/assets/images/icon64'
 
 export default {
   name: 'FileCard',
@@ -232,7 +235,11 @@ export default {
   },
 
   methods: {
-    ...mapActions(['EDIT_FILE', 'DELETE_FILE']),
+    ...mapActions([
+      'EDIT_FILE',
+      'DELETE_FILE',
+      'SET_DRAGGING_FILE'
+    ]),
 
     handleClick () {
       this.dispatch('FileCardGroup', 'item-click', this)
@@ -292,6 +299,13 @@ export default {
     confirmRename () {
       this.handleRename()
       this.isRenameConfirmShowed = false
+    },
+
+    dragStart (e) {
+      let img = new Image()
+      img.src = icon64[this.type]
+      e.dataTransfer.setDragImage(img, 0, 0)
+      this.SET_DRAGGING_FILE(this.rawData)
     }
   }
 }
@@ -365,6 +379,17 @@ export default {
   align-items center
   div
     margin-left 10px
+
+.drag-icon
+  width 36px
+  height 36px
+  background-color #eee
+  display flex
+  align-items center
+  justify-content center
+  .icon
+    width 26px
+    height 26px
 
 .need_push, .isPushing
   right 50px

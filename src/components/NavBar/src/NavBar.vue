@@ -208,7 +208,8 @@ export default {
       currentFile: 'GET_CURRENT_FILE',
       duplicateFile: 'GET_DUPLICATE_FILE',
       selectedTags: 'GET_SELECTED_TAGS',
-      isTagShowed: 'GET_SHOW_TAG_HANDLER'
+      isTagShowed: 'GET_SHOW_TAG_HANDLER',
+      draggingFile: 'GET_DRAGGING_FILE'
     })
   },
 
@@ -462,6 +463,29 @@ export default {
     },
 
     async handleNodeDrop ({ node, oldParent }) {
+      let fileTypeCN = node.data.type === 'folder' ? '文件夹' : '笔记'
+
+      if (!oldParent && this.draggingFile) {
+        if (node.data.type !== 'folder') {
+          return
+        }
+        let taskName = this.draggingFile.type === 'folder' ? 'updateLocalFolder' : 'updateLocalNote'
+        if (this.draggingFile.type === 'folder') {
+          node.instance.moveNode(this.draggingFile)
+          return
+        }
+        let updateRes = await fetchLocal(taskName, {
+          id: this.draggingFile._id,
+          pid: node.id
+        })
+
+        this.$hub.dispatchHub('refreshList', this)
+        this.$Message.success({
+          content: `移动了${fileTypeCN} ${updateRes.title} 至目录 ${node.name}！`
+        })
+        this.$hub.dispatchHub('pushData', this)
+        return
+      }
       if (node.pid !== oldParent.id) {
         await fetchLocal('updateLocalFolder', {
           id: node.data._id || node.data.id || node.id,
@@ -475,6 +499,7 @@ export default {
         })
         let nodes = [...oldBrothers, ...newBrothers]
         let map = this.$refs.tree.model.store.map
+        let newParent = map[node.pid]
 
         let p = nodes.map(folder => {
           let node = map[folder._id]
@@ -486,9 +511,13 @@ export default {
 
         await Promise.all(p)
         let curNode = this.$refs.tree.model.store.currentNode
+        curNode.data._id = curNode.data._id || '0'
         if (curNode.data._id === oldParent.id || curNode.data._id === node.pid) {
           this.$hub.dispatchHub('refreshList', this)
         }
+        this.$Message.success({
+          content: `移动了${fileTypeCN} ${node.name} 至目录 ${newParent.name}！`
+        })
         this.$hub.dispatchHub('pushData', this)
       }
     },

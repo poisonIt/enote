@@ -186,7 +186,8 @@ export default {
       popupedNode: null,
       duplicatedNode: null,
       dragNode: null,
-      dragOverNode: null,
+      dropNode: null,
+      oldParent: null,
       nativeMenuData: [
         rootFolderMenu,
         [...folderMenu, ...resourceMenu[0]],
@@ -260,6 +261,7 @@ export default {
       'SET_CURRENT_NAV',
       'SET_IS_HOME_READY',
       'SET_DUPLICATE_FILE',
+      'SET_DRAGGING_FILE',
       'TOGGLE_SHOW_MOVE_PANEL',
       'TOGGLE_SHOW_TAG_HANDLER'
     ]),
@@ -454,6 +456,39 @@ export default {
     },
 
     confirmRename () {
+      if (this.draggingFile) {
+        if (this.draggingFile.type === 'note') {
+          this.moveNote({
+            id: this.draggingFile._id,
+            pid: this.dropNode.id,
+            title: this.newTitle
+          })
+        } else if (this.draggingFile.type === 'folder') {
+          this.moveFolder({
+            id: this.draggingFile._id,
+            pid: this.dropNode.id,
+            title: this.newTitle
+          })
+        }
+
+        this.isRenameConfirmShowed = false
+        return
+      }
+
+      if (this.dragNode) {
+        if (this.dragNode.data.type === 'folder') {
+          this.moveFolder({
+            id: this.dragNode.id,
+            pid: this.dropNode.id,
+            title: this.newTitle
+          })
+          this.dragNode.name = this.dragNode.data.title = this.newTitle
+        }
+
+        this.isRenameConfirmShowed = false
+        return
+      }
+
       this.updateFolderName(this.renameNode)
       this.isRenameConfirmShowed = false
     },
@@ -463,63 +498,134 @@ export default {
     },
 
     async handleNodeDrop ({ node, oldParent }) {
-      let fileTypeCN = node.data.type === 'folder' ? '文件夹' : '笔记'
+      console.log('handleNodeDrop', node, oldParent)
+      if (node.data.type !== 'folder') return
 
+      let oldBrothers = []
+
+      let newBrothers = []
+
+      let titleArr = []
+
+      // 拖动fileCard
       if (!oldParent && this.draggingFile) {
-        if (node.data.type !== 'folder') {
-          return
-        }
+        this.dropNode = node
         let taskName = this.draggingFile.type === 'folder' ? 'updateLocalFolder' : 'updateLocalNote'
         if (this.draggingFile.type === 'folder') {
           node.instance.moveNode(this.draggingFile)
           return
         }
-        let updateRes = await fetchLocal(taskName, {
-          id: this.draggingFile._id,
+
+        newBrothers = await fetchLocal('getLocalNoteByPid', {
           pid: node.id
         })
 
-        this.$hub.dispatchHub('refreshList', this)
-        this.$Message.success({
-          content: `移动了${fileTypeCN} ${updateRes.title} 至目录 ${node.name}！`
+        titleArr = newBrothers.map(item => item.title)
+        if (titleArr.indexOf(this.draggingFile.title) > -1) {
+          this.newTitle = handleNameConflict(
+            this.draggingFile.title,
+            this.draggingFile.title,
+            titleArr
+          )
+          this.isRenameConfirmShowed = true
+          return
+        }
+
+        this.moveNote({
+          id: this.draggingFile._id,
+          pid: this.dropNode.id
         })
-        this.$hub.dispatchHub('pushData', this)
         return
       }
+
+      // 拖动导航栏
       if (node.pid !== oldParent.id) {
-        await fetchLocal('updateLocalFolder', {
-          id: node.data._id || node.data.id || node.id,
-          pid: node.pid
-        })
-        let oldBrothers = await fetchLocal('getLocalFolderByPid', {
-          pid: oldParent.id
-        })
-        let newBrothers = await fetchLocal('getLocalFolderByPid', {
-          pid: node.pid
-        })
-        let nodes = [...oldBrothers, ...newBrothers]
         let map = this.$refs.tree.model.store.map
         let newParent = map[node.pid]
 
-        let p = nodes.map(folder => {
-          let node = map[folder._id]
-          return fetchLocal('updateLocalFolder', {
-            id: node.data._id || node.data.id || node.id,
-            seq: node.getIndex()
-          })
+        this.oldParent = oldParent
+        this.dragNode = node
+        this.dropNode = newParent
+
+        newBrothers = await fetchLocal('getLocalFolderByPid', {
+          pid: node.pid
         })
 
-        await Promise.all(p)
-        let curNode = this.$refs.tree.model.store.currentNode
-        curNode.data._id = curNode.data._id || '0'
-        if (curNode.data._id === oldParent.id || curNode.data._id === node.pid) {
-          this.$hub.dispatchHub('refreshList', this)
+        titleArr = newBrothers.map(item => item.title)
+
+        if (titleArr.indexOf(node.name) > -1) {
+          this.newTitle = handleNameConflict(
+            node.name,
+            node.name,
+            titleArr
+          )
+          this.isRenameConfirmShowed = true
+          return
         }
-        this.$Message.success({
-          content: `移动了${fileTypeCN} ${node.name} 至目录 ${newParent.name}！`
+        
+        this.moveFolder({
+          id: node.data._id || node.data.id || node.id,
+          pid: node.pid
         })
-        this.$hub.dispatchHub('pushData', this)
       }
+    },
+
+    async moveNote (params) {
+      let updateRes = await fetchLocal('updateLocalNote', params)
+
+      this.$hub.dispatchHub('refreshList', this)
+      this.$Message.success({
+        content: `移动了笔记 ${updateRes.title} 至目录 ${this.dropNode.name}！`
+      })
+
+      this.SET_DRAGGING_FILE(null)
+      this.dragNode = null
+      this.dropNode = null
+      this.oldParent = null
+      this.newTitle = ''
+      this.isRenameConfirmShowed = false
+      this.$hub.dispatchHub('pushData', this)
+    },
+
+    async moveFolder (params) {
+      let map = this.$refs.tree.model.store.map
+
+      let updateRes = await fetchLocal('updateLocalFolder', params)
+
+      let oldBrothers = await fetchLocal('getLocalFolderByPid', {
+        pid: this.oldParent.id
+      })
+
+      let newBrothers = await fetchLocal('getLocalFolderByPid', {
+        pid: this.dropNode.id
+      })
+
+      let nodes = [...oldBrothers, ...newBrothers]
+
+      let p = nodes.map(folder => {
+        let node = map[folder._id]
+        return fetchLocal('updateLocalFolder', {
+          id: node.data._id || node.data.id || node.id,
+          seq: node.getIndex()
+        })
+      })
+
+      await Promise.all(p)
+      let curNode = this.$refs.tree.model.store.currentNode
+      curNode.data._id = curNode.data._id || '0'
+      if (curNode.data._id === this.oldParent.id || curNode.data._id === this.dropNode.id) {
+        this.$hub.dispatchHub('refreshList', this)
+      }
+      this.$Message.success({
+        content: `移动了文件夹 ${updateRes.title} 至目录 ${this.dropNode.name}！`
+      })
+
+      this.SET_DRAGGING_FILE(null)
+      this.dragNode = null
+      this.dropNode = null
+      this.oldParent = null
+      this.newTitle = ''
+      this.$hub.dispatchHub('pushData', this)
     },
 
     handleMove () {

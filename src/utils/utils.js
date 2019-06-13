@@ -29,6 +29,7 @@ export function GenNonDuplicateID (randomLength) {
 }
 
 export function handleNameConflict (name, oldName, arr) {
+  console.log('handleNameConflict', name, oldName, arr)
   let seq
   let newName
   const reg = /[(][1-9][)]/g

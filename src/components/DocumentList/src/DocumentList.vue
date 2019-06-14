@@ -467,7 +467,7 @@ export default {
     handleHistory () {
       this.$hub.dispatchHub('diffHtml', this, this.popupedFile)
     },
-    
+
     handleResume () {
       this.trashFileCache = this.fileList.map(file => file._id)
       this.navNeedUpdate = true

@@ -384,6 +384,7 @@ export default {
       }
       addReport(data).then(res => {
         if (res.data.returnCode === 200) {
+          this.$Message.success('提交成功')
           this.closeResearchPanel()
         } else (
           this.$Message.error(res.data.returnMsg)

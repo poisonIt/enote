@@ -112,7 +112,7 @@ async function removeAll () {
     }
     let p = notes.map(note => {
       return docCtr.getByNoteId({ note_id: note._id }).then(doc => {
-        doc.remove()
+        doc && doc.remove()
         note.remove()
       })
     })
@@ -126,13 +126,15 @@ async function updateAll (req) {
   return result
 }
 
-async function getAll (req) {
-  SharedNote.find({}).exec((err, notes) => {
-    if (err) {
-      console.error(err)
-      return
-    }
-    return notes
+function getAll (req) {
+  return new Promise((resolve, reject) => {
+    SharedNote.find({}).exec((err, notes) => {
+      console.log('SharedNote-getAll', notes)
+      if (err) {
+        reject(err)
+      }
+      resolve(notes)
+    })
   })
 }
 

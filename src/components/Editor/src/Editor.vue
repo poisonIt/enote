@@ -185,6 +185,8 @@ export default {
             this.editor.setData(content || '')
             if (this.currentNav.type === 'share') {
               this.editor.isReadOnly = true
+              document.getElementsByClassName('ck-editor__top')[0].style.display = 'none'
+              this.showMask = false
               return
             }
             this.cachedDoc._id = this.currentDoc._id

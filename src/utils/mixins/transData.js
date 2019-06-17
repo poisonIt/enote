@@ -14,7 +14,7 @@ export function transNoteBookDataFromRemote (obj) {
   }
 }
 
-export function transNoteDataFromRemote (obj) {
+export function transNoteDataFromRemote (obj, allTagLocalMap) {
   return {
     type: 'note',
     remote_id: obj.noteId,

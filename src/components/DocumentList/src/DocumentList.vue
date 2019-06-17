@@ -237,26 +237,6 @@ export default {
         })
         this.handleDataFetched([[], notes])
       })
-      // getShareWithMe().then(res => {
-      //   console.log('getShareWithMe-res', res)
-      //   if (res.data.returnCode === 200) {
-      //     let data = res.data.body.map(item => transNoteDataFromRemote(item))
-      //     fetchLocal('updateSharedNote', data).then(notes => {
-      //       notes.forEach(note => {
-      //         note.isDraggable = false
-      //       })
-      //       this.handleDataFetched([[], notes])
-      //     })
-      //   }
-      // }).catch(err => {
-      //   console.log(err)
-      //   fetchLocal('getSharedNote').then(notes => {
-      //     notes.forEach(note => {
-      //       note.isDraggable = false
-      //     })
-      //     this.handleDataFetched([[], notes])
-      //   })
-      // })
     },
 
     refreshList () {

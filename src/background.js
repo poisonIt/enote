@@ -175,6 +175,10 @@ ipcMain.on('logout', (event, arg) => {
 ipcMain.on('hideWindow', (event, arg) => {
 })
 
+ipcMain.on('closeHomeWindow', (event, arg) => {
+  win && win.destroy()
+})
+
 ipcMain.on('showWindow', (event, arg) => {
 })
 

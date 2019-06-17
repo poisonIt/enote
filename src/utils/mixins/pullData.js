@@ -82,7 +82,7 @@ export default {
       await fetchLocal('diffAddMultiLocalFolder', folderData)
       console.log('222', tagsData)
 
-      let noteData = (pullResp[1].data.body || []).map(item => transNoteDataFromRemote(item))
+      let noteData = (pullResp[1].data.body || []).map(item => transNoteDataFromRemote(item, allTagLocalMap))
       await fetchLocal('diffAddMultiLocalNote', noteData)
       console.log('noteData', noteData)
 

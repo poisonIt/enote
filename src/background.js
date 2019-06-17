@@ -175,6 +175,10 @@ ipcMain.on('logout', (event, arg) => {
 ipcMain.on('hideWindow', (event, arg) => {
 })
 
+ipcMain.on('closeHomeWindow', (event, arg) => {
+  win && win.destroy()
+})
+
 ipcMain.on('showWindow', (event, arg) => {
 })
 
@@ -541,6 +545,7 @@ function connectDatabase () {
       }
       createCollection('folder', p)
       createCollection('note', p)
+      createCollection('sharedNote', p)
       createCollection('doc', p)
       createCollection('tag', p)
       createCollection('img', p)

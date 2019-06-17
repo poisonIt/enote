@@ -39,10 +39,11 @@
           :isShared="item.share"
           :update_at="item.update_at | yyyymmdd"
           :file_size="item.size"
-          :parent_folder="item.parent_folder ? item.parent_folder.title : '我的文件夹'"
+          :parent_folder="folderNameComputed(item)"
           :need_push="item.need_push_remotely"
           :need_push_local="item.need_push_locally"
           :rawData="item"
+          :isDraggable="item.isDraggable"
           :isPushing="notesPushing.indexOf(item._id) > -1"
           @contextmenu="handleContextmenu"
           @dblclick="handleDbClick(item)">
@@ -91,8 +92,9 @@ import { ipcRenderer } from 'electron'
 import * as _ from 'lodash'
 import dayjs from 'dayjs'
 import mixins from '../mixins'
-import { mapGetters, mapState, mapActions } from 'vuex'
+import { mapGetters, mapActions } from 'vuex'
 import fetchLocal from '../../../utils/fetchLocal'
+import { transNoteDataFromRemote } from '../../../utils/mixins/transData'
 import { getShareWithMe } from '../../../service'
 import SearchBar from '@/components/SearchBar'
 // import Loading from '@/components/Loading'
@@ -230,6 +232,23 @@ export default {
     fetchSharedFile () {
       getShareWithMe().then(res => {
         console.log('getShareWithMe-res', res)
+        if (res.data.returnCode === 200) {
+          let data = res.data.body.map(item => transNoteDataFromRemote(item))
+          fetchLocal('updateSharedNote', data).then(notes => {
+            notes.forEach(note => {
+              note.isDraggable = false
+            })
+            this.handleDataFetched([[], notes])
+          })
+        }
+      }).catch(err => {
+        console.log(err)
+        fetchLocal('getSharedNote').then(notes => {
+          notes.forEach(note => {
+            note.isDraggable = false
+          })
+          this.handleDataFetched([[], notes])
+        })
       })
     },
 
@@ -390,6 +409,9 @@ export default {
     },
 
     handleContextmenu (props) {
+      if (this.currentNav.type === 'share') {
+        return
+      }
       this.popupedFile = props
       if (this.currentNav.type === 'bin') {
         this.popupNativeMenu(this.nativeMenus[5])
@@ -494,7 +516,6 @@ export default {
           fetchLocal('getLocalNoteByPid', params).then(notes => {
             if (folders.length + notes.length > 0) {
               this.isDelConfirmShowed = true
-              return
             } else {
               this.removeFile(this.popupedFile.rawData)
             }
@@ -586,7 +607,7 @@ export default {
     },
 
     copyFile (file) {
-      return {
+      let result = {
         type: file.type,
         title: file.title,
         create_at: file.create_at,
@@ -601,6 +622,11 @@ export default {
         update_at: file.update_at,
         _id: file._id
       }
+      if (file.hasOwnProperty('content') && file.hasOwnProperty('share')) {
+        result.content = file.content
+        result.share = file.share
+      }
+      return result
     },
 
     handleHeaderDbClick () {
@@ -610,6 +636,14 @@ export default {
         curWin.maximize()
       } else {
         curWin.unmaximize()
+      }
+    },
+
+    folderNameComputed (file) {
+      if (this.currentNav.type === 'share') {
+        return '与我分享'
+      } else {
+        return file.parent_folder ? file.parent_folder.title : '我的文件夹'
       }
     }
   }

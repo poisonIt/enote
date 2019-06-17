@@ -97,16 +97,21 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import { Tree, TreeStore, TreeNode } from '../index.js'
 import Emitter from '@/utils/mixins/emitter'
 import { addHandler, removeHandler } from './tools.js'
 let fromComp = null
+
 export default {
   name: 'Tree',
+
   mixins: [ Emitter ],
+
   components: {
     Tree
   },
+
   data () {
     return {
       isHover: false,
@@ -117,6 +122,7 @@ export default {
       expanded: this.defaultExpanded
     }
   },
+
   props: {
     dark: {
       type: Boolean,
@@ -145,10 +151,16 @@ export default {
       type: Object
     }
   },
+
   computed: {
+     ...mapGetters({
+      draggingFile: 'GET_DRAGGING_FILE'
+    }),
+
     isCurrent () {
       return this.model === this.model.store.currentNode
     },
+
     itemIconClass () {
       if (this.model.data) {
         if (this.model.data.type === 'folder') {
@@ -160,13 +172,16 @@ export default {
         return ''
       }
     },
+
     caretClass () {
       return this.expanded ? 'tn-icon-caret-down' : 'tn-icon-caret-right'
     },
+
     isFolder () {
       return this.model.children &&
         this.model.children.length
     },
+
     treeNodeClass () {
       const {
         model: {
@@ -185,9 +200,11 @@ export default {
       }
     }
   },
+
   // beforeCreate () {
   //   this.$options.components.item = require('./Tree.vue')
   // },
+
   created () {
     this.model.instance = this
     this.id = this.model.data ? this.model.id : '0'
@@ -202,11 +219,19 @@ export default {
         for (let i in this.model.store.cacheProperty) {
           if (i !== 'id') {
             this.model[i] = this.model.store.cacheProperty[i]
+            if (this.model.data) {
+              if (this.model.data.hasOwnProperty(i)) {
+                this.model.data[i] = this.model.store.cacheProperty[i]
+              } else if (i === 'name' && this.model.data.hasOwnProperty('title')) {
+                this.model.data.title = this.model.store.cacheProperty[i]
+              }
+            }
           }
         }
       }
     })
   },
+
   mounted () {
     const vm = this
     addHandler(window, 'keyup', function (e) {
@@ -224,9 +249,11 @@ export default {
     //   this.model.store.setCurrentNode(this.model, root)
     // }
   },
+
   beforeDestroy () {
     removeHandler(window, 'keyup')
   },
+
   methods: {
     updateName(e) {
       var oldName = this.model.name;
@@ -238,10 +265,12 @@ export default {
         'newName': e.target.value
       })
     },
+
     delNode () {
       var node = this.getRootNode()
       node.$emit('delete-node', this.model)
     },
+
     setEditable () {
       this.editable = true
       this.$nextTick(() => {
@@ -250,14 +279,17 @@ export default {
         $input.setSelectionRange(0, $input.value.length)
       })
     },
+
     blur () {
       this.editable = false
-      var node = this.getRootNode();
+      var node = this.getRootNode()
       node.$emit('change-name-blur', this.model)
     },
+
     setUnEditable () {
       this.editable = false
     },
+
     toggle () {
       if (this.isFolder) {
         if (this.model.children.filter(item => !item.hidden).length === 0) {
@@ -267,35 +299,42 @@ export default {
         this.expanded = !this.expanded
       }
     },
+
     mouseOver (e) {
       return
       if (this.model.disabled) return
       this.isHover = true
     },
+
     mouseOut(e) {
       return
       this.isHover = false
     },
+
     contextmenu () {
       var root = this.getRootNode()
       root.$emit('contextmenu', this)
     },
+
     updateNodeModel (params) {
       this.model.store.cacheProperty = params
       this.broadcast('tree', 'update-model', {
         id: params.id
       }, true)
     },
+
     select (id) {
       this.broadcast('tree', 'select', {
         id: id
       }, true)
     },
+
     selectParent () {
       let parentId = this.model.store.currentNode.parent.id
       if (parentId === 0) return
       this.select(parentId)
     },
+
     click () {
       var root = this.getRootNode()
       if (this === root) return
@@ -306,6 +345,7 @@ export default {
       }
       root.$emit('click', this.model)
     },
+
     addChild (data, isLeaf) {
       if (data.type === 'select') {
         var node = new TreeNode({
@@ -350,12 +390,16 @@ export default {
     dragEnd(e) {
       fromComp = null
     },
+
     dragOver(e) {
       e.preventDefault()
       return true
     },
 
     dragEnter (e) {
+      if (this.draggingFile && this.model.data.type === 'folder') {
+        this.isDragEnterNode = true
+      }
       if (!fromComp) return
       if (this.model.isLeaf) return
       this.isDragEnterNode = true
@@ -366,22 +410,49 @@ export default {
     },
 
     drop (e) {
+      var node = this.getRootNode()
+
+      if (this.draggingFile) {
+        this.isDragEnterNode = false
+        node.$emit('drop', {
+          node: this.model
+        })
+        return
+      }
       if (!fromComp) return
       const oldParent = fromComp.model.parent
       if (this.model === oldParent) {
         this.isDragEnterNode = false
+        node.$emit('drop-fail')
         return
       }
       fromComp.editable = false
       fromComp.model.moveInto(this.model)
       this.isDragEnterNode = false
-      var node = this.getRootNode()
-      console.log(this.model)
       node.$emit('drop', {
         node: fromComp.model,
         oldParent: oldParent
       })
     },
+
+    moveNode (f) {
+      var node = this.getRootNode()
+      let from = this.model.store.map[f.id].instance
+      if (!from) return
+      const oldParent = from.model.parent
+      if (this.model === oldParent) {
+        this.isDragEnterNode = false
+        return
+      }
+      from.editable = false
+      from.model.moveInto(this.model)
+      this.isDragEnterNode = false
+      node.$emit('drop', {
+        node: from.model,
+        oldParent: oldParent
+      })
+    },
+
     dragEnterUp () {
       if (!fromComp) return
       this.isDragEnterUp = true
@@ -391,10 +462,12 @@ export default {
       e.preventDefault()
       return true
     },
+
     dragLeaveUp () {
       if (!fromComp) return
       this.isDragEnterUp = false
     },
+
     dropUp () {
       if (!fromComp) return
       const oldParent = fromComp.model.parent
@@ -406,6 +479,7 @@ export default {
         oldParent: oldParent
       })
     },
+
     dragEnterBottom () {
       if (!fromComp) return
       this.isDragEnterBottom = true
@@ -415,10 +489,12 @@ export default {
       e.preventDefault()
       return true
     },
+
     dragLeaveBottom () {
       if (!fromComp) return
       this.isDragEnterBottom = false
     },
+
     dropBottom () {
       if (!fromComp) return
       const oldParent = fromComp.model.parent
@@ -430,6 +506,7 @@ export default {
         oldParent: oldParent
       })
     },
+
     getRootNode () {
       var node = this.$parent
       if (this.model.name === 'root') {
@@ -557,6 +634,10 @@ export default {
   background-image url(../../../assets/images/lanhu/documents@2x.png)
   &.current
     background-image url(../../../assets/images/lanhu/documents_highlight@2x.png)
+.tn-icon-share
+  background-image url(../../../assets/images/lanhu/share_grey@2x.png)
+  &.current
+    background-image url(../../../assets/images/lanhu/share_highlight@2x.png)
 .tn-icon-folder
   background-image url(../../../assets/images/lanhu/folder_close_grey@2x.png)
   &.expanded

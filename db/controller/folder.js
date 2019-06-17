@@ -70,6 +70,7 @@ function saveAll (req) {
 // add
 async function add (req) {
   let data = folderModel(req)
+
   return new Promise((resolve, reject) => {
     getById({ id: req.pid }).then(pFolder => {
       if (pFolder && pFolder.remote_id) {

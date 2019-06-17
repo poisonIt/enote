@@ -19,6 +19,33 @@ import { ipcRenderer } from 'electron'
 import { mapGetters, mapActions } from 'vuex'
 import { saveAppConf } from '@/tools/appConf'
 
+const isDevelopment = process.env.NODE_ENV !== 'production'
+const menuData = isDevelopment
+  ? [
+      {
+        label: '个人信息',
+        value: 'info'
+      },
+      {
+        label: '偏好设置',
+        value: 'setting'
+      },
+      {
+        label: '注销登录',
+        value: 'logout'
+      }
+    ]
+  : [
+      {
+        label: '个人信息',
+        value: 'info'
+      },
+      {
+        label: '注销登录',
+        value: 'logout'
+      }
+    ]
+
 export default {
   name: 'User',
 
@@ -30,10 +57,10 @@ export default {
           label: '个人信息',
           value: 'info'
         },
-        // {
-        //   label: '偏好设置',
-        //   value: 'setting'
-        // },
+        {
+          label: '偏好设置',
+          value: 'setting'
+        },
         {
           label: '注销登录',
           value: 'logout'

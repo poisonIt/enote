@@ -6,6 +6,7 @@ const state = {
   current_nav: null,
   current_file: null,
   duplicate_file: null,
+  dragging_file: null,
   selected_tags: [],
   note_ver: 0
 }
@@ -25,6 +26,10 @@ const mutations = {
 
   SET_DUPLICATE_FILE (state, file) {
     state.duplicate_file = file
+  },
+
+  SET_DRAGGING_FILE (state, file) {
+    state.dragging_file = file
   },
 
   SET_NOTE_VER (state, val) {
@@ -60,6 +65,10 @@ const actions = {
     commit('SET_DUPLICATE_FILE', file)
   },
 
+  SET_DRAGGING_FILE ({ commit }, file) {
+    commit('SET_DRAGGING_FILE', file)
+  },
+
   SET_NOTE_VER ({ commit }, val) {
     commit('SET_NOTE_VER', val)
   },
@@ -84,6 +93,10 @@ const getters = {
 
   GET_DUPLICATE_FILE (state) {
     return state.duplicate_file
+  },
+
+  GET_DRAGGING_FILE (state, file) {
+    return state.dragging_file
   },
 
   GET_SELECTED_TAGS (state) {

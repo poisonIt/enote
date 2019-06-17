@@ -3,6 +3,8 @@
     :class="{ mini : mini, selected : selected }"
     @click="handleClick"
     @dblclick="handleDbClick"
+    :draggable="true"
+    @dragstart='dragStart'
     @contextmenu="handleContextmenu">
     <div class="header">
       <div class="icon" :class="type"></div>
@@ -41,6 +43,23 @@
       <span class="time" v-if="isTimeShowed">{{ update_at }}</span>
       <span class="size" v-if="isSizeShowed">{{ file_size | size }}</span>
     </div>
+    <modal
+      :visible.sync="isRenameConfirmShowed"
+      width="300px"
+      height="90px"
+      top="30vh"
+      style="padding-bottom:20px "
+      transition-name="fade-in-down"
+      @close="isRenameConfirmShowed = false"
+      title="重命名">
+        <div style="text-align:center;padding:10px; 0">
+          <p>目录中有重名文件夹，是否重命名为：{{ newTitle }}？</p>
+        </div>
+        <div class="button-group button-container" slot="footer">
+          <div class="button primary" @click="confirmRename">是</div>
+          <div class="button" @click="isRenameConfirmShowed = false">否</div>
+        </div>
+    </modal>
   </div>
 </template>
 
@@ -48,9 +67,8 @@
 import { mapGetters, mapActions } from 'vuex'
 import mixins from '../mixins'
 import fetchLocal from '../../../utils/fetchLocal'
-// import {
-//   updateLocalFolder
-// } from '@/service/local'
+import { handleNameConflict } from '../../../utils/utils'
+import icon64 from '@/assets/images/icon64'
 
 export default {
   name: 'FileCard',
@@ -61,6 +79,8 @@ export default {
     return {
       selected: false,
       titleValue: '',
+      newTitle: '',
+      isRenameConfirmShowed: false,
       titleEllipsis: '',
       showTitleInput: false
     }
@@ -215,7 +235,11 @@ export default {
   },
 
   methods: {
-    ...mapActions(['EDIT_FILE', 'DELETE_FILE']),
+    ...mapActions([
+      'EDIT_FILE',
+      'DELETE_FILE',
+      'SET_DRAGGING_FILE'
+    ]),
 
     handleClick () {
       this.dispatch('FileCardGroup', 'item-click', this)
@@ -241,11 +265,26 @@ export default {
 
     handleTitleInputBlur () {
       this.showTitleInput = false
+      let fileList = this.$root.$documentList.fileList
+      let fileTitleList = fileList.filter(item => item.type === this.type).map(item => item.title)
+
+      if (fileTitleList.indexOf(this.titleValue) > -1) {
+        this.newTitle = handleNameConflict(this.titleValue, this.title, fileTitleList)
+        this.isRenameConfirmShowed = true
+        return
+      } else {
+        this.newTitle = this.titleValue
+      }
+
+      this.handleRename()
+    },
+
+    handleRename () {
       let taskName = this.type === 'folder' ? 'updateLocalFolder' : 'updateLocalNote'
 
       fetchLocal(taskName, {
         id: this.file_id,
-        title: this.titleValue
+        title: this.newTitle
       }).then(res => {
         this.$hub.dispatchHub('renameListFile', this, res)
         if (res.type === 'folder') {
@@ -255,6 +294,18 @@ export default {
           })
         }
       })
+    },
+
+    confirmRename () {
+      this.handleRename()
+      this.isRenameConfirmShowed = false
+    },
+
+    dragStart (e) {
+      let img = new Image()
+      img.src = icon64[this.type]
+      e.dataTransfer.setDragImage(img, 0, 0)
+      this.SET_DRAGGING_FILE(this.rawData)
     }
   }
 }
@@ -328,6 +379,17 @@ export default {
   align-items center
   div
     margin-left 10px
+
+.drag-icon
+  width 36px
+  height 36px
+  background-color #eee
+  display flex
+  align-items center
+  justify-content center
+  .icon
+    width 26px
+    height 26px
 
 .need_push, .isPushing
   right 50px

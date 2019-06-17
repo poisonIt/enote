@@ -6,7 +6,6 @@ import folderCtr from './folder'
 import docCtr from './doc'
 import docTemp from '../docTemplate'
 import { LinvoDB } from '../index'
-import doc from './doc';
 
 let schemaKeys = Object.keys(noteModel({}))
 let Note = {}
@@ -404,7 +403,7 @@ function removeTag (req) {
   return new Promise((resolve, reject) => {
     Note.findOne({ _id: id }, (err, note) => {
       if (err) reject(err)
-      if (!note) reject(`note ${id} not exist`)
+      if (!note) reject(new Error(`note ${id} not exist`))
       let newTags = [...note.tags]
       newTags.splice(note.tags.indexOf(tag_id), 1)
       Note.update(

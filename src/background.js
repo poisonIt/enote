@@ -541,6 +541,7 @@ function connectDatabase () {
       }
       createCollection('folder', p)
       createCollection('note', p)
+      createCollection('sharedNote', p)
       createCollection('doc', p)
       createCollection('tag', p)
       createCollection('img', p)

@@ -249,7 +249,7 @@ export default {
         })
       } else if (nav.type === 'folder') {
         let params = {
-          pid: nav._id || nav.id || '0'
+          pid: nav.id || nav._id || '0'
         }
         if (nav.remote_id !== undefined) {
           params.remote_pid = nav.remote_id

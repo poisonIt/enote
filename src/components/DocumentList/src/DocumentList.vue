@@ -52,7 +52,7 @@
       <div class="no-file" v-if="fileList.length === 0">
         <span v-if="currentNav && currentNav.type === 'bin'">回收站为空</span>
         <span v-if="currentNav && currentNav.type !== 'bin'">没有找到文件</span>
-        <div v-if="currentNav && currentNav.type !== 'bin'"
+        <div v-if="currentNav && currentNav.type !== 'bin' && currentNav.type !== 'share'"
           class="new-doc_button"
           @click="newNote">新建笔记
         </div>
@@ -231,7 +231,6 @@ export default {
 
     fetchSharedFile () {
       fetchLocal('getSharedNote').then(notes => {
-        console.log('getSharedNote', notes)
         notes.forEach(note => {
           note.isDraggable = false
         })
@@ -249,7 +248,7 @@ export default {
         })
       } else if (nav.type === 'folder') {
         let params = {
-          pid: nav._id || nav.id || '0'
+          pid: nav.id || nav._id || '0'
         }
         if (nav.remote_id !== undefined) {
           params.remote_pid = nav.remote_id

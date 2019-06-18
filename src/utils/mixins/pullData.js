@@ -36,6 +36,8 @@ export default {
     ]),
 
     async pullData (noteVer) {
+      let allNotes = await fetchLocal('getLocalNoteByQuery', {}, { multi: true })
+      console.log('allNotes', allNotes)
       let resp = await this.runPullTasks(noteVer)
       return resp
     },
@@ -84,7 +86,6 @@ export default {
 
       let noteData = (pullResp[1].data.body || []).map(item => transNoteDataFromRemote(item, allTagLocalMap))
       await fetchLocal('diffAddMultiLocalNote', noteData)
-      console.log('noteData', noteData)
 
       if (noteData.length > 0) {
         let usnArr = noteData.map(item => item.usn)

@@ -179,6 +179,14 @@ ipcMain.on('closeHomeWindow', (event, arg) => {
   win && win.destroy()
 })
 
+ipcMain.on('reloadHomeWindow', (event, arg) => {
+  if (process.env.WEBPACK_DEV_SERVER_URL) {
+    win.loadURL(process.env.WEBPACK_DEV_SERVER_URL + '#/home')
+  } else {
+    win.loadURL('app://./index.html#/home')
+  }
+})
+
 ipcMain.on('showWindow', (event, arg) => {
 })
 

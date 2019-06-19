@@ -153,9 +153,17 @@ export default {
         if (!userResp.userData) return
         ipcRenderer.send('update-user-data', userResp.userData)
       } else if (authenticateResp.data.returnCode === 401){ //添加状态判断 用户名或密码错误
+        if (this.autoLogin === '1') {
+          this.$remote.getCurrentWindow().show()
+          ipcRenderer.send('reloadHomeWindow')
+        }
         this.$Message.error('用户名密码错误')
         this.isLoading = false
-      }else{
+      } else {
+        if (this.autoLogin === '1') {
+          this.$remote.getCurrentWindow().show()
+          ipcRenderer.send('reloadHomeWindow')
+        }
         this.$Message.error('请输入用户名和密码')
         this.isLoading = false
       }

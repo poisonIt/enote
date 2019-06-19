@@ -138,6 +138,14 @@ export function getLocalTagNote (params) {
   return LocalDAO.note.getByTags(params)
 }
 
+export function updateSharedNote (params) {
+  return LocalDAO.sharedNote.updateAll(params)
+}
+
+export function getSharedNote () {
+  return LocalDAO.sharedNote.getAll()
+}
+
 // doc
 export function getAllLocalDoc () {
   return LocalDAO.doc.getAll()
@@ -213,8 +221,6 @@ export function getAllLocalTagByQuery (params) {
 }
 
 export function addLocalTag (params) {
-  let { note_id } = params
-
   return LocalDAO.tag.add(params)
 }
 
@@ -268,7 +274,7 @@ export function deleteAll () {
 }
 
 export function removeAll () {
-  return new Promise ((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     LocalDAO.folder.removeAll().then((f) => {
       LocalDAO.note.removeAll().then((n) => {
         LocalDAO.doc.removeAll().then((d) => {

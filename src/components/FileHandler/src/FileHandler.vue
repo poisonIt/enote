@@ -86,7 +86,6 @@
 <script>
 import { ipcRenderer } from 'electron'
 import dayjs from 'dayjs'
-import * as _ from 'lodash'
 import { mapGetters, mapActions } from 'vuex'
 import { handleNameConflict } from '../../../utils/utils'
 // import {
@@ -113,6 +112,7 @@ export default {
 
   computed: {
     ...mapGetters({
+      currentNav: 'GET_CURRENT_NAV',
       userInfo: 'GET_USER_INFO',
       allFileMap: 'GET_FILES',
       currentFile: 'GET_CURRENT_FILE',
@@ -257,7 +257,7 @@ export default {
     isHandlerHidden (item) {
       if (item === 'fetch') {
         return false
-      } else if (this.currentFile.type === 'folder') {
+      } else if (this.currentFile.type === 'folder' || this.currentNav.type === 'share') {
         return true
       }
     },

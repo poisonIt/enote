@@ -6,7 +6,6 @@ import folderCtr from './folder'
 import docCtr from './doc'
 import docTemp from '../docTemplate'
 import { LinvoDB } from '../index'
-import doc from './doc';
 
 let schemaKeys = Object.keys(noteModel({}))
 let Note = {}
@@ -79,7 +78,7 @@ async function add (req) {
   let data = noteModel(req)
 
   return new Promise((resolve, reject) => {
-    folderCtr.getById({ id: req.pid }).then(pFolder => {
+    folderCtr.getById({ id: req.pid || '0' }).then(pFolder => {
       if (pFolder && pFolder.remote_id) {
         data.remote_pid = pFolder.remote_id
       }
@@ -100,7 +99,7 @@ async function add (req) {
 
 async function diffAdd (req) {
   let notes = await getByQuery({ remote_id: req.remote_id }, { multi: true })
-
+  
   let note = notes.shift()
 
   let p = notes.map(n => {
@@ -155,7 +154,9 @@ async function diffAddMulti (reqs) {
           newNote = await update({ id: note._id, pid: pR._id, need_push: false })
         }
       } else {
-        newNote = await update({ id: note._id, pid: '0', need_push: false })
+        if (!pL) {
+          newNote = await update({ id: note._id, pid: '0', need_push: false })
+        }
       }
       return newNote
     })(note, index)
@@ -404,7 +405,7 @@ function removeTag (req) {
   return new Promise((resolve, reject) => {
     Note.findOne({ _id: id }, (err, note) => {
       if (err) reject(err)
-      if (!note) reject(`note ${id} not exist`)
+      if (!note) reject(new Error(`note ${id} not exist`))
       let newTags = [...note.tags]
       newTags.splice(note.tags.indexOf(tag_id), 1)
       Note.update(
@@ -487,6 +488,7 @@ function getByTags (req) {
 }
 
 async function getByQuery (params, opts) {
+  let allNotes = await Note.find({}).execAsync()
   opts = opts || {
     multi: false,
     with_parent_folder: false,

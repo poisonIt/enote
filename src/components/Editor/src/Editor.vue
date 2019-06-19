@@ -36,6 +36,7 @@ export default {
 
   computed: {
     ...mapGetters({
+      currentNav: 'GET_CURRENT_NAV',
       currentFile: 'GET_CURRENT_FILE',
       viewType: 'GET_VIEW_TYPE'
     })
@@ -127,10 +128,16 @@ export default {
       'SET_IS_EDITOR_FOCUSED'
     ]),
 
-    initEditor (content) {
+    initEditor (content, config) {
       const _self = this
       if (this.editor) {
+        this.editor.isReadOnly = false
+        document.getElementsByClassName('ck-editor__top')[0].style.display = 'block'
         this.editor.setData(content || '')
+        if (this.currentNav.type === 'share') {
+          this.editor.isReadOnly = true
+          document.getElementsByClassName('ck-editor__top')[0].style.display = 'none'
+        }
         this.showMask = false
       } else {
         ClassicEditor
@@ -174,6 +181,16 @@ export default {
           })
           .then(editor => {
             this.editor = editor
+            this.editor.isReadOnly = false
+            this.editor.setData(content || '')
+            if (this.currentNav.type === 'share') {
+              this.editor.isReadOnly = true
+              document.getElementsByClassName('ck-editor__top')[0].style.display = 'none'
+              this.showMask = false
+              return
+            }
+            this.cachedDoc._id = this.currentDoc._id
+
             this.editor.ui.focusTracker.on('change:isFocused', (val) => {
               if (!this.editor.ui.view.editable.isFocused) {
                 let editorData = this.editor.getData()
@@ -184,12 +201,6 @@ export default {
                 }
               }
             })
-            this.editor.setData(content || '')
-            this.cachedDoc._id = this.currentDoc._id
-            // this.cachedDoc = {
-            //   _id: this.currentDoc._id,
-            //   content: content
-            // }
             this.handleEditorReady()
             this.showMask = false
           })

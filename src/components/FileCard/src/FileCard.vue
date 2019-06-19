@@ -3,7 +3,7 @@
     :class="{ mini : mini, selected : selected }"
     @click="handleClick"
     @dblclick="handleDbClick"
-    :draggable="true"
+    :draggable="isDraggable"
     @dragstart='dragStart'
     @contextmenu="handleContextmenu">
     <div class="header">
@@ -140,6 +140,10 @@ export default {
       type: Boolean,
       default: false
     },
+    isDraggable: {
+      type: Boolean,
+      default: true
+    },
     rawData: {
       type: Object,
       default: () => { return {} }
@@ -173,12 +177,11 @@ export default {
       let title = this.titleEllipsis
       let arr = []
       let re = new RegExp(this.searchKeyword, 'g')
-      let matchResult = this.titleEllipsis.search(re)
       if (this.searchKeyword === '') {
         return [title]
       }
-      while (title.search(re) > -1) {
 
+      while (title.search(re) > -1) {
         let idx = title.search(re)
         let strPre = title.substring(0, idx)
         if (strPre !== '') {
@@ -429,7 +432,6 @@ export default {
     display -webkit-box
     -webkit-box-orient vertical
     -webkit-line-clamp 2
-
 
 .footer
   margin 10px 0 0

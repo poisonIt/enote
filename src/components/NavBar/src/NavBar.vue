@@ -227,6 +227,7 @@ export default {
           multi: true
         }).then(folders => {
           fetchLocal('getAllLocalTag').then(tags => {
+            console.log('calcLocalData', [folders, tags])
             this.$worker.postMessage(['calcLocalData', [folders, tags]])
           })
         })
@@ -247,7 +248,9 @@ export default {
           _self.folderTree = new TreeStore([latestNav, shareNav, newRootFolder, newTagNav, binNav])
           _self.$nextTick(() => {
             _self.$refs.tree.$children[0].click()
-            _self.SET_IS_HOME_READY(true)
+            setTimeout(() => {
+              _self.SET_IS_HOME_READY(true)
+            }, 300)
           })
         }
       }

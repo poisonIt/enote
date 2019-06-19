@@ -17,6 +17,7 @@
         <FileHandler></FileHandler>
         <TagHandler></TagHandler>
         <Editor style="height: 100%"></Editor>
+        <!-- <Content style="height: 100%"></Content> -->
         <FolderComp style="height: 100%" v-show="currentFile && currentFile.type === 'folder'"></FolderComp>
       </div>
     </PageLayout>
@@ -44,6 +45,7 @@ import DocumentList from '@/components/DocumentList'
 import FileHandler from '@/components/FileHandler'
 import TagHandler from '@/components/TagHandler.vue'
 import Editor from '@/components/Editor'
+import Content from '@/components/Editor/src/Content'
 import FolderComp from '@/components/FolderComp.vue'
 // import ProgressBar from '@/components/ProgressBar'
 import MovePanel from '@/components/Panels/MovePanel'
@@ -75,6 +77,7 @@ export default {
     FileHandler,
     TagHandler,
     Editor,
+    Content,
     FolderComp,
     // ProgressBar,
     MovePanel,

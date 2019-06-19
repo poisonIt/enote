@@ -39,10 +39,11 @@
           :isShared="item.share"
           :update_at="item.update_at | yyyymmdd"
           :file_size="item.size"
-          :parent_folder="item.parent_folder ? item.parent_folder.title : '我的文件夹'"
+          :parent_folder="folderNameComputed(item)"
           :need_push="item.need_push_remotely"
           :need_push_local="item.need_push_locally"
           :rawData="item"
+          :isDraggable="item.isDraggable"
           :isPushing="notesPushing.indexOf(item._id) > -1"
           @contextmenu="handleContextmenu"
           @dblclick="handleDbClick(item)">
@@ -51,7 +52,7 @@
       <div class="no-file" v-if="fileList.length === 0">
         <span v-if="currentNav && currentNav.type === 'bin'">回收站为空</span>
         <span v-if="currentNav && currentNav.type !== 'bin'">没有找到文件</span>
-        <div v-if="currentNav && currentNav.type !== 'bin'"
+        <div v-if="currentNav && currentNav.type !== 'bin' && currentNav.type !== 'share'"
           class="new-doc_button"
           @click="newNote">新建笔记
         </div>
@@ -91,8 +92,9 @@ import { ipcRenderer } from 'electron'
 import * as _ from 'lodash'
 import dayjs from 'dayjs'
 import mixins from '../mixins'
-import { mapGetters, mapState, mapActions } from 'vuex'
+import { mapGetters, mapActions } from 'vuex'
 import fetchLocal from '../../../utils/fetchLocal'
+import { transNoteDataFromRemote } from '../../../utils/mixins/transData'
 import { getShareWithMe } from '../../../service'
 import SearchBar from '@/components/SearchBar'
 // import Loading from '@/components/Loading'
@@ -228,8 +230,11 @@ export default {
     ]),
 
     fetchSharedFile () {
-      getShareWithMe().then(res => {
-        console.log('getShareWithMe-res', res)
+      fetchLocal('getSharedNote').then(notes => {
+        notes.forEach(note => {
+          note.isDraggable = false
+        })
+        this.handleDataFetched([[], notes])
       })
     },
 
@@ -243,7 +248,7 @@ export default {
         })
       } else if (nav.type === 'folder') {
         let params = {
-          pid: nav._id || nav.id || '0'
+          pid: nav.id || nav._id || '0'
         }
         if (nav.remote_id !== undefined) {
           params.remote_pid = nav.remote_id
@@ -390,6 +395,9 @@ export default {
     },
 
     handleContextmenu (props) {
+      if (this.currentNav.type === 'share') {
+        return
+      }
       this.popupedFile = props
       if (this.currentNav.type === 'bin') {
         this.popupNativeMenu(this.nativeMenus[5])
@@ -494,7 +502,6 @@ export default {
           fetchLocal('getLocalNoteByPid', params).then(notes => {
             if (folders.length + notes.length > 0) {
               this.isDelConfirmShowed = true
-              return
             } else {
               this.removeFile(this.popupedFile.rawData)
             }
@@ -543,7 +550,7 @@ export default {
     handleHistory () {
       this.$hub.dispatchHub('diffHtml', this, this.popupedFile)
     },
-    
+
     handleResume () {
       this.trashFileCache = this.fileList.map(file => file._id)
       this.navNeedUpdate = true
@@ -586,7 +593,7 @@ export default {
     },
 
     copyFile (file) {
-      return {
+      let result = {
         type: file.type,
         title: file.title,
         create_at: file.create_at,
@@ -601,6 +608,11 @@ export default {
         update_at: file.update_at,
         _id: file._id
       }
+      if (file.hasOwnProperty('content') && file.hasOwnProperty('share')) {
+        result.content = file.content
+        result.share = file.share
+      }
+      return result
     },
 
     handleHeaderDbClick () {
@@ -610,6 +622,14 @@ export default {
         curWin.maximize()
       } else {
         curWin.unmaximize()
+      }
+    },
+
+    folderNameComputed (file) {
+      if (this.currentNav.type === 'share') {
+        return '与我分享'
+      } else {
+        return file.parent_folder ? file.parent_folder.title : '我的文件夹'
       }
     }
   }

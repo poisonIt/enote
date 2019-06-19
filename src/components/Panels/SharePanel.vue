@@ -364,11 +364,9 @@ export default {
 
 
       this.isLoading = false
-      console.log(cancelResp.data.returnCode)
+      
       if (cancelResp.data.returnCode === 200) {
-        // this.closeSharePanel()
-        console.log(this.shareUrl)
-
+        this.closeSharePanel()
       }
     },
     handleLinkFocus () {

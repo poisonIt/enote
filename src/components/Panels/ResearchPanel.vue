@@ -176,6 +176,7 @@ export default {
       summary: '',
       showSummaryError: false,
       uploadList: [],
+      query: '北',
       largeTypeArr: [
         {
           name: '公司研究',
@@ -247,6 +248,7 @@ export default {
 
     stock (val) {
       let item = _.find(this.stockMenuData, { value: val })
+      console.log(item)
       if (item) {
         this.stockItem = item
         this.trade = item.trade
@@ -261,6 +263,7 @@ export default {
 
   mounted () {
     this.uploadList = this.$refs.upload.fileList
+    
   },
 
   methods: {
@@ -343,7 +346,14 @@ export default {
       }
     },
     postReport () {
-      if (!this.stockItem) {
+      // if (!this.stockItem) {
+      //   console.log(this.stockItem, this.stock)        
+      //   this.$Message.error('请选择股票')
+      //   // return
+        
+
+      // }
+      if (this.largeType==''){
         this.$Message.error('请选择报告大类')
         return
       }
@@ -351,10 +361,10 @@ export default {
         indcode: this.trade,
         indname: this.tradeName,
         isupdatepeandeps: 0,
-        mktcode: this.stockItem.mktcode,
+        mktcode: this.stockItem==null ? '':this.stockItem.mktcode,
         reporttypeid: this.smallType,
         scode: this.stock,
-        scodename: this.stockItem.label,
+        scodename: this.stockItem==null ? '' : this.stockItem.label,
         status: 50,
         stype: 2,
         keywords: this.keywords,
@@ -366,6 +376,10 @@ export default {
         this.$Message.error('请选择报告小类')
         return
       }
+      if (data.scode === '') {
+        this.$Message.error('请选择股票')
+        return
+      }
       if (data.title === '') {
         this.$Message.error('请输入报告标题')
         return
@@ -374,16 +388,13 @@ export default {
         this.$Message.error('请填写关键字')
         return
       }
-      if (data.scode === '') {
-        this.$Message.error('请选择股票')
-        return
-      }
       if (data.summary === '') {
         this.$Message.error('请填写摘要')
         return
       }
       addReport(data).then(res => {
         if (res.data.returnCode === 200) {
+          this.$Message.success('提交成功')
           this.closeResearchPanel()
         } else (
           this.$Message.error(res.data.returnMsg)

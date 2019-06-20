@@ -368,7 +368,7 @@ export default {
         id: data.id,
         name,
         isLeaf,
-        data: data
+        data: data.data
       }, this.model.store)
       this.model.addChildren(node, true)
       var root = this.getRootNode()

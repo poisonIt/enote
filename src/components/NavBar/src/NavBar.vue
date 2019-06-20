@@ -78,14 +78,14 @@
       top="30vh"
       style="padding-bottom:20px "
       transition-name="fade-in-down"
-      @close="isRenameConfirmShowed = false"
+      @close="cancelRename"
       title="重命名">
         <div style="text-align:center;padding:10px; 0">
           <p>目录中有重名文件夹，是否重命名为：{{ newTitle }}？</p>
         </div>
         <div class="button-group button-container" slot="footer">
           <div class="button primary" @click="confirmRename">是</div>
-          <div class="button" @click="isRenameConfirmShowed = false">否</div>
+          <div class="button" @click="cancelRename">否</div>
         </div>
     </modal>
   </div>
@@ -353,18 +353,58 @@ export default {
         nodeData = node.model.data
       }
 
+      node.addChild({
+        id: null,
+        type: 'folder',
+        name: '新建文件夹',
+        data: {
+          type: 'folder',
+          id: null,
+          _id: null,
+          pid: nodeData.id || nodeData._id || '0',
+          title: '新建文件夹',
+          name: '新建文件夹',
+          seq: node.model.children.length,
+          depth: node.model.getDepth()
+        }
+      })
+      return
+
       fetchLocal('addLocalFolder', {
         pid: nodeData.id || nodeData._id || '0',
         seq: node.model.children.length,
         depth: node.model.getDepth()
       }).then(res => {
+        res.name = res.title
+        res.id = res._id
         node.addChild({
           id: res._id,
           type: 'folder',
-          name: res.title
+          name: res.title,
+          data: res
         })
         this.$hub.dispatchHub('pushData', this)
       })
+    },
+
+    async addFolder (node) {
+      console.log('addFolder', node)
+      let res = await fetchLocal('addLocalFolder', {
+        title: node.name,
+        pid: node.data.pid,
+        seq: node.data.seq,
+        depth: node.data.depth
+      })
+      console.log('addFolder-res', res)
+      let map = this.$refs.tree.model.store.map
+      delete map[node.id]
+      res.name = res.title
+      res.id = res._id
+      node.data = res
+      node.id = res._id
+      node.name = res.title
+      map[node.id] = node
+      this.$hub.dispatchHub('pushData', this)
     },
 
     handleNodeAdded (node) {
@@ -437,7 +477,12 @@ export default {
             this.renameNode = node
           } else {
             this.newTitle = node.name
-            this.updateFolderName(node)
+            console.log('handleChangeNodeName', node, node.name)
+            if (node.data.id !== null) {
+              this.updateFolderName(node)
+            } else {
+              this.addFolder(node)
+            }
           }
         })
       }
@@ -494,6 +539,11 @@ export default {
       }
 
       this.updateFolderName(this.renameNode)
+      this.isRenameConfirmShowed = false
+    },
+
+    cancelRename () {
+      this.renameNode.name = this.renameNode.data.title
       this.isRenameConfirmShowed = false
     },
 

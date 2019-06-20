@@ -7,7 +7,11 @@ export default {
       if (id === this.file_id) {
         this.showTitleInput = true
         this.$nextTick(() => {
-          this.$refs.titleInput && this.$refs.titleInput.select()
+          let titleInput = this.$refs.titleInput
+          if (titleInput) {
+            titleInput.focus()
+            titleInput.select()
+          }
         })
       }
     })

@@ -289,6 +289,7 @@ async function getByQuery (params, opts) {
   }
   const isReqArr = _.isArray(params)
   const query = isReqArr ? { $or: params } : params
+  
   let tags = []
   if (opts.multi) {
     let queryFunc = Tag.find(query)
@@ -305,6 +306,7 @@ async function getByQuery (params, opts) {
       tags.push(tag)
     }
   }
+  
   return opts.multi ? tags : tags[0]
 }
 

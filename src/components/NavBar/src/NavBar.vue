@@ -13,6 +13,7 @@
       @select="handleSelect"
       @add-node="handleNodeAdded"
       @change-name-blur="handleChangeNodeName"
+      @before-drop="handleBeforeNodeDrop"
       @drop="handleNodeDrop"
       @drop-fail="handleNodeDropFailed">
     </Tree>
@@ -93,6 +94,7 @@
 
 <script>
 import * as _ from 'lodash'
+import pReduce from 'p-reduce'
 import { mapActions, mapGetters } from 'vuex'
 import {
   folderMenu,
@@ -368,23 +370,6 @@ export default {
           depth: node.model.getDepth()
         }
       })
-      return
-
-      fetchLocal('addLocalFolder', {
-        pid: nodeData.id || nodeData._id || '0',
-        seq: node.model.children.length,
-        depth: node.model.getDepth()
-      }).then(res => {
-        res.name = res.title
-        res.id = res._id
-        node.addChild({
-          id: res._id,
-          type: 'folder',
-          name: res.title,
-          data: res
-        })
-        this.$hub.dispatchHub('pushData', this)
-      })
     },
 
     async addFolder (node) {
@@ -471,24 +456,25 @@ export default {
           pid: node.data.pid
         }).then(folders => {
           let titles = folders.map(item => item.title)
+          console.log('getLocalFolderByPid', node, folders)
           if (titles.indexOf(node.name) > -1) {
             this.newTitle = handleNameConflict(node.name, node.data.title, titles)
             this.isRenameConfirmShowed = true
             this.renameNode = node
           } else {
             this.newTitle = node.name
-            console.log('handleChangeNodeName', node, node.name)
-            if (node.data.id !== null) {
-              this.updateFolderName(node)
-            } else {
-              this.addFolder(node)
-            }
+            this.updateFolderName(node)
           }
         })
       }
     },
 
     updateFolderName (node) {
+      if (node.data.id === null) { // 新建文件夹
+        node.data.title = node.data.name = node.name = this.newTitle
+        this.addFolder(node)
+        return
+      }
       fetchLocal('updateLocalFolder', {
         id: node.data._id || node.data.id || node.id,
         title: this.newTitle
@@ -526,15 +512,25 @@ export default {
 
       if (this.dragNode) {
         if (this.dragNode.data.type === 'folder') {
+          this.dragNode.name = this.dragNode.data.title = this.newTitle
+          this.dropNode.instance.handleDrop(this.dragNode, this.oldParent)
           this.moveFolder({
             id: this.dragNode.id,
             pid: this.dropNode.id,
             title: this.newTitle
           })
-          this.dragNode.name = this.dragNode.data.title = this.newTitle
         }
 
         this.isRenameConfirmShowed = false
+        return
+      }
+
+      if (this.duplicateFile) {
+        let temp = _.cloneDeep(this.duplicateFile)
+        temp.title = this.newTitle
+        this.SET_DUPLICATE_FILE(temp)
+        this.isRenameConfirmShowed = false
+        this.handlePaste()
         return
       }
 
@@ -543,12 +539,51 @@ export default {
     },
 
     cancelRename () {
-      this.renameNode.name = this.renameNode.data.title
+      if (this.dragNode) {
+        this.dropNode.instance.dragLeave()
+        this.dragNode = null
+        this.dropNode = null
+        this.oldParent = null
+        this.newTitle = ''
+        this.handleNodeDropFailed()
+      }
+      if (this.renameNode) {
+        if (this.renameNode.data.id === null) {
+          this.renameNode.remove()
+          this.popupedNode && this.popupedNode.click()
+        } else {
+          this.renameNode.name = this.renameNode.data.title
+        }
+        this.renameNode = null
+      }
       this.isRenameConfirmShowed = false
     },
 
     handleFolderUpdate (params) {
       this.$refs.tree.updateNodeModel(params)
+    },
+
+    async handleBeforeNodeDrop ({ target, to, from, next }) {
+      if (target.name === 'root' || target === to || target.isTargetChild(to)) {
+        this.handleNodeDropFailed()
+        to.instance.dragLeave()
+        return
+      }
+      this.dragNode = target
+      this.oldParent = from
+      this.dropNode = to
+
+      let isNameConflict = await this.checkNameConflict(to.data._id, target.name, target.data.title, 'folder')
+      if (isNameConflict) {
+        return
+      }
+
+      this.moveFolder({
+        id: target.id,
+        pid: to.id
+      }).then(() => {
+        next(target, from)
+      })
     },
 
     handleNodeDropFailed () {
@@ -573,56 +608,14 @@ export default {
           return
         }
 
-        newBrothers = await fetchLocal('getLocalNoteByPid', {
-          pid: node.id
-        })
-
-        titleArr = newBrothers.map(item => item.title)
-        if (titleArr.indexOf(this.draggingFile.title) > -1) {
-          this.newTitle = handleNameConflict(
-            this.draggingFile.title,
-            this.draggingFile.title,
-            titleArr
-          )
-          this.isRenameConfirmShowed = true
+        let isNameConflict = await this.checkNameConflict(node.id, this.draggingFile.title, this.draggingFile.title, 'note')
+        if (isNameConflict) {
           return
         }
 
         this.moveNote({
           id: this.draggingFile._id,
           pid: this.dropNode.id
-        })
-        return
-      }
-
-      // 拖动导航栏
-      if (node.pid !== oldParent.id) {
-        let map = this.$refs.tree.model.store.map
-        let newParent = map[node.pid]
-
-        this.oldParent = oldParent
-        this.dragNode = node
-        this.dropNode = newParent
-
-        newBrothers = await fetchLocal('getLocalFolderByPid', {
-          pid: node.pid
-        })
-
-        titleArr = newBrothers.map(item => item.title)
-
-        if (titleArr.indexOf(node.name) > -1) {
-          this.newTitle = handleNameConflict(
-            node.name,
-            node.name,
-            titleArr
-          )
-          this.isRenameConfirmShowed = true
-          return
-        }
-        
-        this.moveFolder({
-          id: node.data._id || node.data.id || node.id,
-          pid: node.pid
         })
       }
     },
@@ -700,17 +693,25 @@ export default {
       this.SET_DUPLICATE_FILE(this.copyFile(this.popupedNode.model.data))
     },
 
-    handlePaste () {
+    async handlePaste () {
       let node = this.popupedNode.model
       let data = node.data
       let pid = data.id || data._id
       let shouldUpdateList = (this.popupedNode.model === this.$refs.tree.model.store.currentNode)
 
       if (this.duplicateFile.type === 'note') {
+        let isNameConflict = await this.checkNameConflict(pid, this.duplicateFile.title, this.duplicateFile.title, 'note')
+        if (isNameConflict) {
+          return
+        }
+
         fetchLocal('duplicateLocalNote', {
           id: this.duplicateFile._id,
+          title: this.duplicateFile.title,
           pid: pid
         }).then(res => {
+          this.duplicateFile = null
+          this.newTitle = ''
           let fileTypeCN = res.type === 'folder' ? '文件夹' : '笔记'
           this.$Message.success({
             content: `复制了${fileTypeCN} ${res.title} 至目录 ${node.name}！`
@@ -734,7 +735,8 @@ export default {
 
       fetchLocal('getLocalFolderByPid', params).then(folders => {
         fetchLocal('getLocalNoteByPid', params).then(notes => {
-          if (folders.length + notes.length === 0) {
+          let files = [...folders, ...notes].filter(file => file.trash === 'NORMAL')
+          if (files.length === 0) {
             this.delNode(node)
           } else {
             this.isDelConfirmShowed = true
@@ -777,14 +779,80 @@ export default {
     },
 
     handleResumeBin () {
-      fetchLocal('resumeAllTrash').then(res => {
+      this.resumeAllTrash().then(res => {
         this.$hub.dispatchHub('refreshList', this)
         let nodes = res.filter(item => item.type === 'folder')
         let map = this.$refs.tree.model.store.map
         nodes.forEach(node => {
           this.$set(map[node._id], 'hidden', false)
+          this.$set(map[node._id], 'name', node.title)
         })
         this.$hub.dispatchHub('pushData', this)
+      })
+    },
+
+    async resumeAllTrash () {
+      let folderMap = this.$refs.tree.model.store.map
+      let trashFolders = await fetchLocal('getLocalTrashFolder')
+      let trashNotes = await fetchLocal('getLocalTrashNote')
+
+      trashFolders.forEach(folder => {
+        folder.depth = folderMap[folder._id] ? folderMap[folder._id].getDepth() : 0
+      })
+      trashFolders.sort((a, b) => a.depth - b.depth)
+
+      let files = [...trashFolders, ...trashNotes]
+
+      let p = files.map((file, idx) => {
+        return this.createResumeP(file, idx)
+      })
+
+      let result = []
+      result = await pReduce(p, async (a, b) => {
+        return a.concat([b])
+      }, [])
+
+      console.log('result', result)
+      return result
+
+      // return await Promise.all(p)
+    },
+
+    createResumeP (file, idx) {
+      let folderMap = this.$refs.tree.model.store.map
+      return new Promise((resolve, reject) => {
+        let newTitle = file.title
+        let taskName = file.type === 'folder'
+          ? 'updateLocalFolder'
+          : 'updateLocalNote'
+
+        let pTaskName = file.type === 'folder'
+          ? 'getLocalFolderByPid'
+          : 'getLocalNoteByPid'
+        setTimeout(() => {
+          fetchLocal(pTaskName, {
+            pid: file.pid
+          }).then(newBrothers => {
+            newBrothers = newBrothers.filter(item => item.trash === 'NORMAL')
+
+            let titleArr = newBrothers.map(item => item.title)
+
+            if (titleArr.indexOf(newTitle) > -1) {
+              newTitle = handleNameConflict(
+                file.title,
+                file.title,
+                titleArr
+              )
+            }
+            fetchLocal(taskName, {
+              id: file._id,
+              title: newTitle,
+              trash: 'NORMAL'
+            }).then(res => {
+              resolve(res)
+            })
+          })
+        }, 30 * idx)
       })
     },
 
@@ -830,6 +898,40 @@ export default {
       } else {
         return this.viewFileType === link
       }
+    },
+
+    async checkNameConflict (pid, title, oldTitle, type) {
+      const taskName = type === 'folder' ? 'getLocalFolderByPid' : 'getLocalNoteByPid'
+      let newBrothers = await fetchLocal(taskName, {
+        pid: pid
+      })
+      newBrothers = newBrothers.filter(item => {
+        let result = true
+        let map = this.$refs.tree.model.store.map
+        let p = map[item.pid]
+        if (item.trash !== 'NORMAL') {
+          result = false
+        } else {
+          if (p && p.hidden) {
+            result = false
+          }
+        }
+        return result
+      })
+
+      let titleArr = newBrothers.map(item => item.title)
+
+      if (titleArr.indexOf(title) > -1) {
+        this.newTitle = handleNameConflict(
+          title,
+          oldTitle,
+          titleArr
+        )
+        this.isRenameConfirmShowed = true
+        return true
+      }
+
+      return false
     },
 
     copyFile (file) {

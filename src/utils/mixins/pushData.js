@@ -291,12 +291,10 @@ export default {
       let fDepthed = []
       let fSorted = []
       let folderMap = this.$root.$navTree.model.store.map
-      console.log('getFoldersPrepared', this.$root.$navTree)
 
       fNeedPush.forEach(folder => {
         let depth = folderMap[folder._id] ? folderMap[folder._id].getDepth() : 0
         let index = folderMap[folder._id] ? folderMap[folder._id].getIndex() : 0
-        console.log('getFoldersPrepared-folder', folderMap, folder._id, folder.title, folderMap[folder._id])
         folder.depth = depth
         folder.seq = index
       })

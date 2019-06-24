@@ -41,7 +41,7 @@
         <div class="tn-node-content ellipsis" :class="{ current: isCurrent }" v-if="!editable">
           {{model.name}}
         </div>
-        <input v-else class="tn-input" type="text" ref="nodeInput" :value="model.name" @input="updateName" @blur="blur">
+        <input v-else class="tn-input" type="text" ref="nodeInput" :value="model.name" @input="updateName" @blur="blur" @keyup.enter="blur">
         <div class="select-icon"
           :class="{ fill: model.isSelected }"
           v-if="model.type === 'select'"></div>
@@ -280,7 +280,12 @@ export default {
       })
     },
 
-    blur () {
+    blur (e) {
+      if (e.keyCode === 13) {
+        this.$refs.nodeInput.blur()
+        return
+      }
+
       this.editable = false
       var node = this.getRootNode()
       node.$emit('change-name-blur', this.model)
@@ -410,7 +415,7 @@ export default {
     },
 
     drop (e) {
-      var node = this.getRootNode()
+      let node = this.getRootNode()
 
       if (this.draggingFile) {
         this.isDragEnterNode = false
@@ -426,12 +431,29 @@ export default {
         node.$emit('drop-fail')
         return
       }
-      fromComp.editable = false
-      fromComp.model.moveInto(this.model)
+      node.$emit('before-drop', {
+        target: fromComp.model,
+        from: oldParent,
+        to: this.model,
+        next: this.handleDrop
+      })
+      // fromComp.editable = false
+      // fromComp.model.moveInto(this.model)
+      // this.isDragEnterNode = false
+      // node.$emit('drop', {
+      //   node: fromComp.model,
+      //   oldParent: oldParent
+      // })
+    },
+
+    handleDrop (target, from) {
+      let node = this.getRootNode()
+      target.instance.editable = false
+      target.moveInto(this.model)
       this.isDragEnterNode = false
       node.$emit('drop', {
-        node: fromComp.model,
-        oldParent: oldParent
+        node: target,
+        oldParent: from
       })
     },
 

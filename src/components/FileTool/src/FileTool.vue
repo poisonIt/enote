@@ -69,9 +69,7 @@ export default {
   watch: {
     isUserReady (val) {
       if (val) {
-        this.syncData().then(() => {
-         this.SET_DB_READY(true)
-        })
+        this.syncData()
       }
     },
 
@@ -147,7 +145,10 @@ export default {
     async syncData () {
       if (!this.isOffline) {
         await this.pullData(this.noteVer)
-        await this.pushData()
+        this.SET_DB_READY(true)
+        setTimeout(() => {
+          this.pushData()
+        }, 1000)
       } else {
         ipcRenderer.send('pull-finished')
       }

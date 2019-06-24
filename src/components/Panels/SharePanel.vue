@@ -347,7 +347,6 @@ export default {
 
         this.$nextTick(() => {
           this.isFirstData = false
-          // this.qrcode()
         })
 
 
@@ -358,13 +357,14 @@ export default {
 
     async cancelShare () {
       this.isLoading = true
+
       let cancelResp = await unPublishShare({
         noteId: this.currentFile.remote_id
       })
 
 
       this.isLoading = false
-
+      
       if (cancelResp.data.returnCode === 200) {
         this.closeSharePanel()
       }

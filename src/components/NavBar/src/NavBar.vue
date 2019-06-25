@@ -437,7 +437,7 @@ export default {
           if (!res) {
             node.name = node.data.name
           } else {
-            if (res.name !== node.name) {
+            if (res.name !== node.data.name) {
               node.name = res.name
               node.data.name = res.name
             } else {

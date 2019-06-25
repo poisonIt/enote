@@ -94,6 +94,7 @@ import dayjs from 'dayjs'
 import mixins from '../mixins'
 import { mapGetters, mapActions } from 'vuex'
 import fetchLocal from '../../../utils/fetchLocal'
+import { handleNameConflict } from '../../../utils/utils'
 import { transNoteDataFromRemote } from '../../../utils/mixins/transData'
 import { getShareWithMe } from '../../../service'
 import SearchBar from '@/components/SearchBar'
@@ -111,15 +112,19 @@ import {
   listtypeMenu1,
   listtypeMenu2
 } from './config'
+
 export default {
   name: 'DocumentList',
+
   mixins: mixins,
+
   components: {
     SearchBar,
     // Loading,
     FileCard,
     FileCardGroup
   },
+
   data () {
     return {
       isDelConfirmShowed: false,
@@ -141,11 +146,13 @@ export default {
       ]
     }
   },
+
   filters: {
     yyyymmdd (timestamp) {
       return dayjs(Number(timestamp)).format('YYYY-MM-DD')
     }
   },
+
   computed: {
     ...mapGetters({
       currentNav: 'GET_CURRENT_NAV',
@@ -209,7 +216,22 @@ export default {
 
     viewFileSortOrder (val) {
       this.updateFileList()
+    },
+
+    fileList (val) {
+      console.log('watch-fileList', val)
     }
+  },
+
+  created () {
+    ipcRenderer.on('communicate', (event, arg) => {
+      if (arg.from === 'Preview' && arg.tasks.indexOf('refreshDocumentList') > -1) {
+        if (this.currentFile) {
+          this.selectedIdCache = this.currentFile._id
+        }
+        this.refreshList()
+      }
+    })
   },
 
   mounted () {
@@ -238,13 +260,17 @@ export default {
       })
     },
 
-    refreshList () {
+    refreshList (idx) {
       let nav = this.currentNav
       this.isListLoading = true
       this.selectFile(-1)
       if (nav.type === 'latest') {
         fetchLocal('getLatestLocalNote').then(notes => {
-          this.handleDataFetched([[], notes])
+          let folderMap = this.$root.$navTree.model.store.map
+          let n = notes.filter(note => {
+            return folderMap[note.pid] && !folderMap[note.pid].hidden
+          })
+          this.handleDataFetched([[], n])
         })
       } else if (nav.type === 'folder') {
         let params = {
@@ -500,7 +526,8 @@ export default {
         }
         fetchLocal('getLocalFolderByPid', params).then(folders => {
           fetchLocal('getLocalNoteByPid', params).then(notes => {
-            if (folders.length + notes.length > 0) {
+            let files = [...folders, ...notes].filter(file => file.trash === 'NORMAL')
+            if (files.length > 0) {
               this.isDelConfirmShowed = true
             } else {
               this.removeFile(this.popupedFile.rawData)
@@ -551,21 +578,56 @@ export default {
       this.$hub.dispatchHub('diffHtml', this, this.popupedFile)
     },
 
-    handleResume () {
+    async handleResume () {
       this.trashFileCache = this.fileList.map(file => file._id)
       this.navNeedUpdate = true
       let fileId = this.popupedFile.file_id
+      let newTitle = this.popupedFile.title
       let taskName = this.popupedFile.type === 'folder'
         ? 'updateLocalFolder'
         : 'updateLocalNote'
+
+      let pTaskName = this.popupedFile.type === 'folder'
+        ? 'getLocalFolderByPid'
+        : 'getLocalNoteByPid'
+
+      let newBrothers = await fetchLocal(pTaskName, {
+        pid: this.popupedFile.rawData.pid
+      })
+      newBrothers = newBrothers.filter(item => {
+        let result = true
+        let map = this.$root.$navTree.model.store.map
+        let p = map[item.pid]
+        if (item.trash !== 'NORMAL') {
+          result = false
+        } else {
+          if (p && p.hidden) {
+            result = false
+          }
+        }
+        return result
+      })
+
+      let titleArr = newBrothers.map(item => item.title)
+
+      if (titleArr.indexOf(newTitle) > -1) {
+        newTitle = handleNameConflict(
+          newTitle,
+          newTitle,
+          titleArr
+        )
+      }
+      
       fetchLocal(taskName, {
         id: fileId,
+        title: newTitle,
         trash: 'NORMAL'
       }).then(res => {
         this.refreshList()
         const _self = this
         function resumeNode (node) {
           _self.$set(node, 'hidden', false)
+          _self.$set(node, 'name', newTitle)
           let pNode = folderMap[node.pid]
           if (pNode && pNode.id !== '0' && pNode.hidden) {
             resumeNode(pNode)

@@ -64,11 +64,7 @@ export default {
               save (editor) {
                 _self.editorData = editor.getData()
                 ipcRenderer.send('communicate', {
-                  tasks: ['updateEditorDoc'],
-                  params: [{
-                    id: _self.doc._id,
-                    content: _self.editorData
-                  }],
+                  tasks: ['refreshDocumentList'],
                   from: 'Preview'
                 })
                 _self.saveData(_self.doc._id, _self.editorData)

@@ -266,7 +266,15 @@ export default {
       this.$emit('contextmenu', this.$options.propsData)
     },
 
-    handleTitleInputBlur () {
+    handleTitleInputBlur (e) {
+      if (e.keyCode === 13) {
+        this.$refs.titleInput.blur()
+        return
+      }
+      if (this.titleValue === this.title) {
+        return
+      }
+
       this.showTitleInput = false
       let fileList = this.$root.$documentList.fileList
       let fileTitleList = fileList.filter(item => item.type === this.type).map(item => item.title)
@@ -289,7 +297,6 @@ export default {
         id: this.file_id,
         title: this.newTitle
       }).then(res => {
-        this.$hub.dispatchHub('renameListFile', this, res)
         if (res.type === 'folder') {
           this.$hub.dispatchHub('updateFile', this, {
             id: res._id,

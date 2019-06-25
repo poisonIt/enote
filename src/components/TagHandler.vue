@@ -184,6 +184,7 @@ export default {
       }
       if (_.findIndex(this.allTags, { name: this.addTagName }) > -1) {
         this.shouldUpdateTagNav = false
+        this.$Message.error('标签已存在，请重新输入')
       } else {
         this.shouldUpdateTagNav = true
       }

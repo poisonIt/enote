@@ -230,6 +230,8 @@ export default {
         notes: nTransed
       })
 
+      console.log('resp', resp)
+
       if (resp.data.returnCode === 200) {
         let noteResolved = resp.data.body
         if (noteResolved.length > 0) {

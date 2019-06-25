@@ -165,13 +165,13 @@ async function diffAddMulti (reqs) {
 }
 
 function duplicate (req) {
-  const { id } = req
+  const { id, title } = req
 
   return new Promise((resolve, reject) => {
     Note.findOne({ _id: id }, (err, note) => {
       let newNoteData = {
         pid: req.pid || note.pid,
-        title: note.title,
+        title: title || note.title,
         seq: note.seq,
         size: note.size
       }
@@ -270,6 +270,7 @@ async function update (req) {
         return
       }
       let old_trash = note.trash
+
       Note.update(
         { _id: id },
         { $set: req },

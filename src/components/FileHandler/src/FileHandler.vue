@@ -17,16 +17,18 @@
       <p class="ellipsis">{{ titleValue }}</p>
     </div>
     <div class="handler" v-show="!isTrash">
-      <div class="handler-item"
-        :class="{ hidden: isHandlerHidden(item) }"
-        v-for="(item, index) in handlers"
-        :key="index"
-        :data="'FileHandler-' + item"
-        @click="handleClick(item)">
-        <div class="icon"
-          :class="iconClassComputed(item)"
-          :data="'FileHandler-' + item"></div>
-      </div>
+        <div class="handler-item"
+          :class="{ hidden: isHandlerHidden(item.icon) }"
+          v-for="(item, index) in handlers"
+          :key="index"
+          :data="'FileHandler-' + item.icon"
+          @click="handleClick(item.icon)">
+          <Poptip trigger="hover" :content="item.content" :placement="item.placement" :offset="item.offset">
+            <div class="icon"
+              :class="iconClassComputed(item.icon)"
+              :data="'FileHandler-' + item.icon"></div>
+          </Poptip> 
+        </div>
       <transition name="fade-in-down">
         <div class="more" v-show="isMoreShowed">
           <div class="item" @click="handleExport">导出为PDF</div>
@@ -102,7 +104,15 @@ export default {
       containerWidth: '0px',
       titleValue: '',
       isInputFocused: false,
-      handlers: ['share', 'fetch', 'tag', 'more', 'window', 'info'],
+      // handlers: ['share', 'fetch', 'tag', 'more', 'window', 'info'],
+      handlers: [ 
+        {icon: 'share', content: '分享', placement: 'bottom-start', offset: -10}, 
+        {icon: 'fetch', content: '研报', placement: 'bottom', offset: 0}, 
+        {icon: 'tag', content: '标签', placement: 'bottom', offset: 0}, 
+        {icon: 'more', content: '更多', placement: 'bottom', offset: 0}, 
+        {icon: 'window', content: '新窗口笔记',placement: 'bottom-end', offset: 10}, 
+        {icon: 'info', content: '个人信息',placement: 'bottom-end', offset: 10}, 
+      ],
       // handlers: ['share', 'fetch', 'search', 'tag', 'more', 'window', 'info'],
       isMoreShowed: false,
       isInfoShowed: false,
@@ -402,6 +412,8 @@ export default {
   position relative
   justify-content space-between
   -webkit-app-region no-drag
+  .handler-item
+    text-align center
 
 .icon
   width 15px
@@ -464,3 +476,9 @@ export default {
       margin-right 4px
       color #999999
 </style>
+<style lang="stylus">
+.ivu-poptip-popper
+  min-width 50px !important
+  z-index 10000 !important
+</style>
+

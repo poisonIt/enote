@@ -86,6 +86,13 @@ async function add (req) {
     } else {
       if (req.hasOwnProperty('remote_pid')) {
         query = { remote_id: req.remote_pid }
+        Folder.insert(data, function (err, newFolder) {
+          if (err) {
+            reject(err)
+          }
+          resolve(newFolder)
+        })
+        return
       } else {
         query = { id: '0' }
       }

@@ -195,7 +195,7 @@ export default {
 
   watch: {
     currentNav (val) {
-      console.log('wacth-currentNav', val)
+      // console.log('wacth-currentNav', val)
       if (val.type === 'share') {
         this.fetchSharedFile()
       } else {
@@ -204,7 +204,7 @@ export default {
     },
 
     notesPushing (val) {
-      console.log('watch-notesPushing', val)
+      // console.log('watch-notesPushing', val)
     },
 
     selectedTags (val) {
@@ -230,7 +230,7 @@ export default {
     },
 
     fileList (val) {
-      console.log('watch-fileList', val)
+      // console.log('watch-fileList', val)
     }
   },
 
@@ -383,7 +383,7 @@ export default {
           let sT = this.$refs.body.scrollTop
           let oT = selectedEl.offsetTop
           let h = Number(getComputedStyle(bodyEl, null).height.replace('px', ''))
-          console.log(sT, oT, oT + h)
+          // console.log(sT, oT, oT + h)
           if (sT < oT - h + 100 || sT > oT) {
             this.$refs.body.scrollTop = oT
           }

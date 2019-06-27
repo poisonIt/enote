@@ -256,7 +256,11 @@ export default {
         await fetchLocal('updateMultiLocalNote', saveNoteData)
         await fetchLocal('removeAllDeletedNote')
       } else {
-        this.$Message.error(resp.data.returnMsg)
+        if (resp.data.returnMsg) {
+          this.$Message.error(resp.data.returnMsg)
+        } else {
+          this.$Message.error(resp.data)
+        }
       }
     },
 

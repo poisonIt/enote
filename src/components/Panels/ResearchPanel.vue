@@ -231,11 +231,11 @@ export default {
     },
 
     largeType (val) {
+      this.$refs.smallTypeSelect.clear()
       getReportSubclass({
         columnid: val
       }).then(resp => {
         this.smallTypeArr = resp.data.body.map(item => {
-          this.$refs.smallTypeSelect.clear()
           return {
             name: item.name,
             id: item.objid,

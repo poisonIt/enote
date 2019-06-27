@@ -52,9 +52,11 @@
           <div class="form-label">选择股票</div>
           <Select
             class="stock-select"
+            ref="stockSelectEl"
             v-model="stock"
             :remote-method="stockMenuMethod"
             filterable
+            clearable
             :loading="loadingStock"
             remote>
             <Option
@@ -69,16 +71,19 @@
           <Select
             class="stock-select"
             v-model="tradeName"
-            v-if="largeType==100035">
+            filterable
+            clearable
+            remote
+            v-if="largeType==100035"
+            ref="tradeSelect"
+          >
             <Option
               v-for="(option, index) in tradeMenuData"
               :value="`${option.value} ${option.label}`"
               :key="index">{{option.label}}
             </Option>
           </Select>
-
-          <input v-else type="text" v-model="tradeName" disabled="true">
-
+          <input type="text" v-model="tradeName" disabled="disabled" style="background-color: whitesmoke">
         </div>
         <div class="form-item">
           <div class="form-label">报告标题</div>
@@ -241,6 +246,7 @@ export default {
     },
 
     largeType (val) {
+      this.$refs.smallTypeSelect.clear()
       getReportSubclass({
         columnid: val
       }).then(resp => {
@@ -252,6 +258,12 @@ export default {
           }
         })
       })
+      // console.log(val)
+      if (val == 100035) {
+        this.searchTrade()
+      } else {
+        this.tradeName = ''
+      }
     },
 
     title (val, oldVal) {
@@ -274,7 +286,7 @@ export default {
 
   mounted () {
     this.uploadList = this.$refs.upload.fileList
-    this.searchTrade()
+   
   },
 
   methods: {
@@ -283,6 +295,23 @@ export default {
     ]),
 
     closeResearchPanel () {
+      this.$refs.largeTypeSelect.clear()
+      this.$refs.smallTypeSelect.clear()
+      this.stockMenuData = []
+      if (this.largeType == 100035) {
+        this.$refs.tradeSelect.clearSingleSelect()
+        this.$refs.tradeSelect.setQuery('')
+      } else {
+        this.tradeName = ''
+        this.$refs.stockSelectEl.clearSingleSelect()
+        this.$refs.stockSelectEl.setQuery('')
+      }
+      
+      // this.tradeName = ''
+      this.title = ''
+      this.keywords = ''
+      this.summary = ''
+
       this.TOGGLE_SHOW_RESEARCH_PANEL(false)
     }, 
         
@@ -380,7 +409,7 @@ export default {
         indcode: this.largeType!=100035?this.trade:this.tradeName.split(' ')[0],
         indname: this.largeType!=100035?this.tradeName:this.tradeName.split(' ')[1],
         isupdatepeandeps: 0,
-        mktcode: this.stockItem==null ? '':this.stockItem.mktcode,
+        mktcode: this.stockItem == null ? '':this.stockItem.mktcode,
         reporttypeid: this.smallType,
         scode: this.stock,
         scodename: this.stockItem==null ? '' : this.stockItem.label.split(' ')[0],

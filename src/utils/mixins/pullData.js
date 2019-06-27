@@ -37,7 +37,7 @@ export default {
 
     async pullData (noteVer) {
       let allNotes = await fetchLocal('getLocalNoteByQuery', {}, { multi: true })
-      console.log('allNotes', allNotes)
+      // console.log('allNotes', allNotes)
       let resp = await this.runPullTasks(noteVer)
       return resp
     },
@@ -80,11 +80,12 @@ export default {
       })
 
       let folderData = (pullResp[0].data.body || []).map(item => transNoteBookDataFromRemote(item))
-      console.log('111', folderData)
+      // console.log('111', folderData)
       await fetchLocal('diffAddMultiLocalFolder', folderData)
-      console.log('222', tagsData)
+      // console.log('222', tagsData)
 
       let noteData = (pullResp[1].data.body || []).map(item => transNoteDataFromRemote(item, allTagLocalMap))
+      // console.log('333', noteData)
       await fetchLocal('diffAddMultiLocalNote', noteData)
 
       if (noteData.length > 0) {

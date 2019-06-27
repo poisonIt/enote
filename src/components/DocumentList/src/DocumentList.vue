@@ -52,7 +52,7 @@
       <div class="no-file" v-if="fileList.length === 0">
         <span v-if="currentNav && currentNav.type === 'bin'">回收站为空</span>
         <span v-if="currentNav && currentNav.type !== 'bin'">没有找到文件</span>
-        <div v-if="currentNav && currentNav.type !== 'bin' && currentNav.type !== 'share'"
+        <div v-if="showNewNoteButton"
           class="new-doc_button"
           @click="newNote">新建笔记
         </div>
@@ -128,6 +128,7 @@ export default {
   data () {
     return {
       isDelConfirmShowed: false,
+      selectedFileIdx: -1,
       selectedIdCache: null,
       trashFileCache: [],
       navNeedUpdate: false,
@@ -163,7 +164,8 @@ export default {
       viewFileSortOrder: 'GET_VIEW_FILE_SORT_ORDER',
       tagsMap: 'GET_TAGS_MAP',
       selectedTags: 'GET_SELECTED_TAGS',
-      searchKeyword: 'GET_SEARCH_KEYWORD'
+      searchKeyword: 'GET_SEARCH_KEYWORD',
+      renameFileId: 'GET_RENAME_FILE_ID'
     }),
 
     menuData () {
@@ -180,11 +182,20 @@ export default {
       } else {
         return []
       }
+    },
+
+    showNewNoteButton () {
+      return this.currentNav &&
+        this.currentNav.type !== 'tag' &&
+        this.currentNav.type !== 'select' &&
+        this.currentNav.type !== 'bin' &&
+        this.currentNav.type !== 'share'
     }
   },
 
   watch: {
     currentNav (val) {
+      // console.log('wacth-currentNav', val)
       if (val.type === 'share') {
         this.fetchSharedFile()
       } else {
@@ -193,7 +204,7 @@ export default {
     },
 
     notesPushing (val) {
-      console.log('watch-notesPushing', val)
+      // console.log('watch-notesPushing', val)
     },
 
     selectedTags (val) {
@@ -219,7 +230,7 @@ export default {
     },
 
     fileList (val) {
-      console.log('watch-fileList', val)
+      // console.log('watch-fileList', val)
     }
   },
 
@@ -288,11 +299,15 @@ export default {
           })
         })
       } else if (nav.type === 'tag' || nav.type === 'select') {
-        fetchLocal('getLocalTagNote', {
-          tags: this.selectedTags
-        }).then(notes => {
-          this.handleDataFetched([[], notes])
-        })
+        if (this.selectedTags.length === 0) {
+          this.handleDataFetched([[], []])
+        } else {
+          fetchLocal('getLocalTagNote', {
+            tags: this.selectedTags
+          }).then(notes => {
+            this.handleDataFetched([[], notes])
+          })
+        }
       } else if (nav.type === 'bin') {
         fetchLocal('getLocalTrashFolder').then(folders => {
           fetchLocal('getLocalTrashNote', {
@@ -325,6 +340,7 @@ export default {
       let idx = _.findIndex(this.fileList, { _id: this.selectedIdCache })
       idx = (idx === -1 ? 0 : idx)
       this.selectFile(this.fileList.length > 0 ? idx : -1)
+      this.scrollToSelected()
       this.isListLoading = false
       if (this.navNeedUpdate) {
         let fileListIds = this.fileList.map(file => file._id)
@@ -338,9 +354,17 @@ export default {
         })
         this.navNeedUpdate = false
       }
+      if (this.renameFileId !== '') {
+        this.$nextTick(() => {
+          let idx = _.findIndex(this.fileList, { _id: this.renameFileId })
+          this.selectFile(idx)
+          this.$hub.dispatchHub('renameFileCard', this, this.renameFileId)
+        })
+      }
     },
 
     selectFile (index) {
+      this.selectedFileIdx = index
       const file = this.fileList[index]
       if (file) {
         if (this.currentFile && file._id === this.currentFile._id) return
@@ -349,6 +373,22 @@ export default {
       } else {
         this.SET_CURRENT_FILE(null)
       }
+    },
+
+    scrollToSelected () {
+      this.$nextTick(() => {
+        let bodyEl = this.$refs.body
+        let selectedEl = Array.prototype.slice.call(this.$refs.fileCardGroup.$el.childNodes)[this.selectedFileIdx]
+        if (selectedEl) {
+          let sT = this.$refs.body.scrollTop
+          let oT = selectedEl.offsetTop
+          let h = Number(getComputedStyle(bodyEl, null).height.replace('px', ''))
+          // console.log(sT, oT, oT + h)
+          if (sT < oT - h + 100 || sT > oT) {
+            this.$refs.body.scrollTop = oT
+          }
+        }
+      })
     },
 
     handleFileTitleClick (index) {

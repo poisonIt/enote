@@ -153,7 +153,6 @@ function removeById (req) {
 
 async function removeByQuery (req) {
   let tag = await getByQuery(req)
-  console.log('removeByQuery', req, tag)
 
   tag.remove()
 }
@@ -191,7 +190,6 @@ function updateP (query, req, multi) {
 }
 
 async function update (req) {
-  console.log('update-tag', req)
   const { id } = req
   req.update_at = new Date().valueOf()
 

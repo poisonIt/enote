@@ -324,7 +324,7 @@ export default {
         this.entitledType = this.shareInfo.entitledType
         this.validity = String(this.shareInfo.validityType)
         this.entitledUser = this.shareInfo.entitledUser || []
-        this.config.value = this.shareInfo.url
+        this.config.value = `noteShare:${this.shareInfo.url}`
         this.friendChecked = this.fdList.filter(item => {
           if (this.entitledUser.indexOf(item.userCode) > -1) {
             item.state = true

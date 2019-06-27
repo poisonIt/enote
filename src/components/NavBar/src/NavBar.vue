@@ -1,7 +1,7 @@
 <template>
   <div id="navbar" ref="navbar">
     <Tree
-      :style="{ opacity: viewType === 'unexpanded' ? 0 : 1 }"
+      :class="{ 'unexpanded' : viewType !== 'expanded' }"
       ref="tree"
       :dark="true"
       :model="folderTree"
@@ -20,38 +20,33 @@
     <div class="nav-mini" v-show="viewType === 'unexpanded'">
       <div class="icon icon-latest"
         :class="{
-          active : navMiniActive('latest'),
-          highlight : navMiniActive('latest')
+          active : navMiniActive('latest')
         }"
         @click="handleClickMini('latest')">
       </div>
       <div class="icon icon-share"
         :class="{
-          active : navMiniActive(['share']),
-          highlight : navMiniActive(['share'])
+          active : navMiniActive(['share'])
         }"
         @click="handleClickMini('share')">
       </div>
       <div class="icon icon-folder_open"
         :class="{
-          active : navMiniActive(['folders', 'new folder']),
-          highlight : navMiniActive(['folders', 'new folder'])
+          active : navMiniActive('folder'),
         }"
-        @click="handleClickMini('folders')">
+        @click="handleClickMini('0')">
       </div>
-      <div class="icon icon-tags"
+      <div class="icon icon-tag"
         :class="{
-          active : navMiniActive('tags'),
-          highlight : navMiniActive('tags')
+          active : navMiniActive('tag')
         }"
-        @click="handleClickMini('tags')">
+        @click="handleClickMini('tag')">
       </div>
-      <div class="icon icon-recycle"
+      <div class="icon icon-bin"
         :class="{
-          active : navMiniActive('recycle'),
-          highlight : navMiniActive('recycle')
+          active : navMiniActive('bin')
         }"
-        @click="handleClickMini('recycle')">
+        @click="handleClickMini('bin')">
       </div>
     </div>
     <modal
@@ -209,6 +204,7 @@ export default {
       isDBReady: 'GET_DB_READY',
       viewType: 'GET_VIEW_TYPE',
       viewFileType: 'GET_VIEW_FILE_TYPE',
+      currentNav: 'GET_CURRENT_NAV',
       currentFile: 'GET_CURRENT_FILE',
       duplicateFile: 'GET_DUPLICATE_FILE',
       selectedTags: 'GET_SELECTED_TAGS',
@@ -229,7 +225,6 @@ export default {
           multi: true
         }).then(folders => {
           fetchLocal('getAllLocalTag').then(tags => {
-            console.log('calcLocalData', [folders, tags])
             this.$worker.postMessage(['calcLocalData', [folders, tags]])
           })
         })
@@ -269,11 +264,12 @@ export default {
       'SET_DUPLICATE_FILE',
       'SET_DRAGGING_FILE',
       'TOGGLE_SHOW_MOVE_PANEL',
-      'TOGGLE_SHOW_TAG_HANDLER'
+      'TOGGLE_SHOW_TAG_HANDLER',
+      'SET_RENAME_FILE_ID'
     ]),
 
     handleSetCurrentFolder (node) {
-      console.log('currentFolder', node)
+      console.log('handleSetCurrentFolder', node)
       this.SET_CURRENT_NAV(_.clone(node.data))
     },
 
@@ -309,25 +305,33 @@ export default {
       }
     },
 
-    handleNewNote (isTemp) {
+    async handleNewNote (isTemp) {
       let s = false
       let currentNode = this.$refs.tree.model.store.currentNode
       if (!currentNode.parent.parent && currentNode.id !== '0') {
         currentNode = this.$refs.tree.model.store.map['0']
         s = true
       }
-
-      fetchLocal('addLocalNote', {
-        title: '无标题笔记',
-        pid: currentNode.id || currentNode._id || currentNode.data._id || '0',
-        isTemp: isTemp
-      }).then(res => {
-        this.$hub.dispatchHub('addFile', this, res)
-        if (s) {
-          this.setCurrentFolder('0')
-        }
-        this.$hub.dispatchHub('pushData', this)
+      let pid = currentNode.id || currentNode._id || currentNode.data._id || '0'
+      let newTitle = '无标题笔记'
+      let broNotes = await fetchLocal('getLocalNoteByPid', {
+        pid: pid
       })
+      let titles = broNotes.map(item => item.title)
+      if (titles.indexOf(newTitle) > -1) {
+        newTitle = handleNameConflict(newTitle, newTitle, titles)
+      }
+
+      let addRes = await fetchLocal('addLocalNote', {
+        title: newTitle,
+        pid: pid,
+        isTemp: isTemp
+      })
+      this.$hub.dispatchHub('addFile', this, addRes)
+      if (s) {
+        this.setCurrentFolder('0')
+      }
+      this.$hub.dispatchHub('pushData', this)
     },
 
     handleNewTemplateNote () {
@@ -337,6 +341,7 @@ export default {
     handleNewFolder (isCurrent, nodeId) {
       let node
       let nodeData
+      console.log('handleNewFolder', this.$refs)
       let map = this.$refs.tree.model.store.map
       if (nodeId) {
         nodeData = map[nodeId]
@@ -373,14 +378,20 @@ export default {
     },
 
     async addFolder (node) {
-      console.log('addFolder', node)
+      let newTitle = node.name
+      let broFolders = await fetchLocal('getLocalFolderByPid', {
+        pid: node.data.pid
+      })
+      let titles = broFolders.map(item => item.title)
+      if (titles.indexOf(newTitle) > -1) {
+        newTitle = handleNameConflict(newTitle, newTitle, titles)
+      }
       let res = await fetchLocal('addLocalFolder', {
-        title: node.name,
+        title: newTitle,
         pid: node.data.pid,
         seq: node.data.seq,
         depth: node.data.depth
       })
-      console.log('addFolder-res', res)
       let map = this.$refs.tree.model.store.map
       delete map[node.id]
       res.name = res.title
@@ -389,11 +400,26 @@ export default {
       node.id = res._id
       node.name = res.title
       map[node.id] = node
+
+      if (this.viewType === 'expanded') {
+        this.handleSetCurrentFolder(node)
+      }
+
       this.$hub.dispatchHub('pushData', this)
     },
 
     handleNodeAdded (node) {
       this.$nextTick(() => {
+        if (this.viewType !== 'expanded') {
+          console.log('handleNodeAdded', node)
+          if (node.data.type === 'folder') {
+            this.addFolder(node).then(() => {
+              this.SET_RENAME_FILE_ID(node.data._id)
+              this.setCurrentFolder(node.data.pid)
+            })
+            return
+          }
+        }
         if (node.instance) {
           node.instance.setEditable()
         }
@@ -456,7 +482,6 @@ export default {
           pid: node.data.pid
         }).then(folders => {
           let titles = folders.map(item => item.title)
-          console.log('getLocalFolderByPid', node, folders)
           if (titles.indexOf(node.name) > -1) {
             this.newTitle = handleNameConflict(node.name, node.data.title, titles)
             this.isRenameConfirmShowed = true
@@ -812,7 +837,6 @@ export default {
         return a.concat([b])
       }, [])
 
-      console.log('result', result)
       return result
 
       // return await Promise.all(p)
@@ -889,14 +913,19 @@ export default {
     },
 
     handleClickMini (link) {
-      this.$hub.dispatchHub('clickNavMini', this, link)
+      this.setCurrentFolder(link)
+      // this.SET_VIEW_FILE_TYPE(link)
+      // this.$hub.dispatchHub('clickNavMini', this, link)
     },
 
     navMiniActive (link) {
+      if (!this.currentNav) {
+        return false
+      }
       if (link instanceof Array) {
-        return link.indexOf(this.viewFileType) > -1
+        return link.indexOf(this.currentNav.type) > -1
       } else {
-        return this.viewFileType === link
+        return this.currentNav.type === link
       }
     },
 
@@ -963,6 +992,10 @@ export default {
   padding-bottom 30px
   overflow-y scroll
 
+.unexpanded
+  transform: scaleY(0)
+  overflow hidden
+
 .nav-item
   height 40px
   color #fff
@@ -997,4 +1030,33 @@ export default {
   border 1px solid #E9E9E9
   border-radius 4px
 
+.nav-mini
+  position absolute
+  top 0
+  .icon
+    width 70px
+    height 70px
+    background-repeat  no-repeat
+    background-size 50%
+    background-position center
+  .icon-latest
+    background-image url(../../../assets/images/lanhu/nav/documents.png)
+    &.active
+      background-image url(../../../assets/images/lanhu/nav/documents_highlight.png)
+  .icon-share
+    background-image url(../../../assets/images/lanhu/nav/share.png)
+    &.active
+      background-image url(../../../assets/images/lanhu/nav/share_highlight.png)
+  .icon-folder_open
+    background-image url(../../../assets/images/lanhu/nav/folder_open.png)
+    &.active
+      background-image url(../../../assets/images/lanhu/nav/folder_open_highlight.png)
+  .icon-tag
+    background-image url(../../../assets/images/lanhu/nav/tag.png)
+    &.active
+      background-image url(../../../assets/images/lanhu/nav/tag_highlight.png)
+  .icon-bin
+    background-image url(../../../assets/images/lanhu/nav/bin.png)
+    &.active
+      background-image url(../../../assets/images/lanhu/nav/bin_highlight.png)
 </style>

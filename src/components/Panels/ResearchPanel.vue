@@ -68,7 +68,7 @@
         </div>
         <div class="form-item small" v-if="largeType != 100031">
           <div class="form-label">选择行业</div>
-          <input type="text" v-model="tradeName" disabled="disabled">
+          <input type="text" v-model="tradeName" disabled="disabled" style="background-color: whitesmoke">
         </div>
         <div class="form-item">
           <div class="form-label">报告标题</div>

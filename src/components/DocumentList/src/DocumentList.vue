@@ -163,7 +163,8 @@ export default {
       viewFileSortOrder: 'GET_VIEW_FILE_SORT_ORDER',
       tagsMap: 'GET_TAGS_MAP',
       selectedTags: 'GET_SELECTED_TAGS',
-      searchKeyword: 'GET_SEARCH_KEYWORD'
+      searchKeyword: 'GET_SEARCH_KEYWORD',
+      renameFileId: 'GET_RENAME_FILE_ID'
     }),
 
     menuData () {
@@ -185,6 +186,7 @@ export default {
 
   watch: {
     currentNav (val) {
+      console.log('wacth-currentNav', val)
       if (val.type === 'share') {
         this.fetchSharedFile()
       } else {
@@ -337,6 +339,15 @@ export default {
           }
         })
         this.navNeedUpdate = false
+      }
+      if (this.renameFileId !== '') {
+        console.log('renameFileId', this.renameFileId)
+        this.$nextTick(() => {
+          this.$refs.body.scrollTop = 120 * this.fileList.length
+          let idx = _.findIndex(this.fileList, { _id: this.renameFileId })
+          this.selectFile(idx)
+          this.$hub.dispatchHub('renameFileCard', this, this.renameFileId)
+        })
       }
     },
 

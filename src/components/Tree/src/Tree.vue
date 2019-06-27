@@ -329,6 +329,7 @@ export default {
     },
 
     select (id) {
+      console.log('select', id)
       this.broadcast('tree', 'select', {
         id: id
       }, true)

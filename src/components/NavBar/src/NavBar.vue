@@ -264,10 +264,12 @@ export default {
       'SET_DUPLICATE_FILE',
       'SET_DRAGGING_FILE',
       'TOGGLE_SHOW_MOVE_PANEL',
-      'TOGGLE_SHOW_TAG_HANDLER'
+      'TOGGLE_SHOW_TAG_HANDLER',
+      'SET_RENAME_FILE_ID'
     ]),
 
     handleSetCurrentFolder (node) {
+      console.log('handleSetCurrentFolder', node)
       this.SET_CURRENT_NAV(_.clone(node.data))
     },
 
@@ -303,25 +305,33 @@ export default {
       }
     },
 
-    handleNewNote (isTemp) {
+    async handleNewNote (isTemp) {
       let s = false
       let currentNode = this.$refs.tree.model.store.currentNode
       if (!currentNode.parent.parent && currentNode.id !== '0') {
         currentNode = this.$refs.tree.model.store.map['0']
         s = true
       }
-
-      fetchLocal('addLocalNote', {
-        title: '无标题笔记',
-        pid: currentNode.id || currentNode._id || currentNode.data._id || '0',
-        isTemp: isTemp
-      }).then(res => {
-        this.$hub.dispatchHub('addFile', this, res)
-        if (s) {
-          this.setCurrentFolder('0')
-        }
-        this.$hub.dispatchHub('pushData', this)
+      let pid = currentNode.id || currentNode._id || currentNode.data._id || '0'
+      let newTitle = '无标题笔记'
+      let broNotes = await fetchLocal('getLocalNoteByPid', {
+        pid: pid
       })
+      let titles = broNotes.map(item => item.title)
+      if (titles.indexOf(newTitle) > -1) {
+        newTitle = handleNameConflict(newTitle, newTitle, titles)
+      }
+
+      let addRes = await fetchLocal('addLocalNote', {
+        title: newTitle,
+        pid: pid,
+        isTemp: isTemp
+      })
+      this.$hub.dispatchHub('addFile', this, addRes)
+      if (s) {
+        this.setCurrentFolder('0')
+      }
+      this.$hub.dispatchHub('pushData', this)
     },
 
     handleNewTemplateNote () {
@@ -331,6 +341,7 @@ export default {
     handleNewFolder (isCurrent, nodeId) {
       let node
       let nodeData
+      console.log('handleNewFolder', this.$refs)
       let map = this.$refs.tree.model.store.map
       if (nodeId) {
         nodeData = map[nodeId]
@@ -367,8 +378,16 @@ export default {
     },
 
     async addFolder (node) {
+      let newTitle = node.name
+      let broFolders = await fetchLocal('getLocalFolderByPid', {
+        pid: node.data.pid
+      })
+      let titles = broFolders.map(item => item.title)
+      if (titles.indexOf(newTitle) > -1) {
+        newTitle = handleNameConflict(newTitle, newTitle, titles)
+      }
       let res = await fetchLocal('addLocalFolder', {
-        title: node.name,
+        title: newTitle,
         pid: node.data.pid,
         seq: node.data.seq,
         depth: node.data.depth
@@ -381,11 +400,26 @@ export default {
       node.id = res._id
       node.name = res.title
       map[node.id] = node
+
+      if (this.viewType === 'expanded') {
+        this.handleSetCurrentFolder(node)
+      }
+
       this.$hub.dispatchHub('pushData', this)
     },
 
     handleNodeAdded (node) {
       this.$nextTick(() => {
+        if (this.viewType !== 'expanded') {
+          console.log('handleNodeAdded', node)
+          if (node.data.type === 'folder') {
+            this.addFolder(node).then(() => {
+              this.SET_RENAME_FILE_ID(node.data._id)
+              this.setCurrentFolder(node.data.pid)
+            })
+            return
+          }
+        }
         if (node.instance) {
           node.instance.setEditable()
         }

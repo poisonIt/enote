@@ -70,11 +70,24 @@ function saveAll (req) {
 }
 
 // add
-async function add (req) {
+async function add (req, opts) {
   let data = folderModel(req)
 
   return new Promise((resolve, reject) => {
     let query
+
+    if (opts) {
+      if (opts.immediate) {
+        Folder.insert(data, function (err, newFolder) {
+          if (err) {
+            reject(err)
+          }
+          resolve(newFolder)
+        })
+        return
+      }
+    }
+
     if (req.hasOwnProperty('pid')) {
       query = { id: req.pid }
       if (req.hasOwnProperty('remote_pid')) {
@@ -86,13 +99,6 @@ async function add (req) {
     } else {
       if (req.hasOwnProperty('remote_pid')) {
         query = { remote_id: req.remote_pid }
-        Folder.insert(data, function (err, newFolder) {
-          if (err) {
-            reject(err)
-          }
-          resolve(newFolder)
-        })
-        return
       } else {
         query = { id: '0' }
       }
@@ -132,7 +138,7 @@ async function diffAdd (req) {
     req.id = folder._id
     result = await update(req)
   } else {
-    result = await add(req)
+    result = await add(req, { immediate: true })
   }
 
   return result

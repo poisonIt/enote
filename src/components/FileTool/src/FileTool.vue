@@ -5,14 +5,15 @@
         <div class="icon-new"></div>
         <span>新建</span>
       </div>
-      <div class="item sync" :class="{ 'grey': isOffline }" @click="pushLocalData(30)">
+      <div class="item sync" :class="{ grey: isOffline }" @click="pushLocalData(30)">
         <div class="icon-sync infinite rotate" :class="{ animated: isSyncing }"></div>
         <span>同步</span>
       </div>
     </div>
-    <div class="button-sync" :class="{ 'grey': isOffline }" v-if="viewType === 'unexpanded'"></div>
-    <div class="unexpanded" v-if="viewType === 'unexpanded'">+</div>
+    <div class="button-sync infinite rotate" :class="{ grey: isOffline, animated: isSyncing }" v-if="viewType === 'unexpanded'" @click="pushLocalData(30)"></div>
+    <div class="unexpanded" v-if="viewType === 'unexpanded'" @click="toggleMenu">+</div>
     <Menu
+      :class="{ 'menu': true, 'is-expanded': viewType === 'expanded' }"
       :data="menuData"
       :visible="isMenuVisible"
       @close="closeMenu"
@@ -69,9 +70,7 @@ export default {
   watch: {
     isUserReady (val) {
       if (val) {
-        this.syncData().then(() => {
-         this.SET_DB_READY(true)
-        })
+        this.syncData()
       }
     },
 
@@ -147,7 +146,10 @@ export default {
     async syncData () {
       if (!this.isOffline) {
         await this.pullData(this.noteVer)
-        await this.pushData()
+        this.SET_DB_READY(true)
+        setTimeout(() => {
+          this.pushData()
+        }, 1000)
       } else {
         ipcRenderer.send('pull-finished')
       }
@@ -161,11 +163,6 @@ export default {
       // if (isAuto) return
       setTimeout(() => {
         this.pushData()
-        .catch(err => {
-          // this.$Message.error('同步失败，请重新登录')
-          ipcRenderer.send('logout')
-          // clearInterval(asyncItv)
-        })
       }, delay)
     },
 
@@ -362,4 +359,11 @@ export default {
   text-align center
   line-height 28px
   background-color #DDAF59
+
+.menu
+  position absolute !important
+  top 110px !important
+  left 20px
+  &.is-expanded
+    top 50px !important
 </style>

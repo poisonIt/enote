@@ -1,7 +1,7 @@
 <template>
   <div id="navbar" ref="navbar">
     <Tree
-      :style="{ opacity: viewType === 'unexpanded' ? 0 : 1 }"
+      :class="{ 'unexpanded' : viewType !== 'expanded' }"
       ref="tree"
       :dark="true"
       :model="folderTree"
@@ -13,44 +13,40 @@
       @select="handleSelect"
       @add-node="handleNodeAdded"
       @change-name-blur="handleChangeNodeName"
+      @before-drop="handleBeforeNodeDrop"
       @drop="handleNodeDrop"
       @drop-fail="handleNodeDropFailed">
     </Tree>
     <div class="nav-mini" v-show="viewType === 'unexpanded'">
       <div class="icon icon-latest"
         :class="{
-          active : navMiniActive('latest'),
-          highlight : navMiniActive('latest')
+          active : navMiniActive('latest')
         }"
         @click="handleClickMini('latest')">
       </div>
       <div class="icon icon-share"
         :class="{
-          active : navMiniActive(['share']),
-          highlight : navMiniActive(['share'])
+          active : navMiniActive(['share'])
         }"
         @click="handleClickMini('share')">
       </div>
       <div class="icon icon-folder_open"
         :class="{
-          active : navMiniActive(['folders', 'new folder']),
-          highlight : navMiniActive(['folders', 'new folder'])
+          active : navMiniActive('folder'),
         }"
-        @click="handleClickMini('folders')">
+        @click="handleClickMini('0')">
       </div>
-      <div class="icon icon-tags"
+      <div class="icon icon-tag"
         :class="{
-          active : navMiniActive('tags'),
-          highlight : navMiniActive('tags')
+          active : navMiniActive('tag')
         }"
-        @click="handleClickMini('tags')">
+        @click="handleClickMini('tag')">
       </div>
-      <div class="icon icon-recycle"
+      <div class="icon icon-bin"
         :class="{
-          active : navMiniActive('recycle'),
-          highlight : navMiniActive('recycle')
+          active : navMiniActive('bin')
         }"
-        @click="handleClickMini('recycle')">
+        @click="handleClickMini('bin')">
       </div>
     </div>
     <modal
@@ -78,14 +74,14 @@
       top="30vh"
       style="padding-bottom:20px "
       transition-name="fade-in-down"
-      @close="isRenameConfirmShowed = false"
+      @close="cancelRename"
       title="重命名">
         <div style="text-align:center;padding:10px; 0">
           <p>目录中有重名文件夹，是否重命名为：{{ newTitle }}？</p>
         </div>
         <div class="button-group button-container" slot="footer">
           <div class="button primary" @click="confirmRename">是</div>
-          <div class="button" @click="isRenameConfirmShowed = false">否</div>
+          <div class="button" @click="cancelRename">否</div>
         </div>
     </modal>
   </div>
@@ -93,6 +89,7 @@
 
 <script>
 import * as _ from 'lodash'
+import pReduce from 'p-reduce'
 import { mapActions, mapGetters } from 'vuex'
 import {
   folderMenu,
@@ -207,6 +204,7 @@ export default {
       isDBReady: 'GET_DB_READY',
       viewType: 'GET_VIEW_TYPE',
       viewFileType: 'GET_VIEW_FILE_TYPE',
+      currentNav: 'GET_CURRENT_NAV',
       currentFile: 'GET_CURRENT_FILE',
       duplicateFile: 'GET_DUPLICATE_FILE',
       selectedTags: 'GET_SELECTED_TAGS',
@@ -227,7 +225,6 @@ export default {
           multi: true
         }).then(folders => {
           fetchLocal('getAllLocalTag').then(tags => {
-            console.log('calcLocalData', [folders, tags])
             this.$worker.postMessage(['calcLocalData', [folders, tags]])
           })
         })
@@ -267,11 +264,12 @@ export default {
       'SET_DUPLICATE_FILE',
       'SET_DRAGGING_FILE',
       'TOGGLE_SHOW_MOVE_PANEL',
-      'TOGGLE_SHOW_TAG_HANDLER'
+      'TOGGLE_SHOW_TAG_HANDLER',
+      'SET_RENAME_FILE_ID'
     ]),
 
     handleSetCurrentFolder (node) {
-      console.log('currentFolder', node)
+      console.log('handleSetCurrentFolder', node)
       this.SET_CURRENT_NAV(_.clone(node.data))
     },
 
@@ -307,25 +305,33 @@ export default {
       }
     },
 
-    handleNewNote (isTemp) {
+    async handleNewNote (isTemp) {
       let s = false
       let currentNode = this.$refs.tree.model.store.currentNode
       if (!currentNode.parent.parent && currentNode.id !== '0') {
         currentNode = this.$refs.tree.model.store.map['0']
         s = true
       }
-
-      fetchLocal('addLocalNote', {
-        title: '无标题笔记',
-        pid: currentNode.id || currentNode._id || currentNode.data._id || '0',
-        isTemp: isTemp
-      }).then(res => {
-        this.$hub.dispatchHub('addFile', this, res)
-        if (s) {
-          this.setCurrentFolder('0')
-        }
-        this.$hub.dispatchHub('pushData', this)
+      let pid = currentNode.id || currentNode._id || currentNode.data._id || '0'
+      let newTitle = '无标题笔记'
+      let broNotes = await fetchLocal('getLocalNoteByPid', {
+        pid: pid
       })
+      let titles = broNotes.map(item => item.title)
+      if (titles.indexOf(newTitle) > -1) {
+        newTitle = handleNameConflict(newTitle, newTitle, titles)
+      }
+
+      let addRes = await fetchLocal('addLocalNote', {
+        title: newTitle,
+        pid: pid,
+        isTemp: isTemp
+      })
+      this.$hub.dispatchHub('addFile', this, addRes)
+      if (s) {
+        this.setCurrentFolder('0')
+      }
+      this.$hub.dispatchHub('pushData', this)
     },
 
     handleNewTemplateNote () {
@@ -335,6 +341,7 @@ export default {
     handleNewFolder (isCurrent, nodeId) {
       let node
       let nodeData
+      console.log('handleNewFolder', this.$refs)
       let map = this.$refs.tree.model.store.map
       if (nodeId) {
         nodeData = map[nodeId]
@@ -353,22 +360,66 @@ export default {
         nodeData = node.model.data
       }
 
-      fetchLocal('addLocalFolder', {
-        pid: nodeData.id || nodeData._id || '0',
-        seq: node.model.children.length,
-        depth: node.model.getDepth()
-      }).then(res => {
-        node.addChild({
-          id: res._id,
+      node.addChild({
+        id: null,
+        type: 'folder',
+        name: '新建文件夹',
+        data: {
           type: 'folder',
-          name: res.title
-        })
-        this.$hub.dispatchHub('pushData', this)
+          id: null,
+          _id: null,
+          pid: nodeData.id || nodeData._id || '0',
+          title: '新建文件夹',
+          name: '新建文件夹',
+          seq: node.model.children.length,
+          depth: node.model.getDepth()
+        }
       })
+    },
+
+    async addFolder (node) {
+      let newTitle = node.name
+      let broFolders = await fetchLocal('getLocalFolderByPid', {
+        pid: node.data.pid
+      })
+      let titles = broFolders.map(item => item.title)
+      if (titles.indexOf(newTitle) > -1) {
+        newTitle = handleNameConflict(newTitle, newTitle, titles)
+      }
+      let res = await fetchLocal('addLocalFolder', {
+        title: newTitle,
+        pid: node.data.pid,
+        seq: node.data.seq,
+        depth: node.data.depth
+      })
+      let map = this.$refs.tree.model.store.map
+      delete map[node.id]
+      res.name = res.title
+      res.id = res._id
+      node.data = res
+      node.id = res._id
+      node.name = res.title
+      map[node.id] = node
+
+      if (this.viewType === 'expanded') {
+        this.handleSetCurrentFolder(node)
+      }
+
+      this.$hub.dispatchHub('pushData', this)
     },
 
     handleNodeAdded (node) {
       this.$nextTick(() => {
+        if (this.viewType !== 'expanded') {
+          console.log('handleNodeAdded', node)
+          if (node.data.type === 'folder') {
+            this.addFolder(node).then(() => {
+              this.SET_RENAME_FILE_ID(node.data._id)
+              this.setCurrentFolder(node.data.pid)
+            })
+            return
+          }
+        }
         if (node.instance) {
           node.instance.setEditable()
         }
@@ -412,7 +463,7 @@ export default {
           if (!res) {
             node.name = node.data.name
           } else {
-            if (res.name !== node.name) {
+            if (res.name !== node.data.name) {
               node.name = res.name
               node.data.name = res.name
             } else {
@@ -444,6 +495,11 @@ export default {
     },
 
     updateFolderName (node) {
+      if (node.data.id === null) { // 新建文件夹
+        node.data.title = node.data.name = node.name = this.newTitle
+        this.addFolder(node)
+        return
+      }
       fetchLocal('updateLocalFolder', {
         id: node.data._id || node.data.id || node.id,
         title: this.newTitle
@@ -481,15 +537,25 @@ export default {
 
       if (this.dragNode) {
         if (this.dragNode.data.type === 'folder') {
+          this.dragNode.name = this.dragNode.data.title = this.newTitle
+          this.dropNode.instance.handleDrop(this.dragNode, this.oldParent)
           this.moveFolder({
             id: this.dragNode.id,
             pid: this.dropNode.id,
             title: this.newTitle
           })
-          this.dragNode.name = this.dragNode.data.title = this.newTitle
         }
 
         this.isRenameConfirmShowed = false
+        return
+      }
+
+      if (this.duplicateFile) {
+        let temp = _.cloneDeep(this.duplicateFile)
+        temp.title = this.newTitle
+        this.SET_DUPLICATE_FILE(temp)
+        this.isRenameConfirmShowed = false
+        this.handlePaste()
         return
       }
 
@@ -497,8 +563,52 @@ export default {
       this.isRenameConfirmShowed = false
     },
 
+    cancelRename () {
+      if (this.dragNode) {
+        this.dropNode.instance.dragLeave()
+        this.dragNode = null
+        this.dropNode = null
+        this.oldParent = null
+        this.newTitle = ''
+        this.handleNodeDropFailed()
+      }
+      if (this.renameNode) {
+        if (this.renameNode.data.id === null) {
+          this.renameNode.remove()
+          this.popupedNode && this.popupedNode.click()
+        } else {
+          this.renameNode.name = this.renameNode.data.title
+        }
+        this.renameNode = null
+      }
+      this.isRenameConfirmShowed = false
+    },
+
     handleFolderUpdate (params) {
       this.$refs.tree.updateNodeModel(params)
+    },
+
+    async handleBeforeNodeDrop ({ target, to, from, next }) {
+      if (target.name === 'root' || target === to || target.isTargetChild(to)) {
+        this.handleNodeDropFailed()
+        to.instance.dragLeave()
+        return
+      }
+      this.dragNode = target
+      this.oldParent = from
+      this.dropNode = to
+
+      let isNameConflict = await this.checkNameConflict(to.data._id, target.name, target.data.title, 'folder')
+      if (isNameConflict) {
+        return
+      }
+
+      this.moveFolder({
+        id: target.id,
+        pid: to.id
+      }).then(() => {
+        next(target, from)
+      })
     },
 
     handleNodeDropFailed () {
@@ -523,56 +633,14 @@ export default {
           return
         }
 
-        newBrothers = await fetchLocal('getLocalNoteByPid', {
-          pid: node.id
-        })
-
-        titleArr = newBrothers.map(item => item.title)
-        if (titleArr.indexOf(this.draggingFile.title) > -1) {
-          this.newTitle = handleNameConflict(
-            this.draggingFile.title,
-            this.draggingFile.title,
-            titleArr
-          )
-          this.isRenameConfirmShowed = true
+        let isNameConflict = await this.checkNameConflict(node.id, this.draggingFile.title, this.draggingFile.title, 'note')
+        if (isNameConflict) {
           return
         }
 
         this.moveNote({
           id: this.draggingFile._id,
           pid: this.dropNode.id
-        })
-        return
-      }
-
-      // 拖动导航栏
-      if (node.pid !== oldParent.id) {
-        let map = this.$refs.tree.model.store.map
-        let newParent = map[node.pid]
-
-        this.oldParent = oldParent
-        this.dragNode = node
-        this.dropNode = newParent
-
-        newBrothers = await fetchLocal('getLocalFolderByPid', {
-          pid: node.pid
-        })
-
-        titleArr = newBrothers.map(item => item.title)
-
-        if (titleArr.indexOf(node.name) > -1) {
-          this.newTitle = handleNameConflict(
-            node.name,
-            node.name,
-            titleArr
-          )
-          this.isRenameConfirmShowed = true
-          return
-        }
-        
-        this.moveFolder({
-          id: node.data._id || node.data.id || node.id,
-          pid: node.pid
         })
       }
     },
@@ -650,17 +718,25 @@ export default {
       this.SET_DUPLICATE_FILE(this.copyFile(this.popupedNode.model.data))
     },
 
-    handlePaste () {
+    async handlePaste () {
       let node = this.popupedNode.model
       let data = node.data
       let pid = data.id || data._id
       let shouldUpdateList = (this.popupedNode.model === this.$refs.tree.model.store.currentNode)
 
       if (this.duplicateFile.type === 'note') {
+        let isNameConflict = await this.checkNameConflict(pid, this.duplicateFile.title, this.duplicateFile.title, 'note')
+        if (isNameConflict) {
+          return
+        }
+
         fetchLocal('duplicateLocalNote', {
           id: this.duplicateFile._id,
+          title: this.duplicateFile.title,
           pid: pid
         }).then(res => {
+          this.duplicateFile = null
+          this.newTitle = ''
           let fileTypeCN = res.type === 'folder' ? '文件夹' : '笔记'
           this.$Message.success({
             content: `复制了${fileTypeCN} ${res.title} 至目录 ${node.name}！`
@@ -684,7 +760,8 @@ export default {
 
       fetchLocal('getLocalFolderByPid', params).then(folders => {
         fetchLocal('getLocalNoteByPid', params).then(notes => {
-          if (folders.length + notes.length === 0) {
+          let files = [...folders, ...notes].filter(file => file.trash === 'NORMAL')
+          if (files.length === 0) {
             this.delNode(node)
           } else {
             this.isDelConfirmShowed = true
@@ -727,14 +804,79 @@ export default {
     },
 
     handleResumeBin () {
-      fetchLocal('resumeAllTrash').then(res => {
+      this.resumeAllTrash().then(res => {
         this.$hub.dispatchHub('refreshList', this)
         let nodes = res.filter(item => item.type === 'folder')
         let map = this.$refs.tree.model.store.map
         nodes.forEach(node => {
           this.$set(map[node._id], 'hidden', false)
+          this.$set(map[node._id], 'name', node.title)
         })
         this.$hub.dispatchHub('pushData', this)
+      })
+    },
+
+    async resumeAllTrash () {
+      let folderMap = this.$refs.tree.model.store.map
+      let trashFolders = await fetchLocal('getLocalTrashFolder')
+      let trashNotes = await fetchLocal('getLocalTrashNote')
+
+      trashFolders.forEach(folder => {
+        folder.depth = folderMap[folder._id] ? folderMap[folder._id].getDepth() : 0
+      })
+      trashFolders.sort((a, b) => a.depth - b.depth)
+
+      let files = [...trashFolders, ...trashNotes]
+
+      let p = files.map((file, idx) => {
+        return this.createResumeP(file, idx)
+      })
+
+      let result = []
+      result = await pReduce(p, async (a, b) => {
+        return a.concat([b])
+      }, [])
+
+      return result
+
+      // return await Promise.all(p)
+    },
+
+    createResumeP (file, idx) {
+      let folderMap = this.$refs.tree.model.store.map
+      return new Promise((resolve, reject) => {
+        let newTitle = file.title
+        let taskName = file.type === 'folder'
+          ? 'updateLocalFolder'
+          : 'updateLocalNote'
+
+        let pTaskName = file.type === 'folder'
+          ? 'getLocalFolderByPid'
+          : 'getLocalNoteByPid'
+        setTimeout(() => {
+          fetchLocal(pTaskName, {
+            pid: file.pid
+          }).then(newBrothers => {
+            newBrothers = newBrothers.filter(item => item.trash === 'NORMAL')
+
+            let titleArr = newBrothers.map(item => item.title)
+
+            if (titleArr.indexOf(newTitle) > -1) {
+              newTitle = handleNameConflict(
+                file.title,
+                file.title,
+                titleArr
+              )
+            }
+            fetchLocal(taskName, {
+              id: file._id,
+              title: newTitle,
+              trash: 'NORMAL'
+            }).then(res => {
+              resolve(res)
+            })
+          })
+        }, 30 * idx)
       })
     },
 
@@ -771,15 +913,54 @@ export default {
     },
 
     handleClickMini (link) {
-      this.$hub.dispatchHub('clickNavMini', this, link)
+      this.setCurrentFolder(link)
+      // this.SET_VIEW_FILE_TYPE(link)
+      // this.$hub.dispatchHub('clickNavMini', this, link)
     },
 
     navMiniActive (link) {
-      if (link instanceof Array) {
-        return link.indexOf(this.viewFileType) > -1
-      } else {
-        return this.viewFileType === link
+      if (!this.currentNav) {
+        return false
       }
+      if (link instanceof Array) {
+        return link.indexOf(this.currentNav.type) > -1
+      } else {
+        return this.currentNav.type === link
+      }
+    },
+
+    async checkNameConflict (pid, title, oldTitle, type) {
+      const taskName = type === 'folder' ? 'getLocalFolderByPid' : 'getLocalNoteByPid'
+      let newBrothers = await fetchLocal(taskName, {
+        pid: pid
+      })
+      newBrothers = newBrothers.filter(item => {
+        let result = true
+        let map = this.$refs.tree.model.store.map
+        let p = map[item.pid]
+        if (item.trash !== 'NORMAL') {
+          result = false
+        } else {
+          if (p && p.hidden) {
+            result = false
+          }
+        }
+        return result
+      })
+
+      let titleArr = newBrothers.map(item => item.title)
+
+      if (titleArr.indexOf(title) > -1) {
+        this.newTitle = handleNameConflict(
+          title,
+          oldTitle,
+          titleArr
+        )
+        this.isRenameConfirmShowed = true
+        return true
+      }
+
+      return false
     },
 
     copyFile (file) {
@@ -810,6 +991,10 @@ export default {
   flex-direction column
   padding-bottom 30px
   overflow-y scroll
+
+.unexpanded
+  transform: scaleY(0)
+  overflow hidden
 
 .nav-item
   height 40px
@@ -845,4 +1030,33 @@ export default {
   border 1px solid #E9E9E9
   border-radius 4px
 
+.nav-mini
+  position absolute
+  top 0
+  .icon
+    width 70px
+    height 70px
+    background-repeat  no-repeat
+    background-size 50%
+    background-position center
+  .icon-latest
+    background-image url(../../../assets/images/lanhu/nav/documents.png)
+    &.active
+      background-image url(../../../assets/images/lanhu/nav/documents_highlight.png)
+  .icon-share
+    background-image url(../../../assets/images/lanhu/nav/share.png)
+    &.active
+      background-image url(../../../assets/images/lanhu/nav/share_highlight.png)
+  .icon-folder_open
+    background-image url(../../../assets/images/lanhu/nav/folder_open.png)
+    &.active
+      background-image url(../../../assets/images/lanhu/nav/folder_open_highlight.png)
+  .icon-tag
+    background-image url(../../../assets/images/lanhu/nav/tag.png)
+    &.active
+      background-image url(../../../assets/images/lanhu/nav/tag_highlight.png)
+  .icon-bin
+    background-image url(../../../assets/images/lanhu/nav/bin.png)
+    &.active
+      background-image url(../../../assets/images/lanhu/nav/bin_highlight.png)
 </style>

@@ -443,8 +443,8 @@ function createPreviewWindow (event, arg) {
   previewWin.on('closed', () => {
     previewWin = null
     win && win.webContents.send('communicate', {
-      from: 'Preview',
-      tasks: ['pushData']
+      tasks: ['pushData'],
+      from: 'Preview'
     })
   })
 }

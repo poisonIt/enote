@@ -4,7 +4,7 @@
       <!-- <img src="file:////Users/bowiego/Desktop/WechatIMG44.jpeg" alt=""> -->
       <img :src="userInfo.image_url" alt="">
     </div>
-    <div class="arrow" @click="isMenuVisible = true"></div>
+    <div class="arrow" :class="{ expanded : viewType === 'expanded' }" @click="isMenuVisible = true"></div>
     <Menu
       :data="menuData"
       :visible="isMenuVisible"
@@ -135,8 +135,8 @@ export default {
     height 100%
 .arrow
     position absolute
-    right 35%
-    top 61%
+    right 3px
+    top 71%
     display block
     content ''
     width 10px
@@ -146,6 +146,9 @@ export default {
     border-left 6px solid #949494
     border-bottom 5px solid transparent
     transform rotate(90deg)
+    &.expanded
+      right 35%
+      top 61%
 .offline
   position absolute 
   left 10px

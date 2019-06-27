@@ -52,9 +52,11 @@
           <div class="form-label">选择股票</div>
           <Select
             class="stock-select"
+            ref="stockSelectEl"
             v-model="stock"
             :remote-method="stockMenuMethod"
             filterable
+            clearable
             :loading="loadingStock"
             remote>
             <Option
@@ -66,7 +68,7 @@
         </div>
         <div class="form-item small" v-if="largeType != 100031">
           <div class="form-label">选择行业</div>
-          <input type="text" v-model="tradeName" disabled="disabled">
+          <input type="text" v-model="tradeName" disabled="disabled" style="background-color: whitesmoke">
         </div>
         <div class="form-item">
           <div class="form-label">报告标题</div>
@@ -176,6 +178,7 @@ export default {
       summary: '',
       showSummaryError: false,
       uploadList: [],
+      query: '北',
       largeTypeArr: [
         {
           name: '公司研究',
@@ -228,6 +231,7 @@ export default {
     },
 
     largeType (val) {
+      this.$refs.smallTypeSelect.clear()
       getReportSubclass({
         columnid: val
       }).then(resp => {
@@ -269,6 +273,16 @@ export default {
     ]),
 
     closeResearchPanel () {
+      this.$refs.largeTypeSelect.clear()
+      this.$refs.smallTypeSelect.clear()
+      this.stockMenuData = []
+      this.$refs.stockSelectEl.clearSingleSelect()
+      this.$refs.stockSelectEl.setQuery('')
+      this.tradeName = ''
+      this.title = ''
+      this.keywords = ''
+      this.summary = ''
+
       this.TOGGLE_SHOW_RESEARCH_PANEL(false)
     },
         
@@ -343,7 +357,14 @@ export default {
       }
     },
     postReport () {
-      if (!this.stockItem) {
+      // if (!this.stockItem) {
+      //   console.log(this.stockItem, this.stock)        
+      //   this.$Message.error('请选择股票')
+      //   // return
+        
+
+      // }
+      if (this.largeType==''){
         this.$Message.error('请选择报告大类')
         return
       }
@@ -351,10 +372,10 @@ export default {
         indcode: this.trade,
         indname: this.tradeName,
         isupdatepeandeps: 0,
-        mktcode: this.stockItem.mktcode,
+        mktcode: this.stockItem == null ? '':this.stockItem.mktcode,
         reporttypeid: this.smallType,
         scode: this.stock,
-        scodename: this.stockItem.label,
+        scodename: this.stockItem == null ? '' : this.stockItem.label,
         status: 50,
         stype: 2,
         keywords: this.keywords,
@@ -366,6 +387,10 @@ export default {
         this.$Message.error('请选择报告小类')
         return
       }
+      if (data.scode === '') {
+        this.$Message.error('请选择股票')
+        return
+      }
       if (data.title === '') {
         this.$Message.error('请输入报告标题')
         return
@@ -374,22 +399,15 @@ export default {
         this.$Message.error('请填写关键字')
         return
       }
-      if (data.scode === '') {
-        this.$Message.error('请选择股票')
-        return
-      }
       if (data.summary === '') {
         this.$Message.error('请填写摘要')
         return
       }
       addReport(data).then(res => {
         if (res.data.returnCode === 200) {
+          this.$Message.success('提交成功')
           this.closeResearchPanel()
-        } else (
-          this.$Message.error(res.data.returnMsg)
-        )
-      }).catch(err => {
-        this.$Message.error(err)
+        }
       })
     }
   }

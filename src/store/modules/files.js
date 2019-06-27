@@ -3,10 +3,11 @@ import * as _ from 'lodash'
 
 const state = {
   search_keyword: '',
-  current_nav: null,
+  current_nav: '0',
   current_file: null,
   duplicate_file: null,
   dragging_file: null,
+  rename_file_id: '',
   selected_tags: [],
   note_ver: 0
 }
@@ -30,6 +31,10 @@ const mutations = {
 
   SET_DRAGGING_FILE (state, file) {
     state.dragging_file = file
+  },
+
+  SET_RENAME_FILE_ID (state, id) {
+    state.rename_file_id = id
   },
 
   SET_NOTE_VER (state, val) {
@@ -69,6 +74,10 @@ const actions = {
     commit('SET_DRAGGING_FILE', file)
   },
 
+  SET_RENAME_FILE_ID ({ commit }, id) {
+    commit('SET_RENAME_FILE_ID', id)
+  },
+
   SET_NOTE_VER ({ commit }, val) {
     commit('SET_NOTE_VER', val)
   },
@@ -95,8 +104,12 @@ const getters = {
     return state.duplicate_file
   },
 
-  GET_DRAGGING_FILE (state, file) {
+  GET_DRAGGING_FILE (state) {
     return state.dragging_file
+  },
+
+  GET_RENAME_FILE_ID (state) {
+    return state.rename_file_id
   },
 
   GET_SELECTED_TAGS (state) {

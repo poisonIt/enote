@@ -8,6 +8,7 @@ export default {
     this.$hub.hookHub('setSelectFileId', 'NavBar', (selectId) => this.selectedIdCache = selectId)
     this.$hub.hookHub('refreshList', 'NavBar', () => this.refreshList())
     this.$hub.hookHub('renameListFile', 'FileCard', (file) => this.handleFileRename(file))
+    this.$hub.hookHub('updateFile', 'FileCard', (params) => this.handleFileUpdate(params))
     this.$hub.hookHub('updateFile', 'FileHandler', (params) => this.handleFileUpdate(params))
     this.$hub.hookHub('removeFile', 'FileHandler', (file) => this.handleFileRemove(file))
     this.$hub.hookHub('refreshList', 'TagHandler', () => this.refreshList())
@@ -36,6 +37,8 @@ export default {
     },
 
     handleFileUpdate (params) {
+      if (!this.currentFile) return
+      console.log('handleFileUpdate', this.currentFile, params)
       this.$nextTick(() => {
         let taskName = this.currentFile.type === 'folder' ? 'updateLocalFolder' : 'updateLocalNote'
         fetchLocal(taskName, {

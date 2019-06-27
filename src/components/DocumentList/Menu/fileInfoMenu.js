@@ -5,12 +5,12 @@ export default [
       eventName: 'click',
       callbackName: 'handlePassword'
     }
-  },
-  {
-    label: '查看历史版本',
-    eventListener: {
-      eventName: 'click',
-      callbackName: 'handleHistory'
-    }
   }
+  // {
+  //   label: '查看历史版本',
+  //   eventListener: {
+  //     eventName: 'click',
+  //     callbackName: 'handleHistory'
+  //   }
+  // }
 ]

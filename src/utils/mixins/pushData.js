@@ -188,13 +188,6 @@ export default {
             }
             taskCol++
             runTask()
-          } else {
-            _self.$Message.error(resp.data.returnMsg)
-            if (resp.data.returnCode === 403) {
-              saveAppConf(_self.$remote.app.getAppPath('appData'), {
-                user: null
-              })
-            }
           }
         }
       }
@@ -203,15 +196,15 @@ export default {
     },
 
     async pushNotes () {
-      console.log('pushNotes-0')
+      // console.log('pushNotes-0')
       const { clientId, deviceName, platform } = this.$remote.app.appConf
-      console.log('pushNotes-1', clientId, deviceName, platform)
+      // console.log('pushNotes-1', clientId, deviceName, platform)
 
       let nNeedPush = await fetchLocal('getLocalNoteByQuery',
         { need_push: true },
         { multi: true, with_doc: true }
       )
-      console.log('pushNotes-2', nNeedPush)
+      // console.log('pushNotes-2', nNeedPush)
 
       if (nNeedPush.length === 0) {
         return
@@ -230,6 +223,8 @@ export default {
         notes: nTransed
       })
 
+      // console.log('resp', resp)
+
       if (resp.data.returnCode === 200) {
         let noteResolved = resp.data.body
         if (noteResolved.length > 0) {
@@ -246,14 +241,13 @@ export default {
           return {
             id: nNeedPush[index]._id,
             usn: file.usn,
+            remote_pid: file.noteBookId,
             remote_id: file.noteId,
             need_push: false
           }
         })
         await fetchLocal('updateMultiLocalNote', saveNoteData)
         await fetchLocal('removeAllDeletedNote')
-      } else {
-        this.$Message.error(resp.data.returnMsg)
       }
     },
 

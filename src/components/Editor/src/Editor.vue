@@ -80,14 +80,14 @@ export default {
   },
 
   created () {
-    ipcRenderer.on('communicate', (event, arg) => {
-      if (arg.from === 'Preview' && arg.tasks.indexOf('updateEditorDoc') > -1) {
-        let res = arg.params[arg.tasks.indexOf('updateEditorDoc')]
-        if (this.currentDoc._id === res.id) {
-          this.editor.setData(res.content)
-        }
-      }
-    })
+    // ipcRenderer.on('communicate', (event, arg) => {
+    //   if (arg.from === 'Preview' && arg.tasks.indexOf('updateEditorDoc') > -1) {
+    //     let res = arg.params[arg.tasks.indexOf('updateEditorDoc')]
+    //     if (this.currentDoc._id === res.id) {
+    //       this.editor.setData(res.content)
+    //     }
+    //   }
+    // })
 
     ipcRenderer.on('wrote-pdf', (event, path) => {
       let webviewPDF = document.getElementById('pdf-path')
@@ -219,7 +219,10 @@ export default {
 
     handleResize () {
       let space = this.viewType === 'expanded' ? 540 : 390
-      document.getElementsByClassName('ck ck-editor__main')[0].style.width = document.body.clientWidth - space + 'px'
+      let el = document.getElementsByClassName('ck ck-editor__main')[0]
+      if (el) {
+        el.style.width = document.body.clientWidth - space + 'px'
+      }
     },
 
     saveData (id, content) {

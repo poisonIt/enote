@@ -81,14 +81,21 @@ export default {
       if (this.disabled) return
       this.visible = !this.visible
     },
+
     handleClose () {
       this.visible = false
     },
+
     handleOptionSelect ({ option, byClick }) {
       this.$emit('input', option.value)
       this.selectedLabel = option.label
       this.broadcast('b-option', 'select', option.value)
       this.handleClose()
+    },
+
+    clear () {
+      this.selectedLabel = ''
+      this.broadcast('b-option', 'select', null)
     }
   }
 }

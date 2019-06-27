@@ -441,6 +441,7 @@ export default {
   position absolute
   top 24px
   background-color #fff
+  border-radius 3px
   box-shadow 0px 0px 6px 0px rgba(0,0,0,0.15)
   padding 10px 0
   font-size 12px

@@ -52,7 +52,7 @@
       <div class="no-file" v-if="fileList.length === 0">
         <span v-if="currentNav && currentNav.type === 'bin'">回收站为空</span>
         <span v-if="currentNav && currentNav.type !== 'bin'">没有找到文件</span>
-        <div v-if="currentNav && currentNav.type !== 'bin' && currentNav.type !== 'share'"
+        <div v-if="showNewNoteButton"
           class="new-doc_button"
           @click="newNote">新建笔记
         </div>
@@ -181,6 +181,14 @@ export default {
       } else {
         return []
       }
+    },
+
+    showNewNoteButton () {
+      return this.currentNav &&
+        this.currentNav.type !== 'tag' &&
+        this.currentNav.type !== 'select' &&
+        this.currentNav.type !== 'bin' &&
+        this.currentNav.type !== 'share'
     }
   },
 
@@ -290,11 +298,15 @@ export default {
           })
         })
       } else if (nav.type === 'tag' || nav.type === 'select') {
-        fetchLocal('getLocalTagNote', {
-          tags: this.selectedTags
-        }).then(notes => {
-          this.handleDataFetched([[], notes])
-        })
+        if (this.selectedTags.length === 0) {
+          this.handleDataFetched([[], []])
+        } else {
+          fetchLocal('getLocalTagNote', {
+            tags: this.selectedTags
+          }).then(notes => {
+            this.handleDataFetched([[], notes])
+          })
+        }
       } else if (nav.type === 'bin') {
         fetchLocal('getLocalTrashFolder').then(folders => {
           fetchLocal('getLocalTrashNote', {

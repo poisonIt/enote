@@ -52,9 +52,11 @@
           <div class="form-label">选择股票</div>
           <Select
             class="stock-select"
+            ref="stockSelectEl"
             v-model="stock"
             :remote-method="stockMenuMethod"
             filterable
+            clearable
             :loading="loadingStock"
             remote>
             <Option
@@ -233,6 +235,7 @@ export default {
         columnid: val
       }).then(resp => {
         this.smallTypeArr = resp.data.body.map(item => {
+          this.$refs.smallTypeSelect.clear()
           return {
             name: item.name,
             id: item.objid,
@@ -248,7 +251,6 @@ export default {
 
     stock (val) {
       let item = _.find(this.stockMenuData, { value: val })
-      console.log(item)
       if (item) {
         this.stockItem = item
         this.trade = item.trade
@@ -263,7 +265,6 @@ export default {
 
   mounted () {
     this.uploadList = this.$refs.upload.fileList
-    
   },
 
   methods: {
@@ -272,6 +273,16 @@ export default {
     ]),
 
     closeResearchPanel () {
+      this.$refs.largeTypeSelect.clear()
+      this.$refs.smallTypeSelect.clear()
+      this.stockMenuData = []
+      this.$refs.stockSelectEl.clearSingleSelect()
+      this.$refs.stockSelectEl.setQuery('')
+      this.tradeName = ''
+      this.title = ''
+      this.keywords = ''
+      this.summary = ''
+
       this.TOGGLE_SHOW_RESEARCH_PANEL(false)
     },
         
@@ -361,10 +372,10 @@ export default {
         indcode: this.trade,
         indname: this.tradeName,
         isupdatepeandeps: 0,
-        mktcode: this.stockItem==null ? '':this.stockItem.mktcode,
+        mktcode: this.stockItem == null ? '':this.stockItem.mktcode,
         reporttypeid: this.smallType,
         scode: this.stock,
-        scodename: this.stockItem==null ? '' : this.stockItem.label,
+        scodename: this.stockItem == null ? '' : this.stockItem.label,
         status: 50,
         stype: 2,
         keywords: this.keywords,

@@ -188,13 +188,6 @@ export default {
             }
             taskCol++
             runTask()
-          } else {
-            _self.$Message.error(resp.data.returnMsg)
-            if (resp.data.returnCode === 403) {
-              saveAppConf(_self.$remote.app.getAppPath('appData'), {
-                user: null
-              })
-            }
           }
         }
       }
@@ -255,12 +248,6 @@ export default {
         })
         await fetchLocal('updateMultiLocalNote', saveNoteData)
         await fetchLocal('removeAllDeletedNote')
-      } else {
-        if (resp.data.returnMsg) {
-          this.$Message.error(resp.data.returnMsg)
-        } else {
-          this.$Message.error(resp.data)
-        }
       }
     },
 

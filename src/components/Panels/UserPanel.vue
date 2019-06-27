@@ -167,8 +167,6 @@ export default {
           userInfo.sync_state = resp.data.body.state
           this.SET_USER_INFO(userInfo)
           this.closeOauthPanel()
-        } else {
-          this.$Message.warning(resp.data.returnMsg)
         }
       })
     },
@@ -190,7 +188,6 @@ export default {
           this.SET_USER_INFO(userInfo)
         }, 3000)
       } else {
-        this.$Message.warning(youdaoSync.data.returnMsg)
         this.isSyncing = false
       }
     }

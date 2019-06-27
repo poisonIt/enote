@@ -29,6 +29,7 @@ import '@/assets/css/font-family.css'
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
 const {
+  ipcRenderer,
   remote,
   shell,
   webFrame
@@ -77,19 +78,27 @@ axios.interceptors.request.use(config => {
   return Promise.reject(error)
 })
 
-// axios.interceptors.response.use(data => {
-//   store.state.loadState = false
-//   if (data.data.returnCode === 200){
-//     Message.success(data.data.returnMsg)
-//     return data
-//   } else {
-//     Message.error(data.data.returnMsg)
-//     return data
-//   }
-// }, error => {
-//   Message.error(error)
-//   return Promise.reject(error)
-// })
+axios.interceptors.response.use(data => {
+  if (data.config.url.indexOf('authenticate') > -1) {
+    return data
+  }
+  if (data.config.url.indexOf('validateToken') > -1) {
+    return data
+  }
+  if (data.data) {
+    if (data.data.returnCode !== 200) {
+      if (data.data.returnMsg !== undefined) {
+        Message.error(data.data.returnMsg)
+      } else {
+        Message.error(data.data)
+      }
+    }
+  }
+  return data
+}, error => {
+  Message.error(error)
+  return Promise.reject(error)
+})
 
 Vue.config.productionTip = false
 

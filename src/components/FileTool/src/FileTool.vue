@@ -163,11 +163,6 @@ export default {
       // if (isAuto) return
       setTimeout(() => {
         this.pushData()
-        .catch(err => {
-          // this.$Message.error('同步失败，请重新登录')
-          ipcRenderer.send('logout')
-          // clearInterval(asyncItv)
-        })
       }, delay)
     },
 

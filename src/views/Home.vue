@@ -58,8 +58,7 @@ import Loading from '@/components/Loading'
 
 import { createCollection } from '../../db'
 import LocalDAO from '../../db/api'
-import * as LocalService from '../service/local'
-import { getLocalUserById } from '@/service/local'
+import { validateToken } from '../service'
 import { getAppConf, saveAppConf } from '@/tools/appConf'
 import fetchLocal from '../utils/fetchLocal'
 
@@ -118,6 +117,18 @@ export default {
         this.SET_TOKEN(arg.res.id_token)
         this.SET_NOTE_VER(this.$remote.app.appConf.note_ver || 0)
         this.SET_USER_READY(true)
+        this.validateTokenItv = setInterval(() => {
+          validateToken().then(res => {
+            console.log('validateToken', res)
+            if (res.data.returnCode !== 200) {
+              this.$Message.warning('登录状态已改变，请重新登录')
+              clearInterval(this.validateTokenItv)
+              setTimeout(() => {
+                ipcRenderer.send('logout')
+              }, 3000)
+            }
+          })
+        }, 10000)
       }
     })
   },

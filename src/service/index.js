@@ -7,6 +7,10 @@ export function authenticate (params) {
   })
 }
 
+export function validateToken () {
+  return axios.get('/jwt/validateToken')
+}
+
 export function getUserInfo () {
   return axios.get('/user/userInfo')
 }

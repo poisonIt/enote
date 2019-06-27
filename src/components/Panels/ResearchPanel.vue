@@ -71,7 +71,11 @@
           <Select
             class="stock-select"
             v-model="tradeName"
-            v-if="largeType==100035">
+            filterable
+            clearable
+            remote
+            v-if="largeType==100035"
+            ref="tradeSelect">
             <Option
               v-for="(option, index) in tradeMenuData"
               :value="`${option.value} ${option.label}`"
@@ -253,6 +257,12 @@ export default {
           }
         })
       })
+      // console.log(val)
+      if (val == 100035) {
+        this.searchTrade()
+      } else {
+        this.tradeName = ''
+      }
     },
 
     title (val, oldVal) {
@@ -287,9 +297,16 @@ export default {
       this.$refs.largeTypeSelect.clear()
       this.$refs.smallTypeSelect.clear()
       this.stockMenuData = []
-      this.$refs.stockSelectEl.clearSingleSelect()
-      this.$refs.stockSelectEl.setQuery('')
-      this.tradeName = ''
+      if (this.largeType == 100035) {
+        this.$refs.tradeSelect.clearSingleSelect()
+        this.$refs.tradeSelect.setQuery('')
+      } else {
+        this.tradeName = ''
+        this.$refs.stockSelectEl.clearSingleSelect()
+        this.$refs.stockSelectEl.setQuery('')
+      }
+      
+      // this.tradeName = ''
       this.title = ''
       this.keywords = ''
       this.summary = ''

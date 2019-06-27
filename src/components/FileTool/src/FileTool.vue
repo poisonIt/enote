@@ -5,14 +5,15 @@
         <div class="icon-new"></div>
         <span>新建</span>
       </div>
-      <div class="item sync" :class="{ 'grey': isOffline }" @click="pushLocalData(30)">
+      <div class="item sync" :class="{ grey: isOffline }" @click="pushLocalData(30)">
         <div class="icon-sync infinite rotate" :class="{ animated: isSyncing }"></div>
         <span>同步</span>
       </div>
     </div>
-    <div class="button-sync" :class="{ 'grey': isOffline }" v-if="viewType === 'unexpanded'"></div>
-    <div class="unexpanded" v-if="viewType === 'unexpanded'">+</div>
+    <div class="button-sync infinite rotate" :class="{ grey: isOffline, animated: isSyncing }" v-if="viewType === 'unexpanded'" @click="pushLocalData(30)"></div>
+    <div class="unexpanded" v-if="viewType === 'unexpanded'" @click="toggleMenu">+</div>
     <Menu
+      :class="{ 'menu': true, 'is-expanded': viewType === 'expanded' }"
       :data="menuData"
       :visible="isMenuVisible"
       @close="closeMenu"
@@ -363,4 +364,11 @@ export default {
   text-align center
   line-height 28px
   background-color #DDAF59
+
+.menu
+  position absolute !important
+  top 110px !important
+  left 20px
+  &.is-expanded
+    top 50px !important
 </style>

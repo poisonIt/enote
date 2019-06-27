@@ -1,7 +1,7 @@
 <template>
   <div id="navbar" ref="navbar">
     <Tree
-      :style="{ opacity: viewType === 'unexpanded' ? 0 : 1 }"
+      :class="{ 'unexpanded' : viewType !== 'expanded' }"
       ref="tree"
       :dark="true"
       :model="folderTree"
@@ -20,38 +20,33 @@
     <div class="nav-mini" v-show="viewType === 'unexpanded'">
       <div class="icon icon-latest"
         :class="{
-          active : navMiniActive('latest'),
-          highlight : navMiniActive('latest')
+          active : navMiniActive('latest')
         }"
         @click="handleClickMini('latest')">
       </div>
       <div class="icon icon-share"
         :class="{
-          active : navMiniActive(['share']),
-          highlight : navMiniActive(['share'])
+          active : navMiniActive(['share'])
         }"
         @click="handleClickMini('share')">
       </div>
       <div class="icon icon-folder_open"
         :class="{
-          active : navMiniActive(['folders', 'new folder']),
-          highlight : navMiniActive(['folders', 'new folder'])
+          active : navMiniActive('folder'),
         }"
-        @click="handleClickMini('folders')">
+        @click="handleClickMini('0')">
       </div>
-      <div class="icon icon-tags"
+      <div class="icon icon-tag"
         :class="{
-          active : navMiniActive('tags'),
-          highlight : navMiniActive('tags')
+          active : navMiniActive('tag')
         }"
-        @click="handleClickMini('tags')">
+        @click="handleClickMini('tag')">
       </div>
-      <div class="icon icon-recycle"
+      <div class="icon icon-bin"
         :class="{
-          active : navMiniActive('recycle'),
-          highlight : navMiniActive('recycle')
+          active : navMiniActive('bin')
         }"
-        @click="handleClickMini('recycle')">
+        @click="handleClickMini('bin')">
       </div>
     </div>
     <modal
@@ -209,6 +204,7 @@ export default {
       isDBReady: 'GET_DB_READY',
       viewType: 'GET_VIEW_TYPE',
       viewFileType: 'GET_VIEW_FILE_TYPE',
+      currentNav: 'GET_CURRENT_NAV',
       currentFile: 'GET_CURRENT_FILE',
       duplicateFile: 'GET_DUPLICATE_FILE',
       selectedTags: 'GET_SELECTED_TAGS',
@@ -229,7 +225,6 @@ export default {
           multi: true
         }).then(folders => {
           fetchLocal('getAllLocalTag').then(tags => {
-            console.log('calcLocalData', [folders, tags])
             this.$worker.postMessage(['calcLocalData', [folders, tags]])
           })
         })
@@ -273,7 +268,6 @@ export default {
     ]),
 
     handleSetCurrentFolder (node) {
-      console.log('currentFolder', node)
       this.SET_CURRENT_NAV(_.clone(node.data))
     },
 
@@ -373,14 +367,12 @@ export default {
     },
 
     async addFolder (node) {
-      console.log('addFolder', node)
       let res = await fetchLocal('addLocalFolder', {
         title: node.name,
         pid: node.data.pid,
         seq: node.data.seq,
         depth: node.data.depth
       })
-      console.log('addFolder-res', res)
       let map = this.$refs.tree.model.store.map
       delete map[node.id]
       res.name = res.title
@@ -456,7 +448,6 @@ export default {
           pid: node.data.pid
         }).then(folders => {
           let titles = folders.map(item => item.title)
-          console.log('getLocalFolderByPid', node, folders)
           if (titles.indexOf(node.name) > -1) {
             this.newTitle = handleNameConflict(node.name, node.data.title, titles)
             this.isRenameConfirmShowed = true
@@ -812,7 +803,6 @@ export default {
         return a.concat([b])
       }, [])
 
-      console.log('result', result)
       return result
 
       // return await Promise.all(p)
@@ -889,14 +879,19 @@ export default {
     },
 
     handleClickMini (link) {
-      this.$hub.dispatchHub('clickNavMini', this, link)
+      this.setCurrentFolder(link)
+      // this.SET_VIEW_FILE_TYPE(link)
+      // this.$hub.dispatchHub('clickNavMini', this, link)
     },
 
     navMiniActive (link) {
+      if (!this.currentNav) {
+        return false
+      }
       if (link instanceof Array) {
-        return link.indexOf(this.viewFileType) > -1
+        return link.indexOf(this.currentNav.type) > -1
       } else {
-        return this.viewFileType === link
+        return this.currentNav.type === link
       }
     },
 
@@ -963,6 +958,10 @@ export default {
   padding-bottom 30px
   overflow-y scroll
 
+.unexpanded
+  transform: scaleY(0)
+  overflow hidden
+
 .nav-item
   height 40px
   color #fff
@@ -997,4 +996,33 @@ export default {
   border 1px solid #E9E9E9
   border-radius 4px
 
+.nav-mini
+  position absolute
+  top 0
+  .icon
+    width 70px
+    height 70px
+    background-repeat  no-repeat
+    background-size 50%
+    background-position center
+  .icon-latest
+    background-image url(../../../assets/images/lanhu/nav/documents.png)
+    &.active
+      background-image url(../../../assets/images/lanhu/nav/documents_highlight.png)
+  .icon-share
+    background-image url(../../../assets/images/lanhu/nav/share.png)
+    &.active
+      background-image url(../../../assets/images/lanhu/nav/share_highlight.png)
+  .icon-folder_open
+    background-image url(../../../assets/images/lanhu/nav/folder_open.png)
+    &.active
+      background-image url(../../../assets/images/lanhu/nav/folder_open_highlight.png)
+  .icon-tag
+    background-image url(../../../assets/images/lanhu/nav/tag.png)
+    &.active
+      background-image url(../../../assets/images/lanhu/nav/tag_highlight.png)
+  .icon-bin
+    background-image url(../../../assets/images/lanhu/nav/bin.png)
+    &.active
+      background-image url(../../../assets/images/lanhu/nav/bin_highlight.png)
 </style>

@@ -10,7 +10,7 @@
         </div>
       </div>
       <div slot="middle">
-        <div v-if="viewType === 'expanded'" class="expand-switch" :class="{ unexpanded : viewType === 'unexpanded' }" @click="changeViewType"></div>
+        <!-- <div v-if="viewType === 'expanded'" class="expand-switch" :class="{ unexpanded : viewType === 'unexpanded' }" @click="changeViewType"></div> -->
         <DocumentList></DocumentList>
       </div>
       <div slot="right">

@@ -3,7 +3,7 @@ import * as _ from 'lodash'
 
 const state = {
   search_keyword: '',
-  current_nav: null,
+  current_nav: '0',
   current_file: null,
   duplicate_file: null,
   dragging_file: null,

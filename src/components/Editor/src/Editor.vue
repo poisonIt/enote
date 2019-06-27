@@ -219,7 +219,10 @@ export default {
 
     handleResize () {
       let space = this.viewType === 'expanded' ? 540 : 390
-      document.getElementsByClassName('ck ck-editor__main')[0].style.width = document.body.clientWidth - space + 'px'
+      let el = document.getElementsByClassName('ck ck-editor__main')[0]
+      if (el) {
+        el.style.width = document.body.clientWidth - space + 'px'
+      }
     },
 
     saveData (id, content) {

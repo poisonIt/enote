@@ -66,7 +66,19 @@
         </div>
         <div class="form-item small" v-if="largeType != 100031">
           <div class="form-label">选择行业</div>
-          <input type="text" v-model="tradeName" disabled="disabled">
+          <Select
+            class="stock-select"
+            v-model="tradeName"
+            v-if="largeType==100035">
+            <Option
+              v-for="(option, index) in tradeMenuData"
+              :value="`${option.value} ${option.label}`"
+              :key="index">{{option.label}}
+            </Option>
+          </Select>
+
+          <input v-else type="text" v-model="tradeName" disabled="true">
+
         </div>
         <div class="form-item">
           <div class="form-label">报告标题</div>
@@ -248,7 +260,6 @@ export default {
 
     stock (val) {
       let item = _.find(this.stockMenuData, { value: val })
-      console.log(item)
       if (item) {
         this.stockItem = item
         this.trade = item.trade
@@ -258,12 +269,12 @@ export default {
         this.trade = ''
         this.tradeName = ''
       }
-    }
+    },
   },
 
   mounted () {
     this.uploadList = this.$refs.upload.fileList
-    
+    this.searchTrade()
   },
 
   methods: {
@@ -273,7 +284,7 @@ export default {
 
     closeResearchPanel () {
       this.TOGGLE_SHOW_RESEARCH_PANEL(false)
-    },
+    }, 
         
     handleUpload (file) {
       this.uploadList.push(file)
@@ -296,9 +307,23 @@ export default {
       this.searchStock(query)
     }, 300),
 
-    tradeMenuMethod: _.debounce(function (query) {
-      this.searchTrade(query)
-    }, 300),
+    // tradeMenuMethod: _.debounce(function (query) {
+    //   this.searchTrade(query)
+    // }, 300),
+    
+    searchTrade() {
+      getReportTrade().then(res => {
+        console.log(res.data)
+        if (res.data.returnCode === 200) {
+          this.tradeMenuData = res.data.body.map(item => {
+            return {
+              label: item.name,
+              value: item.code
+            }
+          })
+        }
+      })
+    },
 
     searchStock (query) {
       this.loadingStock = true
@@ -307,6 +332,7 @@ export default {
       }).then(resp => {
         this.loadingStock = false
         if (resp.data.returnCode === 200) {
+          console.log( resp.data.body.body)
           this.stockMenuData = resp.data.body.body.map(item => {
             return {
               value: item.scode,
@@ -346,25 +372,18 @@ export default {
       }
     },
     postReport () {
-      // if (!this.stockItem) {
-      //   console.log(this.stockItem, this.stock)        
-      //   this.$Message.error('请选择股票')
-      //   // return
-        
-
-      // }
       if (this.largeType==''){
         this.$Message.error('请选择报告大类')
         return
       }
       let data = {
-        indcode: this.trade,
-        indname: this.tradeName,
+        indcode: this.largeType!=100035?this.trade:this.tradeName.split(' ')[0],
+        indname: this.largeType!=100035?this.tradeName:this.tradeName.split(' ')[1],
         isupdatepeandeps: 0,
         mktcode: this.stockItem==null ? '':this.stockItem.mktcode,
         reporttypeid: this.smallType,
         scode: this.stock,
-        scodename: this.stockItem==null ? '' : this.stockItem.label,
+        scodename: this.stockItem==null ? '' : this.stockItem.label.split(' ')[0],
         status: 50,
         stype: 2,
         keywords: this.keywords,
@@ -376,10 +395,10 @@ export default {
         this.$Message.error('请选择报告小类')
         return
       }
-      if (data.scode === '') {
-        this.$Message.error('请选择股票')
-        return
-      }
+      // if (data.scode === '') {
+      //   this.$Message.error('请选择股票')
+      //   return
+      // }
       if (data.title === '') {
         this.$Message.error('请输入报告标题')
         return
@@ -396,6 +415,11 @@ export default {
         if (res.data.returnCode === 200) {
           this.$Message.success('提交成功')
           this.closeResearchPanel()
+          this.largeType=''
+          this.smallType=''
+          this.stock=this.tradeName=this.title=this.keywords=this.summary=''
+          this.uploadList=[]
+          console.log(this.largeType)
         } else (
           this.$Message.error(res.data.returnMsg)
         )

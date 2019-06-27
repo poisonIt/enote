@@ -360,7 +360,7 @@ export default {
       }).then(resp => {
         this.loadingStock = false
         if (resp.data.returnCode === 200) {
-          console.log( resp.data.body.body)
+          // console.log( resp.data.body.body)
           this.stockMenuData = resp.data.body.body.map(item => {
             return {
               value: item.scode,
@@ -447,7 +447,7 @@ export default {
           this.smallType=''
           this.stock=this.tradeName=this.title=this.keywords=this.summary=''
           this.uploadList=[]
-          console.log(this.largeType)
+          // console.log(this.largeType)
         }
       })
     }

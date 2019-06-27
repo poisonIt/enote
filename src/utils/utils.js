@@ -29,11 +29,10 @@ export function GenNonDuplicateID (randomLength) {
 }
 
 export function handleNameConflict (name, oldName, arr) {
-  console.log('handleNameConflict', name, oldName, arr)
   let seq
   let newName
-  const reg = /[(][1-9][)]/g
-  const similarReg = new RegExp(`${name.replace('(', '[(]').replace(')', '[)]')}[(][1-9][)]`)
+  let reg = /((?<=\()[^\(\)]+)/g
+  let similarReg = new RegExp(`${name.replace('(', '[(]').replace(')', '[)]')}[(][0-9]*[0-9][)]$`)
   let seqs = arr.filter(title => {
     if (title === oldName) {
       return false
@@ -46,8 +45,7 @@ export function handleNameConflict (name, oldName, arr) {
     }
   }).map(title => {
     let s = title.match(reg)
-    s = s[s.length - 1]
-    return Number(s.substring(1, s.length - 1))
+    return s[s.length - 1]
   })
   if (seqs.length === 0) {
     seqs = [0]

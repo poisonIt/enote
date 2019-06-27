@@ -134,9 +134,9 @@
         <!-- <Loading class="loading" :type="8" fill="#DDAF59" v-if="isLoading"></Loading> -->
       </div>
       <div class="button-group" slot="footer">
-          <div class="button primary" @click="postReport">完成</div>
-          <div class="button" @click="closeResearchPanel">取消</div>
-        </div>
+        <div class="button primary" @click="postReport">完成</div>
+        <div class="button" @click="closeResearchPanel">取消</div>
+      </div>
     </modal>
   </div>
 </template>

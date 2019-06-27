@@ -98,6 +98,7 @@ async function add (req) {
 }
 
 async function diffAdd (req) {
+  // console.log('diffAdd', req)
   let notes = await getByQuery({ remote_id: req.remote_id }, { multi: true })
   
   let note = notes.shift()
@@ -109,7 +110,7 @@ async function diffAdd (req) {
   await Promise.all(p)
 
   if (note) {
-    // console.log('本地存在', req.remote_id)
+    // console.log('本地存在', req.remote_id, note)
     req.id = note._id
     if (req.usn !== note.usn) {
       if (note.need_push) {
@@ -145,6 +146,8 @@ async function diffAddMulti (reqs) {
       let newNote = note
       let pL = await folderCtr.getByQuery({ id: note.pid })
       let pR = await folderCtr.getByQuery({ remote_id: note.remote_pid })
+      // console.log('pL', pL)
+      // console.log('pR', pR)
       if (pR) {
         if (pL) {
           if (pL._id !== pR._id) {

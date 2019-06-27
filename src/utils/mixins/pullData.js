@@ -85,6 +85,7 @@ export default {
       console.log('222', tagsData)
 
       let noteData = (pullResp[1].data.body || []).map(item => transNoteDataFromRemote(item, allTagLocalMap))
+      console.log('333', noteData)
       await fetchLocal('diffAddMultiLocalNote', noteData)
 
       if (noteData.length > 0) {

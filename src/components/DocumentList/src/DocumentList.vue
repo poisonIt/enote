@@ -128,6 +128,7 @@ export default {
   data () {
     return {
       isDelConfirmShowed: false,
+      selectedFileIdx: -1,
       selectedIdCache: null,
       trashFileCache: [],
       navNeedUpdate: false,
@@ -339,6 +340,7 @@ export default {
       let idx = _.findIndex(this.fileList, { _id: this.selectedIdCache })
       idx = (idx === -1 ? 0 : idx)
       this.selectFile(this.fileList.length > 0 ? idx : -1)
+      this.scrollToSelected()
       this.isListLoading = false
       if (this.navNeedUpdate) {
         let fileListIds = this.fileList.map(file => file._id)
@@ -353,9 +355,7 @@ export default {
         this.navNeedUpdate = false
       }
       if (this.renameFileId !== '') {
-        console.log('renameFileId', this.renameFileId)
         this.$nextTick(() => {
-          this.$refs.body.scrollTop = 120 * this.fileList.length
           let idx = _.findIndex(this.fileList, { _id: this.renameFileId })
           this.selectFile(idx)
           this.$hub.dispatchHub('renameFileCard', this, this.renameFileId)
@@ -364,6 +364,7 @@ export default {
     },
 
     selectFile (index) {
+      this.selectedFileIdx = index
       const file = this.fileList[index]
       if (file) {
         if (this.currentFile && file._id === this.currentFile._id) return
@@ -372,6 +373,22 @@ export default {
       } else {
         this.SET_CURRENT_FILE(null)
       }
+    },
+
+    scrollToSelected () {
+      this.$nextTick(() => {
+        let bodyEl = this.$refs.body
+        let selectedEl = Array.prototype.slice.call(this.$refs.fileCardGroup.$el.childNodes)[this.selectedFileIdx]
+        if (selectedEl) {
+          let sT = this.$refs.body.scrollTop
+          let oT = selectedEl.offsetTop
+          let h = Number(getComputedStyle(bodyEl, null).height.replace('px', ''))
+          console.log(sT, oT, oT + h)
+          if (sT < oT - h + 100 || sT > oT) {
+            this.$refs.body.scrollTop = oT
+          }
+        }
+      })
     },
 
     handleFileTitleClick (index) {

@@ -61,3 +61,47 @@ export function handleNameConflict (name, oldName, arr) {
 
   return newName
 }
+
+export function matchIndex (str, reg, withLen) {
+  let result = []
+  let cursor = str.match(reg)
+  let sub = 0
+
+  while (cursor !== null) {
+    let key = cursor[0]
+    let idx = cursor.index
+
+    if (withLen) {
+      let strPrev = str.substring(0, idx)
+      let prev = result[result.length - 1]
+      result.push({
+        index: idx + sub,
+        left: (prev ? prev.left : 0) + getStrPixelLen(strPrev)
+      })
+      
+    } else {
+      result.push(idx + sub)
+    }
+
+    let strNext = str.substring(idx + key.length, str.length)
+    str = strNext
+    sub += (idx + key.length)
+    cursor = str.match(reg)
+  }
+
+  return result
+}
+
+export function getStrPixelLen (str) {
+  let result = 0
+
+  for (let i = 0, len = str.length; i < len; i++) {
+    let code = str.charCodeAt(i)
+    let pixelLen = code > 255 ? 1 : 0.5
+    if (code === 46) pixelLen = 1/3
+
+    result += pixelLen
+  }
+
+  return result
+}

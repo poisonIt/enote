@@ -138,6 +138,7 @@ export function getLocalTagNote (params) {
   return LocalDAO.note.getByTags(params)
 }
 
+// sharedNote
 export function updateSharedNote (params) {
   return LocalDAO.sharedNote.updateAll(params)
 }

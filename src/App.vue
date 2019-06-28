@@ -47,7 +47,7 @@ export default {
   -webkit-app-region no-drag
 
 #app
-  font-family 'Avenir', Helvetica, Arial, sans-serif
+  font-family 'Avenir', Helvetica, Arial, sans-serif,  Microsoft YaHei
   -webkit-font-smoothing antialiased
   -moz-osx-font-smoothing grayscale
   color #2c3e50

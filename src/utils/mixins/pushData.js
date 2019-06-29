@@ -187,12 +187,12 @@ export default {
               })
             }
             taskCol++
-            runTask()
+            await runTask()
           }
         }
       }
 
-      runTask()
+      await runTask()
     },
 
     async pushNotes () {
@@ -204,7 +204,6 @@ export default {
         { need_push: true },
         { multi: true, with_doc: true }
       )
-      // console.log('pushNotes-2', nNeedPush)
 
       if (nNeedPush.length === 0) {
         return

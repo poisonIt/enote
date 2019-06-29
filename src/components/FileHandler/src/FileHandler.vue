@@ -16,19 +16,30 @@
         @keyup.enter="handleInputEnter">
       <p class="ellipsis">{{ titleValue }}</p>
     </div>
-    <div class="handler" v-show="!isTrash">
-        <div class="handler-item"
-          :class="{ hidden: isHandlerHidden(item.icon) }"
-          v-for="(item, index) in handlers"
-          :key="index"
-          :data="'FileHandler-' + item.icon"
-          @click="handleClick(item.icon)">
-          <Poptip trigger="hover" :content="item.content" :placement="item.placement" :offset="item.offset">
-            <div class="icon"
-              :class="iconClassComputed(item.icon)"
-              :data="'FileHandler-' + item.icon"></div>
-          </Poptip> 
-        </div>
+    <div class="search" v-if="false">
+      <span class="num">{{ 2 }}个结果</span>
+      <div class="search-bar">
+        <span class="icon icon-search"></span>
+        <input type="text" v-model="searchKeywords" @keyup.enter="handleSearch">
+        <div class="prev-button"></div>
+        <div class="next-button"></div>
+      </div>
+      <div class="search-button" @click="handleSearch">完成</div>
+    </div>
+    <div class="handler" v-show="!isTrash && !isSearchShowed">
+    <!-- <div class="handler" v-show="false"> -->
+      <div class="handler-item"
+        :class="{ hidden: isHandlerHidden(item.icon) }"
+        v-for="(item, index) in handlers"
+        :key="index"
+        :data="'FileHandler-' + item.icon"
+        @click="handleClick(item.icon)">
+        <Poptip trigger="hover" :content="item.content" :placement="item.placement" :offset="item.offset">
+          <div class="icon"
+            :class="iconClassComputed(item.icon)"
+            :data="'FileHandler-' + item.icon"></div>
+        </Poptip> 
+      </div>
       <transition name="fade-in-down">
         <div class="more" v-show="isMoreShowed">
           <div class="item" @click="handleExport">导出为PDF</div>
@@ -106,17 +117,20 @@ export default {
       isInputFocused: false,
       // handlers: ['share', 'fetch', 'tag', 'more', 'window', 'info'],
       handlers: [ 
-        {icon: 'share', content: '分享', placement: 'bottom-start', offset: -10}, 
-        {icon: 'fetch', content: '研报', placement: 'bottom', offset: 0}, 
-        {icon: 'tag', content: '标签', placement: 'bottom', offset: 0}, 
-        {icon: 'more', content: '更多', placement: 'bottom', offset: 0}, 
-        {icon: 'window', content: '新窗口笔记',placement: 'bottom-end', offset: 10}, 
-        {icon: 'info', content: '个人信息',placement: 'bottom-end', offset: 10}, 
+        {icon: 'share', content: '分享', placement: 'bottom-start', offset: -10},
+        {icon: 'fetch', content: '研报', placement: 'bottom', offset: 0},
+        // {icon: 'search', content: '搜索', placement: 'bottom', offset: 0},
+        {icon: 'tag', content: '标签', placement: 'bottom', offset: 0},
+        {icon: 'more', content: '更多', placement: 'bottom', offset: 0},
+        {icon: 'window', content: '新窗口笔记',placement: 'bottom-end', offset: 10},
+        {icon: 'info', content: '个人信息',placement: 'bottom-end', offset: 10},
       ],
       // handlers: ['share', 'fetch', 'search', 'tag', 'more', 'window', 'info'],
       isMoreShowed: false,
       isInfoShowed: false,
       isConfirmShowed: false,
+      isSearchShowed: false,
+      searchKeywords: '',
       newTitle: ''
     }
   },
@@ -310,6 +324,12 @@ export default {
     },
 
     search () {
+      console.log('search')
+      this.isSearchShowed = true
+    },
+
+    handleSearch () {
+      this.$hub.dispatchHub('searchContent', this, this.searchKeywords)
     },
 
     share () {
@@ -437,10 +457,54 @@ export default {
   &.icon-info
     background-image url('../../../assets/images/lanhu/info@2x.png')
 
+.search
+  display flex
+  align-items center
+  .num
+    display block
+    min-width 48px
+    line-height 27px
+  .search-bar
+    position relative
+  .search-button
+    width 42px
+    margin-left 6px
+    border 1px solid #d8d8d8
+    border-radius 4px
+    text-align center
+  input
+    width 160px
+    height 25px
+    border-radius 16px
+    border 1px solid #d8d8d8
+    padding-left 26px
+    outline none
+  .icon-search, .prev-button, .next-button
+    position absolute
+    top 13px
+    transform translateY(-50%)
+  .icon-search
+    left 2px
+  .prev-button
+    right 22px
+    width 0
+    height 0
+    border-top 5px solid transparent
+    border-right 8px solid #a9a9a9
+    border-bottom 5px solid transparent
+  .next-button 
+    right 10px
+    width 0
+    height 0
+    border-top 5px solid transparent
+    border-left 8px solid #a9a9a9
+    border-bottom 5px solid transparent
+
 .more, .info
   position absolute
   top 24px
   background-color #fff
+  border-radius 3px
   box-shadow 0px 0px 6px 0px rgba(0,0,0,0.15)
   padding 10px 0
   font-size 12px

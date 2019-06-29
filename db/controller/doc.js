@@ -108,7 +108,6 @@ function deleteAll () {
 // update
 function update (req) {
   const { id } = req
-  console.log('update', req)
   req.update_at = new Date().valueOf()
 
   return new Promise((resolve, reject) => {

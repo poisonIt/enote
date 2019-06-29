@@ -88,13 +88,30 @@ export default {
     Loading
   },
 
+  data () {
+    return {
+      validateTokenItv: null
+    }
+  },
+
   computed: {
     ...mapGetters({
       viewFileType: 'GET_VIEW_FILE_TYPE',
       viewType: 'GET_VIEW_TYPE',
       currentFile: 'GET_CURRENT_FILE',
-      isHomeReady: 'GET_IS_HOME_READY'
+      isHomeReady: 'GET_IS_HOME_READY',
+      network_status: 'GET_NETWORK_STATUS'
     })
+  },
+
+  watch: {
+    network_status (val) {
+      if (val === 'online') {
+        this.createValidateTokenItv()
+      } else {
+        this.clearValidateTokenItv()
+      }
+    }
   },
 
   created () {
@@ -112,23 +129,13 @@ export default {
 
     ipcRenderer.on('fetch-user-data-response', (event, arg) => {
       if (arg.from === 'Home') {
-        console.log('userInfo', arg.res)
         this.SET_USER_INFO(arg.res)
         this.SET_TOKEN(arg.res.id_token)
         this.SET_NOTE_VER(this.$remote.app.appConf.note_ver || 0)
         this.SET_USER_READY(true)
-        this.validateTokenItv = setInterval(() => {
-          validateToken().then(res => {
-            console.log('validateToken', res)
-            if (res.data.returnCode !== 200) {
-              this.$Message.warning('登录状态已改变，请重新登录')
-              clearInterval(this.validateTokenItv)
-              setTimeout(() => {
-                ipcRenderer.send('logout')
-              }, 3000)
-            }
-          })
-        }, 10000)
+        if (window.navigator.onLine) {
+          this.createValidateTokenItv()
+        }
       }
     })
   },
@@ -144,6 +151,29 @@ export default {
 
     changeViewType () {
       this.SET_VIEW_TYPE(this.viewType === 'unexpanded' ? 'expanded' : 'unexpanded')
+    },
+
+    createValidateTokenItv () {
+      if (this.validateTokenItv) {
+        return
+      }
+
+      this.validateTokenItv = setInterval(() => {
+        validateToken().then(res => {
+          if (res.data.returnCode !== 200) {
+            this.$Message.warning('登录状态已改变，请重新登录')
+            this.clearValidateTokenItv()
+            setTimeout(() => {
+              ipcRenderer.send('logout')
+            }, 3000)
+          }
+        })
+      }, 10000)
+    },
+
+    clearValidateTokenItv () {
+      clearInterval(this.validateTokenItv)
+      this.validateTokenItv = null
     }
   }
 }

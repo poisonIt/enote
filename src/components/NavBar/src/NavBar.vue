@@ -1034,11 +1034,22 @@ export default {
   position absolute
   top 0
   .icon
+    position relative
     width 70px
-    height 70px
+    height 65px
     background-repeat  no-repeat
-    background-size 50%
+    background-size 40%
     background-position center
+    &.active
+      background-color #313336
+      // &::after
+      //   content ''
+      //   display block
+      //   width 3px
+      //   height 100%
+      //   position absolute
+      //   right 0
+      //   background-color #DDAF59
   .icon-latest
     background-image url(../../../assets/images/lanhu/nav/documents.png)
     &.active

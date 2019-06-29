@@ -71,7 +71,11 @@
           <Select
             class="stock-select"
             v-model="tradeName"
-            v-if="largeType==100035">
+            filterable
+            clearable
+            remote
+            v-if="largeType==100035"
+            ref="tradeSelect">
             <Option
               v-for="(option, index) in tradeMenuData"
               :value="`${option.value} ${option.label}`"
@@ -130,9 +134,9 @@
         <!-- <Loading class="loading" :type="8" fill="#DDAF59" v-if="isLoading"></Loading> -->
       </div>
       <div class="button-group" slot="footer">
-          <div class="button primary" @click="postReport">完成</div>
-          <div class="button" @click="closeResearchPanel">取消</div>
-        </div>
+        <div class="button primary" @click="postReport">完成</div>
+        <div class="button" @click="closeResearchPanel">取消</div>
+      </div>
     </modal>
   </div>
 </template>
@@ -253,6 +257,12 @@ export default {
           }
         })
       })
+      // console.log(val)
+      if (val == 100035) {
+        this.searchTrade()
+      } else {
+        this.tradeName = ''
+      }
     },
 
     title (val, oldVal) {
@@ -287,9 +297,16 @@ export default {
       this.$refs.largeTypeSelect.clear()
       this.$refs.smallTypeSelect.clear()
       this.stockMenuData = []
-      this.$refs.stockSelectEl.clearSingleSelect()
-      this.$refs.stockSelectEl.setQuery('')
-      this.tradeName = ''
+      if (this.largeType == 100035) {
+        this.$refs.tradeSelect.clearSingleSelect()
+        this.$refs.tradeSelect.setQuery('')
+      } else {
+        this.tradeName = ''
+        this.$refs.stockSelectEl.clearSingleSelect()
+        this.$refs.stockSelectEl.setQuery('')
+      }
+      
+      // this.tradeName = ''
       this.title = ''
       this.keywords = ''
       this.summary = ''
@@ -343,7 +360,7 @@ export default {
       }).then(resp => {
         this.loadingStock = false
         if (resp.data.returnCode === 200) {
-          console.log( resp.data.body.body)
+          // console.log( resp.data.body.body)
           this.stockMenuData = resp.data.body.body.map(item => {
             return {
               value: item.scode,
@@ -393,7 +410,7 @@ export default {
         isupdatepeandeps: 0,
         mktcode: this.stockItem == null ? '':this.stockItem.mktcode,
         reporttypeid: this.smallType,
-        scode: this.stock,
+        scode: this.stock?this.stock:'',
         scodename: this.stockItem==null ? '' : this.stockItem.label.split(' ')[0],
         status: 50,
         stype: 2,
@@ -402,6 +419,8 @@ export default {
         title: this.title,
         username: this.userInfo.usercode
       }
+
+      console.log(data)
       if (data.reporttypeid === '') {
         this.$Message.error('请选择报告小类')
         return
@@ -430,7 +449,7 @@ export default {
           this.smallType=''
           this.stock=this.tradeName=this.title=this.keywords=this.summary=''
           this.uploadList=[]
-          console.log(this.largeType)
+          // console.log(this.largeType)
         }
       })
     }

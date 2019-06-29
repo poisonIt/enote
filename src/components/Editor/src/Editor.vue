@@ -1,6 +1,18 @@
 <template>
   <div id="editor-container">
     <textarea name="content" ref="editor" id="editor"></textarea>
+    <div class="high-light-mask"
+      ref="highLightMask"
+      v-show="locations.length > 0"
+      :style="{ top: -scrollTop + 'px' }">
+      <ul>
+        <li v-for="(item, index) in locations"
+          :key="index"
+          :style="locStyle(item)">
+          <!-- {{ item.text }} -->
+        </li>
+      </ul>
+    </div>
     <div class="mask" v-show="showMask"></div>
     <webview id="pdf-path"></webview>
   </div>
@@ -11,6 +23,7 @@ import fs from 'fs'
 import { ipcRenderer } from 'electron'
 import { mapGetters, mapActions } from 'vuex'
 import mixins from '../mixins'
+import { matchIndex, getStrPixelLen } from '../../../utils/utils'
 import uploadAdapter from './upload'
 import '../../../assets/styles/editor.css'
 import fetchLocal from '../../../utils/fetchLocal'
@@ -30,7 +43,9 @@ export default {
       },
       currentDoc: {},
       showMask: true,
-      editor: null
+      editor: null,
+      locations: [],
+      scrollTop: 0
     }
   },
 
@@ -203,6 +218,11 @@ export default {
             })
             this.handleEditorReady()
             this.showMask = false
+
+            let editorMainEl = document.getElementsByClassName('ck-content')[0]
+            editorMainEl.addEventListener('scroll', () => {
+              this.scrollTop = editorMainEl.scrollTop
+            })
           })
           .catch(error => {
             console.error(error)
@@ -236,6 +256,68 @@ export default {
         }
         this.$hub.dispatchHub('updateDoc', this, req)
       })
+    },
+
+    handleSearchContent (keywords) {
+      this.locations = []
+      if (keywords === '') {
+        return
+      }
+      const reg = new RegExp(keywords)
+      const keywordsPixelLen = getStrPixelLen(keywords)
+
+      let contentEl = document.getElementsByClassName('ck-content')[0]
+      let pEls = Array.prototype.slice.call(contentEl.getElementsByTagName('p'))
+      let spanEls = Array.prototype.slice.call(contentEl.getElementsByTagName('span'))
+      let strongEls = Array.prototype.slice.call(contentEl.getElementsByTagName('strong'))
+      let codeEls = Array.prototype.slice.call(contentEl.getElementsByTagName('code'))
+
+      let textEls = pEls.concat(spanEls)
+
+      textEls = textEls.filter(el => {
+        return el.innerText.match(reg) !== null
+      })
+
+      textEls.forEach(el => {
+        const elPos = {
+          top: el.offsetTop,
+          left: el.offsetLeft
+        }
+        const h = el.offsetHeight
+        const fontSize = Number(getComputedStyle(el).fontSize.replace('px', ''))
+        const s = matchIndex(el.innerText, reg, true)
+
+        s.forEach(item => {
+          this.locations.push({
+            top: el.offsetTop,
+            left: el.offsetLeft + item.left * fontSize,
+            width: keywordsPixelLen * fontSize,
+            height: fontSize + 6,
+            fontSize: fontSize,
+            text: keywords,
+            el: el,
+            elStyle: getComputedStyle(el)
+          })
+        })
+      })
+      console.log('locations', this.locations)
+      console.log(this.editor)
+      console.log(this.editor.editing.view.domRoots.main)
+      // console.log(this.editor.model.document)
+      // console.log(this.editor.model.document.selection)
+      // console.log(this.editor.model.document.selection.getRanges())
+    },
+
+    locStyle (item) {
+      return {
+        position: 'absolute',
+        top: item.top + 'px',
+        left: item.left + 'px',
+        width: item.width + 'px',
+        height: item.height + 'px',
+        fontSize: item.fontSize + 'px',
+        backgroundColor: 'rgb(255, 235, 0, 0.4)'
+      }
     }
   }
 }
@@ -244,8 +326,19 @@ export default {
 <style lang="stylus" scoped>
 #editor-container
   position relative
+  overflow hidden
+
 .ck-editor
   height 100% !important
+
+.high-light-mask
+  position absolute
+  top 0
+  width 100%
+  height 100%
+  pointer-events none
+  z-index 1
+
 .mask
   position absolute
   width 100%

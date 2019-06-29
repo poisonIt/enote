@@ -496,7 +496,8 @@ async function getByQuery (params, opts) {
   opts = opts || {
     multi: false,
     with_parent_folder: false,
-    with_summary: false
+    with_summary: false,
+    with_doc: false
   }
   const isReqArr = _.isArray(params)
   const query = isReqArr ? { $or: params } : params
@@ -581,6 +582,35 @@ async function patchSummary (note) {
   return note
 }
 
+// async function search (query) {
+//   if (!query || query === {}) {
+//     return []
+//   }
+
+//   let allNotes = await getByQuery({}, { multi: true, with_doc: true })
+
+//   allNotes = allNotes.filter(note => {
+//     let sflag = true // keywords verify
+//     let kFlag = false // params verify
+//     let regT
+//     let regC
+
+//     if (query.hasOwnProperty('title')) {
+//       kFlag = true
+//       regT = new RegExp(query.title, 'g')
+//       sflag *= (note.title.search(regT) > -1)
+//     }
+//     if (query.hasOwnProperty('content')) {
+//       kFlag = true
+//       regC = new RegExp(query.content, 'g')
+//       sflag *= (htmlToText(note.content).search(regC) > -1)
+//     }
+//     return kFlag * sflag
+//   })
+
+//   return allNotes
+// }
+
 export default {
   createCollection,
   saveAll,
@@ -604,4 +634,5 @@ export default {
   getTrash,
   getByTags,
   getByQuery
+  // search
 }

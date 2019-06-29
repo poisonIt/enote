@@ -74,7 +74,6 @@ axios.interceptors.request.use(config => {
   }
   return config
 }, error => {
-  Message.error(error)
   return Promise.reject(error)
 })
 
@@ -96,7 +95,7 @@ axios.interceptors.response.use(data => {
   }
   return data
 }, error => {
-  Message.error(error)
+  Message.error(`Network Error`)
   return Promise.reject(error)
 })
 

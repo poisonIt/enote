@@ -117,7 +117,6 @@ export default {
       if (this.isLoading) return
       this.isLoading = true
       const { username, password } = this
-      console.log('postInput', username, password, window.navigator.onLine)
       if (!window.navigator.onLine) {
         if (this.autoLogin === '1') {
           ipcRenderer.send('login-ready')
@@ -129,7 +128,6 @@ export default {
         username: username,
         password: password
       }).catch(err => {
-        // this.$Message.error('String(err)')
         this.$Message.error('网络异常，请稍后重试')
         console.error(err)
         this.isLoading = false

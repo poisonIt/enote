@@ -151,7 +151,7 @@ export default {
           this.pushData()
         }, 1000)
       } else {
-        ipcRenderer.send('pull-finished')
+        this.SET_DB_READY(true)
       }
     },
 

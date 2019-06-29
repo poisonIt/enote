@@ -260,16 +260,19 @@ export default {
           trash: file.trash
         }
       } else if (file.type === 'note') {
-        return {
+        let result = {
           noteBookId: file.remote_pid || file.pid,
           noteContent: file.content || '',
-          noteId: file.remote_id || file.id,
           title: file.title,
           trash: file.trash,
           top: file.top,
           tagId: file.tags.map(item => allTagRemoteMap[item]),
           usn: file.usn
         }
+        if (file.remote_id) {
+          result.noteId = file.remote_id
+        }
+        return result
       } else if (file.type === 'tag') {
         return {
           tagsId: file.remote_id,

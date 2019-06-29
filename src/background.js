@@ -18,6 +18,8 @@ import { GenNonDuplicateID } from './utils/utils'
 import * as LocalService from './service/local'
 import { applicationMenuTemplate, contextMenuTemplate } from './client/menu.js'
 
+const electron = require('electron')
+
 const productName = require('../vue.config.js').pluginOptions.electronBuilder.builderOptions.productName
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
@@ -66,11 +68,18 @@ app.on('activate', () => {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', async () => {
+  electron.powerMonitor.on('shutdown', (e) => {
+    e.preventDefault()
+    appQuit()
+  })
+
   if (isDevelopment && !process.env.IS_TEST) {
     // Install Vue Devtools
     await installVueDevtools()
   }
+
   tray = new Tray(path.join(__static, 'icon.png'))
+
   const appMenu = Menu.buildFromTemplate(applicationMenuTemplate)
   const contextMenu = Menu.buildFromTemplate(contextMenuTemplate)
   Menu.setApplicationMenu(appMenu)

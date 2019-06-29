@@ -410,7 +410,7 @@ export default {
         isupdatepeandeps: 0,
         mktcode: this.stockItem == null ? '':this.stockItem.mktcode,
         reporttypeid: this.smallType,
-        scode: this.stock,
+        scode: this.stock?this.stock:'',
         scodename: this.stockItem==null ? '' : this.stockItem.label.split(' ')[0],
         status: 50,
         stype: 2,
@@ -419,6 +419,8 @@ export default {
         title: this.title,
         username: this.userInfo.usercode
       }
+
+      console.log(data)
       if (data.reporttypeid === '') {
         this.$Message.error('请选择报告小类')
         return

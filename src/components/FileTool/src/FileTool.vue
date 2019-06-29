@@ -74,8 +74,11 @@ export default {
       }
     },
 
-    network_status (val) {
+    network_status (val, oldVal) {
       this.isOffline = (val === 'offline')
+      if (val === 'online' && oldVal === 'offline') {
+        this.pushData()
+      }
       return // 密码错误3次账号会被锁住
       if (!this.isOffline && this.$remote.getCurrentWindow().isVisible()) {
         setTimeout(() => {

@@ -94,62 +94,58 @@ app.on('ready', async () => {
 
   let dbPath = path.resolve(app.getAppPath('userData'), `../`)
   // let dbPath = '/Users/bowiego/Documents/workspace/enote/temp'
-  let serviceUrl = isDevelopment
-    ? 'http://122.152.201.59:8001/api'
-    // : 'https://10.50.144.83:8000/api'
-    // ? 'https://122.152.201.59:8000/api'
-    // ? 'https://iapp.htffund.com/note/api'
-    : 'https://iapp.htffund.com/note/api'
-    // : 'http://10.50.115.9:8000/api'
+  let serviceUrl = 'https://iapp.htffund.com/note/api'
+  // let serviceUrl = isDevelopment
+  //   ? 'http://122.152.201.59:8001/api'
+  //   : 'https://iapp.htffund.com/note/api'
 
-  getAppConf(app.getAppPath('userData')).then(appConf => {
-    if (!appConf.serviceUrl || appConf.serviceUrl === '') {
-      saveAppConf(app.getAppPath('userData'), {
-        serviceUrl: serviceUrl,
-        appPath: dbPath
-      })
-    }
-    if (!appConf.clientId || appConf.clientId === '') {
-      let clientId = GenNonDuplicateID(6)
-      appConf.clientId = clientId
-      saveAppConf(app.getAppPath('userData'), {
-        clientId: clientId
-      })
-    }
-    let defaultSize = [960, 640]
-    if (appConf.size) {
-      defaultSize[0] = appConf.size.width || 960
-      defaultSize[1] = appConf.size.height || 640
-    }
-    let p = dbPath + '/database'
-    app.appConf = {
-      name: productName,
-      user: appConf.user,
-      dbPath: p,
-      resourcePath: dbPath + '/resource',
-      serviceUrl: appConf.serviceUrl || serviceUrl,
-      note_ver: 1,
-      dev_url: process.env.WEBPACK_DEV_SERVER_URL,
-      size: {
-        x: 0,
-        y: 0,
-        width: defaultSize[0],
-        height: defaultSize[1]
-      },
-      clientId: appConf.clientId,
-      deviceName: os.hostname(),
-      platform: os.platform(),
-      osUser: os.userInfo().username
-    }
-
-    fs.mkdir(p, { recursive: true }, (err) => {
-      if (err) {
-        console.log(err)
-      }
-      createCollection('user', p)
-      createLoginWindow(appConf.user)
-      createHomeWindow()
+  let appConf = await getAppConf(app.getAppPath('userData'))
+  if (!appConf.serviceUrl || appConf.serviceUrl === '') {
+    await saveAppConf(app.getAppPath('userData'), {
+      serviceUrl: serviceUrl,
+      appPath: dbPath
     })
+  }
+  if (!appConf.clientId || appConf.clientId === '') {
+    let clientId = GenNonDuplicateID(6)
+    appConf.clientId = clientId
+    await saveAppConf(app.getAppPath('userData'), {
+      clientId: clientId
+    })
+  }
+  let defaultSize = [960, 640]
+  if (appConf.size) {
+    defaultSize[0] = appConf.size.width || 960
+    defaultSize[1] = appConf.size.height || 640
+  }
+  let p = dbPath + '/database'
+  app.appConf = {
+    name: productName,
+    user: appConf.user,
+    dbPath: p,
+    resourcePath: dbPath + '/resource',
+    serviceUrl: appConf.serviceUrl || serviceUrl,
+    note_ver: 1,
+    dev_url: process.env.WEBPACK_DEV_SERVER_URL,
+    size: {
+      x: 0,
+      y: 0,
+      width: defaultSize[0],
+      height: defaultSize[1]
+    },
+    clientId: appConf.clientId,
+    deviceName: os.hostname(),
+    platform: os.platform(),
+    osUser: os.userInfo().username
+  }
+
+  fs.mkdir(p, { recursive: true }, (err) => {
+    if (err) {
+      console.log(err)
+    }
+    createCollection('user', p)
+    createLoginWindow(appConf.user)
+    createHomeWindow()
   })
 })
 

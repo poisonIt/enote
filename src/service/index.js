@@ -73,6 +73,14 @@ export function uploadFile (file) {
   return axios.post('/file/upload', data)
 }
 
+export function uploadReportFile (params) {
+  const { files, reportId } = params
+  const data = new FormData()
+  data.append('files', files)
+  data.append('reportId', reportId)
+  return axios.post('/report/uploadReportFile', data)
+}
+
 export function createTag (params) {
   return axios.post('/note/createTag', params)
 }

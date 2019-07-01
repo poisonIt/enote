@@ -70,6 +70,7 @@ export function getShareInfo (noteId) {
 export function uploadFile (file) {
   const data = new FormData()
   data.append('files', file)
+  console.log(data)
   return axios.post('/file/upload', data)
 }
 
@@ -120,4 +121,8 @@ export function getReportTrade (params) {
 
 export function addReport (params) {
   return axios.post('/report/addReport', params)
+}
+
+export function uploadAccessory (data) {
+  return axios.post('/report/uploadReportFile', data)
 }

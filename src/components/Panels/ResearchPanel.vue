@@ -110,14 +110,31 @@
             @blur="handleSummaryBlur"/>
           <span class="tip-error" v-show="showSummaryError">请不要超出50个中文字符长度</span>
         </div>
-        <div class="form-item">
+        <!-- <Loading class="loading" :type="8" fill="#DDAF59" v-if="isLoading"></Loading> -->
+      </div>
+      <div class="button-group" slot="footer">
+        <div class="button primary" @click="postReport">完成</div>
+        <div class="button" @click="closeResearchPanel">取消</div>
+      </div>
+    </modal>
+    <modal
+      :visible.sync="isAccessoryShowed"
+      width="300px"
+      height="210px"
+      top="30vh"
+      transition-name="fade-in-down"
+      @close="isAccessoryShowed = false"
+      title="上传附件">
+        <div class="form-item isAccessory">
           <div class="form-label">上传附件</div>
           <Upload
             multiple
             ref="upload"
             :show-upload-list="false"
             :before-upload="handleUpload"
-            action=""
+            :on-success="handleSuccess"
+            :on-error="handleError"
+            :action="action"
             style="width: 85%;padding-top: 7px;">
             <Button
               class="upload-button"
@@ -131,12 +148,10 @@
             </li>
           </ul>
         </div>
-        <!-- <Loading class="loading" :type="8" fill="#DDAF59" v-if="isLoading"></Loading> -->
-      </div>
-      <div class="button-group" slot="footer">
-        <div class="button primary" @click="postReport">完成</div>
-        <div class="button" @click="closeResearchPanel">取消</div>
-      </div>
+        <div class="button-group button-container" slot="footer">
+            <div class="button primary" @click="UploadConfirm">确认</div>
+            <div class="button" @click="isAccessoryShowed = false">取消</div>
+        </div>
     </modal>
   </div>
 </template>
@@ -149,7 +164,8 @@ import {
   getReportStock,
   getReportTrade,
   getReportSubclass,
-  addReport
+  addReport,
+  uploadAccessory
 } from '../../service'
 import Loading from '@/components/Loading'
 
@@ -172,6 +188,10 @@ export default {
       }
     }
     return {
+      isAccessoryShowed: false, 
+      reportid: 1,
+      uploadData: null,
+      action:'',
       isLoading: true,
       loadingStock: true,
       loadingTrade: true,
@@ -215,6 +235,7 @@ export default {
           children: []
         }
       ],
+
       smallTypeArr: [],
       stockMenuData: [],
       tradeMenuData: [],
@@ -224,7 +245,8 @@ export default {
           { type: 'string', max: 20, message: 'Introduce no less than 20 words', trigger: 'blur' }
           // { validator: validateStrLen, trigger: 'blur' }
         ]
-      }
+      },
+      
     }
   },
 
@@ -312,6 +334,7 @@ export default {
       this.summary = ''
 
       this.TOGGLE_SHOW_RESEARCH_PANEL(false)
+      this.isAccessoryShowed = true
     }, 
         
     handleUpload (file) {
@@ -319,14 +342,36 @@ export default {
       this.$nextTick(() => {
         this.$refs.uploadList.scrollTop = 32 * (this.uploadList.length + 1)
       })
-      return true
+      return false 
     },
 
     deleteFile (file) {
       let idx = this.uploadList.indexOf(file)
       this.uploadList.splice(idx, 1)
     },
+    UploadConfirm() {
+      if (this.uploadList.length == 0) {
+        this.$Message.error('未选择上传文件')
+        return false
+      }
+      const formData = new FormData();
+      Object.keys(this.uploadList).forEach((key) => {
+        formData.append(key, this.uploadList[key]);
+      });
+      formData.append('reportid', this.reportid)
 
+      uploadAccessory(formData).then(res => {
+        if (res.data.scrollTopreturnCode == 200) {
+          this.$Message.success('接口成功')
+        }
+      }).catch(err => this.$Message.error('接口失败'))
+    },
+    handleSuccess(response, file, fileList) {
+      console.log(response)
+    },
+    handleError(response, file, fileList) {
+      console.log(response)
+    },
     closeStockMenu () {
       this.isStockMenuVisible = false
     },
@@ -445,11 +490,12 @@ export default {
         if (res.data.returnCode === 200) {
           this.$Message.success('提交成功')
           this.closeResearchPanel()
-          this.largeType=''
-          this.smallType=''
-          this.stock=this.tradeName=this.title=this.keywords=this.summary=''
-          this.uploadList=[]
-          // console.log(this.largeType)
+          console.log(res.data.body)
+          this.reportid = res.data.body.body.reportid
+          setTimeout(() => {
+            this.isAccessoryShowed=true
+            console.log(this.reportid + '附件')
+          }, 500)
         }
       })
     }
@@ -460,7 +506,6 @@ export default {
 <style lang="stylus" scoped>
 .lucency
   opacity 0
-
 .research-panel
   position relative
   font-size 13px
@@ -525,6 +570,7 @@ export default {
   position absolute
   width 85.4%
   height 100px
+  // background red
   right 0
   top 50px
   line-height 32px
@@ -576,4 +622,11 @@ export default {
   color red
   font-size 12px
   line-height 18px
+.isAccessory
+  padding-left 30px
+  padding-top 10px
+.button-container
+  margin-bottom 10px 
+  position relivate
+  bottom -35px 
 </style>

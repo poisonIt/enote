@@ -132,8 +132,6 @@
             ref="upload"
             :show-upload-list="false"
             :before-upload="handleUpload"
-            :on-success="handleSuccess"
-            :on-error="handleError"
             :action="action"
             style="width: 85%;padding-top: 7px;">
             <Button
@@ -165,7 +163,7 @@ import {
   getReportTrade,
   getReportSubclass,
   addReport,
-  uploadAccessory
+  uploadReportFile
 } from '../../service'
 import Loading from '@/components/Loading'
 
@@ -322,19 +320,21 @@ export default {
       if (this.largeType == 100035) {
         this.$refs.tradeSelect.clearSingleSelect()
         this.$refs.tradeSelect.setQuery('')
+      } else if (this.largeType == 100031) {
+         this.tradeName = ''
+         this.stock = ''
       } else {
         this.tradeName = ''
         this.$refs.stockSelectEl.clearSingleSelect()
         this.$refs.stockSelectEl.setQuery('')
       }
       
-      // this.tradeName = ''
+     
       this.title = ''
       this.keywords = ''
       this.summary = ''
 
       this.TOGGLE_SHOW_RESEARCH_PANEL(false)
-      this.isAccessoryShowed = true
     }, 
         
     handleUpload (file) {
@@ -354,23 +354,12 @@ export default {
         this.$Message.error('未选择上传文件')
         return false
       }
-      const formData = new FormData();
-      Object.keys(this.uploadList).forEach((key) => {
-        formData.append(key, this.uploadList[key]);
-      });
-      formData.append('reportid', this.reportid)
-
-      uploadAccessory(formData).then(res => {
+      uploadReportFile({ files: this.uploadList, reportId: this.reportid }).then(res => {
         if (res.data.scrollTopreturnCode == 200) {
-          this.$Message.success('接口成功')
+          this.$Message.success('上传附件成功')
+          this.isAccessoryShowed = false
         }
-      }).catch(err => this.$Message.error('接口失败'))
-    },
-    handleSuccess(response, file, fileList) {
-      console.log(response)
-    },
-    handleError(response, file, fileList) {
-      console.log(response)
+      }).catch(err => this.$Message.error('上传失败'))
     },
     closeStockMenu () {
       this.isStockMenuVisible = false
@@ -494,7 +483,6 @@ export default {
           this.reportid = res.data.body.body.reportid
           setTimeout(() => {
             this.isAccessoryShowed=true
-            console.log(this.reportid + '附件')
           }, 500)
         }
       })

@@ -70,7 +70,6 @@ export function getShareInfo (noteId) {
 export function uploadFile (file) {
   const data = new FormData()
   data.append('files', file)
-  console.log(data)
   return axios.post('/file/upload', data)
 }
 
@@ -78,8 +77,13 @@ export function uploadReportFile (params) {
   const { files, reportId } = params
   const data = new FormData()
   data.append('files', files)
-  data.append('reportId', reportId)
-  return axios.post('/report/uploadReportFile', data)
+  // data.append('reportId', reportId)
+  console.log(data)
+  return axios.post(`/report/uploadReportFile?reportId=${reportId}`, data, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
 }
 
 export function createTag (params) {

@@ -110,7 +110,6 @@
             @blur="handleSummaryBlur"/>
           <span class="tip-error" v-show="showSummaryError">请不要超出50个中文字符长度</span>
         </div>
-        <!-- <Loading class="loading" :type="8" fill="#DDAF59" v-if="isLoading"></Loading> -->
       </div>
       <div class="button-group" slot="footer">
         <div class="button primary" @click="postReport">完成</div>
@@ -150,6 +149,7 @@
             <div class="button primary" @click="UploadConfirm">确认</div>
             <div class="button" @click="isAccessoryShowed = false">取消</div>
         </div>
+        <Loading class="loading" :type="8" fill="#DDAF59" v-if="isLoading"></Loading>
     </modal>
   </div>
 </template>
@@ -190,7 +190,7 @@ export default {
       reportid: 1,
       uploadData: null,
       action:'',
-      isLoading: true,
+      isLoading: false,
       loadingStock: true,
       loadingTrade: true,
       isStockMenuVisible: false,
@@ -354,11 +354,18 @@ export default {
         this.$Message.error('未选择上传文件')
         return false
       }
+      this.isLoading = true
       uploadReportFile({ files: this.uploadList, reportId: this.reportid }).then(res => {
-        if (res.data.scrollTopreturnCode == 200) {
-          this.$Message.success('上传附件成功')
+        // console.log(res.data.body.body.body.stauts)
+        this.isLoading = false
+        if (res.data.body.body.body.stauts == '1') {
+          this.$Message.success('附件上传成功')
+          this.uploadList.length = 0
           this.isAccessoryShowed = false
+        } else {
+          this.$Message.error("附件上传失败")
         }
+        
       }).catch(err => this.$Message.error('上传失败'))
     },
     closeStockMenu () {
@@ -479,7 +486,6 @@ export default {
         if (res.data.returnCode === 200) {
           this.$Message.success('提交成功')
           this.closeResearchPanel()
-          console.log(res.data.body)
           this.reportid = res.data.body.body.reportid
           setTimeout(() => {
             this.isAccessoryShowed=true
@@ -590,7 +596,7 @@ export default {
   width 100%
   height 100%
   left 0
-  top 40px
+  top 0px
   position absolute
   /* justify-items center */
   justify-content center

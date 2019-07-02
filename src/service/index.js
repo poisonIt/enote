@@ -76,9 +76,15 @@ export function uploadFile (file) {
 export function uploadReportFile (params) {
   const { files, reportId } = params
   const data = new FormData()
-  data.append('files', files)
-  data.append('reportId', reportId)
-  return axios.post('/report/uploadReportFile', data)
+  files.forEach(file => {
+    data.append('files', file)
+  })
+  // data.append('reportId', reportId)
+  return axios.post(`/report/uploadReportFile?reportId=${reportId}`, data, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
 }
 
 export function createTag (params) {
@@ -128,4 +134,8 @@ export function getReportTrade (params) {
 
 export function addReport (params) {
   return axios.post('/report/addReport', params)
+}
+
+export function uploadAccessory (data) {
+  return axios.post('/report/uploadReportFile', data)
 }

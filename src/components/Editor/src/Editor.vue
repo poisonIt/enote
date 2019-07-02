@@ -9,7 +9,6 @@
         <li v-for="(item, index) in locations"
           :key="index"
           :style="locStyle(item)">
-          <!-- {{ item.text }} -->
         </li>
       </ul>
     </div>
@@ -37,6 +36,7 @@ export default {
 
   data () {
     return {
+      selectedKeyIdx: 0,
       cachedDoc: {
         id: '',
         content: ''
@@ -260,6 +260,7 @@ export default {
 
     handleSearchContent (keywords) {
       this.locations = []
+      let idx = 0
       if (keywords === '') {
         return
       }
@@ -289,6 +290,7 @@ export default {
 
         s.forEach(item => {
           this.locations.push({
+            index: idx++,
             top: el.offsetTop,
             left: el.offsetLeft + item.left * fontSize,
             width: keywordsPixelLen * fontSize,
@@ -316,7 +318,26 @@ export default {
         width: item.width + 'px',
         height: item.height + 'px',
         fontSize: item.fontSize + 'px',
-        backgroundColor: 'rgb(255, 235, 0, 0.4)'
+        backgroundColor: 'rgb(255, 235, 0, 0.4)',
+        borderRadius: '2px',
+        boxSizing: 'content-box',
+        border: item.index === this.selectedKeyIdx ? '2px solid red' : 'none'
+      }
+    },
+
+    selectPrevSearchKey () {
+      if (this.selectedKeyIdx > 0) {
+        this.selectedKeyIdx --
+      } else {
+        this.selectedKeyIdx = this.locations.length - 1
+      }
+    },
+
+    selectNextSearchKey () {
+      if (this.selectedKeyIdx < this.locations.length - 1) {
+        this.selectedKeyIdx ++
+      } else {
+        this.selectedKeyIdx = 0
       }
     }
   }

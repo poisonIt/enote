@@ -3,6 +3,7 @@ import { copyFile, existsSync, mkdir } from 'fs'
 import { uploadFile } from '../../../service'
 import LocalDAO from '../../../../db/api'
 import { GenNonDuplicateID } from '@/utils/utils'
+import fetchLocal from '../../../utils/fetchLocal'
 const { remote, ipcRenderer } = require('electron')
 const path = require('path')
 
@@ -47,19 +48,17 @@ class MyUploadAdapter {
         const dest = path.resolve(resourcePath, newFileName)
         copyFile(file.path, dest, (err) => {
           if (err) throw err
-          ipcRenderer.send('fetch-local-data', {
-            tasks: ['addLocalImage'],
-            params: [{
-              name: newFileName,
-              path: `file:///${dest}`,
-              note_id: store.state.files.current_file._id,
-              ext: ext,
-              mime: mime
-            }],
-            from: 'Editor',
-          })
-          resolve({
-            default: `file:///${dest}`
+          fetchLocal('addLocalImage', {
+            name: newFileName,
+            path: `file:///${dest}`,
+            note_id: store.state.files.current_file._id,
+            ext: ext,
+            mime: mime
+          }).then((res) => {
+            console.log('addLocalImage-res', res)
+            resolve({
+              default: `file:///${dest}`
+            })
           })
         })
       })

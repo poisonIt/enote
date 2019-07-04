@@ -45,7 +45,7 @@ export default {
 
     async pushImgs () {
       let iNeedPush = await fetchLocal('getAllLocalImage')
-
+      console.log('iNeedPush', iNeedPush)
       if (iNeedPush.length === 0) {
         return []
       }
@@ -71,6 +71,11 @@ export default {
       })
 
       await fetchLocal('updateLocalDocImg', docsNeedSave)
+
+      ipcRenderer.send('communicate', {
+        tasks: ['refreshDocumentList'],
+        from: 'pushData'
+      })
 
       return imgResp
     },

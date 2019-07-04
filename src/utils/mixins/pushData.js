@@ -19,8 +19,17 @@ export default {
   computed: {
     ...mapGetters({
       noteVer: 'GET_NOTE_VER',
-      isSyncing: 'GET_IS_SYNCING'
+      isSyncing: 'GET_IS_SYNCING',
+      network_status: 'GET_NETWORK_STATUS'
     })
+  },
+
+  watch: {
+    network_status (val) {
+      if (this.isSyncing && val === 'offline') {
+        this.SET_IS_SYNCING(false)
+      }
+    }
   },
 
   methods: {
@@ -45,7 +54,7 @@ export default {
 
     async pushImgs () {
       let iNeedPush = await fetchLocal('getAllLocalImage')
-
+      console.log('iNeedPush', iNeedPush)
       if (iNeedPush.length === 0) {
         return []
       }
@@ -71,6 +80,11 @@ export default {
       })
 
       await fetchLocal('updateLocalDocImg', docsNeedSave)
+
+      ipcRenderer.send('communicate', {
+        tasks: ['refreshDocumentList'],
+        from: 'pushData'
+      })
 
       return imgResp
     },
@@ -187,12 +201,12 @@ export default {
               })
             }
             taskCol++
-            runTask()
+            await runTask()
           }
         }
       }
 
-      runTask()
+      await runTask()
     },
 
     async pushNotes () {
@@ -204,7 +218,6 @@ export default {
         { need_push: true },
         { multi: true, with_doc: true }
       )
-      // console.log('pushNotes-2', nNeedPush)
 
       if (nNeedPush.length === 0) {
         return
@@ -223,7 +236,9 @@ export default {
         notes: nTransed
       })
 
-      // console.log('resp', resp)
+      if (resp.data.returnCode === undefined) {
+        await fetchLocal('removeAllDeletedNote')
+      }
 
       if (resp.data.returnCode === 200) {
         let noteResolved = resp.data.body
@@ -261,16 +276,19 @@ export default {
           trash: file.trash
         }
       } else if (file.type === 'note') {
-        return {
+        let result = {
           noteBookId: file.remote_pid || file.pid,
           noteContent: file.content || '',
-          noteId: file.remote_id || file.id,
           title: file.title,
           trash: file.trash,
           top: file.top,
           tagId: file.tags.map(item => allTagRemoteMap[item]),
           usn: file.usn
         }
+        if (file.remote_id) {
+          result.noteId = file.remote_id
+        }
+        return result
       } else if (file.type === 'tag') {
         return {
           tagsId: file.remote_id,

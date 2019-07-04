@@ -236,7 +236,7 @@ export default {
 
   created () {
     ipcRenderer.on('communicate', (event, arg) => {
-      if (arg.from === 'Preview' && arg.tasks.indexOf('refreshDocumentList') > -1) {
+      if ((arg.from === 'Preview' || arg.from === 'pushData') && arg.tasks.indexOf('refreshDocumentList') > -1) {
         if (this.currentFile) {
           this.selectedIdCache = this.currentFile._id
         }
@@ -366,6 +366,7 @@ export default {
     selectFile (index) {
       this.selectedFileIdx = index
       const file = this.fileList[index]
+      // console.log('selectFile', file, index)
       if (file) {
         if (this.currentFile && file._id === this.currentFile._id) return
         this.SET_CURRENT_FILE(this.copyFile(file))

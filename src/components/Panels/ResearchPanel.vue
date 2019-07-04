@@ -110,14 +110,28 @@
             @blur="handleSummaryBlur"/>
           <span class="tip-error" v-show="showSummaryError">请不要超出50个中文字符长度</span>
         </div>
-        <div class="form-item">
+      </div>
+      <div class="button-group" slot="footer">
+        <div class="button primary" @click="postReport">完成</div>
+        <div class="button" @click="closeResearchPanel">取消</div>
+      </div>
+    </modal>
+    <modal
+      :visible.sync="isAccessoryShowed"
+      width="300px"
+      height="210px"
+      top="30vh"
+      transition-name="fade-in-down"
+      @close="isAccessoryShowed = false"
+      title="上传附件">
+        <div class="form-item isAccessory">
           <div class="form-label">上传附件</div>
           <Upload
             multiple
             ref="upload"
             :show-upload-list="false"
             :before-upload="handleUpload"
-            action=""
+            :action="action"
             style="width: 85%;padding-top: 7px;">
             <Button
               class="upload-button"
@@ -131,12 +145,11 @@
             </li>
           </ul>
         </div>
-        <!-- <Loading class="loading" :type="8" fill="#DDAF59" v-if="isLoading"></Loading> -->
-      </div>
-      <div class="button-group" slot="footer">
-        <div class="button primary" @click="postReport">完成</div>
-        <div class="button" @click="closeResearchPanel">取消</div>
-      </div>
+        <div class="button-group button-container" slot="footer">
+            <div class="button primary" @click="UploadConfirm">确认</div>
+            <div class="button" @click="isAccessoryShowed = false">取消</div>
+        </div>
+        <Loading class="loading" :type="8" fill="#DDAF59" v-if="isLoading"></Loading>
     </modal>
   </div>
 </template>
@@ -149,7 +162,8 @@ import {
   getReportStock,
   getReportTrade,
   getReportSubclass,
-  addReport
+  addReport,
+  uploadReportFile
 } from '../../service'
 import Loading from '@/components/Loading'
 
@@ -172,7 +186,11 @@ export default {
       }
     }
     return {
-      isLoading: true,
+      isAccessoryShowed: false, 
+      reportid: 1,
+      uploadData: null,
+      action:'',
+      isLoading: false,
       loadingStock: true,
       loadingTrade: true,
       isStockMenuVisible: false,
@@ -215,6 +233,7 @@ export default {
           children: []
         }
       ],
+
       smallTypeArr: [],
       stockMenuData: [],
       tradeMenuData: [],
@@ -224,7 +243,8 @@ export default {
           { type: 'string', max: 20, message: 'Introduce no less than 20 words', trigger: 'blur' }
           // { validator: validateStrLen, trigger: 'blur' }
         ]
-      }
+      },
+      
     }
   },
 
@@ -300,13 +320,16 @@ export default {
       if (this.largeType == 100035) {
         this.$refs.tradeSelect.clearSingleSelect()
         this.$refs.tradeSelect.setQuery('')
+      } else if (this.largeType == 100031) {
+         this.tradeName = ''
+         this.stock = ''
       } else {
         this.tradeName = ''
         this.$refs.stockSelectEl.clearSingleSelect()
         this.$refs.stockSelectEl.setQuery('')
       }
       
-      // this.tradeName = ''
+     
       this.title = ''
       this.keywords = ''
       this.summary = ''
@@ -319,14 +342,32 @@ export default {
       this.$nextTick(() => {
         this.$refs.uploadList.scrollTop = 32 * (this.uploadList.length + 1)
       })
-      return true
+      return false 
     },
 
     deleteFile (file) {
       let idx = this.uploadList.indexOf(file)
       this.uploadList.splice(idx, 1)
     },
-
+    UploadConfirm() {
+      if (this.uploadList.length == 0) {
+        this.$Message.error('未选择上传文件')
+        return false
+      }
+      this.isLoading = true
+      uploadReportFile({ files: this.uploadList, reportId: this.reportid }).then(res => {
+        // console.log(res.data.body.body.body.stauts)
+        this.isLoading = false
+        if (res.data.body.body.body.stauts == '1') {
+          this.$Message.success('附件上传成功')
+          this.uploadList.length = 0
+          this.isAccessoryShowed = false
+        } else {
+          this.$Message.error("附件上传失败")
+        }
+        
+      }).catch(err => this.$Message.error('上传失败'))
+    },
     closeStockMenu () {
       this.isStockMenuVisible = false
     },
@@ -445,11 +486,10 @@ export default {
         if (res.data.returnCode === 200) {
           this.$Message.success('提交成功')
           this.closeResearchPanel()
-          this.largeType=''
-          this.smallType=''
-          this.stock=this.tradeName=this.title=this.keywords=this.summary=''
-          this.uploadList=[]
-          // console.log(this.largeType)
+          this.reportid = res.data.body.body.reportid
+          setTimeout(() => {
+            this.isAccessoryShowed=true
+          }, 500)
         }
       })
     }
@@ -460,7 +500,6 @@ export default {
 <style lang="stylus" scoped>
 .lucency
   opacity 0
-
 .research-panel
   position relative
   font-size 13px
@@ -525,6 +564,7 @@ export default {
   position absolute
   width 85.4%
   height 100px
+  // background red
   right 0
   top 50px
   line-height 32px
@@ -556,7 +596,7 @@ export default {
   width 100%
   height 100%
   left 0
-  top 40px
+  top 0px
   position absolute
   /* justify-items center */
   justify-content center
@@ -576,4 +616,11 @@ export default {
   color red
   font-size 12px
   line-height 18px
+.isAccessory
+  padding-left 30px
+  padding-top 10px
+.button-container
+  margin-bottom 10px 
+  position relivate
+  bottom -35px 
 </style>

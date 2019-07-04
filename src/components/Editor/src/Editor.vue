@@ -3,13 +3,12 @@
     <textarea name="content" ref="editor" id="editor"></textarea>
     <div class="high-light-mask"
       ref="highLightMask"
-      v-show="locations.length > 0"
+      v-show="locations.length > 0 && showHighLight"
       :style="{ top: -scrollTop + 'px' }">
       <ul>
         <li v-for="(item, index) in locations"
           :key="index"
           :style="locStyle(item)">
-          <!-- {{ item.text }} -->
         </li>
       </ul>
     </div>
@@ -37,6 +36,8 @@ export default {
 
   data () {
     return {
+      selectedKeyIdx: 0,
+      showHighLight: false,
       cachedDoc: {
         id: '',
         content: ''
@@ -59,6 +60,9 @@ export default {
 
   watch: {
     currentFile (val, oldVal) {
+      this.showHighLight = false
+      this.locations = []
+      this.selectedKeyIdx = 0
       if (!val) {
         this.showMask = true
         return
@@ -207,6 +211,7 @@ export default {
             this.cachedDoc._id = this.currentDoc._id
 
             this.editor.ui.focusTracker.on('change:isFocused', (val) => {
+              console.log('isFocused', this.editor.ui.view.editable.isFocused)
               if (!this.editor.ui.view.editable.isFocused) {
                 let editorData = this.editor.getData()
                 if (this.currentDoc._id === this.cachedDoc._id &&
@@ -214,6 +219,8 @@ export default {
                   this.$hub.dispatchHub('pushData', this)
                   this.cachedDoc.content = editorData
                 }
+              } else {
+                this.showHighLight = false
               }
             })
             this.handleEditorReady()
@@ -260,6 +267,8 @@ export default {
 
     handleSearchContent (keywords) {
       this.locations = []
+      this.selectedKeyIdx = 0
+      let idx = 0
       if (keywords === '') {
         return
       }
@@ -289,6 +298,7 @@ export default {
 
         s.forEach(item => {
           this.locations.push({
+            index: idx++,
             top: el.offsetTop,
             left: el.offsetLeft + item.left * fontSize,
             width: keywordsPixelLen * fontSize,
@@ -300,6 +310,7 @@ export default {
           })
         })
       })
+      this.showHighLight = true
       console.log('locations', this.locations)
       console.log(this.editor)
       console.log(this.editor.editing.view.domRoots.main)
@@ -316,7 +327,26 @@ export default {
         width: item.width + 'px',
         height: item.height + 'px',
         fontSize: item.fontSize + 'px',
-        backgroundColor: 'rgb(255, 235, 0, 0.4)'
+        backgroundColor: 'rgb(255, 235, 0, 0.4)',
+        borderRadius: '2px',
+        boxSizing: 'content-box',
+        border: item.index === this.selectedKeyIdx ? '2px solid #ffa80a' : 'none'
+      }
+    },
+
+    selectPrevSearchKey () {
+      if (this.selectedKeyIdx > 0) {
+        this.selectedKeyIdx --
+      } else {
+        this.selectedKeyIdx = this.locations.length - 1
+      }
+    },
+
+    selectNextSearchKey () {
+      if (this.selectedKeyIdx < this.locations.length - 1) {
+        this.selectedKeyIdx ++
+      } else {
+        this.selectedKeyIdx = 0
       }
     }
   }

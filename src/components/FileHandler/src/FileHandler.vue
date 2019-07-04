@@ -16,13 +16,13 @@
         @keyup.enter="handleInputEnter">
       <p class="ellipsis">{{ titleValue }}</p>
     </div>
-    <div class="search" v-if="false">
+    <div class="search" v-if="isSearchShowed">
       <span class="num">{{ 2 }}个结果</span>
       <div class="search-bar">
         <span class="icon icon-search"></span>
         <input type="text" v-model="searchKeywords" @keyup.enter="handleSearch">
-        <div class="prev-button"></div>
-        <div class="next-button"></div>
+        <div class="prev-button" @click="prevSearch"></div>
+        <div class="next-button" @click="nextSearch"></div>
       </div>
       <div class="search-button" @click="handleSearch">完成</div>
     </div>
@@ -119,7 +119,7 @@ export default {
       handlers: [ 
         {icon: 'share', content: '分享', placement: 'bottom-start', offset: -10},
         {icon: 'fetch', content: '研报', placement: 'bottom', offset: 0},
-        // {icon: 'search', content: '搜索', placement: 'bottom', offset: 0},
+        {icon: 'search', content: '搜索', placement: 'bottom', offset: 0},
         {icon: 'tag', content: '标签', placement: 'bottom', offset: 0},
         {icon: 'more', content: '更多', placement: 'bottom', offset: 0},
         {icon: 'window', content: '新窗口笔记',placement: 'bottom-end', offset: 10},
@@ -326,6 +326,16 @@ export default {
     search () {
       console.log('search')
       this.isSearchShowed = true
+    },
+
+    prevSearch () {
+      console.log('prevSearch')
+      this.$hub.dispatchHub('prevSearch', this)
+    },
+
+    nextSearch () {
+      console.log('nextSearch')
+      this.$hub.dispatchHub('nextSearch', this)
     },
 
     handleSearch () {

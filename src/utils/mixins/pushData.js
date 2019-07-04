@@ -19,8 +19,17 @@ export default {
   computed: {
     ...mapGetters({
       noteVer: 'GET_NOTE_VER',
-      isSyncing: 'GET_IS_SYNCING'
+      isSyncing: 'GET_IS_SYNCING',
+      network_status: 'GET_NETWORK_STATUS'
     })
+  },
+
+  watch: {
+    network_status (val) {
+      if (this.isSyncing && val === 'offline') {
+        this.SET_IS_SYNCING(false)
+      }
+    }
   },
 
   methods: {
@@ -227,7 +236,9 @@ export default {
         notes: nTransed
       })
 
-      // console.log('resp', resp)
+      if (resp.data.returnCode === undefined) {
+        await fetchLocal('removeAllDeletedNote')
+      }
 
       if (resp.data.returnCode === 200) {
         let noteResolved = resp.data.body

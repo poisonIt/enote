@@ -121,7 +121,7 @@ async function diffAdd (req) {
         req.need_push = false
         return await new Promise((resolve, reject) => {
           update(req).then(newNote => {
-            docCtr.getByNoteId({ id: newNote._id }).then(doc => {
+            docCtr.getByNoteId({ note_id: newNote._id }).then(doc => {
               docCtr.update({ id: doc._id, content: req.content }).then(() => {
                 resolve(newNote)
               })

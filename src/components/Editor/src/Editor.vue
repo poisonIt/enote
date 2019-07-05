@@ -73,13 +73,13 @@ export default {
           this.showMask = true
           return
         }
-        if (this.editor) {
-          // 切换选中笔记，保存上一个笔记修改内容
-          let editorData = this.editor.getData()
-          if (editorData !== this.cachedDoc.content) {
-            this.saveData(this.cachedDoc._id, editorData)
-          }
-        }
+        // if (this.editor) {
+        //   // 切换选中笔记，保存上一个笔记修改内容
+        //   let editorData = this.editor.getData()
+        //   if (editorData !== this.cachedDoc.content) {
+        //     this.saveData(this.cachedDoc._id, editorData)
+        //   }
+        // }
         fetchLocal('getLocalDoc', {
           note_id: val._id
         }).then(res => {
@@ -216,8 +216,10 @@ export default {
                 let editorData = this.editor.getData()
                 if (this.currentDoc._id === this.cachedDoc._id &&
                   editorData !== this.cachedDoc.content) {
-                  this.$hub.dispatchHub('pushData', this)
-                  this.cachedDoc.content = editorData
+                  this.saveData(this.cachedDoc._id, editorData).then(() => {
+                    this.$hub.dispatchHub('pushData', this)
+                    this.cachedDoc.content = editorData
+                  })
                 }
               } else {
                 this.showHighLight = false
@@ -252,8 +254,8 @@ export default {
       }
     },
 
-    saveData (id, content) {
-      fetchLocal('updateLocalDoc', {
+    async saveData (id, content) {
+      await fetchLocal('updateLocalDoc', {
         id: id,
         content: content
       }).then(res => {

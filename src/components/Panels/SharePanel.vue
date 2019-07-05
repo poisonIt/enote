@@ -134,7 +134,6 @@
 import VueQr from 'vue-qr'  //二维码插件
 import { clipboard } from 'electron'
 import { mapActions, mapGetters } from 'vuex'
-import LocalDAO from '../../../db/api'
 import {
   publishShare,
   unPublishShare,
@@ -315,7 +314,7 @@ export default {
       this.handleShareFinished(shareResp)
     },
 
-    handleShareFinished (shareResp) {
+    async handleShareFinished (shareResp) {
       this.isLoading = false
       if (shareResp.data.returnCode === 200) {
         this.shareInfo = shareResp.data.body
@@ -349,6 +348,15 @@ export default {
           this.isFirstData = false
         })
 
+        await fetchLocal('updateLocalNote', {
+          id: this.currentFile._id,
+          share: true,
+          need_push: false
+        })
+        this.$hub.dispatchHub('updateFileVal', this, {
+          id: this.currentFile._id,
+          share: true
+        })
 
       } else {
         this.closeSharePanel()
@@ -366,6 +374,16 @@ export default {
       this.isLoading = false
       
       if (cancelResp.data.returnCode === 200) {
+        await fetchLocal('updateLocalNote', {
+          id: this.currentFile._id,
+          share: false,
+          need_push: false
+        })
+        this.$hub.dispatchHub('updateFileVal', this, {
+          id: this.currentFile._id,
+          share: false
+        })
+
         this.closeSharePanel()
       }
     },

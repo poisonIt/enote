@@ -269,7 +269,6 @@ export default {
     ]),
 
     handleSetCurrentFolder (node) {
-      console.log('handleSetCurrentFolder', node)
       this.SET_CURRENT_NAV(_.clone(node.data))
     },
 
@@ -341,7 +340,6 @@ export default {
     handleNewFolder (isCurrent, nodeId) {
       let node
       let nodeData
-      console.log('handleNewFolder', this.$refs)
       let map = this.$refs.tree.model.store.map
       if (nodeId) {
         nodeData = map[nodeId]
@@ -411,7 +409,6 @@ export default {
     handleNodeAdded (node) {
       this.$nextTick(() => {
         if (this.viewType !== 'expanded') {
-          console.log('handleNodeAdded', node)
           if (node.data.type === 'folder') {
             this.addFolder(node).then(() => {
               this.SET_RENAME_FILE_ID(node.data._id)
@@ -629,19 +626,27 @@ export default {
         this.dropNode = node
         let taskName = this.draggingFile.type === 'folder' ? 'updateLocalFolder' : 'updateLocalNote'
         if (this.draggingFile.type === 'folder') {
+          this.oldParent = node.parent
           node.instance.moveNode(this.draggingFile)
-          return
         }
 
-        let isNameConflict = await this.checkNameConflict(node.id, this.draggingFile.title, this.draggingFile.title, 'note')
+        let isNameConflict = await this.checkNameConflict(node.id, this.draggingFile.title, this.draggingFile.title, this.draggingFile.type)
         if (isNameConflict) {
           return
         }
 
-        this.moveNote({
-          id: this.draggingFile._id,
-          pid: this.dropNode.id
-        })
+        if (this.draggingFile.type === 'folder') {
+          this.moveFolder({
+            id: this.draggingFile._id,
+            pid: this.dropNode.id
+          })
+        } else if (this.draggingFile.type === 'note') {
+          this.moveNote({
+            id: this.draggingFile._id,
+            pid: this.dropNode.id
+          })
+        }
+
       }
     },
 

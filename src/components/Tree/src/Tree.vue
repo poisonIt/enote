@@ -329,7 +329,6 @@ export default {
     },
 
     select (id) {
-      console.log('select', id)
       this.broadcast('tree', 'select', {
         id: id
       }, true)
@@ -403,11 +402,12 @@ export default {
     },
 
     dragEnter (e) {
-      if (this.draggingFile && this.model.data.type === 'folder') {
+      if (this.model.isLeaf) return
+      if (this.model.data.type !== 'folder') return
+      if (this.draggingFile) {
         this.isDragEnterNode = true
       }
       if (!fromComp) return
-      if (this.model.isLeaf) return
       this.isDragEnterNode = true
     },
 
@@ -423,6 +423,9 @@ export default {
         node.$emit('drop', {
           node: this.model
         })
+        return
+      }
+      if (this.model.data.type !== 'folder') {
         return
       }
       if (!fromComp) return
@@ -505,7 +508,9 @@ export default {
 
     dragEnterBottom () {
       if (!fromComp) return
-      this.isDragEnterBottom = true
+      if (this.model.data.type === 'folder') {
+        this.isDragEnterBottom = true
+      }
     },
 
     dragOverBottom(e) {

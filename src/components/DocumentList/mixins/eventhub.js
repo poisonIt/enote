@@ -13,6 +13,7 @@ export default {
     this.$hub.hookHub('removeFile', 'FileHandler', (file) => this.handleFileRemove(file))
     this.$hub.hookHub('refreshList', 'TagHandler', () => this.refreshList())
     this.$hub.hookHub('updateDoc', 'Editor', (file) => this.handleDocUpdate(file))
+    this.$hub.hookHub('updateFileVal', 'SharePanel', (params) => this.handleFileValUpdate(params))
   },
 
   methods: {
@@ -36,9 +37,19 @@ export default {
       }
     },
 
+    handleFileValUpdate (params) {
+      let f = _.find(this.fileList, { _id: params.id })
+      if (f) {
+        Object.keys(params).forEach(key => {
+          if (key !== 'id' && f.hasOwnProperty(key)) {
+            this.$set(f, key, params[key])
+          }
+        })
+      }
+    },
+
     handleFileUpdate (params) {
       if (!this.currentFile) return
-      console.log('handleFileUpdate', this.currentFile, params)
       this.$nextTick(() => {
         let taskName = this.currentFile.type === 'folder' ? 'updateLocalFolder' : 'updateLocalNote'
         fetchLocal(taskName, {

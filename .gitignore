@@ -1,6 +1,7 @@
 .DS_Store
 node_modules
 database
+resource
 /dist
 appConfig.json
 package-lock.json

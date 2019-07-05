@@ -353,7 +353,7 @@ export default {
           share: true,
           need_push: false
         })
-        this.$hub.dispatchHub('updateFileVal', this, {
+        this.$hub.dispatchHub('updateFileProperty', this, {
           id: this.currentFile._id,
           share: true
         })
@@ -379,7 +379,7 @@ export default {
           share: false,
           need_push: false
         })
-        this.$hub.dispatchHub('updateFileVal', this, {
+        this.$hub.dispatchHub('updateFileProperty', this, {
           id: this.currentFile._id,
           share: false
         })

@@ -95,7 +95,6 @@ axios.interceptors.response.use(data => {
   }
   return data
 }, error => {
-  Message.error(`Network Error`)
   return Promise.reject(error)
 })
 

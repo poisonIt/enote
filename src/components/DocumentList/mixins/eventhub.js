@@ -13,7 +13,7 @@ export default {
     this.$hub.hookHub('removeFile', 'FileHandler', (file) => this.handleFileRemove(file))
     this.$hub.hookHub('refreshList', 'TagHandler', () => this.refreshList())
     this.$hub.hookHub('updateDoc', 'Editor', (file) => this.handleDocUpdate(file))
-    this.$hub.hookHub('updateFileVal', 'SharePanel', (params) => this.handleFileValUpdate(params))
+    this.$hub.hookHub('updateFileProperty', 'SharePanel', (params) => this.handleFileValUpdate(params))
   },
 
   methods: {

@@ -72,7 +72,6 @@ export default {
       }
 
       let tagsData = (pullResp[2].data.body || []).map(item => transTagDataFromRemote(item))
-      await fetchLocal('diffAddMultiLocalTag', tagsData)
       let tagLocalResp = await fetchLocal('diffAddMultiLocalTag', tagsData)
       allTagLocalMap = {}
       tagLocalResp.forEach(item => {

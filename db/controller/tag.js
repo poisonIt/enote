@@ -119,11 +119,22 @@ function diffAdd (req) {
 
 function diffAddMulti (reqs) {
   return new Promise((resolve, reject) => {
-    let p = reqs.map(req => {
-      return diffAdd(req)
-    })
-    Promise.all(p).then(res => {
-      resolve(res)
+    Tag.find({}).exec((err, allTags) => {
+      let reqIds = reqs.map(tag => tag.remote_id)
+      let tagsNeedRemove = allTags.filter(tag => {
+        return tag.remote_id && (reqIds.indexOf(tag.remote_id) === -1)
+      })
+      let p = reqs.map(req => {
+        return diffAdd(req)
+      })
+      let dP = tagsNeedRemove.map(tag => {
+        return removeById({ id: tag._id })
+      })
+      Promise.all(dP).then(() => {
+        Promise.all(p).then(res => {
+          resolve(res)
+        })
+      })
     })
   })
 }

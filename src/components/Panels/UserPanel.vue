@@ -152,6 +152,7 @@ export default {
       }
       let redirect_uri = `https://iapp.htffund.com/note/api/youdao/callBack`
       let url = `https://note.youdao.com/oauth/authorize2?client_id=838948a8e2be4d35f253cb82f2687d15&response_type=code&redirect_uri=${redirect_uri}/?state=${this.userInfo.usercode}`
+      console.log('youdaoSyncUrl', url)
       ipcRenderer.send('create-youdao-window', {
         name: 'youdao',
         userCode: this.userInfo,

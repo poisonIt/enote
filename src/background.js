@@ -16,6 +16,7 @@ import { getAppConf, saveAppConf } from './tools/appConf'
 import { createCollection } from '../db'
 import { GenNonDuplicateID } from './utils/utils'
 import * as LocalService from './service/local'
+import ipcHandlers from './client/ipcHandlers'
 import { applicationMenuTemplate, contextMenuTemplate } from './client/menu.js'
 
 const electron = require('electron')
@@ -301,6 +302,19 @@ ipcMain.on('open-external', (event, url) => {
   shell.openExternal(url)
 })
 
+ipcMain.on('fetch-ipc', (event, arg) => {
+  let option = arg.options || {}
+  let args = [option]
+  if (arg.params) {
+    args.unshift(arg.params)
+  }
+
+  ipcHandlers[arg.taskName].call(this, ...args).then(res => {
+    arg.res = res
+    event.sender.send('fetch-ipc-response', arg)
+  })
+})
+
 function prepareCreateLogin (user) {
   return new Promise((resolve, reject) => {
     let autoLogin = '0'
@@ -500,6 +514,10 @@ function createYoudaoAsyncWindow (event, url) {
   youdaoWin.on('closed', () => {
     youdaoWin = null
   })
+
+  // 清除Web storage的数据。主要清除cookies
+  const ses = youdaoWin.webContents.session
+  ses.clearStorageData()
 }
 
 function createTestWindow () {

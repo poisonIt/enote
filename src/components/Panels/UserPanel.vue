@@ -24,7 +24,7 @@
         <div class="item">
           <span>有道云账号</span>
           <span>{{ syncState }}</span>
-          <span v-if="userInfo.sync_state === 'UNBIND'" class="async" @click="openYoudaoWindow">绑定账号</span>
+          <span v-if="userInfo.sync_state !== 'UNBIND'" class="async" @click="openYoudaoWindow">绑定账号</span>
         </div>
         <!-- <div class="item" v-if="userInfo.is_sync">
           <span>同步时间</span>

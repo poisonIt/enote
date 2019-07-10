@@ -568,19 +568,17 @@ function showHomeWindow () {
 }
 
 function connectDatabase () {
+  const dbs = ['folder', 'note', 'sharedNote', 'doc', 'tag', 'img', 'state']
+
   return new Promise((resolve, reject) => {
     let p = app.appConf.dbPath + '/' + app.appConf.user
     fs.mkdir(p, { recursive: true }, (err) => {
       if (err) {
         console.log(err)
       }
-      createCollection('folder', p)
-      createCollection('note', p)
-      createCollection('sharedNote', p)
-      createCollection('doc', p)
-      createCollection('tag', p)
-      createCollection('img', p)
-      createCollection('state', p)
+      dbs.forEach(db => {
+        createCollection(db, p)
+      })
 
       LocalService.getLocalState().then(res => {
         console.log('getLocalState', res)

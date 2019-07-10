@@ -114,7 +114,7 @@ export default {
   padding 0 30px
   color #333
 .modal__body
-  height 100%
+  // height 100%
   position relative
   // padding 20px 30px 0
   background-color #fff

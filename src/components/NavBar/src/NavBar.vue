@@ -71,6 +71,7 @@
       :visible.sync="isRenameConfirmShowed"
       width="300px"
       height="90px"
+      body-height="100%"
       top="30vh"
       style="padding-bottom:20px "
       transition-name="fade-in-down"
@@ -407,6 +408,7 @@ export default {
     },
 
     handleNodeAdded (node) {
+      console.log('handleNodeAdded', node.data.pid)
       this.$nextTick(() => {
         if (this.viewType !== 'expanded') {
           if (node.data.type === 'folder') {
@@ -418,6 +420,7 @@ export default {
           }
         }
         if (node.instance) {
+          this.setCurrentFolder(node.id)
           node.instance.setEditable()
         }
       })

@@ -67,6 +67,7 @@
       :visible.sync="isDelConfirmShowed"
       width="300px"
       height="90px"
+      body-height="100%"
       top="30vh"
       style="padding-bottom:20px "
       transition-name="fade-in-down"
@@ -195,7 +196,7 @@ export default {
 
   watch: {
     currentNav (val) {
-      // console.log('wacth-currentNav', val)
+      console.log('wacth-currentNav', val)
       if (val.type === 'share') {
         this.fetchSharedFile()
       } else {
@@ -283,8 +284,9 @@ export default {
           this.handleDataFetched([[], n])
         })
       } else if (nav.type === 'folder') {
+        const fid = nav.id === null ? '-1' : (nav.id || nav._id || '0')
         let params = {
-          pid: nav.id || nav._id || '0'
+          pid: fid
         }
         if (nav.remote_id !== undefined) {
           params.remote_pid = nav.remote_id

@@ -18,7 +18,7 @@
               <span class="modal__title">{{ title }}</span>
             </slot>
           </div>
-          <div class="modal__body">
+          <div class="modal__body" :style="{ height: bodyHeight }">
             <slot></slot>
           </div>
           <div class="modal__footer" v-if="$slots.footer">
@@ -49,6 +49,10 @@ export default {
       default: '50%'
     },
     height: {
+      type: String,
+      default: 'auto'
+    },
+    bodyHeight: {
       type: String,
       default: 'auto'
     },

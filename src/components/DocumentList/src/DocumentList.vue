@@ -233,7 +233,6 @@ export default {
       // console.log('watch-fileList', val)
     }
   },
-
   created () {
     ipcRenderer.on('communicate', (event, arg) => {
       if ((arg.from === 'Preview' || arg.from === 'pushData') && arg.tasks.indexOf('refreshDocumentList') > -1) {
@@ -337,6 +336,7 @@ export default {
       let notes = this.fileListSortFunc(this.noteList.filter(file => file.title.search(re) > -1), 'note')
       let folders = this.fileListSortFunc(this.folderList.filter(file => file.title.search(re) > -1), 'folder')
       this.fileList = _.flatten([folders, notes])
+
       let idx = _.findIndex(this.fileList, { _id: this.selectedIdCache })
       idx = (idx === -1 ? 0 : idx)
       this.selectFile(this.fileList.length > 0 ? idx : -1)

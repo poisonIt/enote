@@ -83,6 +83,7 @@ export default {
       isRenameConfirmShowed: false,
       titleEllipsis: '',
       showTitleInput: false
+      
     }
   },
 

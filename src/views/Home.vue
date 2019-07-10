@@ -146,7 +146,8 @@ export default {
       'SET_TOKEN',
       'SET_VIEW_TYPE',
       'SET_USER_READY',
-      'SET_NOTE_VER'
+      'SET_NOTE_VER',
+      'SET_NETWORK_STATUS'
     ]),
 
     changeViewType () {
@@ -173,6 +174,7 @@ export default {
           }
         }).catch(err => {
           this.SET_NETWORK_STATUS('offline')
+          this.createValidateTokenItv()
         })
       }, 10000)
     },

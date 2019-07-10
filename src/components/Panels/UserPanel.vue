@@ -191,11 +191,11 @@ export default {
           }, 3000)
         } else {
           this.isSyncing = false
-          this.$Message.error('同步失败')
+          this.$Message.error('同步失败，请稍后重试')
         }
       } catch (err) {
         this.isSyncing = false
-        this.$Message.error('网络错误')
+        this.$Message.error('网络错误，请稍后重试')
       }
     }
   }

@@ -232,6 +232,10 @@ export default {
 
     async handleInputBlur () {
       this.isInputFocused = false
+      if (this.titleValue === '') {
+        this.titleValue = this.currentFileTitle
+        return
+      }
       if (this.titleValue === this.currentFileTitle) return
       let fileList = this.$root.$documentList.fileList
       let fileTitleList = fileList.filter(item => item.type === this.currentFile.type).map(item => item.title)

@@ -80,6 +80,7 @@
       :visible.sync="isConfirmShowed"
       width="300px"
       height="90px"
+      body-height="100%"
       top="30vh"
       style="padding-bottom:20px "
       transition-name="fade-in-down"
@@ -119,7 +120,7 @@ export default {
       handlers: [ 
         {icon: 'share', content: '分享', placement: 'bottom-start', offset: -10},
         {icon: 'fetch', content: '研报', placement: 'bottom', offset: 0},
-        {icon: 'search', content: '搜索', placement: 'bottom', offset: 0},
+        // {icon: 'search', content: '搜索', placement: 'bottom', offset: 0},
         {icon: 'tag', content: '标签', placement: 'bottom', offset: 0},
         {icon: 'more', content: '更多', placement: 'bottom', offset: 0},
         {icon: 'window', content: '新窗口笔记',placement: 'bottom-end', offset: 10},

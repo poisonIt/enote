@@ -146,7 +146,8 @@ export default {
       'SET_TOKEN',
       'SET_VIEW_TYPE',
       'SET_USER_READY',
-      'SET_NOTE_VER'
+      'SET_NOTE_VER',
+      'SET_NETWORK_STATUS'
     ]),
 
     changeViewType () {
@@ -160,6 +161,10 @@ export default {
 
       this.validateTokenItv = setInterval(() => {
         validateToken().then(res => {
+          if (this.network_status === 'offline') {
+            this.SET_NETWORK_STATUS('online')
+          }
+
           if (res.data.returnCode !== 200) {
             this.$Message.warning('登录状态已改变，请重新登录')
             this.clearValidateTokenItv()
@@ -167,6 +172,9 @@ export default {
               ipcRenderer.send('logout')
             }, 3000)
           }
+        }).catch(err => {
+          this.SET_NETWORK_STATUS('offline')
+          this.createValidateTokenItv()
         })
       }, 10000)
     },

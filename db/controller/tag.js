@@ -62,8 +62,8 @@ async function add (req) {
 
   return new Promise((resolve, reject) => {
     Tag.findOne({ name: name }).exec((err, tag) => {
-      console.log('add-req', req)
-      console.log('add-tag', tag)
+      // console.log('add-req', req)
+      // console.log('add-tag', tag)
       if (tag) {
         if (tag.trash === 'DELETED') {
           update({ id: tag._id, trash: 'NORMAL' }).then(res => {
@@ -142,10 +142,10 @@ async function diffAddMulti (reqs) {
     })
   })
 
-  console.log('diffAddMulti-allTags', allTags)
-  console.log('diffAddMulti-reqs', reqs)
-  console.log('diffAddMulti-tagsNeedDelete', tagsNeedDelete)
-  console.log('diffAddMulti-tagsNeedRemove', tagsNeedRemove)
+  // console.log('diffAddMulti-allTags', allTags)
+  // console.log('diffAddMulti-reqs', reqs)
+  // console.log('diffAddMulti-tagsNeedDelete', tagsNeedDelete)
+  // console.log('diffAddMulti-tagsNeedRemove', tagsNeedRemove)
 
   let rP = tagsNeedRemove.map(tag => {
     return removeById({ id: tag._id })
@@ -153,7 +153,7 @@ async function diffAddMulti (reqs) {
 
   let aP = reqs.map(req => {
     return diffAdd(req)
-  })
+  })  
 
   await Promise.all(dP)
   await Promise.all(rP)

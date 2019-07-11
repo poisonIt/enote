@@ -2,7 +2,7 @@
   <div>
     <modal
       width="363px"
-      :height="'281px'"
+      :height="'260px'"
       top="30vh"
       transition-name="fade-in-down"
       @close="close"
@@ -177,19 +177,25 @@ export default {
         return
       }
       this.isSyncing = true
-      let youdaoSync = await getSync({ deviceId: this.$remote.app.appConf.clientId })
-      if (youdaoSync.data.returnCode === 200) {
-        await fetchLocal('removeAll')
-        this.$hub.dispatchHub('pullData', this)
-        let userInfo = _.clone(this.userInfo)
-        userInfo.sync_state = 'PULL_SUCCESS'
-        fetchLocal('updateLocalUser', userInfo)
-        setTimeout(() => {
+      try {
+        let youdaoSync = await getSync({ deviceId: this.$remote.app.appConf.clientId })
+        if (youdaoSync.data.returnCode === 200) {
+          await fetchLocal('removeAll')
+          this.$hub.dispatchHub('pullData', this)
+          let userInfo = _.clone(this.userInfo)
+          userInfo.sync_state = 'PULL_SUCCESS'
+          fetchLocal('updateLocalUser', userInfo)
+          setTimeout(() => {
+            this.isSyncing = false
+            this.SET_USER_INFO(userInfo)
+          }, 3000)
+        } else {
           this.isSyncing = false
-          this.SET_USER_INFO(userInfo)
-        }, 3000)
-      } else {
+          this.$Message.error('同步失败，请稍后重试')
+        }
+      } catch (err) {
         this.isSyncing = false
+        this.$Message.error('网络错误，请稍后重试')
       }
     }
   }

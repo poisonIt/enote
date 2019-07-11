@@ -56,6 +56,14 @@ function createCollection (path) {
     top: {
       type: Boolean,
       default: false
+    },
+    share: {
+      type: Boolean,
+      default: false
+    },
+    usn: {
+      type: Number,
+      default: 0
     }
   })
   promisifyAll(Note)

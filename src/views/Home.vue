@@ -21,15 +21,33 @@
         <FolderComp style="height: 100%" v-show="currentFile && currentFile.type === 'folder'"></FolderComp>
       </div>
     </PageLayout>
+    <div class="home-loading" v-if="!isHomeReady">
+      <Loading :type="1" fill="#DDAF59" style="transform: scale(1.2)"></Loading>
+    </div>
     <MovePanel></MovePanel>
     <UserPanel></UserPanel>
     <SharePanel></SharePanel>
     <HistoryPanel></HistoryPanel>
     <ResearchPanel></ResearchPanel>
     <SettingPanel></SettingPanel>
-    <div class="home-loading" v-if="!isHomeReady">
-      <Loading :type="1" fill="#DDAF59" style="transform: scale(1.2)"></Loading>
-    </div>
+    <modal
+      :visible.sync="isModifyConfirmShowed"
+      width="300px"
+      height="90px"
+      body-height="100%"
+      top="30vh"
+      style="padding-bottom:20px "
+      transition-name="fade-in-down"
+      @close="cancelModify"
+      title="重命名">
+        <div style="text-align:center;padding:10px; 0">
+          <p>当前无网络，文件夹/标签操作可能无效。是否确定修改？</p>
+        </div>
+        <div class="button-group button-container" slot="footer">
+          <div class="button primary" @click="confirmModify">是</div>
+          <div class="button" @click="cancelModify">否</div>
+        </div>
+    </modal>
   </div>
 </template>
 
@@ -90,7 +108,8 @@ export default {
 
   data () {
     return {
-      validateTokenItv: null
+      validateTokenItv: null,
+      modifyFrom: null
     }
   },
 
@@ -100,7 +119,8 @@ export default {
       viewType: 'GET_VIEW_TYPE',
       currentFile: 'GET_CURRENT_FILE',
       isHomeReady: 'GET_IS_HOME_READY',
-      network_status: 'GET_NETWORK_STATUS'
+      network_status: 'GET_NETWORK_STATUS',
+      isModifyConfirmShowed: 'GET_MODIFY_CONFIRM_SHOWED'
     })
   },
 
@@ -138,6 +158,8 @@ export default {
         }
       }
     })
+
+    this.$hub.hookHub('showModifyConfirm', 'NavBar', (vm) => this.showModifyConfirm(vm))
   },
 
   methods: {
@@ -182,8 +204,23 @@ export default {
     clearValidateTokenItv () {
       clearInterval(this.validateTokenItv)
       this.validateTokenItv = null
+    },
+
+    showModifyConfirm (vm) {
+      this.modifyFrom = vm
+      this.TOGGLE_SHOW_MODIFY_CONFIRM(true)
+    },
+
+    confirmModify () {
+      this.modifyFrom && this.modifyFrom.confirmModify()
+      this.modifyFrom = null
+    },
+    
+    cancelModify () {
+      this.TOGGLE_SHOW_MODIFY_CONFIRM(false)
+      this.modifyFrom = null
     }
-  }
+  },
 }
 </script>
 

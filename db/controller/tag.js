@@ -38,7 +38,6 @@ function createCollection (path) {
   promisifyAll(Tag)
 }
 
-
 // save
 function saveAll (req) {
   const { data } = req

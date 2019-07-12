@@ -278,7 +278,7 @@ export default {
       } else if (file.type === 'note') {
         let result = {
           noteBookId: file.remote_pid || file.pid,
-          noteContent: file.content || '',
+          noteContent: new Buffer(file.content || '').toString('base64'),
           title: file.title,
           trash: file.trash,
           top: file.top,

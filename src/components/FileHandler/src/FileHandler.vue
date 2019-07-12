@@ -42,7 +42,7 @@
       </div>
       <transition name="fade-in-down">
         <div class="more" v-show="isMoreShowed">
-          <div class="item" @click="handleExport">导出为PDF</div>
+          <!-- <div class="item" @click="handleExport">导出为PDF</div> -->
           <div class="item" @click="handleRemove">删除笔记</div>
           <!-- <div class="item" @click="showHistory">查看历史版本</div> -->
         </div>

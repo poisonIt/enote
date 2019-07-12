@@ -210,7 +210,8 @@ export default {
       duplicateFile: 'GET_DUPLICATE_FILE',
       selectedTags: 'GET_SELECTED_TAGS',
       isTagShowed: 'GET_SHOW_TAG_HANDLER',
-      draggingFile: 'GET_DRAGGING_FILE'
+      draggingFile: 'GET_DRAGGING_FILE',
+      network_status: 'GET_NETWORK_STATUS'
     })
   },
 
@@ -450,6 +451,10 @@ export default {
     },
 
     handleRename () {
+      if (this.network_status === 'offline') {
+        this.$hub.dispatch('showModifyConfirm', this, this)
+        return
+      }
       this.typingNode = this.popupedNode
       this.popupedNode.setEditable()
     },
@@ -582,6 +587,10 @@ export default {
         this.renameNode = null
       }
       this.isRenameConfirmShowed = false
+    },
+
+    confirmModify () {
+
     },
 
     handleFolderUpdate (params) {

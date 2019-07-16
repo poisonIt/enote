@@ -2,8 +2,7 @@ import { ipcRenderer } from 'electron'
 import { 
   pullNotebooks,
   pullNote,
-  pullTags,
-  getShareWithMe
+  pullTags
 } from '@/service'
 import LocalDAO from '../../../db/api'
 import { mapGetters, mapActions } from 'vuex'
@@ -52,7 +51,6 @@ export default {
           deviceType: platform
         }),
         pullTags(),
-        getShareWithMe()
       ])
 
       let returnMsgs = pullResp.map(item => item.data.returnMsg)
@@ -98,8 +96,8 @@ export default {
         }
       }
 
-      let sharedNoteData = (pullResp[3].data.body || []).map(item => transNoteDataFromRemote(item))
-      await fetchLocal('updateSharedNote', sharedNoteData)
+      // let sharedNoteData = (pullResp[3].data.body || []).map(item => transNoteDataFromRemote(item))
+      // await fetchLocal('updateSharedNote', sharedNoteData)
 
       ipcRenderer.send('pull-finished')
     }

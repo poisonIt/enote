@@ -82,9 +82,9 @@
           <div class="button" @click="isDelConfirmShowed = false">取消</div>
         </div>
     </modal>
-    <!-- <div class="list-loading" v-if="isListLoading">
+    <div class="list-loading" v-if="isListLoading">
       <Loading :type="1" fill="#DDAF59" style="transform: scale(1.2) translateY(-60px)"></Loading>
-    </div> -->
+    </div>
   </div>
 </template>
 
@@ -99,7 +99,7 @@ import { handleNameConflict } from '../../../utils/utils'
 import { transNoteDataFromRemote } from '../../../utils/mixins/transData'
 import { getShareWithMe } from '../../../service'
 import SearchBar from '@/components/SearchBar'
-// import Loading from '@/components/Loading'
+import Loading from '@/components/Loading'
 import { FileCard, FileCardGroup } from '@/components/FileCard'
 import {
   docHandleMenu1,
@@ -121,7 +121,7 @@ export default {
 
   components: {
     SearchBar,
-    // Loading,
+    Loading,
     FileCard,
     FileCardGroup
   },
@@ -166,7 +166,8 @@ export default {
       tagsMap: 'GET_TAGS_MAP',
       selectedTags: 'GET_SELECTED_TAGS',
       searchKeyword: 'GET_SEARCH_KEYWORD',
-      renameFileId: 'GET_RENAME_FILE_ID'
+      renameFileId: 'GET_RENAME_FILE_ID',
+      network_status: 'GET_NETWORK_STATUS'
     }),
 
     menuData () {
@@ -263,17 +264,27 @@ export default {
     ]),
 
     fetchSharedFile () {
-      fetchLocal('getSharedNote').then(notes => {
-        notes.forEach(note => {
-          note.isDraggable = false
+      if (this.network_status === 'online') {
+        this.isListLoading = true
+        getShareWithMe().then(resp => {
+          let notes = resp.data.body.map(item => transNoteDataFromRemote(item))
+          this.handleDataFetched([[], notes])
+          fetchLocal('updateSharedNote', notes)
+          this.isListLoading = false
         })
-        this.handleDataFetched([[], notes])
-      })
+      } else {
+        fetchLocal('getSharedNote').then(notes => {
+          notes.forEach(note => {
+            note.isDraggable = false
+          })
+          this.handleDataFetched([[], notes])
+        })
+      }
     },
 
     refreshList (idx) {
       let nav = this.currentNav
-      this.isListLoading = true
+      this.isListLoading = false
       this.selectFile(-1)
       if (nav.type === 'latest') {
         fetchLocal('getLatestLocalNote').then(notes => {

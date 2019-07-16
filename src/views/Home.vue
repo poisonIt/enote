@@ -48,6 +48,17 @@
           <div class="button" @click="cancelModify">否</div>
         </div>
     </modal>
+    <Alert type="warning" show-icon closable :style="{
+      position: 'absolute',
+      zIndex: '9999',
+      left: '35vw',
+      top: '1vh',
+    }" v-if="network_status === 'offline'">
+      提示
+      <template slot="desc">
+        离线状态下操作文件夹、标签可能同步无效。
+      </template>
+    </Alert>
   </div>
 </template>
 

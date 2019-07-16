@@ -11,6 +11,7 @@ import BSelect from '@/components/Select'
 import BOption from '@/components/Option'
 import Menu from '@/components/Menu'
 import {
+  Alert,
   Message,
   Upload,
   Button,
@@ -43,6 +44,7 @@ Vue.use(Modal)
 Vue.use(BSelect)
 Vue.use(BOption)
 Vue.use(Menu)
+Vue.component('Alert', Alert)
 Vue.component('Upload', Upload)
 Vue.component('Button', Button)
 Vue.component('Select', Select)

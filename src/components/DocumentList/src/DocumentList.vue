@@ -324,7 +324,11 @@ export default {
     handleDataFetched (localFiles) {
       if (this.currentNav.type !== 'bin') {
         this.folderList = localFiles[0].filter(file => file.trash === 'NORMAL')
-        this.noteList = localFiles[1].filter(file => file.trash === 'NORMAL')
+        if (this.currentNav.type === 'share') {
+          this.noteList = localFiles[1]
+          } else {
+          this.noteList = localFiles[1].filter(file => file.trash === 'NORMAL')
+        }
       } else {
         this.folderList = localFiles[0]
         this.noteList = localFiles[1]

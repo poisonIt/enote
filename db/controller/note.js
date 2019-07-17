@@ -1,6 +1,6 @@
 import * as _ from 'lodash'
 import { promisifyAll } from '../promisify'
-import { htmlToText, isIllegal } from '../tools'
+import { htmlToText } from '../tools'
 import noteModel from '../models/note'
 import folderCtr from './folder'
 import docCtr from './doc'

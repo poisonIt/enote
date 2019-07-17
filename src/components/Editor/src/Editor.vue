@@ -69,7 +69,7 @@ export default {
       }
       if (val && val.type === 'note') {
         this.showMask = true
-        if (val.trash !== 'NORMAL') {
+        if (val.trash !== 'NORMAL' && this.currentNav.type !== 'share') {
           this.showMask = true
           return
         }

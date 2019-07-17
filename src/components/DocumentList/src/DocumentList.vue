@@ -268,9 +268,11 @@ export default {
         this.isListLoading = true
         getShareWithMe().then(resp => {
           let notes = resp.data.body.map(item => transNoteDataFromRemote(item))
-          this.handleDataFetched([[], notes])
-          fetchLocal('updateSharedNote', notes)
-          this.isListLoading = false
+          fetchLocal('updateSharedNote', notes).then(res => {
+            console.log('res', res)
+            this.handleDataFetched([[], res])
+            this.isListLoading = false
+          })
         })
       } else {
         fetchLocal('getSharedNote').then(notes => {

@@ -58,6 +58,7 @@
             filterable
             clearable
             :loading="loadingStock"
+            :placeholder="'请输入股票名称/代码'"
             remote>
             <Option
               v-for="(option, index) in stockMenuData"
@@ -608,7 +609,6 @@ export default {
   position absolute !important
   top 6px !important
   left 63px !important
-
 .tip-error
   position absolute
   bottom -10px
@@ -623,4 +623,6 @@ export default {
   margin-bottom 10px 
   position relivate
   bottom -35px 
+.ivu-select-input
+  width 150px !important
 </style>

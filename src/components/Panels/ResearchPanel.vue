@@ -488,10 +488,10 @@ export default {
         this.$Message.error('请填写关键字')
         return
       }
-      // if (data.summary === '') {
-      //   this.$Message.error('请填写摘要')
-      //   return
-      // }
+      if (data.summary === '') {
+        this.$Message.error('笔记不能为空')
+        return
+      }
       console.log(data)
       addReport(data).then(res => {
         if (res.data.returnCode === 200) {

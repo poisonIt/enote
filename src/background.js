@@ -99,6 +99,7 @@ app.on('ready', async () => {
   // let serviceUrl = isDevelopment
   //   ? 'http://122.152.201.59:8001/api'
   //   : 'https://iapp.htffund.com/note/api'
+  // let serviceUrl = 'http://10.50.144.83:8000/api'
 
   let appConf = await getAppConf(app.getAppPath('userData'))
   if (!appConf.serviceUrl || appConf.serviceUrl === '') {

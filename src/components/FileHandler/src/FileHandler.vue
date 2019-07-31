@@ -285,11 +285,16 @@ export default {
     },
 
     isHandlerHidden (item) {
-      if (item === 'fetch') {
-        return false
-      } else if (this.currentFile.type === 'folder' || this.currentNav.type === 'share') {
+      // if (item === 'fetch') {
+      //   // return false
+      // } else if (this.currentFile.type === 'folder' || this.currentNav.type === 'share') {
+      //   return true
+      // }
+      // return true
+      if (this.currentFile.type === 'folder' || this.currentNav.type === 'share') {
         return true
       }
+
     },
 
     iconClassComputed (key) {

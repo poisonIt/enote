@@ -2,12 +2,14 @@
   <div>
     <modal
       width="480px"
-      height="456px"
-      top="10vh"
+      height="346px"
+      top="18vh"
       transition-name="fade-in-down"
       title="研报提交"
       @close="closeResearchPanel"
-      :visible.sync="isResearchPanelShowed">
+      :visible.sync="isResearchPanelShowed"
+      >
+      <!--  -->
       <div class="research-panel">
         <div class="form-item small">
           <div class="form-label">报告大类</div>
@@ -103,14 +105,14 @@
             @blur="handleKeywordBlur"/>
           <span class="tip-error" v-show="showKeywordError">请不要超出50个中文字符长度</span>
         </div>
-        <div class="form-item">
+        <!-- <div class="form-item">
           <div class="form-label">摘要</div>
           <textarea type="text"
             v-model="summary"
             :class="{ error: showSummaryError }"
             @blur="handleSummaryBlur"/>
           <span class="tip-error" v-show="showSummaryError">请不要超出50个中文字符长度</span>
-        </div>
+        </div> -->
       </div>
       <div class="button-group" slot="footer">
         <div class="button primary" @click="postReport">完成</div>
@@ -167,7 +169,7 @@ import {
   uploadReportFile
 } from '../../service'
 import Loading from '@/components/Loading'
-
+import fetchLocal from '../../utils/fetchLocal'
 export default {
   name: 'ResearchPanel',
 
@@ -258,6 +260,15 @@ export default {
   },
 
   watch: {
+    isResearchPanelShowed(val) {
+      if (val) {
+        fetchLocal('getLocalDoc', {
+          note_id: this.currentFile._id
+        }).then(res => {
+          this.summary=new Buffer(res.content || '').toString('base64')
+        })
+      }
+    },
     userInfo (val) {
       this.fdList = val.friend_list
     },
@@ -457,12 +468,10 @@ export default {
         status: 50,
         stype: 2,
         keywords: this.keywords,
-        summary: this.summary,
+        summary: this.summary, //摘要
         title: this.title,
         username: this.userInfo.usercode
       }
-
-      console.log(data)
       if (data.reporttypeid === '') {
         this.$Message.error('请选择报告小类')
         return
@@ -479,10 +488,11 @@ export default {
         this.$Message.error('请填写关键字')
         return
       }
-      if (data.summary === '') {
-        this.$Message.error('请填写摘要')
-        return
-      }
+      // if (data.summary === '') {
+      //   this.$Message.error('请填写摘要')
+      //   return
+      // }
+      console.log(data)
       addReport(data).then(res => {
         if (res.data.returnCode === 200) {
           this.$Message.success('提交成功')
@@ -622,7 +632,7 @@ export default {
 .button-container
   margin-bottom 10px 
   position relivate
-  bottom -35px 
+  // bottom -35px 
 .ivu-select-input
-  width 150px !important
+    padding: 0 10px 0 8px !important
 </style>

@@ -215,6 +215,7 @@ export default {
 
   watch: {
     isSharePanelShowed (val) {
+      console.log(this.currentFile)
       if (val) {
         this.isFirstData = true
         if (!this.currentFile.remote_id) {
@@ -286,6 +287,7 @@ export default {
     },
 
     async createShare (remote_id) {
+      
       this.isFirstData = true
       this.isLoading = true
 

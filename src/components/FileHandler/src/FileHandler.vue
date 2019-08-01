@@ -439,7 +439,8 @@ export default {
     font-weight inherit
     color inherit
     font-family inherit
-
+  input:disabled
+    background #fff 
 .hide
   opacity 0
 
@@ -564,5 +565,11 @@ export default {
 .ivu-poptip-popper
   min-width 50px !important
   z-index 10000 !important
+input:disabled
+  background-color: #fff;
+input[disabled]
+  background-color: #fff;
+* html input.disabled
+  background-color: #fff
 </style>
 

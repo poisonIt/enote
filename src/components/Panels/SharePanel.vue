@@ -369,7 +369,7 @@ export default {
       this.isLoading = true
 
       let cancelResp = await unPublishShare({
-        noteId: this.currentFile.remote_id
+        noteId: this.currentFile.remote_id || this.remoteId
       })
 
 

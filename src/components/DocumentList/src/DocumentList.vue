@@ -69,7 +69,7 @@
       height="90px"
       body-height="100%"
       top="30vh"
-      style="padding-bottom:20px "
+      style="padding-bottom:20px"
       transition-name="fade-in-down"
       @close="isDelConfirmShowed = false"
       title="删除确认">

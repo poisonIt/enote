@@ -52,7 +52,7 @@
     <modal
       :visible.sync="isDelConfirmShowed"
       width="300px"
-      height="90px"
+      height="120px"
       top="30vh"
       style="padding-bottom:20px "
       transition-name="fade-in-down"
@@ -62,7 +62,7 @@
         <div style="text-align:center;padding:10px; 0">
           <p>该文件夹下内容不为空，是否继续删除?</p>
         </div>
-        <div class="button-group button-container" slot="footer">
+        <div class="button-group button-container" style="bottom:10px;" slot="footer">
           <div class="button primary" @click="delConfirm">确认删除</div>
           <div class="button" @click="closeDelConfirm">取消</div>
         </div>
@@ -1087,4 +1087,5 @@ export default {
     background-image url(../../../assets/images/lanhu/nav/bin.png)
     &.active
       background-image url(../../../assets/images/lanhu/nav/bin_highlight.png)
+
 </style>

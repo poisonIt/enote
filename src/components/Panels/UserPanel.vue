@@ -65,6 +65,18 @@
       <p style="font-size: 12px;margin: 50px 20px 20px">数据同步中...</p>
       <!-- <ProgressBar :value="syncProgress"></ProgressBar> -->
     </modal>
+    <modal
+        width="300px"
+        height="140px"
+        top="40vh"
+        transition-name="fade-in-down"
+        title="同步完成"
+        :visible.sync="isSyncSuccessed">
+        <p style="font-size: 12px;margin: 10px 20px 10px; text-align:center;">同步完成，请重新登录</p>
+        <div class="button-group" slot="footer">
+          <div class="button primary" style="" @click="SyncSuclogout">确认</div>
+        </div>
+      </modal>
     <!-- <webview src="https://note.youdao.com/oauth/authorize2?client_id=838948a8e2be4d35f253cb82f2687d15&response_type=code&redirect_uri=https://iapp.htffund.com"></webview> -->
   </div>
 </template>
@@ -72,6 +84,7 @@
 <script>
 import * as _ from 'lodash'
 import { ipcRenderer } from 'electron'
+import { saveAppConf } from '@/tools/appConf'
 import { mapActions, mapGetters } from 'vuex'
 import LocalDAO from '../../../db/api'
 import {
@@ -95,7 +108,8 @@ export default {
       isSyncing: false,
       isOauthed: false,
       isOauthPanelShowed: false,
-      isSyncPanelShowed: false
+      isSyncPanelShowed: false,
+      isSyncSuccessed: false
     }
   },
 
@@ -136,7 +150,9 @@ export default {
     close () {
       this.TOGGLE_SHOW_USER_PANEL(false)
     },
-
+    open() {
+      this.isSyncSuccessed = true
+    },
     closeOauthPanel () {
       this.isOauthPanelShowed = false
     },
@@ -144,7 +160,13 @@ export default {
     closeSyncPanel () {
       this.isSyncPanelShowed = false
     },
-
+    SyncSuclogout() {
+      saveAppConf(this.$remote.app.getAppPath('appData'), {
+        user: null
+      })
+      ipcRenderer.send('logout')
+      this.isSyncSuccesse = false
+    },
     openYoudaoWindow () {
       if (!this.userInfo.usercode) {
         alert('userCode empty!')
@@ -164,6 +186,7 @@ export default {
     async checkYoudaoSyncState () {
       syncSate().then(resp => {
         if (resp.data.returnCode === 200) {
+          console.log(resp)
           let userInfo = _.clone(this.userInfo)
           userInfo.sync_state = resp.data.body.state
           this.SET_USER_INFO(userInfo)
@@ -182,6 +205,7 @@ export default {
         if (youdaoSync.data.returnCode === 200) {
           await fetchLocal('removeAll')
           this.$hub.dispatchHub('pullData', this)
+          this.isSyncSuccessed = true
           let userInfo = _.clone(this.userInfo)
           userInfo.sync_state = 'PULL_SUCCESS'
           fetchLocal('updateLocalUser', userInfo)

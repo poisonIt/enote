@@ -65,6 +65,17 @@
       <p style="font-size: 12px;margin: 50px 20px 20px">数据同步中...</p>
       <!-- <ProgressBar :value="syncProgress"></ProgressBar> -->
     </modal>
+    <Alert type="warning" show-icon closable :style="{
+      position: 'absolute',
+      zIndex: '9999',
+      left: '35vw',
+      top: '1vh',
+    }" v-if="returnMsg === 'success'">
+      提示
+      <template slot="desc">
+        同步完成，请重新登录
+      </template>
+    </Alert>
     <!-- <webview src="https://note.youdao.com/oauth/authorize2?client_id=838948a8e2be4d35f253cb82f2687d15&response_type=code&redirect_uri=https://iapp.htffund.com"></webview> -->
   </div>
 </template>
@@ -95,7 +106,8 @@ export default {
       isSyncing: false,
       isOauthed: false,
       isOauthPanelShowed: false,
-      isSyncPanelShowed: false
+      isSyncPanelShowed: false,
+      returnMsg: ''
     }
   },
 
@@ -164,6 +176,7 @@ export default {
     async checkYoudaoSyncState () {
       syncSate().then(resp => {
         if (resp.data.returnCode === 200) {
+          console.log(resp)
           let userInfo = _.clone(this.userInfo)
           userInfo.sync_state = resp.data.body.state
           this.SET_USER_INFO(userInfo)
@@ -182,6 +195,8 @@ export default {
         if (youdaoSync.data.returnCode === 200) {
           await fetchLocal('removeAll')
           this.$hub.dispatchHub('pullData', this)
+          // console.log(youdaoSync.data)
+          this.returnMsg=youdaoSync.data.returnMsg
           let userInfo = _.clone(this.userInfo)
           userInfo.sync_state = 'PULL_SUCCESS'
           fetchLocal('updateLocalUser', userInfo)

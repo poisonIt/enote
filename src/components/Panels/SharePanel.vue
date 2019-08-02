@@ -616,7 +616,7 @@ export default {
   .button-group
     position relative
     margin 0 auto
-    top -65px
+    top -15px
     left 0
     transform none
 </style>

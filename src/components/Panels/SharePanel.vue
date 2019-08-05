@@ -215,7 +215,7 @@ export default {
 
   watch: {
     isSharePanelShowed (val) {
-      console.log(this.currentFile)
+      // console.log(this.currentFile)
       if (val) {
         this.isFirstData = true
         if (!this.currentFile.remote_id) {

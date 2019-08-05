@@ -262,11 +262,16 @@ export default {
   watch: {
     isResearchPanelShowed(val) {
       if (val) {
-        fetchLocal('getLocalDoc', {
-          note_id: this.currentFile._id
-        }).then(res => {
-          this.summary=new Buffer(res.content || '').toString('base64')
-        })
+        if (!this.currentFile.remote_id) { 
+          fetchLocal('getLocalDoc', {
+            note_id: this.currentFile._id
+          }).then(res => {
+            this.remoteId = res.remote_id
+            this.summary = new Buffer(res.cremote_idontent || '').toString('base64')
+          })
+        } else {
+          this.remoteId = this.currentFile.remote_id
+        }
       }
     },
     userInfo (val) {
@@ -317,6 +322,7 @@ export default {
 
   mounted () {
     this.uploadList = this.$refs.upload.fileList
+    console.log(this.userInfo)
     this.searchTrade()
   },
 
@@ -368,9 +374,9 @@ export default {
       }
       this.isLoading = true
       uploadReportFile({ files: this.uploadList, reportId: this.reportid }).then(res => {
-        // console.log(res.data.body.body.body.stauts)
+        console.log(res.data)
         this.isLoading = false
-        if (res.data.body.body.body.stauts == '1') {
+        if (res.data.body.stauts == '1') {
           this.$Message.success('附件上传成功')
           this.uploadList.length = 0
           this.isAccessoryShowed = false
@@ -470,7 +476,9 @@ export default {
         keywords: this.keywords,
         summary: this.summary, //摘要
         title: this.title,
-        username: this.userInfo.usercode
+        // username: this.userInfo.usercode
+        username: this.userInfo.username,
+        noteId: this.remoteId //笔记id
       }
       if (data.reporttypeid === '') {
         this.$Message.error('请选择报告小类')
@@ -494,10 +502,11 @@ export default {
       }
       console.log(data)
       addReport(data).then(res => {
-        if (res.data.returnCode === 200) {
+        console.log(res)
+        if (res.data.returnCode === 0) {
           this.$Message.success('提交成功')
           this.closeResearchPanel()
-          this.reportid = res.data.body.body.reportid
+          this.reportid = res.data.body.reportid
           setTimeout(() => {
             this.isAccessoryShowed=true
           }, 500)

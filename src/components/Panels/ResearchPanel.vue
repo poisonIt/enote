@@ -262,16 +262,12 @@ export default {
   watch: {
     isResearchPanelShowed(val) {
       if (val) {
-        if (!this.currentFile.remote_id) { 
-          fetchLocal('getLocalDoc', {
-            note_id: this.currentFile._id
-          }).then(res => {
-            this.remoteId = res.remote_id
-            this.summary = new Buffer(res.cremote_idontent || '').toString('base64')
-          })
-        } else {
-          this.remoteId = this.currentFile.remote_id
-        }
+        fetchLocal('getLocalDoc', {
+          note_id: this.currentFile._id
+        }).then(res => {
+          this.remoteId = res.remote_id
+          this.summary = new Buffer(res.cremote_idontent || '').toString('base64')
+        })
       }
     },
     userInfo (val) {

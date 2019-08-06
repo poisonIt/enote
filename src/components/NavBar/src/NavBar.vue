@@ -7,7 +7,7 @@
       :model="folderTree"
       default-tree-node-name="新建文件夹"
       v-bind:default-expanded="true"
-      :flat-ids="['0', 'latest', 'share', 'tag', 'bin']"
+      :flat-ids="['0', 'latest', 'share', 'tag', 'bin', 'public']"
       @contextmenu="handleContextmenu"
       @set-current="handleSetCurrentFolder"
       @select="handleSelect"
@@ -47,6 +47,12 @@
           active : navMiniActive('bin')
         }"
         @click="handleClickMini('bin')">
+      </div>
+      <div class="icon icon-public"
+        :class="{
+          active : navMiniActive('public')
+        }"
+        @click="handleClickMini('public')">
       </div>
     </div>
     <modal
@@ -164,6 +170,21 @@ const binNav = {
   }
 }
 
+const publicFolder = {
+  name: '公共区',
+  id: 'public',
+  pid: null,
+  dragDisabled: true,
+  addTreeNodeDisabled: true,
+  addLeafNodeDisabled: true,
+  editNodeDisabled: true,
+  delNodeDisabled: true,
+  children: [],
+  data: {
+    type: 'public'
+  }
+}
+
 export default {
   name: 'NavBar',
 
@@ -244,7 +265,7 @@ export default {
         if (e.data[0] === 'calcLocalData') {
           let newRootFolder = e.data[1]
           let newTagNav = e.data[2]
-          _self.folderTree = new TreeStore([latestNav, shareNav, newRootFolder, newTagNav, binNav])
+          _self.folderTree = new TreeStore([latestNav, shareNav, newRootFolder, newTagNav, binNav, publicFolder])
           _self.$nextTick(() => {
             _self.$refs.tree.$children[0].click()
             setTimeout(() => {
@@ -298,10 +319,14 @@ export default {
         }
       } else {
         if (d.data.type === 'select') {
+          // console.log(d)
           this.popupNativeMenu(this.nativeMenus[4])
         }
         if (d.data.type === 'bin') {
           this.popupNativeMenu(this.nativeMenus[3])
+        }
+        if (d.data.type === 'public') {
+          // this.popupNativeMenu(this.nativeMenus[4])
         }
       }
     },
@@ -1087,5 +1112,8 @@ export default {
     background-image url(../../../assets/images/lanhu/nav/bin.png)
     &.active
       background-image url(../../../assets/images/lanhu/nav/bin_highlight.png)
-
+  .icon-public
+    background-image url(../../../assets/images/lanhu/no-select-public@2x.png)
+    &.active
+      background-image url(../../../assets/images/lanhu/select-public@2x.png)
 </style>

@@ -191,7 +191,8 @@ export default {
         this.currentNav.type !== 'tag' &&
         this.currentNav.type !== 'select' &&
         this.currentNav.type !== 'bin' &&
-        this.currentNav.type !== 'share'
+        this.currentNav.type !== 'share' &&
+        this.currentNav.type !== 'public'
     }
   },
 
@@ -331,6 +332,8 @@ export default {
             this.handleDataFetched([folders, notes])
           })
         })
+      } else if (nav.type === 'public') {
+        console.log('public')
       }
     },
 

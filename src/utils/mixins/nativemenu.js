@@ -27,6 +27,7 @@ export default {
 
   methods: {
     initNativeMenus () {
+      // console.log(this.nativeMenuData)
       this.nativeMenus = this.nativeMenuData.map(data =>
         this.createNativeMenu([...hookMenuEvent(data, this)])
       )

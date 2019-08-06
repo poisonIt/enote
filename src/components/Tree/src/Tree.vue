@@ -682,6 +682,10 @@ export default {
   background-image url(../../../assets/images/lanhu/recycle@2x.png)
   &.current
     background-image url(../../../assets/images/lanhu/recycle_highlight@2x.png)
+.tn-icon-public
+  background-image url(../../../assets/images/lanhu/no-select-public@2x.png)
+  &.current
+    background-image url(../../../assets/images/lanhu/select-public@2x.png)
 .dark
   .tree-node
     color #fff
@@ -714,4 +718,8 @@ export default {
     background-image url(../../../assets/images/lanhu/recycle@2x.png)
     &.current
       background-image url(../../../assets/images/lanhu/recycle_highlight@2x.png)
+  .tn-icon-public
+    background-image url(../../../assets/images/lanhu/no-select-public@2x.png)
+    &.current
+      background-image url(../../../assets/images/lanhu/select-public@2x.png)
 </style>

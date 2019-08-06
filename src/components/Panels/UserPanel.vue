@@ -77,6 +77,20 @@
           <div class="button primary" style="" @click="SyncSuclogout">确认</div>
         </div>
       </modal>
+      <modal
+        width="300px"
+        height="140px"
+        top="40vh"
+        transition-name="fade-in-down"
+        title="同步提示"
+        @close="noSyncConfirm"
+        :visible.sync="isContinue">
+        <p style="font-size: 12px;margin: 10px 20px 10px;">有道云同步会清空本地文件，是否继续？</p>
+        <div class="button-group" slot="footer">
+          <div class="button primary" style="" @click="syncConfirm">确认</div>
+          <div class="button" @click="noSyncConfirm">取消</div>
+        </div>
+      </modal>
     <!-- <webview src="https://note.youdao.com/oauth/authorize2?client_id=838948a8e2be4d35f253cb82f2687d15&response_type=code&redirect_uri=https://iapp.htffund.com"></webview> -->
   </div>
 </template>
@@ -109,7 +123,8 @@ export default {
       isOauthed: false,
       isOauthPanelShowed: false,
       isSyncPanelShowed: false,
-      isSyncSuccessed: false
+      isSyncSuccessed: false,
+      isContinue: false
     }
   },
 
@@ -160,6 +175,34 @@ export default {
     closeSyncPanel () {
       this.isSyncPanelShowed = false
     },
+    async syncConfirm() {
+      this.isContinue = false
+      this.isSyncing = true
+      try {
+        let youdaoSync = await getSync({ deviceId: this.$remote.app.appConf.clientId })
+        if (youdaoSync.data.returnCode === 200) {
+          await fetchLocal('removeAll')
+          this.$hub.dispatchHub('pullData', this)
+          this.isSyncSuccessed = true
+          let userInfo = _.clone(this.userInfo)
+          userInfo.sync_state = 'PULL_SUCCESS'
+          fetchLocal('updateLocalUser', userInfo)
+          setTimeout(() => {
+            this.isSyncing = false
+            this.SET_USER_INFO(userInfo)
+          }, 3000)
+        } else {
+          this.isSyncing = false
+          this.$Message.error('同步失败，请稍后重试')
+        }
+      } catch (err) {
+        this.isSyncing = false
+        this.$Message.error('网络错误，请稍后重试')
+      }
+    },
+    noSyncConfirm() {
+      this.isContinue = false
+    },
     SyncSuclogout() {
       saveAppConf(this.$remote.app.getAppPath('appData'), {
         user: null
@@ -195,32 +238,12 @@ export default {
       })
     },
 
-    async syncYoudao () {
+    syncYoudao () {
       if (this.isSyncing) {
         return
       }
-      this.isSyncing = true
-      try {
-        let youdaoSync = await getSync({ deviceId: this.$remote.app.appConf.clientId })
-        if (youdaoSync.data.returnCode === 200) {
-          await fetchLocal('removeAll')
-          this.$hub.dispatchHub('pullData', this)
-          this.isSyncSuccessed = true
-          let userInfo = _.clone(this.userInfo)
-          userInfo.sync_state = 'PULL_SUCCESS'
-          fetchLocal('updateLocalUser', userInfo)
-          setTimeout(() => {
-            this.isSyncing = false
-            this.SET_USER_INFO(userInfo)
-          }, 3000)
-        } else {
-          this.isSyncing = false
-          this.$Message.error('同步失败，请稍后重试')
-        }
-      } catch (err) {
-        this.isSyncing = false
-        this.$Message.error('网络错误，请稍后重试')
-      }
+      this.isContinue = true
+      
     }
   }
 }

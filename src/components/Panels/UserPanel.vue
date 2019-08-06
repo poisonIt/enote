@@ -205,12 +205,12 @@ export default {
         if (youdaoSync.data.returnCode === 200) {
           await fetchLocal('removeAll')
           this.$hub.dispatchHub('pullData', this)
-          this.isSyncSuccessed = true
           let userInfo = _.clone(this.userInfo)
           userInfo.sync_state = 'PULL_SUCCESS'
           fetchLocal('updateLocalUser', userInfo)
           setTimeout(() => {
             this.isSyncing = false
+            this.isSyncSuccessed = true
             this.SET_USER_INFO(userInfo)
           }, 3000)
         } else {

@@ -97,7 +97,7 @@ import { mapGetters, mapActions } from 'vuex'
 import fetchLocal from '../../../utils/fetchLocal'
 import { handleNameConflict } from '../../../utils/utils'
 import { transNoteDataFromRemote } from '../../../utils/mixins/transData'
-import { getShareWithMe, getPublicFolder } from '../../../service'
+import { getShareWithMe, pullPublic } from '../../../service'
 import SearchBar from '@/components/SearchBar'
 import Loading from '@/components/Loading'
 import { FileCard, FileCardGroup } from '@/components/FileCard'
@@ -167,7 +167,8 @@ export default {
       selectedTags: 'GET_SELECTED_TAGS',
       searchKeyword: 'GET_SEARCH_KEYWORD',
       renameFileId: 'GET_RENAME_FILE_ID',
-      network_status: 'GET_NETWORK_STATUS'
+      network_status: 'GET_NETWORK_STATUS',
+      public: 'GET_PUBLIC'
     }),
 
     menuData () {
@@ -202,6 +203,8 @@ export default {
       if (val.type === 'share') {
         this.fetchSharedFile()
       } else if (val.type === 'public') {
+        this.SET_PUBLIC(true)
+        console.log(this.public)
         this.fetchPublicFile()
       } else {
         this.refreshList()
@@ -263,7 +266,8 @@ export default {
       'SET_VIEW_FILE_SORT_ORDER',
       'TOGGLE_SHOW_MOVE_PANEL',
       'TOGGLE_SHOW_SHARE_PANEL',
-      'TOGGLE_SHOW_HISTORY_PANEL'
+      'TOGGLE_SHOW_HISTORY_PANEL',
+      'SET_PUBLIC'
     ]),
 
     fetchSharedFile () {
@@ -289,11 +293,12 @@ export default {
 
     fetchPublicFile () {
       if (this.network_status === 'online') {
-        this.isLiatLoading = true
-        // getPublicFolder().then(res => {
-        //   consolr.log(res)
-        // })
-        
+        this.isListLoading = true
+        console.log('public')
+        pullPublic().then(res => {
+          consolr.log(res)
+        })
+
       } else {
 
       }
@@ -348,7 +353,7 @@ export default {
         })
       } else if (nav.type === 'public') {
         console.log('public')
-        
+
       }
     },
 
@@ -697,7 +702,7 @@ export default {
           titleArr
         )
       }
-      
+
       fetchLocal(taskName, {
         id: fileId,
         title: newTitle,

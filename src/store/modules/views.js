@@ -25,10 +25,15 @@ const state = {
   is_syncing: false,
   notes_pushing: [],
   is_editor_focused: false,
-  is_home_ready: false
+  is_home_ready: false,
+  public: false
 }
 
 const mutations = {
+  SET_PUBLIC (state, val) {
+    state.public = val
+  },
+
   SET_USER_READY (state, val) {
     state.is_user_ready = val
   },
@@ -132,6 +137,10 @@ const mutations = {
 }
 
 const actions = {
+  SET_PUBLIC({ commit }, val) {
+    commit('SET_PUBLIC', val)
+  },
+
   SET_USER_READY({ commit }, val) {
     commit('SET_USER_READY', val)
   },
@@ -235,6 +244,10 @@ const actions = {
 }
 
 const getters = {
+  GET_PUBLIC (state) {
+    return state.public
+  },
+
   GET_USER_READY (state) {
     return state.is_user_ready
   },

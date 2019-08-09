@@ -74,12 +74,20 @@ axios.interceptors.request.use(config => {
     })
     config.data = formData
   }
+  if (store.state.views.public && config.url.indexOf('public') === -1) {
+    // console.log(config.url)
+    // config.url = `http://115.159.127.156:8000/api${config.url}`
+  } else {
+    // remote.app.appConf.serviceUrl = 'https://iapp.htffund.com/note/api'
+  }
+
   return config
 }, error => {
   return Promise.reject(error)
 })
 
 axios.interceptors.response.use(data => {
+  console.log(data)
   if (data.config.url.indexOf('authenticate') > -1) {
     return data
   }

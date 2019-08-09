@@ -215,12 +215,7 @@ export default {
 
   watch: {
     isSharePanelShowed (val) {
-<<<<<<< HEAD
-=======
-      // console.log(this.currentFile)
->>>>>>> 5c96cefbabeda0fd46702703e2798815da54fc05
       if (val) {
-        console.log(this.currentFile)
         this.isFirstData = true
         if (!this.currentFile.remote_id) {
           fetchLocal('getLocalNoteById', {

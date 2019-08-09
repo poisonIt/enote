@@ -210,8 +210,8 @@ export default {
           fetchLocal('updateLocalUser', userInfo)
           setTimeout(() => {
             this.isSyncing = false
-            this.isSyncSuccessed = true
             this.SET_USER_INFO(userInfo)
+            this.isSyncSuccessed = true
           }, 3000)
         } else {
           this.isSyncing = false

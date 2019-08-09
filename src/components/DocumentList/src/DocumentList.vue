@@ -197,6 +197,7 @@ export default {
 
   watch: {
     currentNav (val) {
+      
       console.log('wacth-currentNav', val)
       if (val.type === 'share') {
         this.fetchSharedFile()

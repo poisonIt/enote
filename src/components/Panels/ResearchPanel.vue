@@ -190,7 +190,7 @@ export default {
     }
     return {
       isAccessoryShowed: false,
-      reportid: 1,
+      noteId: null,
       uploadData: null,
       action:'',
       isLoading: false,
@@ -262,11 +262,10 @@ export default {
   watch: {
     isResearchPanelShowed(val) {
       if (val) {
+        this.noteId = this.currentFile.remote_id
         fetchLocal('getLocalDoc', {
           note_id: this.currentFile._id
         }).then(res => {
-          // console.log(res.content)
-          this.remoteId = res.remote_id
           this.summary = new Buffer(res.content || '').toString('base64')
         })
       }
@@ -475,7 +474,7 @@ export default {
         title: this.title,
         // username: this.userInfo.usercode
         username: this.userInfo.username,
-        noteId: this.remoteId //笔记id
+        noteId: this.noteId //笔记id
       }
       if (data.reporttypeid === '') {
         this.$Message.error('请选择报告小类')

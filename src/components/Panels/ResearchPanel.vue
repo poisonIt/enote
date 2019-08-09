@@ -262,6 +262,8 @@ export default {
   watch: {
     isResearchPanelShowed(val) {
       if (val) {
+    console.log(this.userInfo)
+
         this.noteId = this.currentFile.remote_id
         fetchLocal('getLocalDoc', {
           note_id: this.currentFile._id
@@ -318,7 +320,6 @@ export default {
 
   mounted () {
     this.uploadList = this.$refs.upload.fileList
-    console.log(this.userInfo)
     this.searchTrade()
   },
 
@@ -473,7 +474,7 @@ export default {
         summary: this.summary, //摘要
         title: this.title,
         // username: this.userInfo.usercode
-        username: this.userInfo.username,
+        username: this.userInfo.userNamePinYin,
         noteId: this.noteId //笔记id
       }
       if (data.reporttypeid === '') {

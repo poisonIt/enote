@@ -189,7 +189,7 @@ export default {
       }
     }
     return {
-      isAccessoryShowed: false, 
+      isAccessoryShowed: false,
       reportid: 1,
       uploadData: null,
       action:'',
@@ -247,7 +247,7 @@ export default {
           // { validator: validateStrLen, trigger: 'blur' }
         ]
       },
-      
+
     }
   },
 
@@ -265,8 +265,9 @@ export default {
         fetchLocal('getLocalDoc', {
           note_id: this.currentFile._id
         }).then(res => {
+          // console.log(res.content)
           this.remoteId = res.remote_id
-          this.summary = new Buffer(res.cremote_idontent || '').toString('base64')
+          this.summary = new Buffer(res.content || '').toString('base64')
         })
       }
     },
@@ -342,21 +343,21 @@ export default {
         this.$refs.stockSelectEl.clearSingleSelect()
         this.$refs.stockSelectEl.setQuery('')
       }
-      
-     
+
+
       this.title = ''
       this.keywords = ''
       this.summary = ''
 
       this.TOGGLE_SHOW_RESEARCH_PANEL(false)
-    }, 
-        
+    },
+
     handleUpload (file) {
       this.uploadList.push(file)
       this.$nextTick(() => {
         this.$refs.uploadList.scrollTop = 32 * (this.uploadList.length + 1)
       })
-      return false 
+      return false
     },
 
     deleteFile (file) {
@@ -379,7 +380,7 @@ export default {
         } else {
           this.$Message.error("附件上传失败")
         }
-        
+
       }).catch(err => this.$Message.error('上传失败'))
     },
     closeStockMenu () {
@@ -393,7 +394,7 @@ export default {
     // tradeMenuMethod: _.debounce(function (query) {
     //   this.searchTrade(query)
     // }, 300),
-    
+
     searchTrade() {
       getReportTrade().then(res => {
         console.log(res.data)
@@ -635,9 +636,9 @@ export default {
   padding-left 30px
   padding-top 10px
 .button-container
-  margin-bottom 10px 
+  margin-bottom 10px
   position relivate
-  // bottom -35px 
+  // bottom -35px
 .ivu-select-input
     padding: 0 10px 0 8px !important
 </style>

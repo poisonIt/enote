@@ -104,7 +104,7 @@ app.on('ready', async () => {
   let appConf = await getAppConf(app.getAppPath('userData'))
   if (!appConf.serviceUrl || appConf.serviceUrl === '') {
     await saveAppConf(app.getAppPath('userData'), {
-      serviceUrl: serviceUrl,
+      // serviceUrl: serviceUrl,
       appPath: dbPath
     })
   }

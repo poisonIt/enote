@@ -172,7 +172,7 @@ const binNav = {
 
 const publicFolder = {
   name: '公共区',
-  id: 'public',
+  id: 'public', 
   pid: null,
   dragDisabled: true,
   addTreeNodeDisabled: true,
@@ -325,9 +325,9 @@ export default {
         if (d.data.type === 'bin') {
           this.popupNativeMenu(this.nativeMenus[3])
         }
-        if (d.data.type === 'public') {
-          // this.popupNativeMenu(this.nativeMenus[4])
-        }
+        // if (d.data.type === 'public') {
+        //   // this.popupNativeMenu(this.nativeMenus[4])
+        // }
       }
     },
 
@@ -384,7 +384,7 @@ export default {
         }
         nodeData = node.model.data
       }
-
+      console.log(node)
       node.addChild({
         id: null,
         type: 'folder',

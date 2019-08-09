@@ -97,7 +97,7 @@ import { mapGetters, mapActions } from 'vuex'
 import fetchLocal from '../../../utils/fetchLocal'
 import { handleNameConflict } from '../../../utils/utils'
 import { transNoteDataFromRemote } from '../../../utils/mixins/transData'
-import { getShareWithMe } from '../../../service'
+import { getShareWithMe, getPublicFolder } from '../../../service'
 import SearchBar from '@/components/SearchBar'
 import Loading from '@/components/Loading'
 import { FileCard, FileCardGroup } from '@/components/FileCard'
@@ -113,7 +113,7 @@ import {
   listtypeMenu1,
   listtypeMenu2
 } from './config'
-
+import axios from 'axios'
 export default {
   name: 'DocumentList',
 
@@ -201,6 +201,8 @@ export default {
       console.log('wacth-currentNav', val)
       if (val.type === 'share') {
         this.fetchSharedFile()
+      } else if (val.type === 'public') {
+        this.fetchPublicFile()
       } else {
         this.refreshList()
       }
@@ -285,6 +287,18 @@ export default {
       }
     },
 
+    fetchPublicFile () {
+      if (this.network_status === 'online') {
+        this.isLiatLoading = true
+        // getPublicFolder().then(res => {
+        //   consolr.log(res)
+        // })
+        
+      } else {
+
+      }
+    },
+
     refreshList (idx) {
       let nav = this.currentNav
       this.isListLoading = false
@@ -334,12 +348,15 @@ export default {
         })
       } else if (nav.type === 'public') {
         console.log('public')
+        
       }
     },
 
     handleDataFetched (localFiles) {
+      console.log(localFiles)
       if (this.currentNav.type !== 'bin') {
         this.folderList = localFiles[0].filter(file => file.trash === 'NORMAL')
+        console.log(this.folderList)
         if (this.currentNav.type === 'share') {
           this.noteList = localFiles[1]
           } else {

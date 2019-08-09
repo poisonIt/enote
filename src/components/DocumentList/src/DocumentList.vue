@@ -294,9 +294,9 @@ export default {
     fetchPublicFile () {
       if (this.network_status === 'online') {
         this.isListLoading = true
-        console.log('public')
+        // console.log('public')
         pullPublic().then(res => {
-          consolr.log(res)
+          console.log(res)
         })
 
       } else {

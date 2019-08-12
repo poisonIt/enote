@@ -140,7 +140,6 @@ export function uploadAccessory (data) {
   return axios.post('/report/uploadReportFile', data)
 }
 
-export function pullPublic () {
-  // console.log(serviceUrl)
-  return axios.get('/public/noteBook/pull')
+export function getPublicFolder () {
+  return axios.get('/api/public/noteBook/pull')
 }

@@ -77,11 +77,11 @@ axios.interceptors.request.use(config => {
   }
 
   if (config.url.split('/api/public')[1]) {
-    console.log(config.url.split('/api/public'))
-    config.url.split('/api/public')[0] = 'http://115.159.127.156:8000/api/public'
-    console.log(config.url.split('/api/public')[0])
-
-    config.url = `${config.url.split('/api/public')[0]}${config.url.split('/api/public')[1]}`
+    let str = 'eyJhbGciOiJIUzUxMiJ9.eyJleHAiOjE1NjU5NDg5NDgsInN1YiI6Ind5eiIsImNyZWF0ZWQiOjE1NjUzNDQxNDgwMDl9.yCwCYE9W4TFp9ELoqiaNtbQSggOza6DW7hA0ammmCvMPyLxUCWCI5K-WLyl63I9Yp_QMilJ1MyYHlvIu68MAeg'
+    config.headers['Authorization'] = 'Bearer' + str
+    let configArr = config.url.split('/api/public')
+    configArr.splice(0, 1, 'http://115.159.127.156:8000')
+    config.url = `${configArr[0]}/api/public${configArr[1]}`
   }
   return config
 }, error => {

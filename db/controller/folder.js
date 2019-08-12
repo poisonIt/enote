@@ -312,6 +312,7 @@ async function updateByQuery (req) {
       r[i] = data[i]
     }
     r.id = folder._id
+
     return update(r)
   })
 

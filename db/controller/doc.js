@@ -169,6 +169,9 @@ function getAll () {
 function getByNoteId (req) {
   const { note_id } = req
   return new Promise((resolve, reject) => {
+    if (!req.hasOwnProperty('note_id')) {
+      reject('req has no property note_id')
+    }
     Doc.findOne({ note_id: note_id }).exec((err, doc) => {
       resolve(doc)
     })

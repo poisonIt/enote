@@ -17,6 +17,7 @@ const state = {
   show_research_panel: false,
   show_setting_panel: false,
   show_tag_handler: false,
+  show_modify_confirm: false,
   editor_content: '',
   editor_content_cache: '',
   cached_doc: '',
@@ -103,6 +104,10 @@ const mutations = {
 
   TOGGLE_SHOW_TAG_HANDLER (state, val) {
     state.show_tag_handler = !!val
+  },
+
+  TOGGLE_SHOW_MODIFY_CONFIRM (state, val) {
+    state.show_modify_confirm = !!val
   },
 
   // SET_CURRENT_NAV (state, val) {
@@ -203,6 +208,10 @@ const actions = {
     commit('TOGGLE_SHOW_TAG_HANDLER', val)
   },
 
+  TOGGLE_SHOW_MODIFY_CONFIRM ({ commit }, val) {
+    commit('TOGGLE_SHOW_MODIFY_CONFIRM', val)
+  },
+
   // SET_CURRENT_NAV ({ commit }, val) {
   //   commit('SET_CURRENT_NAV', val)
   // },
@@ -226,6 +235,10 @@ const actions = {
 }
 
 const getters = {
+  GET_PUBLIC (state) {
+    return state.public
+  },
+
   GET_USER_READY (state) {
     return state.is_user_ready
   },
@@ -304,6 +317,10 @@ const getters = {
 
   GET_SHOW_TAG_HANDLER (state) {
     return state.show_tag_handler
+  },
+
+  GET_MODIFY_CONFIRM_SHOWED (state) {
+    return state.show_modify_confirm
   },
 
   // GET_CURRENT_NAV (state) {

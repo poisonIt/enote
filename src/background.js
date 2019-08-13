@@ -16,6 +16,7 @@ import { getAppConf, saveAppConf } from './tools/appConf'
 import { createCollection } from '../db'
 import { GenNonDuplicateID } from './utils/utils'
 import * as LocalService from './service/local'
+import ipcHandlers from './client/ipcHandlers'
 import { applicationMenuTemplate, contextMenuTemplate } from './client/menu.js'
 
 const electron = require('electron')
@@ -98,6 +99,7 @@ app.on('ready', async () => {
   // let serviceUrl = isDevelopment
   //   ? 'http://122.152.201.59:8001/api'
   //   : 'https://iapp.htffund.com/note/api'
+  // let serviceUrl = 'http://10.50.144.83:8000/api'
 
   let appConf = await getAppConf(app.getAppPath('userData'))
   if (!appConf.serviceUrl || appConf.serviceUrl === '') {
@@ -113,6 +115,11 @@ app.on('ready', async () => {
       clientId: clientId
     })
   }
+  if (isDevelopment) {
+    if (!appConf.hasOwnProperty('devTool')) {
+      appConf.devTool = '1'
+    }
+  }
   let defaultSize = [960, 640]
   if (appConf.size) {
     defaultSize[0] = appConf.size.width || 960
@@ -127,6 +134,7 @@ app.on('ready', async () => {
     serviceUrl: appConf.serviceUrl || serviceUrl,
     note_ver: 1,
     dev_url: process.env.WEBPACK_DEV_SERVER_URL,
+    dev_tool: appConf.devTool === '1',
     size: {
       x: 0,
       y: 0,
@@ -301,6 +309,19 @@ ipcMain.on('open-external', (event, url) => {
   shell.openExternal(url)
 })
 
+ipcMain.on('fetch-ipc', (event, arg) => {
+  let option = arg.options || {}
+  let args = [option]
+  if (arg.params) {
+    args.unshift(arg.params)
+  }
+
+  ipcHandlers[arg.taskName].call(this, ...args).then(res => {
+    arg.res = res
+    event.sender.send('fetch-ipc-response', arg)
+  })
+})
+
 function prepareCreateLogin (user) {
   return new Promise((resolve, reject) => {
     let autoLogin = '0'
@@ -351,11 +372,14 @@ function createLoginWindow (user) {
     if (process.env.WEBPACK_DEV_SERVER_URL) {
       // Load the url of the dev server if in development mode
       loginWin.loadURL(`${process.env.WEBPACK_DEV_SERVER_URL}#/?autoLogin=${autoLogin}&username=${data.username}&password=${data.password}`)
-      loginWin.webContents.openDevTools()
     } else {
       createProtocol('app')
       // Load the index.html when not in development
       loginWin.loadURL(`app://./index.html#/?autoLogin=${autoLogin}&username=${data.username}&password=${data.password}`)
+    }
+
+    if (app.appConf.dev_tool) {
+      loginWin.webContents.openDevTools()
     }
 
     loginWin.on('show', (event) => {
@@ -394,11 +418,14 @@ function createHomeWindow () {
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode
     win.loadURL(process.env.WEBPACK_DEV_SERVER_URL + '#/home')
-    win.webContents.openDevTools()
   } else {
     createProtocol('app')
     // Load the index.html when not in development
     win.loadURL('app://./index.html#/home')
+  }
+
+  if (app.appConf.dev_tool) {
+    win.webContents.openDevTools()
   }
 
   win.on('show', (event) => {
@@ -500,6 +527,10 @@ function createYoudaoAsyncWindow (event, url) {
   youdaoWin.on('closed', () => {
     youdaoWin = null
   })
+
+  // 清除Web storage的数据。主要清除cookies
+  const ses = youdaoWin.webContents.session
+  ses.clearStorageData()
 }
 
 function createTestWindow () {
@@ -550,19 +581,17 @@ function showHomeWindow () {
 }
 
 function connectDatabase () {
+  const dbs = ['folder', 'note', 'sharedNote', 'doc', 'tag', 'img', 'state']
+
   return new Promise((resolve, reject) => {
     let p = app.appConf.dbPath + '/' + app.appConf.user
     fs.mkdir(p, { recursive: true }, (err) => {
       if (err) {
         console.log(err)
       }
-      createCollection('folder', p)
-      createCollection('note', p)
-      createCollection('sharedNote', p)
-      createCollection('doc', p)
-      createCollection('tag', p)
-      createCollection('img', p)
-      createCollection('state', p)
+      dbs.forEach(db => {
+        createCollection(db, p)
+      })
 
       LocalService.getLocalState().then(res => {
         console.log('getLocalState', res)

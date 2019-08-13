@@ -2,12 +2,14 @@
   <div>
     <modal
       width="480px"
-      height="456px"
-      top="10vh"
+      height="346px"
+      top="18vh"
       transition-name="fade-in-down"
       title="研报提交"
       @close="closeResearchPanel"
-      :visible.sync="isResearchPanelShowed">
+      :visible.sync="isResearchPanelShowed"
+      >
+      <!--  -->
       <div class="research-panel">
         <div class="form-item small">
           <div class="form-label">报告大类</div>
@@ -58,6 +60,7 @@
             filterable
             clearable
             :loading="loadingStock"
+            :placeholder="'请输入股票名称/代码'"
             remote>
             <Option
               v-for="(option, index) in stockMenuData"
@@ -102,14 +105,14 @@
             @blur="handleKeywordBlur"/>
           <span class="tip-error" v-show="showKeywordError">请不要超出50个中文字符长度</span>
         </div>
-        <div class="form-item">
+        <!-- <div class="form-item">
           <div class="form-label">摘要</div>
           <textarea type="text"
             v-model="summary"
             :class="{ error: showSummaryError }"
             @blur="handleSummaryBlur"/>
           <span class="tip-error" v-show="showSummaryError">请不要超出50个中文字符长度</span>
-        </div>
+        </div> -->
       </div>
       <div class="button-group" slot="footer">
         <div class="button primary" @click="postReport">完成</div>
@@ -166,7 +169,7 @@ import {
   uploadReportFile
 } from '../../service'
 import Loading from '@/components/Loading'
-
+import fetchLocal from '../../utils/fetchLocal'
 export default {
   name: 'ResearchPanel',
 
@@ -186,8 +189,8 @@ export default {
       }
     }
     return {
-      isAccessoryShowed: false, 
-      reportid: 1,
+      isAccessoryShowed: false,
+      noteId: null,
       uploadData: null,
       action:'',
       isLoading: false,
@@ -244,7 +247,7 @@ export default {
           // { validator: validateStrLen, trigger: 'blur' }
         ]
       },
-      
+
     }
   },
 
@@ -257,6 +260,18 @@ export default {
   },
 
   watch: {
+    isResearchPanelShowed(val) {
+      if (val) {
+    console.log(this.userInfo)
+
+        this.noteId = this.currentFile.remote_id
+        fetchLocal('getLocalDoc', {
+          note_id: this.currentFile._id
+        }).then(res => {
+          this.summary = new Buffer(res.content || '').toString('base64')
+        })
+      }
+    },
     userInfo (val) {
       this.fdList = val.friend_list
     },
@@ -328,21 +343,21 @@ export default {
         this.$refs.stockSelectEl.clearSingleSelect()
         this.$refs.stockSelectEl.setQuery('')
       }
-      
-     
+
+
       this.title = ''
       this.keywords = ''
       this.summary = ''
 
       this.TOGGLE_SHOW_RESEARCH_PANEL(false)
-    }, 
-        
+    },
+
     handleUpload (file) {
       this.uploadList.push(file)
       this.$nextTick(() => {
         this.$refs.uploadList.scrollTop = 32 * (this.uploadList.length + 1)
       })
-      return false 
+      return false
     },
 
     deleteFile (file) {
@@ -356,16 +371,16 @@ export default {
       }
       this.isLoading = true
       uploadReportFile({ files: this.uploadList, reportId: this.reportid }).then(res => {
-        // console.log(res.data.body.body.body.stauts)
+        console.log(res.data)
         this.isLoading = false
-        if (res.data.body.body.body.stauts == '1') {
+        if (res.data.body.stauts == '1') {
           this.$Message.success('附件上传成功')
           this.uploadList.length = 0
           this.isAccessoryShowed = false
         } else {
           this.$Message.error("附件上传失败")
         }
-        
+
       }).catch(err => this.$Message.error('上传失败'))
     },
     closeStockMenu () {
@@ -379,7 +394,7 @@ export default {
     // tradeMenuMethod: _.debounce(function (query) {
     //   this.searchTrade(query)
     // }, 300),
-    
+
     searchTrade() {
       getReportTrade().then(res => {
         console.log(res.data)
@@ -456,12 +471,12 @@ export default {
         status: 50,
         stype: 2,
         keywords: this.keywords,
-        summary: this.summary,
+        summary: this.summary, //摘要
         title: this.title,
-        username: this.userInfo.usercode
+        // username: this.userInfo.usercode
+        username: this.userInfo.userNamePinYin,
+        noteId: this.noteId //笔记id
       }
-
-      console.log(data)
       if (data.reporttypeid === '') {
         this.$Message.error('请选择报告小类')
         return
@@ -479,14 +494,16 @@ export default {
         return
       }
       if (data.summary === '') {
-        this.$Message.error('请填写摘要')
+        this.$Message.error('笔记不能为空')
         return
       }
+      console.log(data)
       addReport(data).then(res => {
-        if (res.data.returnCode === 200) {
+        console.log(res)
+        if (res.data.returnCode === 0) {
           this.$Message.success('提交成功')
           this.closeResearchPanel()
-          this.reportid = res.data.body.body.reportid
+          this.reportid = res.data.body.reportid
           setTimeout(() => {
             this.isAccessoryShowed=true
           }, 500)
@@ -608,7 +625,6 @@ export default {
   position absolute !important
   top 6px !important
   left 63px !important
-
 .tip-error
   position absolute
   bottom -10px
@@ -620,7 +636,9 @@ export default {
   padding-left 30px
   padding-top 10px
 .button-container
-  margin-bottom 10px 
+  margin-bottom 10px
   position relivate
-  bottom -35px 
+  // bottom -35px
+.ivu-select-input
+    padding: 0 10px 0 8px !important
 </style>

@@ -4,12 +4,13 @@ import promisify from './promisify'
 let fid = 0
 let cbPool = Object.create(null)
 
-ipcRenderer.on('fetch-local-response', (event, arg) => {
+ipcRenderer.on('fetch-ipc-response', (event, arg) => {
   cbPool[arg.fid] && cbPool[arg.fid].call(this, null, arg.res)
+  console.log('fetch-ipc-response', arg)
   delete cbPool[arg.fid]
 })
 
-function fetchLocal (taskName) {
+function fetchIpc (taskName) {
   let cb = arguments[arguments.length - 1]
   let params
   let options
@@ -36,9 +37,9 @@ function fetchLocal (taskName) {
 
   cbPool[fid] = cb
 
-  ipcRenderer.send('fetch-local', req)
+  ipcRenderer.send('fetch-ipc', req)
 }
 
-fetchLocal = promisify(fetchLocal)
+fetchIpc = promisify(fetchIpc)
 
-export default fetchLocal
+export default fetchIpc

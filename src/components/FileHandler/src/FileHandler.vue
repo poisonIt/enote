@@ -42,7 +42,7 @@
       </div>
       <transition name="fade-in-down">
         <div class="more" v-show="isMoreShowed">
-          <div class="item" @click="handleExport">导出为PDF</div>
+          <!-- <div class="item" @click="handleExport">导出为PDF</div> -->
           <div class="item" @click="handleRemove">删除笔记</div>
           <!-- <div class="item" @click="showHistory">查看历史版本</div> -->
         </div>
@@ -80,6 +80,7 @@
       :visible.sync="isConfirmShowed"
       width="300px"
       height="90px"
+      body-height="100%"
       top="30vh"
       style="padding-bottom:20px "
       transition-name="fade-in-down"
@@ -119,7 +120,7 @@ export default {
       handlers: [ 
         {icon: 'share', content: '分享', placement: 'bottom-start', offset: -10},
         {icon: 'fetch', content: '研报', placement: 'bottom', offset: 0},
-        {icon: 'search', content: '搜索', placement: 'bottom', offset: 0},
+        // {icon: 'search', content: '搜索', placement: 'bottom', offset: 0},
         {icon: 'tag', content: '标签', placement: 'bottom', offset: 0},
         {icon: 'more', content: '更多', placement: 'bottom', offset: 0},
         {icon: 'window', content: '新窗口笔记',placement: 'bottom-end', offset: 10},
@@ -232,6 +233,10 @@ export default {
 
     async handleInputBlur () {
       this.isInputFocused = false
+      if (this.titleValue === '') {
+        this.titleValue = this.currentFileTitle
+        return
+      }
       if (this.titleValue === this.currentFileTitle) return
       let fileList = this.$root.$documentList.fileList
       let fileTitleList = fileList.filter(item => item.type === this.currentFile.type).map(item => item.title)
@@ -280,11 +285,16 @@ export default {
     },
 
     isHandlerHidden (item) {
-      if (item === 'fetch') {
-        return false
-      } else if (this.currentFile.type === 'folder' || this.currentNav.type === 'share') {
+      // if (item === 'fetch') {
+      //   // return false
+      // } else if (this.currentFile.type === 'folder' || this.currentNav.type === 'share') {
+      //   return true
+      // }
+      // return true
+      if (this.currentFile.type === 'folder' || this.currentNav.type === 'share') {
         return true
       }
+
     },
 
     iconClassComputed (key) {
@@ -429,7 +439,8 @@ export default {
     font-weight inherit
     color inherit
     font-family inherit
-
+  input:disabled
+    background #fff 
 .hide
   opacity 0
 
@@ -554,5 +565,11 @@ export default {
 .ivu-poptip-popper
   min-width 50px !important
   z-index 10000 !important
+input:disabled
+  background-color: #fff;
+input[disabled]
+  background-color: #fff;
+* html input.disabled
+  background-color: #fff
 </style>
 

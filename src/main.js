@@ -11,6 +11,7 @@ import BSelect from '@/components/Select'
 import BOption from '@/components/Option'
 import Menu from '@/components/Menu'
 import {
+  Alert,
   Message,
   Upload,
   Button,
@@ -43,6 +44,7 @@ Vue.use(Modal)
 Vue.use(BSelect)
 Vue.use(BOption)
 Vue.use(Menu)
+Vue.component('Alert', Alert)
 Vue.component('Upload', Upload)
 Vue.component('Button', Button)
 Vue.component('Select', Select)
@@ -61,6 +63,7 @@ let worker = new Worker()
 Vue.prototype.$worker = new Worker()
 
 axios.interceptors.request.use(config => {
+  // console.log(config)
   config.url = `${remote.app.appConf.serviceUrl}${config.url}`
   if (store.state.user.id_token) {
     config.headers['Authorization'] = 'Bearer' + store.state.user.id_token
@@ -71,6 +74,14 @@ axios.interceptors.request.use(config => {
       formData.append(key, config.data[key])
     })
     config.data = formData
+  }
+
+  if (config.url.split('/api/public')[1]) {
+    let str = 'eyJhbGciOiJIUzUxMiJ9.eyJleHAiOjE1NjU5NDg5NDgsInN1YiI6Ind5eiIsImNyZWF0ZWQiOjE1NjUzNDQxNDgwMDl9.yCwCYE9W4TFp9ELoqiaNtbQSggOza6DW7hA0ammmCvMPyLxUCWCI5K-WLyl63I9Yp_QMilJ1MyYHlvIu68MAeg'
+    config.headers['Authorization'] = 'Bearer' + str
+    let configArr = config.url.split('/api/public')
+    configArr.splice(0, 1, 'http://115.159.127.156:8000')
+    config.url = `${configArr[0]}/api/public${configArr[1]}`
   }
   return config
 }, error => {
@@ -95,7 +106,6 @@ axios.interceptors.response.use(data => {
   }
   return data
 }, error => {
-  Message.error(`Network Error`)
   return Promise.reject(error)
 })
 

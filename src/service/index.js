@@ -139,3 +139,7 @@ export function addReport (params) {
 export function uploadAccessory (data) {
   return axios.post('/report/uploadReportFile', data)
 }
+
+export function getPublicFolder () {
+  return axios.get('/api/public/noteBook/pull')
+}

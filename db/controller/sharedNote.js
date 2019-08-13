@@ -1,6 +1,6 @@
 import * as _ from 'lodash'
 import { promisifyAll } from '../promisify'
-import { htmlToText, isIllegal } from '../tools'
+import { htmlToText } from '../tools'
 import noteModel from '../models/note'
 import folderCtr from './folder'
 import docCtr from './doc'
@@ -90,7 +90,8 @@ async function add (req) {
         docCtr.add({
           note_id: note._id,
           content: req.isTemp ? docTemp : (req.content || '')
-        }).then(() => {
+        }).then(doc => {
+          note.summary = htmlToText(doc.content)
           resolve(note)
         })
       })

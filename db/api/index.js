@@ -2,6 +2,7 @@ import user from '../controller/user'
 import folder from '../controller/folder'
 import note from '../controller/note'
 import sharedNote from '../controller/sharedNote'
+import publicNote from '../controller/publicNote'
 import doc from '../controller/doc'
 import tag from '../controller/tag'
 import img from '../controller/img'
@@ -15,7 +16,8 @@ const LocalDAO = {
   doc,
   tag,
   img,
-  state
+  state,
+  publicNote
 }
 
 export default LocalDAO

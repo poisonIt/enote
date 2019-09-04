@@ -38,7 +38,8 @@
           :isTop="item.top"
           :isShared="item.share"
           :update_at="item.update_at | yyyymmdd"
-          :file_size="item.size"
+          :file_size="Number(item.size)"
+          :username="item.username"
           :parent_folder="folderNameComputed(item)"
           :need_push="item.need_push_remotely"
           :need_push_local="item.need_push_locally"
@@ -97,7 +98,7 @@ import { mapGetters, mapActions } from 'vuex'
 import fetchLocal from '../../../utils/fetchLocal'
 import { handleNameConflict } from '../../../utils/utils'
 import { transNoteDataFromRemote } from '../../../utils/mixins/transData'
-import { getShareWithMe, pullPublic } from '../../../service'
+import { getShareWithMe, getPublicNote, saveShareWithMe } from '../../../service'
 import SearchBar from '@/components/SearchBar'
 import Loading from '@/components/Loading'
 import { FileCard, FileCardGroup } from '@/components/FileCard'
@@ -107,7 +108,8 @@ import {
   folderHandleMenu,
   fileCloudMenu,
   fileInfoMenu,
-  binMenu
+  binMenu,
+  publicMenu
 } from '../Menu'
 import {
   listtypeMenu1,
@@ -144,7 +146,8 @@ export default {
         folderHandleMenu,
         fileCloudMenu,
         fileInfoMenu,
-        binMenu
+        binMenu,
+        publicMenu
       ]
     }
   },
@@ -167,8 +170,7 @@ export default {
       selectedTags: 'GET_SELECTED_TAGS',
       searchKeyword: 'GET_SEARCH_KEYWORD',
       renameFileId: 'GET_RENAME_FILE_ID',
-      network_status: 'GET_NETWORK_STATUS',
-      public: 'GET_PUBLIC'
+      network_status: 'GET_NETWORK_STATUS'
     }),
 
     menuData () {
@@ -203,8 +205,6 @@ export default {
       if (val.type === 'share') {
         this.fetchSharedFile()
       } else if (val.type === 'public') {
-        this.SET_PUBLIC(true)
-        console.log(this.public)
         this.fetchPublicFile()
       } else {
         this.refreshList()
@@ -266,17 +266,16 @@ export default {
       'SET_VIEW_FILE_SORT_ORDER',
       'TOGGLE_SHOW_MOVE_PANEL',
       'TOGGLE_SHOW_SHARE_PANEL',
-      'TOGGLE_SHOW_HISTORY_PANEL',
-      'SET_PUBLIC'
+      'TOGGLE_SHOW_HISTORY_PANEL'
     ]),
 
     fetchSharedFile () {
       if (this.network_status === 'online') {
         this.isListLoading = true
         getShareWithMe().then(resp => {
+          console.log(resp)
           let notes = resp.data.body.map(item => transNoteDataFromRemote(item))
           fetchLocal('updateSharedNote', notes).then(res => {
-            console.log('res', res)
             this.handleDataFetched([[], res])
             this.isListLoading = false
           })
@@ -295,12 +294,23 @@ export default {
       if (this.network_status === 'online') {
         this.isListLoading = true
         // console.log('public')
-        pullPublic().then(res => {
-          console.log(res)
+        getPublicNote().then(resp => {
+          console.log(resp)
+          let notes = resp.data.body.content.map(item => transNoteDataFromRemote(item))
+          fetchLocal('updatePublicNote', notes).then(res => {
+            // console.log(res)
+            this.handleDataFetched([[], res])
+            this.isListLoading = false
+          })
         })
 
       } else {
-
+        fetchLocal('getPublicNote').then(notes => {
+          notes.forEach(note => {
+            note.isDraggable = false
+          })
+          this.handleDataFetched([[], notes])
+        })
       }
     },
 
@@ -352,19 +362,17 @@ export default {
           })
         })
       } else if (nav.type === 'public') {
-        console.log('public')
+        console.log('nav-public', nav)
 
       }
     },
 
     handleDataFetched (localFiles) {
-      console.log(localFiles)
       if (this.currentNav.type !== 'bin') {
         this.folderList = localFiles[0].filter(file => file.trash === 'NORMAL')
-        console.log(this.folderList)
         if (this.currentNav.type === 'share') {
           this.noteList = localFiles[1]
-          } else {
+        } else {
           this.noteList = localFiles[1].filter(file => file.trash === 'NORMAL')
         }
       } else {
@@ -410,7 +418,7 @@ export default {
     selectFile (index) {
       this.selectedFileIdx = index
       const file = this.fileList[index]
-      // console.log('selectFile', file, index)
+      console.log('selectFile', file, index)
       if (file) {
         if (this.currentFile && file._id === this.currentFile._id) return
         this.SET_CURRENT_FILE(this.copyFile(file))
@@ -506,12 +514,21 @@ export default {
     },
 
     handleContextmenu (props) {
-      if (this.currentNav.type === 'share') {
+      if (this.currentNav.type === 'share' && props.type === 'note') {
+        console.log(this.nativeMenus)
+        this.popupNativeMenu(this.nativeMenus[3])
         return
       }
       this.popupedFile = props
       if (this.currentNav.type === 'bin') {
         this.popupNativeMenu(this.nativeMenus[5])
+        return
+      }
+      if (this.currentNav.type === 'public' && props.type === 'note') {
+        let userId = _.findIndex(props, { id: props.userId })
+        let idx = userId === -1 ? 6 : 7
+        // 查询userId， 如果存在就是属于自己创建的笔记、可以删除，不存在就是别人的笔记
+        this.popupNativeMenu(this.nativeMenus[idx])
         return
       }
       if (props.type === 'note') {
@@ -521,6 +538,17 @@ export default {
       } else if (props.type === 'folder') {
         this.popupNativeMenu(this.nativeMenus[2])
       }
+
+    },
+
+    handleSaveNote () {
+      console.log(this.popupedFile.rawData)
+      saveShareWithMe(this.popupedFile.rawData.remote_id).then(resp => {
+        console.log(resp)
+        if (resp.data.returnCode === 200) {
+          this.$Message.success('保存成功')
+        }
+      })
     },
 
     handleDbClick (file) {
@@ -740,6 +768,7 @@ export default {
     },
 
     copyFile (file) {
+      // console.log(file)
       let result = {
         type: file.type,
         title: file.title,
@@ -753,7 +782,8 @@ export default {
         seq: file.seq,
         trash: file.trash,
         update_at: file.update_at,
-        _id: file._id
+        _id: file._id,
+        noteFiles: file.noteFiles || []
       }
       if (file.hasOwnProperty('content') && file.hasOwnProperty('share')) {
         result.content = file.content
@@ -775,6 +805,8 @@ export default {
     folderNameComputed (file) {
       if (this.currentNav.type === 'share') {
         return '与我分享'
+      } else if (this.currentNav.type === 'public') {
+        return '研究部晨会'
       } else {
         return file.parent_folder ? file.parent_folder.title : '我的文件夹'
       }

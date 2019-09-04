@@ -38,7 +38,7 @@
           <div class="icon"
             :class="iconClassComputed(item.icon)"
             :data="'FileHandler-' + item.icon"></div>
-        </Poptip> 
+        </Poptip>
       </div>
       <transition name="fade-in-down">
         <div class="more" v-show="isMoreShowed">
@@ -117,7 +117,7 @@ export default {
       titleValue: '',
       isInputFocused: false,
       // handlers: ['share', 'fetch', 'tag', 'more', 'window', 'info'],
-      handlers: [ 
+      handlers: [
         {icon: 'share', content: '分享', placement: 'bottom-start', offset: -10},
         {icon: 'fetch', content: '研报', placement: 'bottom', offset: 0},
         // {icon: 'search', content: '搜索', placement: 'bottom', offset: 0},
@@ -291,7 +291,7 @@ export default {
       //   return true
       // }
       // return true
-      if (this.currentFile.type === 'folder' || this.currentNav.type === 'share') {
+      if (this.currentFile.type === 'folder' || this.currentNav.type === 'share' || this.currentNav.type === 'public') {
         return true
       }
 
@@ -440,7 +440,7 @@ export default {
     color inherit
     font-family inherit
   input:disabled
-    background #fff 
+    background #fff
 .hide
   opacity 0
 
@@ -513,7 +513,7 @@ export default {
     border-top 5px solid transparent
     border-right 8px solid #a9a9a9
     border-bottom 5px solid transparent
-  .next-button 
+  .next-button
     right 10px
     width 0
     height 0

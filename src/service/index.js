@@ -140,7 +140,11 @@ export function uploadAccessory (data) {
   return axios.post('/report/uploadReportFile', data)
 }
 
-export function pullPublic () {
+export function getPublicNote () {
   // console.log(serviceUrl)
-  return axios.get('/public/noteBook/pull')
+  return axios.post(`/public/note/pull?page=0&size=20`)
+}
+
+export function saveShareWithMe(fileId) {
+  return axios.post(`/public/note/saveAsMyShareNote?publicNoteId=${fileId}`)
 }

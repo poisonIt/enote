@@ -4,6 +4,7 @@ import folderHandleMenu from './folderHandleMenu'
 import fileCloudMenu from './fileCloudMenu'
 import fileInfoMenu from './fileInfoMenu'
 import binMenu from './binMenu'
+import publicMenu from './publicMenu'
 
 export {
   docHandleMenu1,
@@ -11,5 +12,6 @@ export {
   folderHandleMenu,
   fileCloudMenu,
   fileInfoMenu,
-  binMenu
+  binMenu,
+  publicMenu
 }

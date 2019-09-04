@@ -2,12 +2,13 @@
   <div>
     <modal
       width="480px"
-      height="346px"
-      top="18vh"
+      :height="modalHeight"
+      top="8vh"
       transition-name="fade-in-down"
       title="研报提交"
       @close="closeResearchPanel"
       :visible.sync="isResearchPanelShowed"
+      ref="research"
       >
       <!--  -->
       <div class="research-panel">
@@ -105,6 +106,46 @@
             @blur="handleKeywordBlur"/>
           <span class="tip-error" v-show="showKeywordError">请不要超出50个中文字符长度</span>
         </div>
+
+        <div class="form-item">
+          <div class="form-label">上传附件</div>
+          <!-- multiple -->
+          <Upload
+            ref="upload"
+            :action="action"
+            :show-upload-list="false"
+            :before-upload="handleUpload"
+            :on-success="handleSuccess"
+            :on-progress="handleProgress"
+            :data="uploadData"
+            :headers="{ Authorization: 'Bearer'+authorization }"
+            style="width: 85%;padding-top: 7px;">
+            <Button
+              class="upload-button"
+              icon="ios-cloud-upload-outline">新增文件
+            </Button>
+          </Upload>
+        </div>
+        <div class="form-item" v-if="uploadList.length > 0">
+          <div class="form-label"></div>
+          <ul class="upload-list" ref="uploadList">
+            <li class="upload-list-item" v-for="(item, index) in uploadList" :key="index">
+              <span>{{ item.fileName }}</span>
+              <div class="icon-del" @click="deleteFile(item)"></div>
+            </li>
+          </ul>
+        </div>
+        <div class="form-item">
+          <div class="form-label"></div>
+          <label class="mem-item">
+            <input type="checkbox" @change="handlePublicChange">
+            <div class="name">提交至“研究部晨会”</div>
+          </label>
+        </div>
+        <div class="form-item" v-show="publicStatus">
+          <div class="form-label"></div>
+          <input type="text" class="public_name" v-model="researchTitle" placeholder="研究部晨会标题">
+        </div>
         <!-- <div class="form-item">
           <div class="form-label">摘要</div>
           <textarea type="text"
@@ -119,7 +160,7 @@
         <div class="button" @click="closeResearchPanel">取消</div>
       </div>
     </modal>
-    <modal
+    <!-- <modal
       :visible.sync="isAccessoryShowed"
       width="300px"
       height="210px"
@@ -153,7 +194,7 @@
             <div class="button" @click="isAccessoryShowed = false">取消</div>
         </div>
         <Loading class="loading" :type="8" fill="#DDAF59" v-if="isLoading"></Loading>
-    </modal>
+    </modal> -->
   </div>
 </template>
 
@@ -170,6 +211,7 @@ import {
 } from '../../service'
 import Loading from '@/components/Loading'
 import fetchLocal from '../../utils/fetchLocal'
+import { transAttachMentList } from '../../utils/mixins/transData.js'
 export default {
   name: 'ResearchPanel',
 
@@ -189,10 +231,16 @@ export default {
       }
     }
     return {
+      noteFiles: [],
+      attachmentList: [],
+      attachmentflag: 0,
+      researchTitle: '',
+      modalHeight: '445px',
+      publicStatus: false,
       isAccessoryShowed: false,
       noteId: null,
       uploadData: null,
-      action:'',
+      action: 'http://10.50.16.123:8000/api/report/uploadReportFile?reportId=0',
       isLoading: false,
       loadingStock: true,
       loadingTrade: true,
@@ -255,14 +303,15 @@ export default {
     ...mapGetters({
       isResearchPanelShowed: 'GET_SHOW_RESEARCH_PANEL',
       userInfo: 'GET_USER_INFO',
-      currentFile: 'GET_CURRENT_FILE'
+      currentFile: 'GET_CURRENT_FILE',
+      authorization: 'GET_TOKEN'
     })
   },
 
   watch: {
     isResearchPanelShowed(val) {
       if (val) {
-    console.log(this.userInfo)
+        console.log(this.userInfo)
 
         this.noteId = this.currentFile.remote_id
         fetchLocal('getLocalDoc', {
@@ -319,7 +368,7 @@ export default {
   },
 
   mounted () {
-    this.uploadList = this.$refs.upload.fileList
+    // this.uploadList = this.$refs.upload.fileList
     this.searchTrade()
   },
 
@@ -348,41 +397,98 @@ export default {
       this.title = ''
       this.keywords = ''
       this.summary = ''
-
+      this.publicStatus = false
+      this.uploadList = []
       this.TOGGLE_SHOW_RESEARCH_PANEL(false)
     },
 
     handleUpload (file) {
-      this.uploadList.push(file)
-      this.$nextTick(() => {
-        this.$refs.uploadList.scrollTop = 32 * (this.uploadList.length + 1)
+      // this.uploadList.push(file)
+
+      // this.uploadData = {
+      //   reportId: 0
+      // }
+
+      let promise = new Promise((resolve) => {
+        this.$nextTick(function () {
+          if (this.uploadList.length > 0) {
+            this.$refs.uploadList.scrollTop = 32 * (this.uploadList.length + 1)
+          }
+          resolve(true);
+        });
       })
-      return false
+      return promise; //通过返回一个promis对象解决
+      // this.$nextTick(() => {
+      //   if (this.uploadList.length > 0) {
+      //     this.$refs.uploadList.scrollTop = 32 * (this.uploadList.length + 1)
+      //   }
+      //   if (parseFloat(this.modalHeight) <= 535) {
+      //     this.modalHeight = parseFloat(this.modalHeight) + 32 + 'px'
+      //   } else {
+      //     return
+      //   }
+      // })
+      // return false
+    },
+
+    handleSuccess (resp) {
+      console.log(resp)
+      if (resp.returnCode === 200) {
+        this.uploadList = this.uploadList.concat(resp.body)
+        this.noteFiles = _.cloneDeep(this.uploadList)
+        if (parseFloat(this.modalHeight) <= 535) {
+          this.modalHeight = parseFloat(this.modalHeight) + 32 + 'px'
+        }
+      }
+    },
+
+    handleProgress (fileList) {
+      console.log(fileList)
     },
 
     deleteFile (file) {
       let idx = this.uploadList.indexOf(file)
       this.uploadList.splice(idx, 1)
-    },
-    UploadConfirm() {
-      if (this.uploadList.length == 0) {
-        this.$Message.error('未选择上传文件')
-        return false
-      }
-      this.isLoading = true
-      uploadReportFile({ files: this.uploadList, reportId: this.reportid }).then(res => {
-        console.log(res.data)
-        this.isLoading = false
-        if (res.data.body.stauts == '1') {
-          this.$Message.success('附件上传成功')
-          this.uploadList.length = 0
-          this.isAccessoryShowed = false
-        } else {
-          this.$Message.error("附件上传失败")
-        }
 
-      }).catch(err => this.$Message.error('上传失败'))
+      this.noteFiles.forEach(item => {
+        if (item.fileId === file.fileId) {
+          item.status = 1
+        }
+      })
+
+      this.$nextTick(() => {
+        if (this.uploadList.length === 0) {
+          this.modalHeight = '445px'
+          return
+        }
+        if (parseFloat(this.modalHeight) >= 445 && this.$refs.uploadList.clientHeight < 80) {
+          this.modalHeight = parseFloat(this.modalHeight) - 32 + 'px'
+        } else {
+          return
+        }
+      })
     },
+
+    // UploadConfirm() {
+    //   if (this.uploadList.length == 0) {
+    //     this.$Message.error('未选择上传文件')
+    //     return false
+    //   }
+    //   this.isLoading = true
+    //   uploadReportFile({ files: this.uploadList, reportId: this.reportid }).then(res => {
+    //     console.log(res.data)
+    //     this.isLoading = false
+    //     if (res.data.body.stauts == '1') {
+    //       this.$Message.success('附件上传成功')
+    //       this.uploadList.length = 0
+    //       this.isAccessoryShowed = false
+    //     } else {
+    //       this.$Message.error("附件上传失败")
+    //     }
+
+    //   }).catch(err => this.$Message.error('上传失败'))
+    // },
+
     closeStockMenu () {
       this.isStockMenuVisible = false
     },
@@ -460,7 +566,11 @@ export default {
         this.$Message.error('请选择报告大类')
         return
       }
+
       let data = {
+        noteFiles: this.noteFiles,
+        attachmentList: transAttachMentList(this.noteFiles),
+        attachmentflag: this.attachmentflag,
         indcode: this.largeType!=100035?this.trade:this.tradeName.split(' ')[0],
         indname: this.largeType!=100035?this.tradeName:this.tradeName.split(' ')[1],
         isupdatepeandeps: 0,
@@ -475,8 +585,12 @@ export default {
         title: this.title,
         // username: this.userInfo.usercode
         username: this.userInfo.userNamePinYin,
-        noteId: this.noteId //笔记id
+        noteId: this.noteId,//笔记id
+        syncPublic: this.publicStatus,
+        isConform: false,
+        title: this.researchTitle
       }
+
       if (data.reporttypeid === '') {
         this.$Message.error('请选择报告小类')
         return
@@ -497,18 +611,25 @@ export default {
         this.$Message.error('笔记不能为空')
         return
       }
-      console.log(data)
+
+      if (this.publicStatus && this.researchTitle === '') {
+        this.$Message.error('研究部晨会名称不能为空')
+      }
+
       addReport(data).then(res => {
         console.log(res)
         if (res.data.returnCode === 0) {
           this.$Message.success('提交成功')
           this.closeResearchPanel()
-          this.reportid = res.data.body.reportid
-          setTimeout(() => {
-            this.isAccessoryShowed=true
-          }, 500)
+          // this.reportid = res.data.body.reportid
+          // setTimeout(() => {
+          //   this.isAccessoryShowed=true
+          // }, 500)
         }
       })
+    },
+    handlePublicChange () {
+      this.publicStatus = !this.publicStatus
     }
   }
 }
@@ -578,16 +699,17 @@ export default {
     border-color #DDAF59 !important
 
 .upload-list
-  position absolute
+  // position absolute
   width 85.4%
-  height 100px
+  max-height 100px
+  padding-left 10px
   // background red
   right 0
   top 50px
   line-height 32px
   font-size 12px
   color #333
-  overflow scroll
+  overflow-y scroll
   .upload-list-item
     position relative
 
@@ -641,4 +763,23 @@ export default {
   // bottom -35px
 .ivu-select-input
     padding: 0 10px 0 8px !important
+
+.mem-item
+  display flex
+  // height 50px
+  flex-direction row
+  justify-content space-between
+  align-items center
+  padding-left 10px
+  &.hightlight
+    background-color #FFF5E2
+  .name
+    // flex .8
+    margin 0 10px
+    font-size 12px
+    color #333333
+.public_name
+  width: 357px
+  height: 28px
+  margin-left: 10px
 </style>

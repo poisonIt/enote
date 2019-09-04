@@ -76,13 +76,13 @@ axios.interceptors.request.use(config => {
     config.data = formData
   }
 
-  if (config.url.split('/api/public')[1]) {
-    console.log(config.url.split('/api/public'))
-    config.url.split('/api/public')[0] = 'http://115.159.127.156:8000/api/public'
-    console.log(config.url.split('/api/public')[0])
-
-    config.url = `${config.url.split('/api/public')[0]}${config.url.split('/api/public')[1]}`
-  }
+  // if (config.url.split('/api/public')[1]) {
+  //   let str = 'eyJhbGciOiJIUzUxMiJ9.eyJleHAiOjE1Njc3NDA5MjYsInN1YiI6IjI5NyIsImNyZWF0ZWQiOjE1NjcxMzYxMjYxOTZ9.ibPyS4u0_sPRDnx_S7I9-J1dPqIQwz5nXggXXEUF26-T7H8CU13ZqqciWyv9hq6JN2Jl-o3UZancACk98fRVkQ'
+  //   config.headers['Authorization'] = 'Bearer' + str
+  //   let configArr = config.url.split('/api/public')
+  //   configArr.splice(0, 1, 'http://115.159.127.156:8000')
+  //   config.url = `${configArr[0]}/api/public${configArr[1]}`
+  // }
   return config
 }, error => {
   return Promise.reject(error)

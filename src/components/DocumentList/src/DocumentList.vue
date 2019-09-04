@@ -115,19 +115,15 @@ import {
   listtypeMenu1,
   listtypeMenu2
 } from './config'
-import axios from 'axios'
 export default {
   name: 'DocumentList',
-
   mixins: mixins,
-
   components: {
     SearchBar,
     Loading,
     FileCard,
     FileCardGroup
   },
-
   data () {
     return {
       isDelConfirmShowed: false,
@@ -151,13 +147,11 @@ export default {
       ]
     }
   },
-
   filters: {
     yyyymmdd (timestamp) {
       return dayjs(Number(timestamp)).format('YYYY-MM-DD')
     }
   },
-
   computed: {
     ...mapGetters({
       currentNav: 'GET_CURRENT_NAV',
@@ -172,7 +166,6 @@ export default {
       renameFileId: 'GET_RENAME_FILE_ID',
       network_status: 'GET_NETWORK_STATUS'
     }),
-
     menuData () {
       if (this.currentNav) {
         let menu = this.currentNav.type !== 'latest' ? listtypeMenu1 : listtypeMenu2
@@ -188,7 +181,6 @@ export default {
         return []
       }
     },
-
     showNewNoteButton () {
       return this.currentNav &&
         this.currentNav.type !== 'tag' &&
@@ -198,9 +190,9 @@ export default {
         this.currentNav.type !== 'public'
     }
   },
-
   watch: {
     currentNav (val) {
+
       console.log('wacth-currentNav', val)
       if (val.type === 'share') {
         this.fetchSharedFile()
@@ -210,11 +202,9 @@ export default {
         this.refreshList()
       }
     },
-
     notesPushing (val) {
       // console.log('watch-notesPushing', val)
     },
-
     selectedTags (val) {
       if (this.currentNav.type === 'tag' || this.currentNav.type === 'select') {
         fetchLocal('getLocalTagNote', {
@@ -224,19 +214,15 @@ export default {
         })
       }
     },
-
     searchKeyword (val) {
       this.updateFileList()
     },
-
     viewFileSortType (val) {
       this.updateFileList()
     },
-
     viewFileSortOrder (val) {
       this.updateFileList()
     },
-
     fileList (val) {
       // console.log('watch-fileList', val)
     }
@@ -251,11 +237,9 @@ export default {
       }
     })
   },
-
   mounted () {
     this.$root.$documentList = this
   },
-
   methods: {
     ...mapActions([
       'SET_CURRENT_FILE',
@@ -268,7 +252,6 @@ export default {
       'TOGGLE_SHOW_SHARE_PANEL',
       'TOGGLE_SHOW_HISTORY_PANEL'
     ]),
-
     fetchSharedFile () {
       if (this.network_status === 'online') {
         this.isListLoading = true
@@ -289,7 +272,6 @@ export default {
         })
       }
     },
-
     fetchPublicFile () {
       if (this.network_status === 'online') {
         this.isListLoading = true
@@ -313,7 +295,6 @@ export default {
         })
       }
     },
-
     refreshList (idx) {
       let nav = this.currentNav
       this.isListLoading = false
@@ -328,6 +309,7 @@ export default {
         })
       } else if (nav.type === 'folder') {
         const fid = nav.id === null ? '-1' : (nav.id || nav._id || '0')
+        console.log(fid)
         let params = {
           pid: fid
         }
@@ -363,10 +345,8 @@ export default {
         })
       } else if (nav.type === 'public') {
         console.log('nav-public', nav)
-
       }
     },
-
     handleDataFetched (localFiles) {
       if (this.currentNav.type !== 'bin') {
         this.folderList = localFiles[0].filter(file => file.trash === 'NORMAL')
@@ -382,13 +362,11 @@ export default {
       this.stickTopFiles = []
       this.updateFileList()
     },
-
     updateFileList () {
       let re = new RegExp(this.searchKeyword, 'g')
       let notes = this.fileListSortFunc(this.noteList.filter(file => file.title.search(re) > -1), 'note')
       let folders = this.fileListSortFunc(this.folderList.filter(file => file.title.search(re) > -1), 'folder')
       this.fileList = _.flatten([folders, notes])
-
       let idx = _.findIndex(this.fileList, { _id: this.selectedIdCache })
       idx = (idx === -1 ? 0 : idx)
       this.selectFile(this.fileList.length > 0 ? idx : -1)
@@ -414,7 +392,6 @@ export default {
         })
       }
     },
-
     selectFile (index) {
       this.selectedFileIdx = index
       const file = this.fileList[index]
@@ -427,7 +404,6 @@ export default {
         this.SET_CURRENT_FILE(null)
       }
     },
-
     scrollToSelected () {
       this.$nextTick(() => {
         let bodyEl = this.$refs.body
@@ -443,20 +419,16 @@ export default {
         }
       })
     },
-
     handleFileTitleClick (index) {
       let file = this.fileList[index]
       this.handleDbClick(file)
     },
-
     handleBack () {
       this.navUpHub()
     },
-
     handleList () {
       this.isMenuVisible = !this.isMenuVisible
     },
-
     handleMenuClick (value, item) {
       let sortOrder = !item.actived ? 'up' : 'down'
       if (value === 'summary' || value === 'list') {
@@ -466,7 +438,6 @@ export default {
         this.SET_VIEW_FILE_SORT_ORDER(sortOrder)
       }
     },
-
     fileListSortFunc (list, type) {
       let order
       let sortKey
@@ -508,11 +479,9 @@ export default {
       }
       return [...topList, ...downList]
     },
-
     newNote () {
       this.$hub.dispatchHub('newNote', this)
     },
-
     handleContextmenu (props) {
       if (this.currentNav.type === 'share' && props.type === 'note') {
         console.log(this.nativeMenus)
@@ -550,13 +519,11 @@ export default {
         }
       })
     },
-
     handleDbClick (file) {
       if (file.type === 'folder') {
         this.$root.$navTree.select(file._id)
       }
     },
-
     handleStickTop () {
       this.selectedIdCache = this.popupedFile.rawData._id
       fetchLocal('updateLocalNote', {
@@ -567,7 +534,6 @@ export default {
         this.$hub.dispatchHub('pushData', this)
       })
     },
-
     handleCancelStickTop () {
       this.selectedIdCache = this.popupedFile.rawData._id
       fetchLocal('updateLocalNote', {
@@ -578,7 +544,6 @@ export default {
         this.$hub.dispatchHub('pushData', this)
       })
     },
-
     handleExportPDF () { // 导出pdf功能
       // return
       let data = this.popupedFile.rawData
@@ -588,12 +553,10 @@ export default {
         isPdf: 1
       })
     },
-
     handleNewFolder () {
       let pid = this.popupedFile.file_id
       this.$hub.dispatchHub('newFolder', this, pid)
     },
-
     handleNewNote (isTemp) {
       let pid = this.popupedFile.file_id
       fetchLocal('addLocalNote', {
@@ -606,17 +569,14 @@ export default {
         this.$hub.dispatchHub('pushData', this)
       })
     },
-
     handleNewTemplateNote () {
       this.handleNewNote(true)
     },
-
     handleRename () {
       let idx = _.findIndex(this.fileList, { _id: this.popupedFile.file_id })
       this.selectFile(idx)
       this.$hub.dispatchHub('renameFileCard', this, this.popupedFile.file_id)
     },
-
     handleMove () {
       this.$hub.dispatchHub('showMovePanel', this, {
         file: {
@@ -627,11 +587,9 @@ export default {
         tree: this.$root.$navTree.model.children[2]
       })
     },
-
     handleDuplicate () {
       this.SET_DUPLICATE_FILE(this.copyFile(this.popupedFile.rawData))
     },
-
     handleRemove () {
       if (this.popupedFile.type === 'folder') {
         let params = {
@@ -651,12 +609,10 @@ export default {
         this.removeFile(this.popupedFile.rawData)
       }
     },
-
     removeFile (file) {
       let taskName = this.popupedFile.type === 'folder'
         ? 'updateLocalFolder'
         : 'updateLocalNote'
-
       fetchLocal(taskName, {
         id: file._id,
         trash: 'TRASH'
@@ -668,29 +624,24 @@ export default {
         this.$hub.dispatchHub('pushData', this)
       })
     },
-
     delConfirm () {
       this.removeFile(this.popupedFile.rawData)
       this.isDelConfirmShowed = false
     },
-
     handleNewWindow () {
       ipcRenderer.send('create-preview-window', {
         noteId: this.popupedFile.file_id,
         title: this.popupedFile.title
       })
     },
-
     handleShare () {
       let idx = _.findIndex(this.fileList, { _id: this.popupedFile.file_id })
       this.selectFile(idx)
       this.TOGGLE_SHOW_SHARE_PANEL(true)
     },
-
     handleHistory () {
       this.$hub.dispatchHub('diffHtml', this, this.popupedFile)
     },
-
     async handleResume () {
       this.trashFileCache = this.fileList.map(file => file._id)
       this.navNeedUpdate = true
@@ -699,11 +650,9 @@ export default {
       let taskName = this.popupedFile.type === 'folder'
         ? 'updateLocalFolder'
         : 'updateLocalNote'
-
       let pTaskName = this.popupedFile.type === 'folder'
         ? 'getLocalFolderByPid'
         : 'getLocalNoteByPid'
-
       let newBrothers = await fetchLocal(pTaskName, {
         pid: this.popupedFile.rawData.pid
       })
@@ -720,9 +669,7 @@ export default {
         }
         return result
       })
-
       let titleArr = newBrothers.map(item => item.title)
-
       if (titleArr.indexOf(newTitle) > -1) {
         newTitle = handleNameConflict(
           newTitle,
@@ -752,7 +699,6 @@ export default {
         this.$hub.dispatchHub('pushData', this)
       })
     },
-
     handleDelete () {
       let fileId = this.popupedFile.file_id
       let taskName = this.popupedFile.type === 'folder'
@@ -766,7 +712,6 @@ export default {
         this.$hub.dispatchHub('pushData', this)
       })
     },
-
     copyFile (file) {
       // console.log(file)
       let result = {
@@ -791,7 +736,6 @@ export default {
       }
       return result
     },
-
     handleHeaderDbClick () {
       let curWin = this.$remote.getCurrentWindow()
       let isMaximized = curWin.isMaximized()
@@ -801,7 +745,6 @@ export default {
         curWin.unmaximize()
       }
     },
-
     folderNameComputed (file) {
       if (this.currentNav.type === 'share') {
         return '与我分享'
@@ -870,7 +813,6 @@ export default {
     padding-left 20px
     font-size 12px
     letter-spacing 1px
-
 .header
   .button
     position relative

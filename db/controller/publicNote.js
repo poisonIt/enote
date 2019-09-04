@@ -34,6 +34,10 @@ function createCollection (path) {
       type: Number,
       default: 0
     },
+    depth: {
+      type: Number,
+      default: 0
+    },
     create_at: Date,
     update_at: Date,
     trash: {

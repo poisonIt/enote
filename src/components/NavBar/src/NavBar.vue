@@ -7,7 +7,7 @@
       :model="folderTree"
       default-tree-node-name="新建文件夹"
       v-bind:default-expanded="true"
-      :flat-ids="['0', 'latest', 'share', 'public', 'tag', 'bin']"
+      :flat-ids="['0', 'latest', 'share', 'tag', 'bin', 'public']"
       @contextmenu="handleContextmenu"
       @set-current="handleSetCurrentFolder"
       @select="handleSelect"
@@ -54,7 +54,6 @@
         }"
         @click="handleClickMini('bin')">
       </div>
-
     </div>
     <modal
       :visible.sync="isDelConfirmShowed"
@@ -157,6 +156,7 @@ const rootFolder = {
 }
 
 
+
 const publicFolder = {
   name: '研究部晨会',
   id: 'public',
@@ -170,11 +170,13 @@ const publicFolder = {
   data: {
     type: 'public'
   }
+
 }
 
 const binNav = {
   name: '回收站',
   id: 'bin',
+
   pid: null,
   dragDisabled: true,
   addTreeNodeDisabled: true,
@@ -186,7 +188,6 @@ const binNav = {
     type: 'bin'
   }
 }
-
 
 
 export default {
@@ -329,9 +330,6 @@ export default {
         if (d.data.type === 'bin') {
           this.popupNativeMenu(this.nativeMenus[3])
         }
-        // if (d.data.type === 'public') {
-        //   // this.popupNativeMenu(this.nativeMenus[4])
-        // }
       }
     },
 

@@ -75,7 +75,6 @@ axios.interceptors.request.use(config => {
     })
     config.data = formData
   }
-
   // if (config.url.split('/api/public')[1]) {
   //   let str = 'eyJhbGciOiJIUzUxMiJ9.eyJleHAiOjE1Njc3NDA5MjYsInN1YiI6IjI5NyIsImNyZWF0ZWQiOjE1NjcxMzYxMjYxOTZ9.ibPyS4u0_sPRDnx_S7I9-J1dPqIQwz5nXggXXEUF26-T7H8CU13ZqqciWyv9hq6JN2Jl-o3UZancACk98fRVkQ'
   //   config.headers['Authorization'] = 'Bearer' + str

@@ -29,7 +29,6 @@ const state = {
 }
 
 const mutations = {
-
   SET_USER_READY (state, val) {
     state.is_user_ready = val
   },
@@ -133,7 +132,6 @@ const mutations = {
 }
 
 const actions = {
-
   SET_USER_READY({ commit }, val) {
     commit('SET_USER_READY', val)
   },

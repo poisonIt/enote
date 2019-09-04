@@ -69,7 +69,6 @@ function createCollection (path) {
   promisifyAll(Note)
 }
 
-
 // save
 function saveAll (req) {
   const { data } = req
@@ -108,7 +107,7 @@ async function add (req) {
 async function diffAdd (req) {
   // console.log('diffAdd', req)
   let notes = await getByQuery({ remote_id: req.remote_id }, { multi: true })
-  
+
   let note = notes.shift()
 
   let p = notes.map(n => {
@@ -400,7 +399,7 @@ function addTag (req) {
         { _id: id },
         { $set: {
           tags: newTags,
-          need_push: true 
+          need_push: true
         }},
         { multi: true },
         (err, num, newNote) => {

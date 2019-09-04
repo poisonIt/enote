@@ -146,6 +146,14 @@ export function updateSharedNote (params) {
 export function getSharedNote () {
   return LocalDAO.sharedNote.getAll()
 }
+// publicNote
+export function updatePublicNote (params) {
+  return LocalDAO.publicNote.updateAll(params)
+}
+
+export function getPublicNote () {
+  return LocalDAO.publicNote.getAll()
+}
 
 // doc
 export function getAllLocalDoc () {

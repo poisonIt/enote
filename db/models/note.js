@@ -15,7 +15,9 @@ function noteModel (opts) {
     tags: opts.tags || [],
     top: opts.top || false,
     share: opts.share || false,
-    usn: opts.usn || 0
+    usn: opts.usn || 0,
+    username: opts.username || '',
+    noteFiles: opts.noteFiles || []
   }
 }
 

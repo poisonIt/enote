@@ -97,9 +97,9 @@ app.on('ready', async () => {
   // let dbPath = '/Users/bowiego/Documents/workspace/enote/temp'
   let serviceUrl = 'https://iapp.htffund.com/note/api'
   // let serviceUrl = isDevelopment
-  //   ? 'http://122.152.201.59:8001/api'
-  //   : 'https://iapp.htffund.com/note/api'
-  // let serviceUrl = 'http://10.50.144.83:8000/api'
+    // ? 'http://10.50.16.123:8000/api'
+    // : 'https://iapp.htffund.com/note/api'
+  // let serviceUrl = 'http://10.50.16.123:8000/api'
 
   let appConf = await getAppConf(app.getAppPath('userData'))
   if (!appConf.serviceUrl || appConf.serviceUrl === '') {
@@ -581,7 +581,7 @@ function showHomeWindow () {
 }
 
 function connectDatabase () {
-  const dbs = ['folder', 'note', 'sharedNote', 'doc', 'tag', 'img', 'state']
+  const dbs = ['folder', 'note', 'sharedNote','publicNote', 'doc', 'tag', 'img', 'state']
 
   return new Promise((resolve, reject) => {
     let p = app.appConf.dbPath + '/' + app.appConf.user

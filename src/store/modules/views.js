@@ -235,9 +235,6 @@ const actions = {
 }
 
 const getters = {
-  GET_PUBLIC (state) {
-    return state.public
-  },
 
   GET_USER_READY (state) {
     return state.is_user_ready

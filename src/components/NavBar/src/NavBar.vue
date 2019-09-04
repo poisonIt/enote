@@ -36,6 +36,12 @@
         }"
         @click="handleClickMini('0')">
       </div>
+      <div class="icon icon-public"
+        :class="{
+          active : navMiniActive('public')
+        }"
+        @click="handleClickMini('public')">
+      </div>
       <div class="icon icon-tag"
         :class="{
           active : navMiniActive('tag')
@@ -47,12 +53,6 @@
           active : navMiniActive('bin')
         }"
         @click="handleClickMini('bin')">
-      </div>
-      <div class="icon icon-public"
-        :class="{
-          active : navMiniActive('public')
-        }"
-        @click="handleClickMini('public')">
       </div>
     </div>
     <modal
@@ -155,9 +155,28 @@ const rootFolder = {
   }
 }
 
+
+
+const publicFolder = {
+  name: '研究部晨会',
+  id: 'public',
+  pid: null,
+  dragDisabled: true,
+  addTreeNodeDisabled: true,
+  addLeafNodeDisabled: true,
+  editNodeDisabled: true,
+  delNodeDisabled: true,
+  children: [],
+  data: {
+    type: 'public'
+  }
+
+}
+
 const binNav = {
   name: '回收站',
   id: 'bin',
+
   pid: null,
   dragDisabled: true,
   addTreeNodeDisabled: true,
@@ -170,20 +189,6 @@ const binNav = {
   }
 }
 
-const publicFolder = {
-  name: '公共区',
-  id: 'public',
-  pid: null,
-  dragDisabled: true,
-  addTreeNodeDisabled: true,
-  addLeafNodeDisabled: true,
-  editNodeDisabled: true,
-  delNodeDisabled: true,
-  children: [],
-  data: {
-    type: 'public'
-  }
-}
 
 export default {
   name: 'NavBar',
@@ -265,7 +270,7 @@ export default {
         if (e.data[0] === 'calcLocalData') {
           let newRootFolder = e.data[1]
           let newTagNav = e.data[2]
-          _self.folderTree = new TreeStore([latestNav, shareNav, newRootFolder, newTagNav, binNav, publicFolder])
+          _self.folderTree = new TreeStore([latestNav, shareNav, newRootFolder, publicFolder, newTagNav, binNav])
           _self.$nextTick(() => {
             _self.$refs.tree.$children[0].click()
             setTimeout(() => {

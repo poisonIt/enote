@@ -139,3 +139,25 @@ export function addReport (params) {
 export function uploadAccessory (data) {
   return axios.post('/report/uploadReportFile', data)
 }
+
+export function getPublicNote () {
+  // console.log(serviceUrl)
+  return axios.post(`/public/note/pull?page=0&size=20`)
+}
+
+export function saveShareWithMe(fileId) {
+  return axios.post(`/public/note/saveAsMyShareNote?publicNoteId=${fileId}`)
+}
+
+export function delPublicNote (params) {
+  return axios.delete(`/public/note/del`, {
+    data: params,
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+}
+
+export function saveYoudaoShare (params) {
+  return axios.post('/share/save/youdao', params)
+}

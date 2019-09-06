@@ -7,7 +7,7 @@
       :model="folderTree"
       default-tree-node-name="新建文件夹"
       v-bind:default-expanded="true"
-      :flat-ids="['0', 'latest', 'share', 'tag', 'bin']"
+      :flat-ids="['0', 'latest', 'share', 'tag', 'bin', 'public']"
       @contextmenu="handleContextmenu"
       @set-current="handleSetCurrentFolder"
       @select="handleSelect"
@@ -36,6 +36,12 @@
         }"
         @click="handleClickMini('0')">
       </div>
+      <div class="icon icon-public"
+        :class="{
+          active : navMiniActive('public')
+        }"
+        @click="handleClickMini('public')">
+      </div>
       <div class="icon icon-tag"
         :class="{
           active : navMiniActive('tag')
@@ -52,7 +58,7 @@
     <modal
       :visible.sync="isDelConfirmShowed"
       width="300px"
-      height="90px"
+      height="120px"
       top="30vh"
       style="padding-bottom:20px "
       transition-name="fade-in-down"
@@ -62,7 +68,7 @@
         <div style="text-align:center;padding:10px; 0">
           <p>该文件夹下内容不为空，是否继续删除?</p>
         </div>
-        <div class="button-group button-container" slot="footer">
+        <div class="button-group button-container" style="bottom:10px;" slot="footer">
           <div class="button primary" @click="delConfirm">确认删除</div>
           <div class="button" @click="closeDelConfirm">取消</div>
         </div>
@@ -71,6 +77,7 @@
       :visible.sync="isRenameConfirmShowed"
       width="300px"
       height="90px"
+      body-height="100%"
       top="30vh"
       style="padding-bottom:20px "
       transition-name="fade-in-down"
@@ -148,9 +155,28 @@ const rootFolder = {
   }
 }
 
+
+
+const publicFolder = {
+  name: '研究部晨会',
+  id: 'public',
+  pid: null,
+  dragDisabled: true,
+  addTreeNodeDisabled: true,
+  addLeafNodeDisabled: true,
+  editNodeDisabled: true,
+  delNodeDisabled: true,
+  children: [],
+  data: {
+    type: 'public'
+  }
+
+}
+
 const binNav = {
   name: '回收站',
   id: 'bin',
+
   pid: null,
   dragDisabled: true,
   addTreeNodeDisabled: true,
@@ -162,6 +188,7 @@ const binNav = {
     type: 'bin'
   }
 }
+
 
 export default {
   name: 'NavBar',
@@ -209,7 +236,8 @@ export default {
       duplicateFile: 'GET_DUPLICATE_FILE',
       selectedTags: 'GET_SELECTED_TAGS',
       isTagShowed: 'GET_SHOW_TAG_HANDLER',
-      draggingFile: 'GET_DRAGGING_FILE'
+      draggingFile: 'GET_DRAGGING_FILE',
+      network_status: 'GET_NETWORK_STATUS'
     })
   },
 
@@ -242,7 +270,7 @@ export default {
         if (e.data[0] === 'calcLocalData') {
           let newRootFolder = e.data[1]
           let newTagNav = e.data[2]
-          _self.folderTree = new TreeStore([latestNav, shareNav, newRootFolder, newTagNav, binNav])
+          _self.folderTree = new TreeStore([latestNav, shareNav, newRootFolder, publicFolder, newTagNav, binNav])
           _self.$nextTick(() => {
             _self.$refs.tree.$children[0].click()
             setTimeout(() => {
@@ -269,6 +297,7 @@ export default {
     ]),
 
     handleSetCurrentFolder (node) {
+      // console.log(node.data)
       this.SET_CURRENT_NAV(_.clone(node.data))
     },
 
@@ -279,6 +308,7 @@ export default {
     },
 
     setCurrentFolder (id) {
+      // console.log(id)
       this.$refs.tree.select(id)
     },
 
@@ -296,6 +326,7 @@ export default {
         }
       } else {
         if (d.data.type === 'select') {
+          // console.log(d)
           this.popupNativeMenu(this.nativeMenus[4])
         }
         if (d.data.type === 'bin') {
@@ -357,7 +388,7 @@ export default {
         }
         nodeData = node.model.data
       }
-
+      console.log(node)
       node.addChild({
         id: null,
         type: 'folder',
@@ -407,6 +438,7 @@ export default {
     },
 
     handleNodeAdded (node) {
+      console.log('handleNodeAdded', node.data.pid)
       this.$nextTick(() => {
         if (this.viewType !== 'expanded') {
           if (node.data.type === 'folder') {
@@ -418,6 +450,7 @@ export default {
           }
         }
         if (node.instance) {
+          this.setCurrentFolder(node.id)
           node.instance.setEditable()
         }
       })
@@ -447,6 +480,10 @@ export default {
     },
 
     handleRename () {
+      if (this.network_status === 'offline') {
+        this.$hub.dispatch('showModifyConfirm', this, this)
+        return
+      }
       this.typingNode = this.popupedNode
       this.popupedNode.setEditable()
     },
@@ -579,6 +616,10 @@ export default {
         this.renameNode = null
       }
       this.isRenameConfirmShowed = false
+    },
+
+    confirmModify () {
+
     },
 
     handleFolderUpdate (params) {
@@ -1075,4 +1116,8 @@ export default {
     background-image url(../../../assets/images/lanhu/nav/bin.png)
     &.active
       background-image url(../../../assets/images/lanhu/nav/bin_highlight.png)
+  .icon-public
+    background-image url(../../../assets/images/lanhu/no-select-public@2x.png)
+    &.active
+      background-image url(../../../assets/images/lanhu/select-public@2x.png)
 </style>

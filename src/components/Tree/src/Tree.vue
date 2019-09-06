@@ -342,6 +342,7 @@ export default {
 
     click () {
       var root = this.getRootNode()
+      // console.log(root)
       if (this === root) return
       this.model.store.setCurrentNode(this.model, root, this)
       if (this.model.type === 'select') {
@@ -380,7 +381,7 @@ export default {
       this.model.store.setCurrentNode(node, root)
       root.$emit('add-node', node)
     },
-    
+
     dragStart (e) {
       if (!(this.model.dragDisabled || this.model.disabled)) {
         fromComp = this
@@ -682,6 +683,10 @@ export default {
   background-image url(../../../assets/images/lanhu/recycle@2x.png)
   &.current
     background-image url(../../../assets/images/lanhu/recycle_highlight@2x.png)
+.tn-icon-public
+  background-image url(../../../assets/images/lanhu/no-select-public@2x.png)
+  &.current
+    background-image url(../../../assets/images/lanhu/select-public@2x.png)
 .dark
   .tree-node
     color #fff
@@ -714,4 +719,8 @@ export default {
     background-image url(../../../assets/images/lanhu/recycle@2x.png)
     &.current
       background-image url(../../../assets/images/lanhu/recycle_highlight@2x.png)
+  .tn-icon-public
+    background-image url(../../../assets/images/lanhu/no-select-public@2x.png)
+    &.current
+      background-image url(../../../assets/images/lanhu/select-public@2x.png)
 </style>

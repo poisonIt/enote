@@ -1,9 +1,8 @@
 import { ipcRenderer } from 'electron'
-import { 
+import {
   pullNotebooks,
   pullNote,
-  pullTags,
-  getShareWithMe
+  pullTags
 } from '@/service'
 import LocalDAO from '../../../db/api'
 import { mapGetters, mapActions } from 'vuex'
@@ -25,7 +24,7 @@ export default {
 
   computed: {
     ...mapGetters({
-      noteVer: 'GET_NOTE_VER',
+      noteVer: 'GET_NOTE_VER'
     })
   },
 
@@ -51,8 +50,7 @@ export default {
           deviceName: deviceName,
           deviceType: platform
         }),
-        pullTags(),
-        getShareWithMe()
+        pullTags()
       ])
 
       let returnMsgs = pullResp.map(item => item.data.returnMsg)
@@ -72,7 +70,6 @@ export default {
       }
 
       let tagsData = (pullResp[2].data.body || []).map(item => transTagDataFromRemote(item))
-      await fetchLocal('diffAddMultiLocalTag', tagsData)
       let tagLocalResp = await fetchLocal('diffAddMultiLocalTag', tagsData)
       allTagLocalMap = {}
       tagLocalResp.forEach(item => {
@@ -99,8 +96,8 @@ export default {
         }
       }
 
-      let sharedNoteData = (pullResp[3].data.body || []).map(item => transNoteDataFromRemote(item))
-      await fetchLocal('updateSharedNote', sharedNoteData)
+      // let sharedNoteData = (pullResp[3].data.body || []).map(item => transNoteDataFromRemote(item))
+      // await fetchLocal('updateSharedNote', sharedNoteData)
 
       ipcRenderer.send('pull-finished')
     }

@@ -112,7 +112,7 @@ export default {
       'SET_TOKEN',
       'SET_FILES_FROM_LOCAL'
     ]),
-  
+
     async postInput () {
       if (this.isLoading) return
       this.isLoading = true
@@ -189,6 +189,7 @@ export default {
       }
 
       const userDataTransed = this.transUserData(userInfoResp.data.body)
+      console.log(userDataTransed)
       userDataTransed.local_name = username
       userDataTransed.password = password
       userDataTransed.id_token = idToken
@@ -199,10 +200,12 @@ export default {
       }
     },
 
+
     transUserData (obj) {
       return {
         username: obj.userName,
         usercode: obj.userCode,
+        userNamePinYin: obj.userNamePinYin,
         access_token: obj.accessToken,
         account_name_cn: obj.accountNameCN,
         department_id: obj.departmentId,

@@ -21,15 +21,45 @@
         <FolderComp style="height: 100%" v-show="currentFile && currentFile.type === 'folder'"></FolderComp>
       </div>
     </PageLayout>
+    <div class="home-loading" v-if="!isHomeReady">
+      <Loading :type="1" fill="#DDAF59" style="transform: scale(1.2)"></Loading>
+    </div>
+    <ShareWithMePanel></ShareWithMePanel>
     <MovePanel></MovePanel>
     <UserPanel></UserPanel>
     <SharePanel></SharePanel>
     <HistoryPanel></HistoryPanel>
     <ResearchPanel></ResearchPanel>
     <SettingPanel></SettingPanel>
-    <div class="home-loading" v-if="!isHomeReady">
-      <Loading :type="1" fill="#DDAF59" style="transform: scale(1.2)"></Loading>
-    </div>
+    <modal
+      :visible.sync="isModifyConfirmShowed"
+      width="300px"
+      height="90px"
+      body-height="100%"
+      top="30vh"
+      style="padding-bottom:20px "
+      transition-name="fade-in-down"
+      @close="cancelModify"
+      title="重命名">
+        <div style="text-align:center;padding:10px; 0">
+          <p>当前无网络，文件夹/标签操作可能无效。是否确定修改？</p>
+        </div>
+        <div class="button-group button-container" slot="footer">
+          <div class="button primary" @click="confirmModify">是</div>
+          <div class="button" @click="cancelModify">否</div>
+        </div>
+    </modal>
+    <Alert type="warning" show-icon closable :style="{
+      position: 'absolute',
+      zIndex: '9999',
+      left: '35vw',
+      top: '1vh',
+    }" v-if="network_status === 'offline'">
+      提示
+      <template slot="desc">
+        离线状态下操作文件夹、标签可能同步无效。
+      </template>
+    </Alert>
   </div>
 </template>
 
@@ -48,6 +78,7 @@ import Editor from '@/components/Editor'
 import Content from '@/components/Editor/src/Content'
 import FolderComp from '@/components/FolderComp.vue'
 // import ProgressBar from '@/components/ProgressBar'
+import ShareWithMePanel from '@/components/Panels/ShareWithMePanel'
 import MovePanel from '@/components/Panels/MovePanel'
 import UserPanel from '@/components/Panels/UserPanel'
 import SharePanel from '@/components/Panels/SharePanel'
@@ -79,6 +110,7 @@ export default {
     Content,
     FolderComp,
     // ProgressBar,
+    ShareWithMePanel,
     MovePanel,
     UserPanel,
     SharePanel,
@@ -90,7 +122,8 @@ export default {
 
   data () {
     return {
-      validateTokenItv: null
+      validateTokenItv: null,
+      modifyFrom: null
     }
   },
 
@@ -100,7 +133,8 @@ export default {
       viewType: 'GET_VIEW_TYPE',
       currentFile: 'GET_CURRENT_FILE',
       isHomeReady: 'GET_IS_HOME_READY',
-      network_status: 'GET_NETWORK_STATUS'
+      network_status: 'GET_NETWORK_STATUS',
+      isModifyConfirmShowed: 'GET_MODIFY_CONFIRM_SHOWED'
     })
   },
 
@@ -115,6 +149,7 @@ export default {
   },
 
   created () {
+
     window.onbeforeunload = (e) => {
       e.returnValue = false
       let curWin = this.$remote.getCurrentWindow()
@@ -138,6 +173,8 @@ export default {
         }
       }
     })
+
+    this.$hub.hookHub('showModifyConfirm', 'NavBar', (vm) => this.showModifyConfirm(vm))
   },
 
   methods: {
@@ -146,7 +183,8 @@ export default {
       'SET_TOKEN',
       'SET_VIEW_TYPE',
       'SET_USER_READY',
-      'SET_NOTE_VER'
+      'SET_NOTE_VER',
+      'SET_NETWORK_STATUS'
     ]),
 
     changeViewType () {
@@ -160,6 +198,10 @@ export default {
 
       this.validateTokenItv = setInterval(() => {
         validateToken().then(res => {
+          if (this.network_status === 'offline') {
+            this.SET_NETWORK_STATUS('online')
+          }
+
           if (res.data.returnCode !== 200) {
             this.$Message.warning('登录状态已改变，请重新登录')
             this.clearValidateTokenItv()
@@ -167,6 +209,9 @@ export default {
               ipcRenderer.send('logout')
             }, 3000)
           }
+        }).catch(err => {
+          this.SET_NETWORK_STATUS('offline')
+          this.createValidateTokenItv()
         })
       }, 10000)
     },
@@ -174,8 +219,23 @@ export default {
     clearValidateTokenItv () {
       clearInterval(this.validateTokenItv)
       this.validateTokenItv = null
+    },
+
+    showModifyConfirm (vm) {
+      this.modifyFrom = vm
+      this.TOGGLE_SHOW_MODIFY_CONFIRM(true)
+    },
+
+    confirmModify () {
+      this.modifyFrom && this.modifyFrom.confirmModify()
+      this.modifyFrom = null
+    },
+
+    cancelModify () {
+      this.TOGGLE_SHOW_MODIFY_CONFIRM(false)
+      this.modifyFrom = null
     }
-  }
+  },
 }
 </script>
 

@@ -40,6 +40,7 @@
       <div class="path" v-if="!mini && selected && viewFileType === 'latest'">
         {{ parent_folder }}
       </div>
+      <span class="username" v-if="isUserShowed">{{ username }}</span>
       <span class="time" v-if="isTimeShowed">{{ update_at }}</span>
       <span class="size" v-if="isSizeShowed">{{ file_size | size }}</span>
     </div>
@@ -47,6 +48,7 @@
       :visible.sync="isRenameConfirmShowed"
       width="300px"
       height="90px"
+      body-height="100%"
       top="30vh"
       style="padding-bottom:20px "
       transition-name="fade-in-down"
@@ -117,6 +119,10 @@ export default {
       type: Number,
       default: 0
     },
+    username: {
+      type: String,
+      default: ''
+    },
     parent_folder: {
       type: String
     },
@@ -153,7 +159,8 @@ export default {
   computed: {
     ...mapGetters({
       viewFileType: 'GET_VIEW_FILE_TYPE',
-      searchKeyword: 'GET_SEARCH_KEYWORD'
+      searchKeyword: 'GET_SEARCH_KEYWORD',
+      currentNav: 'GET_CURRENT_NAV'
     }),
 
     isTimeShowed () {
@@ -170,6 +177,15 @@ export default {
         return !this.mini && !this.selected
       } else {
         return !this.mini
+      }
+    },
+
+    isUserShowed () {
+      if (this.type === 'folder') return false
+      if (this.currentNav.type === 'public' || this.currentNav.type === 'share') {
+        return !this.mini && !this.selected
+      } else {
+        return false
       }
     },
 
@@ -446,7 +462,9 @@ export default {
   font-weight 500
   color #808080
   .size
-    margin-left 20px
+    margin-left 10px
+  .username
+    margin-right 10px
   .path
     display flex
     flex-direction row

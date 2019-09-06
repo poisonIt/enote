@@ -24,15 +24,19 @@ export function transNoteDataFromRemote (obj, allTagLocalMap) {
     // pid: obj.noteBookId,
     remote_pid: obj.noteBookId,
     trash: obj.trash,
-    file_size: obj.size,
+    size: obj.size,
     content: obj.noteContent,
-    tags: obj.tagId ? obj.tagId.map(item => allTagLocalMap[item]) : [],
+    // tags: obj.tagId ? obj.tagId.map(item => allTagLocalMap[item]) : [],
     need_push: false,
     top: obj.top,
     share: obj.share,
-    usn: obj.usn
+    usn: obj.usn,
+    username: obj.username,
+    publicNoteId: obj.publicNoteId || [],
+    noteFiles: obj.noteFiles
   }
 }
+
 
 export function transTagDataFromRemote (obj) {
   return {
@@ -40,4 +44,16 @@ export function transTagDataFromRemote (obj) {
     remote_id: obj.tagId,
     need_push: false
   }
+}
+
+
+export function transAttachMentList (obj) {
+  let ret = []
+  obj.forEach(item => {
+    ret.push({
+      attachmentId: item.externalId,
+      status: item.status
+    })
+  })
+  return ret
 }

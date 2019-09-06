@@ -17,6 +17,7 @@ const state = {
   show_research_panel: false,
   show_setting_panel: false,
   show_tag_handler: false,
+  show_modify_confirm: false,
   editor_content: '',
   editor_content_cache: '',
   cached_doc: '',
@@ -24,7 +25,8 @@ const state = {
   is_syncing: false,
   notes_pushing: [],
   is_editor_focused: false,
-  is_home_ready: false
+  is_home_ready: false,
+  show_share_with_me: false
 }
 
 const mutations = {
@@ -89,6 +91,10 @@ const mutations = {
     state.show_share_panel = !!val
   },
 
+  TOGGLE_SHOW_SHARE_WITH_ME (state, val) {
+    state.show_share_with_me = !!val
+  },
+
   TOGGLE_SHOW_HISTORY_PANEL (state, val) {
     state.show_history_panel = !!val
   },
@@ -103,6 +109,10 @@ const mutations = {
 
   TOGGLE_SHOW_TAG_HANDLER (state, val) {
     state.show_tag_handler = !!val
+  },
+
+  TOGGLE_SHOW_MODIFY_CONFIRM (state, val) {
+    state.show_modify_confirm = !!val
   },
 
   // SET_CURRENT_NAV (state, val) {
@@ -187,6 +197,10 @@ const actions = {
     commit('TOGGLE_SHOW_SHARE_PANEL', val)
   },
 
+  TOGGLE_SHOW_SHARE_WITH_ME ({ commit }, val) {
+    commit('TOGGLE_SHOW_SHARE_WITH_ME', val)
+  },
+
   TOGGLE_SHOW_HISTORY_PANEL ({ commit }, val) {
     commit('TOGGLE_SHOW_HISTORY_PANEL', val)
   },
@@ -201,6 +215,10 @@ const actions = {
 
   TOGGLE_SHOW_TAG_HANDLER ({ commit }, val) {
     commit('TOGGLE_SHOW_TAG_HANDLER', val)
+  },
+
+  TOGGLE_SHOW_MODIFY_CONFIRM ({ commit }, val) {
+    commit('TOGGLE_SHOW_MODIFY_CONFIRM', val)
   },
 
   // SET_CURRENT_NAV ({ commit }, val) {
@@ -226,6 +244,7 @@ const actions = {
 }
 
 const getters = {
+
   GET_USER_READY (state) {
     return state.is_user_ready
   },
@@ -294,6 +313,10 @@ const getters = {
     return state.show_history_panel
   },
 
+  GET_SHOW_SHARE_WITH_ME (state) {
+    return state.show_share_with_me
+  },
+
   GET_SHOW_RESEARCH_PANEL (state) {
     return state.show_research_panel
   },
@@ -304,6 +327,10 @@ const getters = {
 
   GET_SHOW_TAG_HANDLER (state) {
     return state.show_tag_handler
+  },
+
+  GET_MODIFY_CONFIRM_SHOWED (state) {
+    return state.show_modify_confirm
   },
 
   // GET_CURRENT_NAV (state) {

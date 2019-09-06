@@ -16,6 +16,7 @@ import { getAppConf, saveAppConf } from './tools/appConf'
 import { createCollection } from '../db'
 import { GenNonDuplicateID } from './utils/utils'
 import * as LocalService from './service/local'
+import ipcHandlers from './client/ipcHandlers'
 import { applicationMenuTemplate, contextMenuTemplate } from './client/menu.js'
 
 const electron = require('electron')
@@ -39,6 +40,9 @@ let testWin
 let tray
 let isHomeVisible = false
 let pdfPath
+
+let downLoadPath//下载路径
+let downType //下载方式
 
 // Standard scheme must be registered before the app is ready
 protocol.registerStandardSchemes(['app'], { secure: true })
@@ -96,8 +100,9 @@ app.on('ready', async () => {
   // let dbPath = '/Users/bowiego/Documents/workspace/enote/temp'
   let serviceUrl = 'https://iapp.htffund.com/note/api'
   // let serviceUrl = isDevelopment
-  //   ? 'http://122.152.201.59:8001/api'
-  //   : 'https://iapp.htffund.com/note/api'
+    // ? 'http://10.50.16.123:8000/api'
+    // : 'https://iapp.htffund.com/note/api'
+  // let serviceUrl = 'http://10.50.16.123:8000/api'
 
   let appConf = await getAppConf(app.getAppPath('userData'))
   if (!appConf.serviceUrl || appConf.serviceUrl === '') {
@@ -113,9 +118,14 @@ app.on('ready', async () => {
       clientId: clientId
     })
   }
-  let defaultSize = [960, 640]
+  if (isDevelopment) {
+    if (!appConf.hasOwnProperty('devTool')) {
+      appConf.devTool = '1'
+    }
+  }
+  let defaultSize = [1000, 640]
   if (appConf.size) {
-    defaultSize[0] = appConf.size.width || 960
+    defaultSize[0] = appConf.size.width || 1000
     defaultSize[1] = appConf.size.height || 640
   }
   let p = dbPath + '/database'
@@ -127,6 +137,7 @@ app.on('ready', async () => {
     serviceUrl: appConf.serviceUrl || serviceUrl,
     note_ver: 1,
     dev_url: process.env.WEBPACK_DEV_SERVER_URL,
+    dev_tool: appConf.devTool === '1',
     size: {
       x: 0,
       y: 0,
@@ -216,6 +227,7 @@ ipcMain.on('create-home-window', (event, arg) => {
 })
 
 ipcMain.on('create-preview-window', (event, arg) => {
+  // console.log(event, arg)
   createPreviewWindow(event, arg)
 })
 
@@ -301,6 +313,30 @@ ipcMain.on('open-external', (event, url) => {
   shell.openExternal(url)
 })
 
+ipcMain.on('fetch-ipc', (event, arg) => {
+  let option = arg.options || {}
+  let args = [option]
+  if (arg.params) {
+    args.unshift(arg.params)
+  }
+
+  ipcHandlers[arg.taskName].call(this, ...args).then(res => {
+    arg.res = res
+    event.sender.send('fetch-ipc-response', arg)
+  })
+})
+
+//主进程代码
+ipcMain.on('download', (event, args) => {
+  console.log('download---->',args)
+  var arr = args.split("+");
+  downLoadPath = arr[0];
+  downType = arr[1];
+
+  //下面这句会触发will-download事件
+  win.webContents.downloadURL(downLoadPath)
+})
+
 function prepareCreateLogin (user) {
   return new Promise((resolve, reject) => {
     let autoLogin = '0'
@@ -351,11 +387,14 @@ function createLoginWindow (user) {
     if (process.env.WEBPACK_DEV_SERVER_URL) {
       // Load the url of the dev server if in development mode
       loginWin.loadURL(`${process.env.WEBPACK_DEV_SERVER_URL}#/?autoLogin=${autoLogin}&username=${data.username}&password=${data.password}`)
-      loginWin.webContents.openDevTools()
     } else {
       createProtocol('app')
       // Load the index.html when not in development
       loginWin.loadURL(`app://./index.html#/?autoLogin=${autoLogin}&username=${data.username}&password=${data.password}`)
+    }
+
+    if (app.appConf.dev_tool) {
+      loginWin.webContents.openDevTools()
     }
 
     loginWin.on('show', (event) => {
@@ -394,11 +433,14 @@ function createHomeWindow () {
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode
     win.loadURL(process.env.WEBPACK_DEV_SERVER_URL + '#/home')
-    win.webContents.openDevTools()
   } else {
     createProtocol('app')
     // Load the index.html when not in development
     win.loadURL('app://./index.html#/home')
+  }
+
+  if (app.appConf.dev_tool) {
+    win.webContents.openDevTools()
   }
 
   win.on('show', (event) => {
@@ -418,9 +460,66 @@ function createHomeWindow () {
       }
     })
   })
+
+  win.webContents.session.on('will-download', (event, item, webContents) => {
+    //设置文件存放位置，如果用户没有设置保存路径，Electron将使用默认方式来确定保存路径（通常会提示保存对话框）
+    // console.log(item)
+    // item.setSavePath(savePath + item.getFilename())
+
+    const filePath = path.join(app.getPath('downloads'), item.getFilename());
+    item.setSavePath(filePath);
+
+    item.on('updated', (event, state) => {
+      if (state === 'interrupted') {
+        console.log('Download is interrupted but can be resumed')
+      } else if (state === 'progressing') {
+        if (item.isPaused()) {
+          console.log('Download is paused')
+        } else {
+          //添加进度显示
+          // console.log(item.getSavePath(),item.getFilename(), item.getReceivedBytes(), item.getTotalBytes())
+          win.webContents.send("down-done", {
+            name: item.getFilename(),
+            receive: item.getReceivedBytes(),
+            total: item.getTotalBytes(),
+            savePath: item.getSavePath()
+          })
+
+          win.setProgressBar(item.getReceivedBytes() / item.getTotalBytes())
+            // (item.getReceivedBytes() / item.getTotalBytes() * 100).toFixed(2) + "%"
+          console.log(`Received bytes: ${item.getReceivedBytes()}`)
+        }
+      }
+    })
+    item.once('done', (event, state) => {
+
+      if (state === 'completed') {
+        console.log('Download successfully')
+        if (!win.isDestroyed()) {
+          win.setProgressBar(-1);
+        }
+
+        if (downType === 'all') {
+          shell.showItemInFolder(filePath)
+        } else {
+          shell.showItemInFolder(filePath) && shell.openItem(filePath) //下载完成后以默认打开方式打开文件
+        }
+
+        // shell.showItemInFolder(filePath) && shell.openItem(filePath) //下载完成后以默认打开方式打开文件
+
+        //回显 调用渲染进程方法
+        win.webContents.send('downstate', state)
+      } else {
+        console.log(`Download failed: ${state}`)
+        //回显 调用渲染进程方法
+        win.webContents.send('downstate', state)
+      }
+    })
+  })
 }
 
 function createPreviewWindow (event, arg) {
+  // console.log(arg)
   previewWin = new BrowserWindow({
     id: 'preview',
     width: 960,
@@ -437,7 +536,7 @@ function createPreviewWindow (event, arg) {
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode
-    previewWin.loadURL(process.env.WEBPACK_DEV_SERVER_URL + `#/preview?note_id=${arg.noteId}&title=${arg.title}&isPdf=${arg.isPdf}`)
+    previewWin.loadURL(process.env.WEBPACK_DEV_SERVER_URL + `#/preview?note_id=${arg.noteId}&title=${arg.title}&isPdf=${arg.isPdf}&isReadOnly=${arg.isReadOnly}&content=${arg.content}`)
     // previewWin.webContents.openDevTools()
   } else {
     createProtocol('app')
@@ -500,6 +599,10 @@ function createYoudaoAsyncWindow (event, url) {
   youdaoWin.on('closed', () => {
     youdaoWin = null
   })
+
+  // 清除Web storage的数据。主要清除cookies
+  const ses = youdaoWin.webContents.session
+  ses.clearStorageData()
 }
 
 function createTestWindow () {
@@ -550,19 +653,17 @@ function showHomeWindow () {
 }
 
 function connectDatabase () {
+  const dbs = ['folder', 'note', 'sharedNote','publicNote', 'doc', 'tag', 'img', 'state']
+
   return new Promise((resolve, reject) => {
     let p = app.appConf.dbPath + '/' + app.appConf.user
     fs.mkdir(p, { recursive: true }, (err) => {
       if (err) {
         console.log(err)
       }
-      createCollection('folder', p)
-      createCollection('note', p)
-      createCollection('sharedNote', p)
-      createCollection('doc', p)
-      createCollection('tag', p)
-      createCollection('img', p)
-      createCollection('state', p)
+      dbs.forEach(db => {
+        createCollection(db, p)
+      })
 
       LocalService.getLocalState().then(res => {
         console.log('getLocalState', res)

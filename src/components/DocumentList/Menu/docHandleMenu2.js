@@ -6,13 +6,13 @@ export default [
       callbackName: 'handleCancelStickTop'
     }
   },
-  {
-    label: '导出为PDF',
-    eventListener: {
-      eventName: 'click',
-      callbackName: 'handleExportPDF'
-    }
-  },
+  // {
+  //   label: '导出为PDF',
+  //   eventListener: {
+  //     eventName: 'click',
+  //     callbackName: 'handleExportPDF'
+  //   }
+  // },
   // {
   //   label: '重命名',
   //   eventListener: {

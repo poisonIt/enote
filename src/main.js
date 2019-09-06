@@ -10,16 +10,7 @@ import Modal from '@/components/Modal'
 import BSelect from '@/components/Select'
 import BOption from '@/components/Option'
 import Menu from '@/components/Menu'
-import {
-  Message,
-  Upload,
-  Button,
-  Select,
-  Option,
-  Form,
-  FormItem,
-  Poptip
-} from 'iview'
+import { Alert, Message, Upload, Button, Select, Option, Form, FormItem, Poptip, Notice } from 'iview'
 import '@/assets/css/font-awesome.min.css'
 import 'iview/dist/styles/iview.css'
 import '@/assets/styles/iview.styl'
@@ -28,12 +19,7 @@ import '@/assets/css/font-family.css'
 
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
-const {
-  ipcRenderer,
-  remote,
-  shell,
-  webFrame
-} = require('electron')
+const {ipcRenderer, remote, shell, webFrame} = require('electron')
 console.log(remote.app.getAppPath('userData'))
 
 let serviceUrl = ''
@@ -43,11 +29,13 @@ Vue.use(Modal)
 Vue.use(BSelect)
 Vue.use(BOption)
 Vue.use(Menu)
+Vue.component('Alert', Alert)
 Vue.component('Upload', Upload)
 Vue.component('Button', Button)
 Vue.component('Select', Select)
 Vue.component('Option', Option)
 Vue.component('Poptip', Poptip)
+Vue.component('Notice', Notice)
 // Vue.component('Form', Form)
 // Vue.component('FormItem', FormItem)
 Vue.prototype.$Message = Message
@@ -61,6 +49,7 @@ let worker = new Worker()
 Vue.prototype.$worker = new Worker()
 
 axios.interceptors.request.use(config => {
+  // console.log(config)
   config.url = `${remote.app.appConf.serviceUrl}${config.url}`
   if (store.state.user.id_token) {
     config.headers['Authorization'] = 'Bearer' + store.state.user.id_token
@@ -71,6 +60,22 @@ axios.interceptors.request.use(config => {
       formData.append(key, config.data[key])
     })
     config.data = formData
+  }
+
+  // if (config.url.split('/api/public')[1]) {
+  //   let str = 'eyJhbGciOiJIUzUxMiJ9.eyJleHAiOjE1Njc3NDA5MjYsInN1YiI6IjI5NyIsImNyZWF0ZWQiOjE1NjcxMzYxMjYxOTZ9.ibPyS4u0_sPRDnx_S7I9-J1dPqIQwz5nXggXXEUF26-T7H8CU13ZqqciWyv9hq6JN2Jl-o3UZancACk98fRVkQ'
+  //   config.headers['Authorization'] = 'Bearer' + str
+  //   let configArr = config.url.split('/api/public')
+  //   configArr.splice(0, 1, 'http://115.159.127.156:8000')
+  //   config.url = `${configArr[0]}/api/public${configArr[1]}`
+  // }
+  if (config.url.split('/api/share/save')[1]) {
+    console.log()
+    let str = 'eyJhbGciOiJIUzUxMiJ9.eyJleHAiOjE1Njc3NDA5MjYsInN1YiI6IjI5NyIsImNyZWF0ZWQiOjE1NjcxMzYxMjYxOTZ9.ibPyS4u0_sPRDnx_S7I9-J1dPqIQwz5nXggXXEUF26-T7H8CU13ZqqciWyv9hq6JN2Jl-o3UZancACk98fRVkQ'
+    config.headers['Authorization'] = 'Bearer' + str
+    let configArr = config.url.split('/api/share/save')
+    configArr.splice(0, 1, 'http://115.159.127.156:8000')
+    config.url = `${configArr[0]}/api/share/save/youdao`
   }
   return config
 }, error => {
@@ -95,7 +100,6 @@ axios.interceptors.response.use(data => {
   }
   return data
 }, error => {
-  Message.error(`Network Error`)
   return Promise.reject(error)
 })
 

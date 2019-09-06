@@ -13,6 +13,11 @@
       </ul>
     </div>
     <div class="mask" v-show="showMask"></div>
+    <attachment
+      v-if="hasAttachment"
+      :note_files="noteFiles"
+      :attachShow="attachShow"
+    ></attachment>
     <webview id="pdf-path"></webview>
   </div>
 </template>
@@ -26,6 +31,7 @@ import { matchIndex, getStrPixelLen } from '../../../utils/utils'
 import uploadAdapter from './upload'
 import '../../../assets/styles/editor.css'
 import fetchLocal from '../../../utils/fetchLocal'
+import Attachment from './Attachment'
 
 const ClassicEditor = window.ClassicEditor
 
@@ -46,7 +52,9 @@ export default {
       showMask: true,
       editor: null,
       locations: [],
-      scrollTop: 0
+      scrollTop: 0,
+      noteFiles: [],
+      attachShow: false
     }
   },
 
@@ -55,7 +63,18 @@ export default {
       currentNav: 'GET_CURRENT_NAV',
       currentFile: 'GET_CURRENT_FILE',
       viewType: 'GET_VIEW_TYPE'
-    })
+    }),
+
+    hasAttachment () {
+      if (this.currentNav.type === 'share' || this.currentNav.type === 'public') {
+        // console.log(this.noteFiles)
+        if (this.noteFiles.length > 0) {
+          return true
+        }
+      } else {
+        return false
+      }
+    }
   },
 
   watch: {
@@ -63,13 +82,16 @@ export default {
       this.showHighLight = false
       this.locations = []
       this.selectedKeyIdx = 0
+      // this.noteFiles = val.noteFiles || []
       if (!val) {
         this.showMask = true
         return
       }
       if (val && val.type === 'note') {
         this.showMask = true
-        if (val.trash !== 'NORMAL') {
+        this.noteFiles = val.noteFiles || []
+        this.attachShow = false
+        if (val.trash !== 'NORMAL' && this.currentNav.type !== 'share') {
           this.showMask = true
           return
         }
@@ -80,9 +102,11 @@ export default {
         //     this.saveData(this.cachedDoc._id, editorData)
         //   }
         // }
+
         fetchLocal('getLocalDoc', {
           note_id: val._id
         }).then(res => {
+          // console.log(res)
           this.currentDoc = res
           this.cachedDoc = {
             _id: res._id,
@@ -107,7 +131,6 @@ export default {
     //     }
     //   }
     // })
-
     ipcRenderer.on('wrote-pdf', (event, path) => {
       let webviewPDF = document.getElementById('pdf-path')
       let tempPath = this.$remote.app.appConf.resourcePath + `/${this.currentFile._id}.html`
@@ -153,7 +176,7 @@ export default {
         this.editor.isReadOnly = false
         document.getElementsByClassName('ck-editor__top')[0].style.display = 'block'
         this.editor.setData(content || '')
-        if (this.currentNav.type === 'share') {
+        if (this.currentNav.type === 'share' || this.currentNav.type === 'public') {
           this.editor.isReadOnly = true
           document.getElementsByClassName('ck-editor__top')[0].style.display = 'none'
         }
@@ -351,6 +374,10 @@ export default {
         this.selectedKeyIdx = 0
       }
     }
+  },
+
+  components: {
+    Attachment
   }
 }
 </script>

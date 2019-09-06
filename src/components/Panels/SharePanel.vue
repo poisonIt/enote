@@ -215,6 +215,7 @@ export default {
 
   watch: {
     isSharePanelShowed (val) {
+      // console.log(this.currentFile)
       if (val) {
         this.isFirstData = true
         if (!this.currentFile.remote_id) {
@@ -286,6 +287,7 @@ export default {
     },
 
     async createShare (remote_id) {
+      
       this.isFirstData = true
       this.isLoading = true
 
@@ -353,7 +355,7 @@ export default {
           share: true,
           need_push: false
         })
-        this.$hub.dispatchHub('updateFileVal', this, {
+        this.$hub.dispatchHub('updateFileProperty', this, {
           id: this.currentFile._id,
           share: true
         })
@@ -367,7 +369,7 @@ export default {
       this.isLoading = true
 
       let cancelResp = await unPublishShare({
-        noteId: this.currentFile.remote_id
+        noteId: this.currentFile.remote_id || this.remoteId
       })
 
 
@@ -379,7 +381,7 @@ export default {
           share: false,
           need_push: false
         })
-        this.$hub.dispatchHub('updateFileVal', this, {
+        this.$hub.dispatchHub('updateFileProperty', this, {
           id: this.currentFile._id,
           share: false
         })
@@ -614,7 +616,7 @@ export default {
   .button-group
     position relative
     margin 0 auto
-    top -65px
+    top -15px
     left 0
     transform none
 </style>

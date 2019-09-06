@@ -38,7 +38,6 @@ function createCollection (path) {
   promisifyAll(Tag)
 }
 
-
 // save
 function saveAll (req) {
   const { data } = req
@@ -62,6 +61,8 @@ async function add (req) {
 
   return new Promise((resolve, reject) => {
     Tag.findOne({ name: name }).exec((err, tag) => {
+      // console.log('add-req', req)
+      // console.log('add-tag', tag)
       if (tag) {
         if (tag.trash === 'DELETED') {
           update({ id: tag._id, trash: 'NORMAL' }).then(res => {
@@ -117,15 +118,46 @@ function diffAdd (req) {
   })
 }
 
-function diffAddMulti (reqs) {
-  return new Promise((resolve, reject) => {
-    let p = reqs.map(req => {
-      return diffAdd(req)
-    })
-    Promise.all(p).then(res => {
-      resolve(res)
+async function diffAddMulti (reqs) {
+  let allTags = await Tag.find({}).execAsync()
+  let reqIds = reqs.map(tag => tag.remote_id)
+  let reqNames = reqs.map(tag => tag.name)
+  let tagsNeedDelete = []
+  let tagsNeedRemove = allTags.filter(tag => {
+    if (tag.remote_id && (reqIds.indexOf(tag.remote_id) === -1)) {
+      return true
+    } else {
+      if (tag.remote_id === undefined && (reqNames.indexOf(tag.name) > -1))
+      tagsNeedDelete.push(tag)
+      return false
+    }
+  })
+
+  let dP = tagsNeedDelete.map(tag => {
+    return new Promise((resolve, reject) => {
+      update({ id: tag._id, trash: 'DELETED' }).then(() => {
+        tag.remove()
+      })
     })
   })
+
+  // console.log('diffAddMulti-allTags', allTags)
+  // console.log('diffAddMulti-reqs', reqs)
+  // console.log('diffAddMulti-tagsNeedDelete', tagsNeedDelete)
+  // console.log('diffAddMulti-tagsNeedRemove', tagsNeedRemove)
+
+  let rP = tagsNeedRemove.map(tag => {
+    return removeById({ id: tag._id })
+  })
+
+  let aP = reqs.map(req => {
+    return diffAdd(req)
+  })  
+
+  await Promise.all(dP)
+  await Promise.all(rP)
+  await sleep(100)
+  return await Promise.all(aP)
 }
 
 // remove
@@ -306,6 +338,14 @@ async function getByQuery (params, opts) {
   }
   
   return opts.multi ? tags : tags[0]
+}
+
+function sleep (time) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      resolve()
+    }, time)
+  })
 }
 
 export default {

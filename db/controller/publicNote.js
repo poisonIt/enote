@@ -7,11 +7,11 @@ import docCtr from './doc'
 import docTemp from '../docTemplate'
 import { LinvoDB } from '../index'
 
-let SharedNote = {}
+let PublicNote = {}
 
 function createCollection (path) {
   LinvoDB.dbPath = path
-  SharedNote = new LinvoDB(`shared-note`, {
+  PublicNote = new LinvoDB(`public-note`, {
     type: {
       type: String,
       default: 'note'
@@ -31,6 +31,10 @@ function createCollection (path) {
       default: '无标题笔记'
     },
     seq: {
+      type: Number,
+      default: 0
+    },
+    depth: {
       type: Number,
       default: 0
     },
@@ -55,9 +59,21 @@ function createCollection (path) {
     top: {
       type: Boolean,
       default: false
+    },
+    username: {
+      type: String,
+      default: ''
+    },
+    noteFiles: {
+      type: Array,
+      default: []
+    },
+    publicNoteId: {
+      type: String,
+      default: ''
     }
   })
-  promisifyAll(SharedNote)
+  promisifyAll(PublicNote)
 }
 
 // save
@@ -65,7 +81,7 @@ function saveAll (req) {
   const { data } = req
 
   return new Promise((resolve, reject) => {
-    SharedNote.save(data, (err, notes) => {
+    PublicNote.save(data, (err, notes) => {
       if (err) {
         reject(err)
       }
@@ -77,13 +93,12 @@ function saveAll (req) {
 // add
 async function add (req) {
   let data = noteModel(req)
-
   return new Promise((resolve, reject) => {
     folderCtr.getById({ id: req.pid }).then(pFolder => {
       if (pFolder && pFolder.remote_id) {
         data.remote_pid = pFolder.remote_id
       }
-      SharedNote.insert(data, (err, note) => {
+      PublicNote.insert(data, (err, note) => {
         if (err) {
           reject(err)
         }
@@ -101,13 +116,12 @@ async function add (req) {
 
 async function multiAdd (req) {
   let p = req.map(item => add(item))
-
   let result = await Promise.all(p)
   return result
 }
 
 async function removeAll () {
-  SharedNote.find({}, (err, notes) => {
+  PublicNote.find({}, (err, notes) => {
     if (err) {
       return
     }
@@ -129,8 +143,8 @@ async function updateAll (req) {
 
 function getAll (req) {
   return new Promise((resolve, reject) => {
-    SharedNote.find({}).exec((err, notes) => {
-      console.log('SharedNote-getAll', notes)
+    PublicNote.find({}).exec((err, notes) => {
+      console.log('PublicNote-getAll', notes)
       if (err) {
         reject(err)
       }

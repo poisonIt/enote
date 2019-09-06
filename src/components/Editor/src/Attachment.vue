@@ -6,22 +6,30 @@
         <span class="description">共 {{ note_files.length }} 个附件，展开可查看下载。</span>
       </div>
 
-      <span class="all_down">
+      <div class="all_down" @click="handleDownAllAttach">
         <img src="../../../assets/images/attachment/down_load.png">
         全部下载
+      </div>
+      <span class="attachment_show">
+        <img
+          src="../../../assets/images/attachment/down_drop.png"
+          class="showAll"
+          @click="attShow"
+          :style="{transform:'rotateZ('+deg+'deg)', transition: 'all 250ms'}"
+        >
       </span>
-      <img
-        src="../../../assets/images/attachment/down_drop.png"
-        class="showAll"
-        @click="attShow"
-        :style="{transform:'rotateZ('+deg+'deg)', transition: 'all 250ms'}"
-      >
+
     </div>
 
     <collapse>
       <div class="attachment_list" v-show="attachShowStatus">
         <ul>
-          <li v-for="(item, index) of note_files" :key="index" @click="handleSelect(index)">
+          <li
+            v-for="(item, index) of note_files"
+            :key="index"
+            @mouseover="currentIndex = index"
+            @mouseout="currentIndex = -1"
+            @click="handleDownFile(item.url)">
             <div class="file_mold">
               <img :src="item.fileType==='EXCEL'?Excel:item.fileType==='PDF'?Pdf:item.fileType==='WORD'?Word:item.fileType==='PPT'?Ppt:Other">
             </div>
@@ -43,6 +51,7 @@
 
 <script>
   import collapse from "../../../utils/transitions/collapse.js"
+  import { ipcRenderer } from 'electron'
   export default {
     name: 'Attachment',
 
@@ -61,8 +70,10 @@
 
     data () {
       return {
+        downStatus: '',
         attachShowStatus: this.attachShow,
         deg: 0,
+        downUrlList: [],
         currentIndex: -1,
         noSelSrc: require('../../../assets/images/attachment/down_load.png'),
         selSrc: require('../../../assets/images/attachment/down_active.png'),
@@ -88,6 +99,25 @@
         }
       }
     },
+
+    created () {
+      //监听main process里发出的message
+      ipcRenderer.on('downstate', (event, arg) => {
+        console.log(event, arg)
+        // alert("下载状态：" + arg);
+        this.downStatus = arg
+        if (this.downStatus ===  'completed') {
+          console.log('下载成功---->', this.fileSavePath)
+        }
+      })
+
+      ipcRenderer.on('down-done', (event, arg) => {
+        // console.log(event, arg)
+        // console.log((arg.receive/arg.total*100).toFixed(2)+"%")
+        this.fileSavePath = arg.savePath
+      })
+
+    },
     methods: {
 
       attShow () {
@@ -98,9 +128,26 @@
         }
       },
 
-      handleSelect (index) {
-        console.log (index)
-        this.currentIndex = index
+      handleDownAllAttach () {
+        this.downUrlList = []
+        console.log(this.note_files)
+        this.note_files.forEach(item => {
+          this.downUrlList.push(item.url)
+        })
+        console.log(this.downUrlList)
+
+        this.downUrlList.forEach(item => {
+          ipcRenderer.send('download',item+'+all')
+        })
+
+        // if ()
+      },
+
+      handleDownFile (url) {
+        let downUrl = url;//需要下载文件的路径
+        // let savePath = 'file://'
+
+        ipcRenderer.send('download',downUrl)
       }
     },
   }
@@ -133,6 +180,7 @@
         color rgba(51,51,51,1)
     .all_down
       position absolute
+      background red
       width 83px
       height 24px
       background rgba(255,255,255,1)
@@ -150,26 +198,27 @@
       // bottom 0
       // margin auto
       text-align center
+      &:hover
+        color #DDAF59
       img
         width 15px
         height 15px
         vertical-align middle
-    .showAll
+    .attachment_show
+      width 20px
+      height 30px
       display inline-block
+      // background red
       position absolute
-      height 10px
-      width 10px
-      top 10px
-      // left 0
-      // bottom 0
+      top 0px
       right 14px
-      &:before
-        content: ''
-        position: absolute
-        top: -10px
-        left: -10px
-        right: -10px
-        bottom: -10px
+      text-align center
+      .showAll
+        display inline-block
+        height 10px
+        width 10px
+        // left 0
+        // bottom 0
   .attachment_list
     height 226px
     width 100%
@@ -230,11 +279,15 @@
             .down_img
               width 11px
               height 11px
-              vertical-align middle
+              vertical-align text-top
               margin-right 6px
               // margin-top 3px
             .size
-              // width 37px
+              // width 55px
+              // line-height 20px
+              overflow hidden
+              text-overflow ellipsis
+              white-space nowrap
               font-size 12px
               font-family PingFangTC
               font-weight 400

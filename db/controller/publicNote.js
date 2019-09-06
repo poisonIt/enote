@@ -67,6 +67,10 @@ function createCollection (path) {
     noteFiles: {
       type: Array,
       default: []
+    },
+    publicNoteId: {
+      type: String,
+      default: ''
     }
   })
   promisifyAll(PublicNote)

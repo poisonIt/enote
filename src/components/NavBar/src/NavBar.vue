@@ -297,6 +297,7 @@ export default {
     ]),
 
     handleSetCurrentFolder (node) {
+      // console.log(node.data)
       this.SET_CURRENT_NAV(_.clone(node.data))
     },
 
@@ -307,6 +308,7 @@ export default {
     },
 
     setCurrentFolder (id) {
+      // console.log(id)
       this.$refs.tree.select(id)
     },
 

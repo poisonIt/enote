@@ -17,7 +17,8 @@ function noteModel (opts) {
     share: opts.share || false,
     usn: opts.usn || 0,
     username: opts.username || '',
-    noteFiles: opts.noteFiles || []
+    noteFiles: opts.noteFiles || [],
+    publicNoteId: opts.publicNoteId || ''
   }
 }
 

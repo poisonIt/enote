@@ -79,8 +79,6 @@ export default {
 
   watch: {
     currentFile (val, oldVal) {
-      console.log(val)
-
       this.showHighLight = false
       this.locations = []
       this.selectedKeyIdx = 0

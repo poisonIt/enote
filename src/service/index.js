@@ -148,3 +148,16 @@ export function getPublicNote () {
 export function saveShareWithMe(fileId) {
   return axios.post(`/public/note/saveAsMyShareNote?publicNoteId=${fileId}`)
 }
+
+export function delPublicNote (params) {
+  return axios.delete(`/public/note/del`, {
+    data: params,
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+}
+
+export function saveYoudaoShare (params) {
+  return axios.post('/share/save/youdao', params)
+}

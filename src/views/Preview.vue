@@ -24,7 +24,9 @@ export default {
       title: '',
       editorData: '',
       showMask: true,
-      editor: null
+      editor: null,
+      isReadOnly: '',
+      noteContent: ''
     }
   },
 
@@ -33,6 +35,7 @@ export default {
     let noteId = query.note_id
     this.title = query.title
     this.isPdf = query.isPdf
+    this.isReadOnly = query.isReadOnly
 
     this.SET_CURRENT_FILE({
       _id: noteId
@@ -41,9 +44,12 @@ export default {
     fetchLocal('getLocalDoc', {
       note_id: noteId
     }).then(res => {
+      console.log(res)
       this.doc = res
       this.initEditor(res.content)
     })
+
+
   },
 
   methods: {
@@ -82,6 +88,9 @@ export default {
             this.editor.setData(content || '')
             this.handleEditorReady()
             this.showMask = false
+            if (this.isReadOnly==='true') {
+              this.editor.isReadOnly = true
+            }
             if (this.isPdf === '1') {
               document.getElementsByClassName('ck-editor__top')[0].style = 'display: none;'
               setTimeout(() => {

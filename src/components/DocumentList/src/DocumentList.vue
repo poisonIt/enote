@@ -98,7 +98,7 @@ import { mapGetters, mapActions } from 'vuex'
 import fetchLocal from '../../../utils/fetchLocal'
 import { handleNameConflict } from '../../../utils/utils'
 import { transNoteDataFromRemote } from '../../../utils/mixins/transData'
-import { getShareWithMe, getPublicNote, saveShareWithMe } from '../../../service'
+import { getShareWithMe, getPublicNote, saveShareWithMe, delPublicNote } from '../../../service'
 import SearchBar from '@/components/SearchBar'
 import Loading from '@/components/Loading'
 import { FileCard, FileCardGroup } from '@/components/FileCard'
@@ -109,7 +109,8 @@ import {
   fileCloudMenu,
   fileInfoMenu,
   binMenu,
-  publicMenu
+  publicMenu,
+  delPublicMenu
 } from '../Menu'
 import {
   listtypeMenu1,
@@ -143,7 +144,8 @@ export default {
         fileCloudMenu,
         fileInfoMenu,
         binMenu,
-        publicMenu
+        publicMenu,
+        delPublicMenu
       ]
     }
   },
@@ -164,7 +166,8 @@ export default {
       selectedTags: 'GET_SELECTED_TAGS',
       searchKeyword: 'GET_SEARCH_KEYWORD',
       renameFileId: 'GET_RENAME_FILE_ID',
-      network_status: 'GET_NETWORK_STATUS'
+      network_status: 'GET_NETWORK_STATUS',
+      userInfo: 'GET_USER_INFO'
     }),
     menuData () {
       if (this.currentNav) {
@@ -395,7 +398,7 @@ export default {
     selectFile (index) {
       this.selectedFileIdx = index
       const file = this.fileList[index]
-      console.log('selectFile', file, index)
+      // console.log('selectFile', file, index)
       if (file) {
         if (this.currentFile && file._id === this.currentFile._id) return
         this.SET_CURRENT_FILE(this.copyFile(file))
@@ -483,8 +486,9 @@ export default {
       this.$hub.dispatchHub('newNote', this)
     },
     handleContextmenu (props) {
+      console.log(props)
       if (this.currentNav.type === 'share' && props.type === 'note') {
-        console.log(this.nativeMenus)
+        // console.log(this.nativeMenus)
         this.popupNativeMenu(this.nativeMenus[3])
         return
       }
@@ -494,10 +498,16 @@ export default {
         return
       }
       if (this.currentNav.type === 'public' && props.type === 'note') {
-        let userId = _.findIndex(props, { id: props.userId })
-        let idx = userId === -1 ? 6 : 7
+        let username = "张莉莎"
+        // console.log(this.userInfo.username)
+        if (username === this.userInfo.username) {
+          this.popupNativeMenu(this.nativeMenus[7])
+        } else {
+          this.popupNativeMenu(this.nativeMenus[6])
+        }
+
         // 查询userId， 如果存在就是属于自己创建的笔记、可以删除，不存在就是别人的笔记
-        this.popupNativeMenu(this.nativeMenus[idx])
+        // this.popupNativeMenu(this.nativeMenus[idx])
         return
       }
       if (props.type === 'note') {
@@ -511,7 +521,6 @@ export default {
     },
 
     handleSaveNote () {
-      console.log(this.popupedFile.rawData)
       saveShareWithMe(this.popupedFile.rawData.remote_id).then(resp => {
         console.log(resp)
         if (resp.data.returnCode === 200) {
@@ -605,6 +614,16 @@ export default {
             }
           })
         })
+      } else if (this.currentNav.type === 'public' && this.popupedFile.type === 'note') {
+        console.log(this.currentFile.publicNoteId )
+        //删除笔记
+        delPublicNote({ publicId: this.currentFile.publicNoteId }).then(resp => {
+          console.log(resp)
+          if (resp.data.returnCode === 200) {
+            this.$Message.success('删除成功')
+            this.fetchPublicFile()
+          }
+        })
       } else {
         this.removeFile(this.popupedFile.rawData)
       }
@@ -629,9 +648,11 @@ export default {
       this.isDelConfirmShowed = false
     },
     handleNewWindow () {
+      console.log(this.popupedFile)
       ipcRenderer.send('create-preview-window', {
         noteId: this.popupedFile.file_id,
-        title: this.popupedFile.title
+        title: this.popupedFile.title,
+        isReadOnly: this.currentNav.type === 'public' ? true : false
       })
     },
     handleShare () {
@@ -713,7 +734,6 @@ export default {
       })
     },
     copyFile (file) {
-      // console.log(file)
       let result = {
         type: file.type,
         title: file.title,
@@ -728,7 +748,8 @@ export default {
         trash: file.trash,
         update_at: file.update_at,
         _id: file._id,
-        noteFiles: file.noteFiles || []
+        noteFiles: file.noteFiles || [],
+        publicNoteId: file.publicNoteId || ''
       }
       if (file.hasOwnProperty('content') && file.hasOwnProperty('share')) {
         result.content = file.content

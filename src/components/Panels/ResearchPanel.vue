@@ -138,7 +138,7 @@
         <div class="form-item">
           <div class="form-label"></div>
           <label class="mem-item">
-            <input type="checkbox" @change="handlePublicChange">
+            <input type="checkbox" v-model="publicStatus">
             <div class="name">提交至“研究部晨会”</div>
           </label>
         </div>
@@ -399,6 +399,8 @@ export default {
       this.summary = ''
       this.publicStatus = false
       this.uploadList = []
+      this.researchTitle = ''
+      this.modalHeight = '445px'
       this.TOGGLE_SHOW_RESEARCH_PANEL(false)
     },
 
@@ -439,6 +441,8 @@ export default {
         if (parseFloat(this.modalHeight) <= 535) {
           this.modalHeight = parseFloat(this.modalHeight) + 32 + 'px'
         }
+      } else {
+        this.$Message.error('附件上传失败')
       }
     },
 
@@ -588,7 +592,7 @@ export default {
         noteId: this.noteId,//笔记id
         syncPublic: this.publicStatus,
         isConform: false,
-        title: this.researchTitle
+        publicTitle: this.researchTitle
       }
 
       if (data.reporttypeid === '') {
@@ -627,9 +631,6 @@ export default {
           // }, 500)
         }
       })
-    },
-    handlePublicChange () {
-      this.publicStatus = !this.publicStatus
     }
   }
 }

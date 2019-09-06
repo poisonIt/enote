@@ -41,6 +41,9 @@ let tray
 let isHomeVisible = false
 let pdfPath
 
+let downLoadPath//下载路径
+let downType //下载方式
+
 // Standard scheme must be registered before the app is ready
 protocol.registerStandardSchemes(['app'], { secure: true })
 
@@ -120,9 +123,9 @@ app.on('ready', async () => {
       appConf.devTool = '1'
     }
   }
-  let defaultSize = [960, 640]
+  let defaultSize = [1000, 640]
   if (appConf.size) {
-    defaultSize[0] = appConf.size.width || 960
+    defaultSize[0] = appConf.size.width || 1000
     defaultSize[1] = appConf.size.height || 640
   }
   let p = dbPath + '/database'
@@ -224,6 +227,7 @@ ipcMain.on('create-home-window', (event, arg) => {
 })
 
 ipcMain.on('create-preview-window', (event, arg) => {
+  // console.log(event, arg)
   createPreviewWindow(event, arg)
 })
 
@@ -320,6 +324,17 @@ ipcMain.on('fetch-ipc', (event, arg) => {
     arg.res = res
     event.sender.send('fetch-ipc-response', arg)
   })
+})
+
+//主进程代码
+ipcMain.on('download', (event, args) => {
+  console.log('download---->',args)
+  var arr = args.split("+");
+  downLoadPath = arr[0];
+  downType = arr[1];
+
+  //下面这句会触发will-download事件
+  win.webContents.downloadURL(downLoadPath)
 })
 
 function prepareCreateLogin (user) {
@@ -445,9 +460,66 @@ function createHomeWindow () {
       }
     })
   })
+
+  win.webContents.session.on('will-download', (event, item, webContents) => {
+    //设置文件存放位置，如果用户没有设置保存路径，Electron将使用默认方式来确定保存路径（通常会提示保存对话框）
+    // console.log(item)
+    // item.setSavePath(savePath + item.getFilename())
+
+    const filePath = path.join(app.getPath('downloads'), item.getFilename());
+    item.setSavePath(filePath);
+
+    item.on('updated', (event, state) => {
+      if (state === 'interrupted') {
+        console.log('Download is interrupted but can be resumed')
+      } else if (state === 'progressing') {
+        if (item.isPaused()) {
+          console.log('Download is paused')
+        } else {
+          //添加进度显示
+          // console.log(item.getSavePath(),item.getFilename(), item.getReceivedBytes(), item.getTotalBytes())
+          win.webContents.send("down-done", {
+            name: item.getFilename(),
+            receive: item.getReceivedBytes(),
+            total: item.getTotalBytes(),
+            savePath: item.getSavePath()
+          })
+
+          win.setProgressBar(item.getReceivedBytes() / item.getTotalBytes())
+            // (item.getReceivedBytes() / item.getTotalBytes() * 100).toFixed(2) + "%"
+          console.log(`Received bytes: ${item.getReceivedBytes()}`)
+        }
+      }
+    })
+    item.once('done', (event, state) => {
+
+      if (state === 'completed') {
+        console.log('Download successfully')
+        if (!win.isDestroyed()) {
+          win.setProgressBar(-1);
+        }
+
+        if (downType === 'all') {
+          shell.showItemInFolder(filePath)
+        } else {
+          shell.showItemInFolder(filePath) && shell.openItem(filePath) //下载完成后以默认打开方式打开文件
+        }
+
+        // shell.showItemInFolder(filePath) && shell.openItem(filePath) //下载完成后以默认打开方式打开文件
+
+        //回显 调用渲染进程方法
+        win.webContents.send('downstate', state)
+      } else {
+        console.log(`Download failed: ${state}`)
+        //回显 调用渲染进程方法
+        win.webContents.send('downstate', state)
+      }
+    })
+  })
 }
 
 function createPreviewWindow (event, arg) {
+  // console.log(arg)
   previewWin = new BrowserWindow({
     id: 'preview',
     width: 960,
@@ -464,7 +536,7 @@ function createPreviewWindow (event, arg) {
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode
-    previewWin.loadURL(process.env.WEBPACK_DEV_SERVER_URL + `#/preview?note_id=${arg.noteId}&title=${arg.title}&isPdf=${arg.isPdf}`)
+    previewWin.loadURL(process.env.WEBPACK_DEV_SERVER_URL + `#/preview?note_id=${arg.noteId}&title=${arg.title}&isPdf=${arg.isPdf}&isReadOnly=${arg.isReadOnly}&content=${arg.content}`)
     // previewWin.webContents.openDevTools()
   } else {
     createProtocol('app')

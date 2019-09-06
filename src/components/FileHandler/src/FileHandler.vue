@@ -118,6 +118,7 @@ export default {
       isInputFocused: false,
       // handlers: ['share', 'fetch', 'tag', 'more', 'window', 'info'],
       handlers: [
+        {icon: 'shareWithMe', content: '查看分享',placement: 'bottom-start', offset: -10},
         {icon: 'share', content: '分享', placement: 'bottom-start', offset: -10},
         {icon: 'fetch', content: '研报', placement: 'bottom', offset: 0},
         // {icon: 'search', content: '搜索', placement: 'bottom', offset: 0},
@@ -220,6 +221,7 @@ export default {
       'TOGGLE_SHOW_TAG_HANDLER',
       'TOGGLE_SHOW_SHARE_PANEL',
       'TOGGLE_SHOW_RESEARCH_PANEL',
+      'TOGGLE_SHOW_SHARE_WITH_ME',
       'SET_SHARE_INFO'
     ]),
 
@@ -303,6 +305,9 @@ export default {
 
     handleClick (key) {
       switch (key) {
+        case 'shareWithMe':
+          this.shareWithMe()
+          break
         case 'share':
           this.share()
           break
@@ -354,6 +359,11 @@ export default {
 
     share () {
       this.TOGGLE_SHOW_SHARE_PANEL(true)
+    },
+
+    shareWithMe () {
+      console.log('11111')
+      this.TOGGLE_SHOW_SHARE_WITH_ME(true)
     },
 
     showTag () {
@@ -463,6 +473,8 @@ export default {
   background-position center
   background-repeat no-repeat
   margin 0 5px
+  &.icon-shareWithMe
+    background-image url('../../../assets/images/lanhu/shareWithMe@2x.png')
   &.icon-share
     background-image url('../../../assets/images/lanhu/share@2x.png')
   &.icon-fetch

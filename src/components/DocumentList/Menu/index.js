@@ -5,6 +5,7 @@ import fileCloudMenu from './fileCloudMenu'
 import fileInfoMenu from './fileInfoMenu'
 import binMenu from './binMenu'
 import publicMenu from './publicMenu'
+import delPublicMenu from './delPublicMenu'
 
 export {
   docHandleMenu1,
@@ -13,5 +14,6 @@ export {
   fileCloudMenu,
   fileInfoMenu,
   binMenu,
-  publicMenu
+  publicMenu,
+  delPublicMenu
 }

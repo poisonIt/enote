@@ -26,7 +26,7 @@ export function transNoteDataFromRemote (obj, allTagLocalMap) {
     trash: obj.trash,
     size: obj.size,
     content: obj.noteContent,
-    // tags: obj.tagId ? obj.tagId.map(item => allTagLocalMap[item]) : [],
+    tags: obj.tagId ? obj.tagId.map(item => allTagLocalMap[item]) : [],
     need_push: false,
     top: obj.top,
     share: obj.share,

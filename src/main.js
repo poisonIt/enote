@@ -54,6 +54,7 @@ axios.interceptors.request.use(config => {
   if (store.state.user.id_token) {
     config.headers['Authorization'] = 'Bearer' + store.state.user.id_token
   }
+
   if (config.method === 'delete' && config.url.indexOf('deleteTag') === -1) {
     let formData = new FormData()
     Object.keys(config.data).forEach(key => {
@@ -62,25 +63,32 @@ axios.interceptors.request.use(config => {
     config.data = formData
   }
 
-  // if (config.url.split('/api/public')[1]) {
-  //   let str = 'eyJhbGciOiJIUzUxMiJ9.eyJleHAiOjE1Njc3NDA5MjYsInN1YiI6IjI5NyIsImNyZWF0ZWQiOjE1NjcxMzYxMjYxOTZ9.ibPyS4u0_sPRDnx_S7I9-J1dPqIQwz5nXggXXEUF26-T7H8CU13ZqqciWyv9hq6JN2Jl-o3UZancACk98fRVkQ'
-  //   config.headers['Authorization'] = 'Bearer' + str
-  //   let configArr = config.url.split('/api/public')
-  //   configArr.splice(0, 1, 'http://115.159.127.156:8000')
-  //   config.url = `${configArr[0]}/api/public${configArr[1]}`
-  // }
-  if (config.url.split('/api/share/')[1]) {
-    // console.log()
-    let str = 'eyJhbGciOiJIUzUxMiJ9.eyJleHAiOjE1Njc3NDA5MjYsInN1YiI6IjI5NyIsImNyZWF0ZWQiOjE1NjcxMzYxMjYxOTZ9.ibPyS4u0_sPRDnx_S7I9-J1dPqIQwz5nXggXXEUF26-T7H8CU13ZqqciWyv9hq6JN2Jl-o3UZancACk98fRVkQ'
-    config.headers['Authorization'] = 'Bearer' + str
-    let configArr = config.url.split('/api/share/')
-    configArr.splice(0, 1, 'http://115.159.127.156:8000')
-    if (configArr[1] === 'withme') {
-      config.url = `${configArr[0]}/api/share/withme`
+  if (config.url.split('/api/')[1]) {
+    let configArr = config.url.split('/api/')
+    console.log(configArr)
+    if (configArr[1] === 'authenticate' || config.url.indexOf('user') != -1) {
+      config.url = `${configArr[0]}/api/${configArr[1]}`
+      // return
     } else {
-      config.url = `${configArr[0]}/api/share/save/youdao`
+      let str = 'eyJhbGciOiJIUzUxMiJ9.eyJleHAiOjE1Njg2MDQ5OTgsInN1YiI6IjI5NyIsImNyZWF0ZWQiOjE1NjgwMDAxOTg2OTF9.CistPIpXgWwtW7yElikLWhoF-A5eTBBgbthLSbw6-KdmV-dTQFM4AKdpk9jSPNCWoXbAewnOqqosgDvz0Cftog'
+      config.headers['Authorization'] = 'Bearer' + str
+      configArr.splice(0, 1, 'http://115.159.127.156:8000')
+      config.url = `${configArr[0]}/api/${configArr[1]}`
     }
   }
+
+  // if (config.url.split('/api/share/')[1]) {
+  //   // console.log()
+  //   let str = 'eyJhbGciOiJIUzUxMiJ9.eyJleHAiOjE1Njg2MDQ5OTgsInN1YiI6IjI5NyIsImNyZWF0ZWQiOjE1NjgwMDAxOTg2OTF9.CistPIpXgWwtW7yElikLWhoF-A5eTBBgbthLSbw6-KdmV-dTQFM4AKdpk9jSPNCWoXbAewnOqqosgDvz0Cftog'
+  //   config.headers['Authorization'] = 'Bearer' + str
+  //   let configArr = config.url.split('/api/share/')
+  //   configArr.splice(0, 1, 'http://115.159.127.156:8000')
+  //   if (configArr[1] === 'withme') {
+  //     config.url = `${configArr[0]}/api/share/withme`
+  //   } else {
+  //     config.url = `${configArr[0]}/api/share/save/youdao`
+  //   }
+  // }
 
   return config
 }, error => {

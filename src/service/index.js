@@ -141,11 +141,10 @@ export function uploadAccessory (data) {
 }
 
 export function getPublicNote () {
-  // console.log(serviceUrl)
   return axios.post(`/public/note/pull?page=0&size=40`)
 }
 
-export function saveShareWithMe(fileId) {
+export function saveShareWithMe (fileId) {
   return axios.post(`/public/note/saveAsMyShareNote?publicNoteId=${fileId}`)
 }
 
@@ -160,4 +159,8 @@ export function delPublicNote (params) {
 
 export function saveYoudaoShare (params) {
   return axios.post('/share/save/youdao', params)
+}
+
+export function reportIsRepeat (params) {
+  return axios.post('/report/reportIsrepeat', params)
 }

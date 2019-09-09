@@ -142,7 +142,7 @@ export function uploadAccessory (data) {
 
 export function getPublicNote () {
   // console.log(serviceUrl)
-  return axios.post(`/public/note/pull?page=0&size=20`)
+  return axios.post(`/public/note/pull?page=0&size=40`)
 }
 
 export function saveShareWithMe(fileId) {

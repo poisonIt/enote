@@ -138,6 +138,7 @@ async function removeAll () {
 async function updateAll (req) {
   await removeAll()
   let result = await multiAdd(req)
+  console.log(result.length)
   return result
 }
 

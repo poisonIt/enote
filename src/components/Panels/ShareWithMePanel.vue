@@ -54,16 +54,27 @@
         saveYoudaoShare({ shareUrl: this.shareUrl, userCode: this.userInfo.usercode }).then(response => {
           if (response.data.returnCode === 0) {
             // 保存成功后打开查看笔记跳转到与我分享菜单
-
+            getShareWithMe().then(resp => {
+              let notes = resp.data.body.map(item => transNoteDataFromRemote(item))
+              fetchLocal('updateSharedNote', notes).then(res => {
+                res.forEach(item => {
+                  if (item.remote_id === response.data.body.noteId) {
+                    ipcRenderer.send('create-preview-window', {
+                      noteId: item._id,
+                      title: item.title,
+                      isReadOnly: true
+                    })
+                  }
+                })
+              })
+            })
+            this.closeShareWithPanel()
           }
         })
-        // console.log(node.data)
-
       },
 
       closeShareWithPanel () {
         this.TOGGLE_SHOW_SHARE_WITH_ME(false)
-        // this.SET_CURRENT_NAV()
         this.shareUrl = ''
       }
     },

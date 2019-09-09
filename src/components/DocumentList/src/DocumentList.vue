@@ -283,7 +283,7 @@ export default {
           console.log(resp)
           let notes = resp.data.body.content.map(item => transNoteDataFromRemote(item))
           fetchLocal('updatePublicNote', notes).then(res => {
-            // console.log(res)
+            console.log(res)
             this.handleDataFetched([[], res])
             this.isListLoading = false
           })
@@ -351,9 +351,16 @@ export default {
       }
     },
     handleDataFetched (localFiles) {
+      console.log(localFiles[1])
       if (this.currentNav.type !== 'bin') {
         this.folderList = localFiles[0].filter(file => file.trash === 'NORMAL')
         if (this.currentNav.type === 'share') {
+          this.noteList = localFiles[1]
+        } else {
+          this.noteList = localFiles[1].filter(file => file.trash === 'NORMAL')
+        }
+
+        if (this.currentNav.type === 'public') {
           this.noteList = localFiles[1]
         } else {
           this.noteList = localFiles[1].filter(file => file.trash === 'NORMAL')
@@ -369,7 +376,10 @@ export default {
       let re = new RegExp(this.searchKeyword, 'g')
       let notes = this.fileListSortFunc(this.noteList.filter(file => file.title.search(re) > -1), 'note')
       let folders = this.fileListSortFunc(this.folderList.filter(file => file.title.search(re) > -1), 'folder')
+      // if ()
       this.fileList = _.flatten([folders, notes])
+
+      console.log(this.fileList)
       let idx = _.findIndex(this.fileList, { _id: this.selectedIdCache })
       idx = (idx === -1 ? 0 : idx)
       this.selectFile(this.fileList.length > 0 ? idx : -1)
@@ -498,9 +508,9 @@ export default {
         return
       }
       if (this.currentNav.type === 'public' && props.type === 'note') {
-        let username = "张莉莎"
+        // let username = "张莉莎"
         // console.log(this.userInfo.username)
-        if (username === this.userInfo.username) {
+        if (props.username === this.userInfo.username) {
           this.popupNativeMenu(this.nativeMenus[7])
         } else {
           this.popupNativeMenu(this.nativeMenus[6])
@@ -615,7 +625,7 @@ export default {
           })
         })
       } else if (this.currentNav.type === 'public' && this.popupedFile.type === 'note') {
-        console.log(this.currentFile.publicNoteId )
+        console.log(this.currentFile )
         //删除笔记
         delPublicNote({ publicId: this.currentFile.publicNoteId }).then(resp => {
           console.log(resp)
@@ -648,7 +658,7 @@ export default {
       this.isDelConfirmShowed = false
     },
     handleNewWindow () {
-      console.log(this.popupedFile)
+      // console.log(this.popupedFile)
       ipcRenderer.send('create-preview-window', {
         noteId: this.popupedFile.file_id,
         title: this.popupedFile.title,

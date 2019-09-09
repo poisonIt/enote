@@ -29,6 +29,8 @@
   import * as _ from 'lodash'
   import { ipcRenderer } from 'electron'
   export default {
+    name: 'ShareWithMePanel',
+
     data() {
       return {
         shareUrl: '',
@@ -69,6 +71,7 @@
               })
             })
             this.closeShareWithPanel()
+            this.$hub.dispatchHub('goShare', this)
           }
         })
       },

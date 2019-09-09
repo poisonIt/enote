@@ -69,14 +69,19 @@ axios.interceptors.request.use(config => {
   //   configArr.splice(0, 1, 'http://115.159.127.156:8000')
   //   config.url = `${configArr[0]}/api/public${configArr[1]}`
   // }
-  if (config.url.split('/api/share/save')[1]) {
-    console.log()
+  if (config.url.split('/api/share/')[1]) {
+    // console.log()
     let str = 'eyJhbGciOiJIUzUxMiJ9.eyJleHAiOjE1Njc3NDA5MjYsInN1YiI6IjI5NyIsImNyZWF0ZWQiOjE1NjcxMzYxMjYxOTZ9.ibPyS4u0_sPRDnx_S7I9-J1dPqIQwz5nXggXXEUF26-T7H8CU13ZqqciWyv9hq6JN2Jl-o3UZancACk98fRVkQ'
     config.headers['Authorization'] = 'Bearer' + str
-    let configArr = config.url.split('/api/share/save')
+    let configArr = config.url.split('/api/share/')
     configArr.splice(0, 1, 'http://115.159.127.156:8000')
-    config.url = `${configArr[0]}/api/share/save/youdao`
+    if (configArr[1] === 'withme') {
+      config.url = `${configArr[0]}/api/share/withme`
+    } else {
+      config.url = `${configArr[0]}/api/share/save/youdao`
+    }
   }
+
   return config
 }, error => {
   return Promise.reject(error)
@@ -92,9 +97,9 @@ axios.interceptors.response.use(data => {
   if (data.data) {
     if (data.data.returnCode !== 200) {
       if (data.data.returnMsg !== undefined) {
-        Message.error(data.data.returnMsg)
+        // Message.error(data.data.returnMsg)
       } else {
-        Message.error(data.data)
+        // Message.error(data.data)
       }
     }
   }

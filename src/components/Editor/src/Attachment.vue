@@ -45,7 +45,9 @@
         </ul>
       </div>
     </collapse>
-
+    <div class="down_path"
+      v-if="downStatus === 'completed'"
+    >已保存，文件存储路径为：{{fileSavePath}}</div>
   </div>
 </template>
 
@@ -71,6 +73,7 @@
     data () {
       return {
         downStatus: '',
+        fileSavePath: '',
         attachShowStatus: this.attachShow,
         deg: 0,
         downUrlList: [],
@@ -108,13 +111,19 @@
         this.downStatus = arg
         if (this.downStatus ===  'completed') {
           console.log('下载成功---->', this.fileSavePath)
+          setTimeout(() => {
+            this.downStatus = ''
+          }, 3000);
         }
       })
 
       ipcRenderer.on('down-done', (event, arg) => {
         // console.log(event, arg)
         // console.log((arg.receive/arg.total*100).toFixed(2)+"%")
-        this.fileSavePath = arg.savePath
+        let pathArr = arg.savePath.split('/')
+        pathArr.pop()
+        console.log(pathArr)
+        this.fileSavePath = pathArr.join('/')
       })
 
     },
@@ -292,4 +301,22 @@
               font-family PingFangTC
               font-weight 400
               color rgba(153,153,153,1)
+.down_path
+  min-width:282px;
+  height:36px;
+  background:rgba(0,0,0,1);
+  border-radius:4px;
+  opacity:0.6;
+  font-size:12px;
+  font-family:PingFangSC;
+  font-weight:400;
+  color:rgba(255,255,255,1);
+  line-height:36px;
+  text-align center
+  position absolute
+  z-index 9999
+  bottom 270px
+  left 0
+  right 0
+  margin auto
 </style>

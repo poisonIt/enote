@@ -283,7 +283,7 @@ export default {
           console.log(resp)
           let notes = resp.data.body.content.map(item => transNoteDataFromRemote(item))
           fetchLocal('updatePublicNote', notes).then(res => {
-            console.log(res)
+            // console.log(res)
             this.handleDataFetched([[], res])
             this.isListLoading = false
           })
@@ -351,20 +351,15 @@ export default {
       }
     },
     handleDataFetched (localFiles) {
-      console.log(localFiles[1])
+      // console.log(localFiles[1])
       if (this.currentNav.type !== 'bin') {
         this.folderList = localFiles[0].filter(file => file.trash === 'NORMAL')
-        if (this.currentNav.type === 'share') {
+        if (this.currentNav.type === 'share' || this.currentNav.type === 'public') {
           this.noteList = localFiles[1]
         } else {
           this.noteList = localFiles[1].filter(file => file.trash === 'NORMAL')
         }
 
-        if (this.currentNav.type === 'public') {
-          this.noteList = localFiles[1]
-        } else {
-          this.noteList = localFiles[1].filter(file => file.trash === 'NORMAL')
-        }
       } else {
         this.folderList = localFiles[0]
         this.noteList = localFiles[1]
@@ -379,7 +374,7 @@ export default {
       // if ()
       this.fileList = _.flatten([folders, notes])
 
-      console.log(this.fileList)
+      // console.log(this.fileList)
       let idx = _.findIndex(this.fileList, { _id: this.selectedIdCache })
       idx = (idx === -1 ? 0 : idx)
       this.selectFile(this.fileList.length > 0 ? idx : -1)
@@ -496,7 +491,7 @@ export default {
       this.$hub.dispatchHub('newNote', this)
     },
     handleContextmenu (props) {
-      console.log(props)
+      // console.log(props)
       if (this.currentNav.type === 'share' && props.type === 'note') {
         // console.log(this.nativeMenus)
         this.popupNativeMenu(this.nativeMenus[3])

@@ -195,6 +195,27 @@
         </div>
         <Loading class="loading" :type="8" fill="#DDAF59" v-if="isLoading"></Loading>
     </modal> -->
+
+    <modal
+      width="480px"
+      height="200px"
+      top="20vh"
+      transition-name="fade-in-down"
+      title="标题重复"
+      @close="isResearchTitleShowed=false"
+      :visible.sync="isResearchTitleShowed"
+      ref="research"
+    >
+      <div class="researchTitle">
+        研究部晨会里已有标题 ”{{ researchTitle }}“ ,确认替换吗？
+      </div>
+
+      <div class="button-group" slot="footer">
+        <div class="button primary" @click="confirmPostTitle">确认</div>
+        <div class="button" @click="isResearchTitleShowed=false">取消</div>
+      </div>
+    </modal>
+
   </div>
 </template>
 
@@ -207,7 +228,8 @@ import {
   getReportTrade,
   getReportSubclass,
   addReport,
-  uploadReportFile
+  uploadReportFile,
+  reportIsRepeat
 } from '../../service'
 import Loading from '@/components/Loading'
 import fetchLocal from '../../utils/fetchLocal'
@@ -231,6 +253,8 @@ export default {
       }
     }
     return {
+      isResearchTitleShowed: false,
+      confirmResearchData: [],
       noteFiles: [],
       attachmentList: [],
       attachmentflag: 0,
@@ -392,8 +416,7 @@ export default {
         this.$refs.stockSelectEl.clearSingleSelect()
         this.$refs.stockSelectEl.setQuery('')
       }
-
-
+      this.isResearchTitleShowed = false
       this.title = ''
       this.keywords = ''
       this.summary = ''
@@ -434,7 +457,7 @@ export default {
     },
 
     handleSuccess (resp) {
-      console.log(resp)
+      // console.log(resp)
       if (resp.returnCode === 200) {
         this.uploadList = this.uploadList.concat(resp.body)
         this.noteFiles = _.cloneDeep(this.uploadList)
@@ -570,7 +593,7 @@ export default {
         this.$Message.error('请选择报告大类')
         return
       }
-
+      this.confirmResearchData = []
       let data = {
         noteFiles: this.noteFiles,
         attachmentList: transAttachMentList(this.noteFiles),
@@ -620,8 +643,40 @@ export default {
         this.$Message.error('研究部晨会名称不能为空')
       }
 
+      if (this.publicStatus) {
+        reportIsRepeat(data).then(resp => {
+          console.log(resp)
+          if (resp.data.returnCode === 200) {
+            if (resp.data.body.status === '0') {
+              this.submitEnquiry(data)
+            } else {
+              //标题重复
+              // this.
+              this.isResearchTitleShowed = true
+              this.confirmResearchData = data
+            }
+          }
+        })
+      } else {
+        this.submitEnquiry(data)
+      }
+
+      // addReport(data).then(res => {
+      //   console.log(res)
+      //   if (res.data.returnCode === 0) {
+      //     this.$Message.success('提交成功')
+      //     this.closeResearchPanel()
+      //     // this.reportid = res.data.body.reportid
+      //     // setTimeout(() => {
+      //     //   this.isAccessoryShowed=true
+      //     // }, 500)
+      //   }
+      // })
+    },
+
+    submitEnquiry (data) {
       addReport(data).then(res => {
-        console.log(res)
+        // console.log(res)
         if (res.data.returnCode === 0) {
           this.$Message.success('提交成功')
           this.closeResearchPanel()
@@ -631,7 +686,12 @@ export default {
           // }, 500)
         }
       })
+    },
+
+    confirmPostTitle () {
+      this.submitEnquiry (this.confirmResearchData)
     }
+
   }
 }
 </script>
@@ -783,4 +843,11 @@ export default {
   width: 357px
   height: 28px
   margin-left: 10px
+.researchTitle
+  text-align center
+  font-size:12px;
+  // font-family:PingFangSC;
+  font-weight:400;
+  color:rgba(51,51,51,1);
+  line-height:130px;
 </style>

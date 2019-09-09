@@ -328,7 +328,7 @@ ipcMain.on('fetch-ipc', (event, arg) => {
 
 //主进程代码
 ipcMain.on('download', (event, args) => {
-  console.log('download---->',args)
+  // console.log('download---->',args)
   var arr = args.split("+");
   downLoadPath = arr[0];
   downType = arr[1];
@@ -536,7 +536,7 @@ function createPreviewWindow (event, arg) {
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode
-    previewWin.loadURL(process.env.WEBPACK_DEV_SERVER_URL + `#/preview?note_id=${arg.noteId}&title=${arg.title}&isPdf=${arg.isPdf}&isReadOnly=${arg.isReadOnly}&content=${arg.content}`)
+    previewWin.loadURL(process.env.WEBPACK_DEV_SERVER_URL + `#/preview?note_id=${arg.noteId}&title=${arg.title}&isPdf=${arg.isPdf}&isReadOnly=${arg.isReadOnly}`)
     // previewWin.webContents.openDevTools()
   } else {
     createProtocol('app')

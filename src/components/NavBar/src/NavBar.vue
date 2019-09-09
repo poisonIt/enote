@@ -308,7 +308,7 @@ export default {
     },
 
     setCurrentFolder (id) {
-      // console.log(id)
+      console.log(id)
       this.$refs.tree.select(id)
     },
 

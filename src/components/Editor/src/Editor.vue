@@ -19,6 +19,7 @@
       :attachShow="attachShow"
     ></attachment>
     <webview id="pdf-path"></webview>
+
   </div>
 </template>
 
@@ -406,4 +407,5 @@ export default {
   left 0
   background-color #fff
   z-index 9999
+
 </style>

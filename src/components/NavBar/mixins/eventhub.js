@@ -9,6 +9,7 @@ export default {
     this.$hub.hookHub('navUp', 'DocumentList', () => this.handleNavUp())
     this.$hub.hookHub('newFolder', 'DocumentList', (nodeId) => this.handleNewFolder(false, nodeId))
     this.$hub.hookHub('newFolder', 'FileTool', () => this.handleNewFolder(true))
+    this.$hub.hookHub('goShare', 'ShareWithMePanel', () => this.setCurrentFolder('share'))
     // this.$hub.hookHub('goBin', 'FileCard', () => this.setCurrentFolder('bin'))
     this.$hub.hookHub('deleteNavNode', 'DocumentList', (id) => {
       let node = this.$refs.tree.model.store.map[id]

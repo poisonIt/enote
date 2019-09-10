@@ -24,6 +24,7 @@
     <div class="home-loading" v-if="!isHomeReady">
       <Loading :type="1" fill="#DDAF59" style="transform: scale(1.2)"></Loading>
     </div>
+    <ShareWithMePanel></ShareWithMePanel>
     <MovePanel></MovePanel>
     <UserPanel></UserPanel>
     <SharePanel></SharePanel>
@@ -77,6 +78,7 @@ import Editor from '@/components/Editor'
 import Content from '@/components/Editor/src/Content'
 import FolderComp from '@/components/FolderComp.vue'
 // import ProgressBar from '@/components/ProgressBar'
+import ShareWithMePanel from '@/components/Panels/ShareWithMePanel'
 import MovePanel from '@/components/Panels/MovePanel'
 import UserPanel from '@/components/Panels/UserPanel'
 import SharePanel from '@/components/Panels/SharePanel'
@@ -108,6 +110,7 @@ export default {
     Content,
     FolderComp,
     // ProgressBar,
+    ShareWithMePanel,
     MovePanel,
     UserPanel,
     SharePanel,
@@ -146,6 +149,7 @@ export default {
   },
 
   created () {
+
     window.onbeforeunload = (e) => {
       e.returnValue = false
       let curWin = this.$remote.getCurrentWindow()
@@ -226,7 +230,7 @@ export default {
       this.modifyFrom && this.modifyFrom.confirmModify()
       this.modifyFrom = null
     },
-    
+
     cancelModify () {
       this.TOGGLE_SHOW_MODIFY_CONFIRM(false)
       this.modifyFrom = null

@@ -342,6 +342,7 @@ export default {
 
     click () {
       var root = this.getRootNode()
+      // console.log(root)
       if (this === root) return
       this.model.store.setCurrentNode(this.model, root, this)
       if (this.model.type === 'select') {
@@ -380,7 +381,7 @@ export default {
       this.model.store.setCurrentNode(node, root)
       root.$emit('add-node', node)
     },
-    
+
     dragStart (e) {
       if (!(this.model.dragDisabled || this.model.disabled)) {
         fromComp = this

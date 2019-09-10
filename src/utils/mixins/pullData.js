@@ -1,5 +1,5 @@
 import { ipcRenderer } from 'electron'
-import { 
+import {
   pullNotebooks,
   pullNote,
   pullTags
@@ -24,7 +24,7 @@ export default {
 
   computed: {
     ...mapGetters({
-      noteVer: 'GET_NOTE_VER',
+      noteVer: 'GET_NOTE_VER'
     })
   },
 
@@ -50,7 +50,7 @@ export default {
           deviceName: deviceName,
           deviceType: platform
         }),
-        pullTags(),
+        pullTags()
       ])
 
       let returnMsgs = pullResp.map(item => item.data.returnMsg)

@@ -640,4 +640,22 @@ export default {
   // bottom -35px 
 .ivu-select-input
     padding: 0 10px 0 8px !important
+
+</style>
+<style lang="stylus">
+.ivu-select-dropdown-list 
+  max-height 150px !important
+  overflow auto !important
+.ivu-select-drpdown-list::-webkit-scrollbar
+  width: 6px;
+  height: 16px;
+  background-color: #F5F5F5;
+.ivu-select-drpdown-list::-webkit-scrollbar-track
+  // -webkit-box-shadow: inset 0 0 6px #e9eaec;
+  border-radius: 3px;
+  background-color: #f5f7f9;  
+.ivu-select-drpdown-list::-webkit-scrollbar-thumb
+  border-radius: 3px;
+  // -webkit-box-shadow: inset 0 0 6px #e9e9e9;
+  background-color: #ccc;
 </style>

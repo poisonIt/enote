@@ -65,7 +65,7 @@ axios.interceptors.request.use(config => {
 
   if (config.url.split('/api/')[1]) {
     let configArr = config.url.split('/api/')
-    console.log(configArr)
+    // console.log(configArr)
     if (configArr[1] === 'authenticate' || config.url.indexOf('user') != -1) {
       config.url = `${configArr[0]}/api/${configArr[1]}`
       // return

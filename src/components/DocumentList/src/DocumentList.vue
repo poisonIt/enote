@@ -22,34 +22,39 @@
       </div>
     </div>
     <div class="body" ref="body">
-      <FileCardGroup
-        ref="fileCardGroup"
-        @handleSelect="selectFile"
-        @titleClick="handleFileTitleClick">
-        <FileCard
-          v-for="(item, index) in fileList"
-          :key="index"
-          :pid="item.pid"
-          :mini="viewFileListType === 'list'"
-          :file_id="item._id"
-          :type="item.type"
-          :title="item.title"
-          :content="item.summary"
-          :isTop="item.top"
-          :isShared="item.share"
-          :update_at="item.update_at | yyyymmdd"
-          :file_size="Number(item.size)"
-          :username="item.username"
-          :parent_folder="folderNameComputed(item)"
-          :need_push="item.need_push_remotely"
-          :need_push_local="item.need_push_locally"
-          :rawData="item"
-          :isDraggable="item.isDraggable"
-          :isPushing="notesPushing.indexOf(item._id) > -1"
-          @contextmenu="handleContextmenu"
-          @dblclick="handleDbClick(item)">
-        </FileCard>
-      </FileCardGroup>
+      <Scroll :on-reach-bottom="handleReachBottom" :height="publicNoteHeight" :loading-text="text">
+        <FileCardGroup
+          ref="fileCardGroup"
+          @handleSelect="selectFile"
+          @titleClick="handleFileTitleClick">
+          <FileCard
+            v-for="(item, index) in fileList"
+            :key="index"
+            :pid="item.pid"
+            :mini="viewFileListType === 'list'"
+            :file_id="item._id"
+            :type="item.type"
+            :title="item.title"
+            :content="item.summary"
+            :isTop="item.top"
+            :isShared="item.share"
+            :update_at="item.update_at | yyyymmdd"
+            :file_size="Number(item.size)"
+            :username="item.username"
+            :parent_folder="folderNameComputed(item)"
+            :need_push="item.need_push_remotely"
+            :need_push_local="item.need_push_locally"
+            :rawData="item"
+            :isDraggable="item.isDraggable"
+            :isPushing="notesPushing.indexOf(item._id) > -1"
+            @contextmenu="handleContextmenu"
+            @dblclick="handleDbClick(item)">
+          </FileCard>
+
+        </FileCardGroup>
+      </Scroll>
+
+
       <div class="no-file" v-if="fileList.length === 0">
         <span v-if="currentNav && currentNav.type === 'bin'">回收站为空</span>
         <span v-if="currentNav && currentNav.type !== 'bin'">没有找到文件</span>
@@ -127,6 +132,8 @@ export default {
   },
   data () {
     return {
+      text: '加赞中',
+      publicNoteHeight: 0,
       isDelConfirmShowed: false,
       selectedFileIdx: -1,
       selectedIdCache: null,
@@ -146,7 +153,9 @@ export default {
         binMenu,
         publicMenu,
         delPublicMenu
-      ]
+      ],
+      page: 0,
+      size: 10
     }
   },
   filters: {
@@ -200,7 +209,7 @@ export default {
       if (val.type === 'share') {
         this.fetchSharedFile()
       } else if (val.type === 'public') {
-        this.fetchPublicFile()
+        this.fetchPublicFile({ page: this.page, size: this.size })
       } else {
         this.refreshList()
       }
@@ -239,9 +248,12 @@ export default {
         this.refreshList()
       }
     })
+
   },
   mounted () {
     this.$root.$documentList = this
+    this.publicNoteHeight = this.$refs.body.offsetHeight
+    console.log(this.publicNoteHeight)
   },
   methods: {
     ...mapActions([
@@ -259,7 +271,6 @@ export default {
       if (this.network_status === 'online') {
         this.isListLoading = true
         getShareWithMe().then(resp => {
-          console.log(resp)
           let notes = resp.data.body.map(item => transNoteDataFromRemote(item))
           fetchLocal('updateSharedNote', notes).then(res => {
             this.handleDataFetched([[], res])
@@ -275,13 +286,18 @@ export default {
         })
       }
     },
-    fetchPublicFile () {
+    fetchPublicFile (reqList) {
       if (this.network_status === 'online') {
         this.isListLoading = true
         // console.log('public')
-        getPublicNote().then(resp => {
-          console.log(resp)
-          let notes = resp.data.body.content.map(item => transNoteDataFromRemote(item))
+        getPublicNote(reqList).then(resp => {
+          // console.log(resp)
+          // if (resp.data.body.content.lenth < this.size) {
+          //   this.text = '已经到底了'
+          // }
+          let publicNotes = []
+          publicNotes = resp.data.body.content
+          let notes = this.page === 0 ? publicNotes.map(item => transNoteDataFromRemote(item)) : publicNotes.concat(resp.data.body.content).map(item => transNoteDataFromRemote(item))
           fetchLocal('updatePublicNote', notes).then(res => {
             // console.log(res)
             this.handleDataFetched([[], res])
@@ -492,12 +508,13 @@ export default {
     },
     handleContextmenu (props) {
       // console.log(props)
+      this.popupedFile = props
+
       if (this.currentNav.type === 'share' && props.type === 'note') {
         // console.log(this.nativeMenus)
         this.popupNativeMenu(this.nativeMenus[3])
         return
       }
-      this.popupedFile = props
       if (this.currentNav.type === 'bin') {
         this.popupNativeMenu(this.nativeMenus[5])
         return
@@ -510,9 +527,6 @@ export default {
         } else {
           this.popupNativeMenu(this.nativeMenus[6])
         }
-
-        // 查询userId， 如果存在就是属于自己创建的笔记、可以删除，不存在就是别人的笔记
-        // this.popupNativeMenu(this.nativeMenus[idx])
         return
       }
       if (props.type === 'note') {
@@ -620,13 +634,13 @@ export default {
           })
         })
       } else if (this.currentNav.type === 'public' && this.popupedFile.type === 'note') {
-        console.log(this.currentFile )
+        console.log(this.currentFile)
         //删除笔记
         delPublicNote({ publicId: this.currentFile.publicNoteId }).then(resp => {
           console.log(resp)
           if (resp.data.returnCode === 200) {
             this.$Message.success('删除成功')
-            this.fetchPublicFile()
+            this.fetchPublicFile({ page: this.page, size: this.size })
           }
         })
       } else {
@@ -661,6 +675,8 @@ export default {
       })
     },
     handleShare () {
+      console.log(this.popupedFile)
+
       let idx = _.findIndex(this.fileList, { _id: this.popupedFile.file_id })
       this.selectFile(idx)
       this.TOGGLE_SHOW_SHARE_PANEL(true)
@@ -779,107 +795,280 @@ export default {
       } else {
         return file.parent_folder ? file.parent_folder.title : '我的文件夹'
       }
+    },
+
+    handleReachBottom () {
+      // console.log('1111')
+      this.page++
+      this.fetchPublicFile({ page: this.page, size: this.size })
     }
   }
 }
 </script>
 
 <style lang="stylus" scoped>
-.document-list
-  width 100%
-  height 100%
-  position relative
-  .header
-    width inherit
-    height 60px
-    padding 14px
-    display flex
-    flex-direction row
-    justify-content space-between
-    align-items center
-    border-bottom 1px solid #e6e6e6
-    -webkit-app-region drag
-    .title
-      flex .85
-      text-align center
-      font-size 14px
-.body
-  position relative
-  height 100%
-  padding-bottom 90px
-  overflow-y scroll
-  .no-file
-    height 100%
-    display flex
-    flex-direction column
-    align-items center
-    justify-content center
-    font-size 12px
-    color #999
-  .new-doc_button
-    width 110px
-    height 36px
-    margin-top 10px
-    border-radius 3px
-    background-color #DDAF59
-    color #fff
-    font-size 12px
-    font-weight 500
-    text-align center
-    line-height 36px
-.footer
-  width 100%
-  position absolute
-  bottom 0
-  border-top 1px solid #e6e6e6
-  background-color #FCFBF7
-  .num
-    height 30px
-    line-height 30px
-    padding-left 20px
-    font-size 12px
-    letter-spacing 1px
-.header
-  .button
-    position relative
-    width 40px
-    height 24px
-    border-radius 0
-    background-color inherit
-    border none
-    &::before
-      content ''
-      display block
-      width 28px
-      height 18px
-      position absolute
-      top 50%
-      left 50%
-      transform translate(-50%, -50%)
-      background-repeat no-repeat
-      background-size 100%
-      background-position center
-    &.button-back
-      &::before
-        background-image url(../../../assets/images/lanhu/back@2x.png)
-      &.disable
-        &::before
-          background-image url(../../../assets/images/lanhu/back_dis@2x.png)
-    &.expand
-      &::before
-        background-image url(../../../assets/images/lanhu/view@2x.png)
-      &.summary
-        &::before
-          background-image url(../../../assets/images/lanhu/view@2x.png)
-.list-loading
-  position absolute
-  top 0
-  width 100%
-  height 100%
-  margin-top 60px
-  display flex
-  align-items center
-  justify-content center
-  background-color #fcfbf7
-  z-index 9999
+.document-list {
+  width: 100%;
+  height: 100%;
+  position: relative;
+
+  .header {
+    width: inherit;
+    height: 60px;
+    padding: 14px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e6e6e6;
+    -webkit-app-region: drag;
+
+    .title {
+      flex: 0.85;
+      text-align: center;
+      font-size: 14px;
+    }
+  }
+}
+
+.body {
+  position: relative;
+  height: 100%;
+  padding-bottom: 90px;
+  overflow-y: scroll;
+
+  .no-file {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: #999;
+  }
+
+  .new-doc_button {
+    width: 110px;
+    height: 36px;
+    margin-top: 10px;
+    border-radius: 3px;
+    background-color: #DDAF59;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 500;
+    text-align: center;
+    line-height: 36px;
+  }
+}
+
+.footer {
+  width: 100%;
+  position: absolute;
+  bottom: 0;
+  border-top: 1px solid #e6e6e6;
+  background-color: #FCFBF7;
+
+  .num {
+    height: 30px;
+    line-height: 30px;
+    padding-left: 20px;
+    font-size: 12px;
+    letter-spacing: 1px;
+  }
+}
+
+.header {
+  .button {
+    position: relative;
+    width: 40px;
+    height: 24px;
+    border-radius: 0;
+    background-color: inherit;
+    border: none;
+
+    &::before {
+      content: '';
+      display: block;
+      width: 28px;
+      height: 18px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-repeat: no-repeat;
+      background-size: 100%;
+      background-position: center;
+    }
+
+    &.button-back {
+      &::before {
+        background-image: url('../../../assets/images/lanhu/back@2x.png');
+      }
+
+      &.disable {
+        &::before {
+          background-image: url('../../../assets/images/lanhu/back_dis@2x.png');
+        }
+      }
+    }
+
+    &.expand {
+      &::before {
+        background-image: url('../../../assets/images/lanhu/view@2x.png');
+      }
+
+      &.summary {
+        &::before {
+          background-image: url('../../../assets/images/lanhu/view@2x.png');
+        }
+      }
+    }
+  }
+}
+
+.list-loading {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  margin-top: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #fcfbf7;
+  z-index: 9999;
+}
+</style>
+<style lang="stylus">
+.document-list {
+  width: 100%;
+  height: 100%;
+  position: relative;
+
+  .header {
+    width: inherit;
+    height: 60px;
+    padding: 14px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e6e6e6;
+    -webkit-app-region: drag;
+
+    .title {
+      flex: 0.85;
+      text-align: center;
+      font-size: 14px;
+    }
+  }
+}
+
+.body {
+  position: relative;
+  height: 100%;
+  padding-bottom: 90px;
+  overflow-y: scroll;
+
+  .no-file {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: #999;
+  }
+
+  .new-doc_button {
+    width: 110px;
+    height: 36px;
+    margin-top: 10px;
+    border-radius: 3px;
+    background-color: #DDAF59;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 500;
+    text-align: center;
+    line-height: 36px;
+  }
+}
+
+.footer {
+  width: 100%;
+  position: absolute;
+  bottom: 0;
+  border-top: 1px solid #e6e6e6;
+  background-color: #FCFBF7;
+
+  .num {
+    height: 30px;
+    line-height: 30px;
+    padding-left: 20px;
+    font-size: 12px;
+    letter-spacing: 1px;
+  }
+}
+
+.header {
+  .button {
+    position: relative;
+    width: 40px;
+    height: 24px;
+    border-radius: 0;
+    background-color: inherit;
+    border: none;
+
+    &::before {
+      content: '';
+      display: block;
+      width: 28px;
+      height: 18px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-repeat: no-repeat;
+      background-size: 100%;
+      background-position: center;
+    }
+
+    &.button-back {
+      &::before {
+        background-image: url('../../../assets/images/lanhu/back@2x.png');
+      }
+
+      &.disable {
+        &::before {
+          background-image: url('../../../assets/images/lanhu/back_dis@2x.png');
+        }
+      }
+    }
+
+    &.expand {
+      &::before {
+        background-image: url('../../../assets/images/lanhu/view@2x.png');
+      }
+
+      &.summary {
+        &::before {
+          background-image: url('../../../assets/images/lanhu/view@2x.png');
+        }
+      }
+    }
+  }
+}
+
+.list-loading {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  margin-top: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #fcfbf7;
+  z-index: 9999;
+}
 </style>

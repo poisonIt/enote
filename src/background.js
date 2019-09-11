@@ -98,11 +98,11 @@ app.on('ready', async () => {
 
   let dbPath = path.resolve(app.getAppPath('userData'), `../`)
   // let dbPath = '/Users/bowiego/Documents/workspace/enote/temp'
-  let serviceUrl = 'https://iapp.htffund.com/note/api'
+  // let serviceUrl = 'https://iapp.htffund.com/note/api'
   // let serviceUrl = isDevelopment
     // ? 'http://10.50.16.123:8000/api'
     // : 'https://iapp.htffund.com/note/api'
-  // let serviceUrl = 'http://10.50.16.123:8000/api'
+  let serviceUrl = 'http://10.50.16.123:8000/api'
 
   let appConf = await getAppConf(app.getAppPath('userData'))
   if (!appConf.serviceUrl || appConf.serviceUrl === '') {
@@ -541,14 +541,16 @@ function createPreviewWindow (event, arg) {
   } else {
     createProtocol('app')
     // Load the index.html when not in development
-    previewWin.loadURL(`app://./index.html#/preview?note_id=${arg.noteId}&title=${arg.title}`)
+    previewWin.loadURL(`app://./index.html#/preview?note_id=${arg.noteId}&title=${arg.title}&isReadOnly=${arg.isReadOnly}`)
   }
+    // console.log(arg)
 
   previewWin.on('closed', () => {
     previewWin = null
     win && win.webContents.send('communicate', {
       tasks: ['pushData'],
-      from: 'Preview'
+      from: 'Preview',
+      type: arg.type
     })
   })
 }

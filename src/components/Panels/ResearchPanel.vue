@@ -416,12 +416,14 @@ export default {
         this.$refs.stockSelectEl.clearSingleSelect()
         this.$refs.stockSelectEl.setQuery('')
       }
+
       this.isResearchTitleShowed = false
       this.title = ''
       this.keywords = ''
       this.summary = ''
       this.publicStatus = false
       this.uploadList = []
+      this.noteFiles = []
       this.researchTitle = ''
       this.modalHeight = '445px'
       this.TOGGLE_SHOW_RESEARCH_PANEL(false)
@@ -459,6 +461,7 @@ export default {
     handleSuccess (resp) {
       // console.log(resp)
       if (resp.returnCode === 200) {
+        this.$Message.success('附件上传成功')
         this.uploadList = this.uploadList.concat(resp.body)
         this.noteFiles = _.cloneDeep(this.uploadList)
         if (parseFloat(this.modalHeight) <= 535) {
@@ -480,6 +483,7 @@ export default {
       this.noteFiles.forEach(item => {
         if (item.fileId === file.fileId) {
           item.status = 1
+          this.$Message.error('附件删除成功')
         }
       })
 

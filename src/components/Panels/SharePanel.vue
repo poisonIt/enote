@@ -146,7 +146,7 @@ export default {
   name: 'SharePanel',
   components: {
     Loading,
-    VueQr 
+    VueQr
   },
   data () {
     return {
@@ -215,7 +215,6 @@ export default {
 
   watch: {
     isSharePanelShowed (val) {
-      // console.log(this.currentFile)
       if (val) {
         this.isFirstData = true
         if (!this.currentFile.remote_id) {
@@ -280,20 +279,22 @@ export default {
     ...mapActions([
       'TOGGLE_SHOW_SHARE_PANEL'
     ]),
-   
+
     closeSharePanel () {
       this.remoteId = ''
       this.TOGGLE_SHOW_SHARE_PANEL(false)
     },
 
     async createShare (remote_id) {
-      
+
       this.isFirstData = true
       this.isLoading = true
 
       let shareResp = await publishShare({
         noteId: remote_id || this.currentFile.remote_id
       })
+
+      console.log(shareResp)
 
       this.handleShareFinished(shareResp)
     },
@@ -374,7 +375,7 @@ export default {
 
 
       this.isLoading = false
-      
+
       if (cancelResp.data.returnCode === 200) {
         await fetchLocal('updateLocalNote', {
           id: this.currentFile._id,
@@ -425,7 +426,7 @@ export default {
       clipboard.writeText(this.shareUrl)
       this.$Message.success('复制成功')
     },
-   
+
   }
 }
 </script>
@@ -457,7 +458,7 @@ export default {
   .validity, .authority
     display flex
     align-items center
-  .iapp 
+  .iapp
     .app
       width 30px
       height 30px
@@ -612,7 +613,7 @@ export default {
     background-size contain
     background-position center
     background-repeat no-repeat
-  
+
   .button-group
     position relative
     margin 0 auto

@@ -297,14 +297,13 @@ export default {
           // }
           let publicNotes = []
           publicNotes = resp.data.body.content
-          let notes = this.page === 0 ? publicNotes.map(item => transNoteDataFromRemote(item)) : publicNotes.concat(resp.data.body.content).map(item => transNoteDataFromRemote(item))
+          let notes = publicNotes.map(item => transNoteDataFromRemote(item))
           fetchLocal('updatePublicNote', notes).then(res => {
             // console.log(res)
-            this.handleDataFetched([[], res])
+            this.handleDataFetched([[], res], true)
             this.isListLoading = false
           })
         })
-
       } else {
         fetchLocal('getPublicNote').then(notes => {
           notes.forEach(note => {
@@ -366,14 +365,22 @@ export default {
         console.log('nav-public', nav)
       }
     },
-    handleDataFetched (localFiles) {
+    handleDataFetched (localFiles, isAppend) {
       // console.log(localFiles[1])
       if (this.currentNav.type !== 'bin') {
         this.folderList = localFiles[0].filter(file => file.trash === 'NORMAL')
         if (this.currentNav.type === 'share' || this.currentNav.type === 'public') {
-          this.noteList = localFiles[1]
+          if (isAppend) {
+            this.noteList = this.noteList.concat(localFiles[1])
+          } else {
+            this.noteList = localFiles[1]
+          }
         } else {
-          this.noteList = localFiles[1].filter(file => file.trash === 'NORMAL')
+          if (isAppend) { 
+            this.noteList = this.noteList.concat(localFiles[1].filter(file => file.trash === 'NORMAL'))
+          } else {
+            this.noteList = localFiles[1].filter(file => file.trash === 'NORMAL')
+          }
         }
 
       } else {

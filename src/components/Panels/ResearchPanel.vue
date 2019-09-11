@@ -681,7 +681,7 @@ export default {
     submitEnquiry (data) {
       addReport(data).then(res => {
         // console.log(res)
-        if (res.data.returnCode === 0) {
+        if (res.data.returnCode === 200) {
           this.$Message.success('提交成功')
           this.closeResearchPanel()
           // this.reportid = res.data.body.reportid

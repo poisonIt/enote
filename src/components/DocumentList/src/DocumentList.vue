@@ -22,7 +22,6 @@
       </div>
     </div>
     <div class="body" ref="body">
-      <Scroll :on-reach-bottom="handleReachBottom" :height="publicNoteHeight" :loading-text="text">
         <FileCardGroup
           ref="fileCardGroup"
           @handleSelect="selectFile"
@@ -52,8 +51,6 @@
           </FileCard>
 
         </FileCardGroup>
-      </Scroll>
-
 
       <div class="no-file" v-if="fileList.length === 0">
         <span v-if="currentNav && currentNav.type === 'bin'">回收站为空</span>
@@ -128,7 +125,7 @@ export default {
     SearchBar,
     Loading,
     FileCard,
-    FileCardGroup
+    FileCardGroup,
   },
   data () {
     return {
@@ -799,8 +796,7 @@ export default {
 
     handleReachBottom () {
       // console.log('1111')
-      this.page++
-      this.fetchPublicFile({ page: this.page, size: this.size })
+
     }
   }
 }

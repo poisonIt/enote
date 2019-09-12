@@ -40,7 +40,7 @@ export default {
     this.SET_CURRENT_FILE({
       _id: noteId
     })
-
+    console.log(noteId)
     fetchLocal('getLocalDoc', {
       note_id: noteId
     }).then(res => {

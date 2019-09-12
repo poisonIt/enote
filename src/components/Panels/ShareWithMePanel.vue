@@ -41,10 +41,18 @@
     computed: {
       ...mapGetters({
         isShareWithMePanelShowed: 'GET_SHOW_SHARE_WITH_ME',
-        userInfo: 'GET_USER_INFO'
+        userInfo: 'GET_USER_INFO',
+        currentFile: 'GET_CURRENT_FILE'
       })
     },
-
+    created() {
+      ipcRenderer.on('communicate', (event, args)=> {
+        console.log(args)
+        if (args.tasks[0] === 'pushData' && args.type === 'share') {
+          this.$hub.dispatchHub('goShare', this)
+        }
+      })
+    },
     methods: {
 
       ...mapActions([
@@ -56,22 +64,29 @@
         saveYoudaoShare({ shareUrl: this.shareUrl, userCode: this.userInfo.usercode }).then(response => {
           if (response.data.returnCode === 0) {
             // 保存成功后打开查看笔记跳转到与我分享菜单
+            // this.$hub.dispatchHub('goShare', this)
+            // console.log(this.currentFile)
+            this.$Message.success('保存成功，请稍等查看笔记')
             getShareWithMe().then(resp => {
               let notes = resp.data.body.map(item => transNoteDataFromRemote(item))
               fetchLocal('updateSharedNote', notes).then(res => {
+                // console.log(res)
                 res.forEach(item => {
                   if (item.remote_id === response.data.body.noteId) {
                     ipcRenderer.send('create-preview-window', {
                       noteId: item._id,
                       title: item.title,
-                      isReadOnly: true
+                      isReadOnly: true,
+                      type: 'share'
                     })
+                    //
                   }
                 })
               })
             })
             this.closeShareWithPanel()
-            this.$hub.dispatchHub('goShare', this)
+          } else {
+            this.$Message.error('请检查有道云链接是否正确')
           }
         })
       },

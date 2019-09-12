@@ -63,19 +63,19 @@ axios.interceptors.request.use(config => {
     config.data = formData
   }
 
-  if (config.url.split('/api/')[1]) {
-    let configArr = config.url.split('/api/')
-    console.log(configArr)
-    if (configArr[1] === 'authenticate' || config.url.indexOf('user') != -1 || config.url.indexOf('stocks') != -1 || config.url.indexOf('trades') != -1 || config.url.indexOf('reportSubclass') != -1) {
-      config.url = `${configArr[0]}/api/${configArr[1]}`
-    // return
-    } else {
-      let str = 'eyJhbGciOiJIUzUxMiJ9.eyJleHAiOjE1Njg2MDQ5OTgsInN1YiI6IjI5NyIsImNyZWF0ZWQiOjE1NjgwMDAxOTg2OTF9.CistPIpXgWwtW7yElikLWhoF-A5eTBBgbthLSbw6-KdmV-dTQFM4AKdpk9jSPNCWoXbAewnOqqosgDvz0Cftog'
-      config.headers['Authorization'] = 'Bearer' + str
-      configArr.splice(0, 1, 'http://115.159.127.156:8000')
-      config.url = `${configArr[0]}/api/${configArr[1]}`
-    }
-  }
+  // if (config.url.split('/api/')[1]) {
+  //   let configArr = config.url.split('/api/')
+  //   // console.log(configArr)
+  //   if (configArr[1] === 'authenticate' || config.url.indexOf('user') != -1 || config.url.indexOf('stocks') != -1 || config.url.indexOf('trades') != -1 || config.url.indexOf('reportSubclass') != -1) {
+  //     config.url = `${configArr[0]}/api/${configArr[1]}`
+  //   // return
+  //   } else {
+  //     let str = 'eyJhbGciOiJIUzUxMiJ9.eyJleHAiOjE1Njg2MDQ5OTgsInN1YiI6IjI5NyIsImNyZWF0ZWQiOjE1NjgwMDAxOTg2OTF9.CistPIpXgWwtW7yElikLWhoF-A5eTBBgbthLSbw6-KdmV-dTQFM4AKdpk9jSPNCWoXbAewnOqqosgDvz0Cftog'
+  //     config.headers['Authorization'] = 'Bearer' + str
+  //     configArr.splice(0, 1, 'http://115.159.127.156:8000')
+  //     config.url = `${configArr[0]}/api/${configArr[1]}`
+  //   }
+  // }
 
 
 

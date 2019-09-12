@@ -159,7 +159,7 @@ export function delPublicNote (params) {
 }
 
 export function saveYoudaoShare (params) {
-  return axios.post('/share/save/youdao', params)
+  return axios.post('/share/save/youdao/v2', params)
 }
 
 export function reportIsRepeat (params) {

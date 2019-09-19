@@ -241,6 +241,7 @@ export default {
         this.currentNav.type !== 'public'
     },
     end () {
+      // console.log(this.totalPages, this.page)
       return this.page === this.totalPages
     }
   },
@@ -332,15 +333,13 @@ export default {
           this.isListLoading = true
         }
         getPublicNote(reqList).then(resp => {
-          console.log(resp)
-          this.totalPages = resp.data.body.totalPages
+          // console.log(resp.data)
+          this.totalPages = resp.data.body.totalPages - 1
           let publicNotes = []
           publicNotes = resp.data.body.content
 
           let notes = publicNotes.map(item => transNoteDataFromRemote(item))
-          // console.log(notes)
           fetchLocal('updatePublicNote', notes).then(res => {
-            // console.log(res)
             this.handleDataFetched([[], res], true)
             this.isListLoading = false
           })
@@ -404,15 +403,17 @@ export default {
         })
       } else if (nav.type === 'public') {
         console.log('nav-public', nav)
+
       }
     },
     handleDataFetched (localFiles, isAppend) {
       // console.log(localFiles[1])
       if (this.currentNav.type !== 'bin') {
         this.folderList = localFiles[0].filter(file => file.trash === 'NORMAL')
-        if (this.currentNav.type === 'share' || this.currentNav.type === 'public') {
+        if (this.currentNav.type === 'public') {
           if (isAppend) {
-            this.noteList = this.noteList.concat(localFiles[1])
+            // this.noteList = this.page === 0 ? localFiles[1].filter(file => file.trash === 'NORMAL') : this.noteList.concat(localFiles[1]).filter(file => file.trash === 'NORMAL')
+            this.noteList = this.page === 0 ? localFiles[1] : this.noteList.concat(localFiles[1])
           } else {
             this.noteList = localFiles[1]
           }
@@ -426,6 +427,7 @@ export default {
       } else {
         this.folderList = localFiles[0]
         this.noteList = localFiles[1]
+        console.log('99999', this.noteList)
       }
       this.stickTopFiles = []
       this.updateFileList()
@@ -434,8 +436,11 @@ export default {
       let re = new RegExp(this.searchKeyword, 'g')
       let notes = this.fileListSortFunc(this.noteList.filter(file => file.title.search(re) > -1), 'note')
       let folders = this.fileListSortFunc(this.folderList.filter(file => file.title.search(re) > -1), 'folder')
+
       this.fileList = _.flatten([folders, notes])
-      // console.log(this.fileList)
+
+      // console.log(notes)
+
       let idx = _.findIndex(this.fileList, { _id: this.selectedIdCache })
       idx = (idx === -1 ? 0 : idx)
       this.selectFile(this.fileList.length > 0 ? idx : -1)
@@ -477,7 +482,6 @@ export default {
       }
     },
     scrollToSelected () {
-      console.log('1111')
       this.$nextTick(() => {
         let bodyEl = this.$refs.body
         let selectedEl = Array.prototype.slice.call(this.$refs.fileCardGroup.$el.childNodes)[this.selectedFileIdx]
@@ -680,7 +684,6 @@ export default {
           })
         })
       } else if (this.currentNav.type === 'public' && this.popupedFile.type === 'note') {
-        console.log(this.currentFile)
         //删除笔记
         delPublicNote({ publicId: this.currentFile.publicNoteId }).then(resp => {
           console.log(resp)
@@ -689,6 +692,7 @@ export default {
             this.fetchPublicFile({ page: this.page, size: this.size })
           }
         })
+
       } else {
         this.removeFile(this.popupedFile.rawData)
       }
@@ -799,6 +803,7 @@ export default {
       })
     },
     copyFile (file) {
+      console.log(file)
       let result = {
         type: file.type,
         title: file.title,
@@ -843,6 +848,7 @@ export default {
     next () {
       // console.log('1111')
       this.page++
+
       this.fetchPublicFile({ page: this.page, size: this.size })
     }
   }

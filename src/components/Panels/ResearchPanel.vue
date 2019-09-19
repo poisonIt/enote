@@ -130,7 +130,7 @@
           <div class="form-label"></div>
           <ul class="upload-list" ref="uploadList">
             <li class="upload-list-item" v-for="(item, index) in uploadList" :key="index">
-              <span>{{ item.fileName }}</span>
+              <span>{{ item.oldName }}</span>
               <div class="icon-del" @click="deleteFile(item)"></div>
             </li>
           </ul>
@@ -202,7 +202,6 @@
       top="20vh"
       transition-name="fade-in-down"
       title="标题重复"
-      @close="isResearchTitleShowed=false"
       :visible.sync="isResearchTitleShowed"
       ref="research"
     >
@@ -212,7 +211,45 @@
 
       <div class="button-group" slot="footer">
         <div class="button primary" @click="confirmPostTitle">确认</div>
-        <div class="button" @click="isResearchTitleShowed=false">取消</div>
+        <div class="button" @click="noPostTitle">取消</div>
+      </div>
+    </modal>
+
+    <modal
+      width="480px"
+      height="200px"
+      top="20vh"
+      transition-name="fade-in-down"
+      title="提示"
+      :visible.sync="isNotesyncAnswerShowed"
+      ref="research"
+    >
+      <div class="researchTitle">
+        该笔记在研究部晨会里已存在，是否替换？
+      </div>
+
+      <div class="button-group" slot="footer">
+        <div class="button primary" @click="confirmSyncAnswer">是</div>
+        <div class="button" @click="noSyncAnswer">否</div>
+      </div>
+    </modal>
+
+    <modal
+      width="480px"
+      height="200px"
+      top="20vh"
+      transition-name="fade-in-down"
+      title="提示"
+      :visible.sync="isbackAnswerShowed"
+      ref="research"
+    >
+      <div class="researchTitle">
+        该研究部晨会标题已存在，请重新输入标题。
+      </div>
+
+      <div class="button-group" slot="footer">
+        <div class="button primary" @click="backSyncAnswer">确认</div>
+        <!-- <div class="button" @click="noSyncAnswer">否</div> -->
       </div>
     </modal>
 
@@ -253,7 +290,16 @@ export default {
       }
     }
     return {
+      post_data: {
+        noteId: '',
+        publicTitle: '',
+        syncAnswer: null,
+        titleRepeatAnswer: null
+      },
+
       isResearchTitleShowed: false,
+      isNotesyncAnswerShowed: false,
+      isbackAnswerShowed: false,
       confirmResearchData: [],
       noteFiles: [],
       attachmentList: [],
@@ -264,7 +310,8 @@ export default {
       isAccessoryShowed: false,
       noteId: null,
       uploadData: null,
-      action: 'http://10.50.16.123:8000/api/report/uploadReportFile?reportId=0',
+      action: 'https://iapp.htffund.com/note/api/report/uploadReportFile?reportId=0',
+      // action: 'http://10.50.16.123:8000/api/report/uploadReportFile?reportId=0',
       isLoading: false,
       loadingStock: true,
       loadingTrade: true,
@@ -333,10 +380,22 @@ export default {
   },
 
   watch: {
+    publicStatus(val) {
+      if (val) {
+        this.researchTitle = this.currentFile.title
+        this.post_data = {
+          noteId: this.currentFile.remote_id,
+          publicTitle: this.researchTitle,
+          syncAnswer: null,
+          titleRepeatAnswer: null
+        }
+      } else {
+        this.researchTitle = ''
+      }
+    },
+
     isResearchPanelShowed(val) {
       if (val) {
-        console.log(this.userInfo)
-
         this.noteId = this.currentFile.remote_id
         fetchLocal('getLocalDoc', {
           note_id: this.currentFile._id
@@ -394,6 +453,7 @@ export default {
   mounted () {
     // this.uploadList = this.$refs.upload.fileList
     this.searchTrade()
+
   },
 
   methods: {
@@ -445,17 +505,7 @@ export default {
         });
       })
       return promise; //通过返回一个promis对象解决
-      // this.$nextTick(() => {
-      //   if (this.uploadList.length > 0) {
-      //     this.$refs.uploadList.scrollTop = 32 * (this.uploadList.length + 1)
-      //   }
-      //   if (parseFloat(this.modalHeight) <= 535) {
-      //     this.modalHeight = parseFloat(this.modalHeight) + 32 + 'px'
-      //   } else {
-      //     return
-      //   }
-      // })
-      // return false
+
     },
 
     handleSuccess (resp) {
@@ -615,11 +665,14 @@ export default {
         summary: this.summary, //摘要
         title: this.title,
         // username: this.userInfo.usercode
-        username: this.userInfo.userNamePinYin,
+        // username: this.userInfo.usernamePinYin
+        username: this.userInfo.local_name,
         noteId: this.noteId,//笔记id
         syncPublic: this.publicStatus,
         isConform: false,
-        publicTitle: this.researchTitle
+        publicTitle: this.researchTitle,
+        syncAnswer: this.post_data.syncAnswer,
+        titleRepeatAnswer: this.post_data.titleRepeatAnswer
       }
 
       if (data.reporttypeid === '') {
@@ -645,55 +698,85 @@ export default {
 
       if (this.publicStatus && this.researchTitle === '') {
         this.$Message.error('研究部晨会名称不能为空')
+        return
       }
 
+      this.confirmResearchData = data
+
       if (this.publicStatus) {
-        reportIsRepeat(data).then(resp => {
-          console.log(resp)
-          if (resp.data.returnCode === 200) {
-            if (resp.data.body.status === '0') {
-              this.submitEnquiry(data)
-            } else {
-              //标题重复
-              // this.
-              this.isResearchTitleShowed = true
-              this.confirmResearchData = data
-            }
-          }
-        })
+
+        console.log(this.post_data)
+        this.confirmNote(this.post_data)
       } else {
         this.submitEnquiry(data)
       }
-
-      // addReport(data).then(res => {
-      //   console.log(res)
-      //   if (res.data.returnCode === 0) {
-      //     this.$Message.success('提交成功')
-      //     this.closeResearchPanel()
-      //     // this.reportid = res.data.body.reportid
-      //     // setTimeout(() => {
-      //     //   this.isAccessoryShowed=true
-      //     // }, 500)
-      //   }
-      // })
     },
 
     submitEnquiry (data) {
       addReport(data).then(res => {
-        // console.log(res)
         if (res.data.returnCode === 200) {
           this.$Message.success('提交成功')
           this.closeResearchPanel()
-          // this.reportid = res.data.body.reportid
-          // setTimeout(() => {
-          //   this.isAccessoryShowed=true
-          // }, 500)
+          this.isResearchTitleShowed = false
+          this.isNotesyncAnswerShowed = false
+          this.isbackAnswerShowed = false
+        }
+      })
+    },
+
+    confirmNote(post_data) {
+      console.log(post_data)
+      reportIsRepeat(post_data).then(resp => {
+        console.log('提交研究部晨会---->', resp)
+        if (resp.data.returnCode === 200) {
+          if (resp.data.body.status === '0') {
+            this.confirmResearchData.syncAnswer = this.post_data.syncAnswer
+            this.confirmResearchData.titleRepeatAnswer = this.post_data.titleRepeatAnswer
+            this.submitEnquiry(this.confirmResearchData)
+          } else if (resp.data.body.status === '1'){
+            //"1" 笔记提交至研究部晨会、是要覆盖 （是 syncAnswer = true） false
+            this.isNotesyncAnswerShowed = true
+          } else {
+            // "2"   标题重复  (是 titleRepeatAnswer = true)
+            this.isResearchTitleShowed = true
+          }
         }
       })
     },
 
     confirmPostTitle () {
-      this.submitEnquiry (this.confirmResearchData)
+
+      this.post_data.titleRepeatAnswer = true
+      this.confirmNote(this.post_data)
+      this.isResearchTitleShowed = false
+
+    },
+
+    noPostTitle () {
+      this.isbackAnswerShowed = true
+      this.isResearchTitleShowed = false
+    },
+
+    confirmSyncAnswer() { //笔记覆盖
+      this.post_data.syncAnswer = true
+      this.confirmNote(this.post_data)
+      this.isNotesyncAnswerShowed = false
+    },
+
+    noSyncAnswer() { //新建
+      this.post_data.syncAnswer = false
+      this.confirmNote(this.post_data)
+      // this.confirmResearchData.syncAnswer = false
+      // console.log('笔记新建',this.confirmResearchData)
+      this.isNotesyncAnswerShowed = false
+
+      // this.submitEnquiry (this.confirmResearchData)
+    },
+
+    backSyncAnswer () {
+      this.isbackAnswerShowed = false
+      this.post_data.titleRepeatAnswer = false
+
     }
 
   }

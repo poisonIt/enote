@@ -12,7 +12,7 @@
         </li>
       </ul>
     </div>
-    <div class="mask" v-show="showMask"></div>
+    <div class="mask" v-if="showMask"></div>
     <attachment
       v-if="hasAttachment"
       :note_files="noteFiles"
@@ -91,18 +91,12 @@ export default {
       if (val && val.type === 'note') {
         this.showMask = true
         this.noteFiles = val.noteFiles || []
+        // console.log(this.noteFiles)
         this.attachShow = false
-        if (val.trash !== 'NORMAL' && this.currentNav.type !== 'share') {
+        if (val.trash !== 'NORMAL' && this.currentNav.type !== 'share' && this.currentNav.type !== 'public') {
           this.showMask = true
           return
         }
-        // if (this.editor) {
-        //   // 切换选中笔记，保存上一个笔记修改内容
-        //   let editorData = this.editor.getData()
-        //   if (editorData !== this.cachedDoc.content) {
-        //     this.saveData(this.cachedDoc._id, editorData)
-        //   }
-        // }
 
         fetchLocal('getLocalDoc', {
           note_id: val._id
@@ -226,7 +220,7 @@ export default {
             this.editor = editor
             this.editor.isReadOnly = false
             this.editor.setData(content || '')
-            if (this.currentNav.type === 'share') {
+            if (this.currentNav.type === 'share' || this.currentNav.type === 'public') {
               this.editor.isReadOnly = true
               document.getElementsByClassName('ck-editor__top')[0].style.display = 'none'
               this.showMask = false

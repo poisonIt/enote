@@ -149,6 +149,12 @@ export default {
     }),
 
     isTrash () {
+      // console.log(this.currentFile && this.currentFile.trash !== 'NORMAL')
+      if (this.currentNav.type === 'share' || this.currentNav.type === 'public') {
+        return true
+      } else {
+        return false
+      }
       return this.currentFile && this.currentFile.trash !== 'NORMAL'
     },
 

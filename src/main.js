@@ -17,6 +17,10 @@ import '@/assets/styles/iview.styl'
 import '@/assets/styles/common.styl'
 import '@/assets/css/font-family.css'
 
+import { Circle } from 'vant'
+
+Vue.use(Circle)
+
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
 const {ipcRenderer, remote, shell, webFrame} = require('electron')
@@ -76,8 +80,6 @@ axios.interceptors.request.use(config => {
   //     config.url = `${configArr[0]}/api/${configArr[1]}`
   //   }
   // }
-
-
 
   // if (config.url.split('/api/share/')[1]) {
   //   // console.log()

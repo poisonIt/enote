@@ -264,7 +264,7 @@ export default {
       isAccessoryShowed: false,
       noteId: null,
       uploadData: null,
-      action: 'http://10.50.16.123:8000/api/report/uploadReportFile?reportId=0',
+      action: 'https://iapp.htffund.com/note/api/report/uploadReportFile?reportId=0',
       isLoading: false,
       loadingStock: true,
       loadingTrade: true,

@@ -65,7 +65,16 @@
 <script>
   import collapse from "../../../utils/transitions/collapse.js"
   import { ipcRenderer, shell } from 'electron'
-  
+  /** * 是否为mac系统（包含iphone手机） * */
+  const isMac = function() {
+  return /macintosh|mac os x/i.test(navigator.userAgent);
+  }();
+
+
+  /** * 是否为windows系统 * */
+  const isWindows = function() {
+      return /windows|win32/i.test(navigator.userAgent);
+  }();
   export default {
     name: 'Attachment',
 
@@ -150,10 +159,21 @@
           this.hiddenIndex = -1
           this.hidden = false
         }
-        this.pathUrl = arg.savePath
-        let pathArr = arg.savePath.split('/')
-        pathArr.pop()
-        this.fileSavePath = pathArr.join('/')
+        if (isMac) {
+          this.pathUrl = arg.savePath
+          let pathArr = arg.savePath.split('/')
+          pathArr.pop()
+          this.fileSavePath = pathArr.join('/')
+        } else if (isWindows) {
+          this.pathUrl = arg.savePath
+
+          let pathArr = arg.savePath.replace(/\\/g, '\\').split('\\')
+          // arg.savePat?h
+          pathArr.pop()
+          this.fileSavePath = pathArr.join('\\')
+          // console.log(this.fileSavePath )
+
+        }
       })
 
     },
@@ -184,19 +204,27 @@
       },
 
       handleDownFile (url, file_name, index) {
-        let name = this.pathUrl.split('/')
-        console.log(name)
-        console.log(name[name.length - 1] === file_name)
-        console.log(name[name.length - 1], file_name)
-        if (name[name.length - 1] === file_name) {
-          shell.showItemInFolder(this.pathUrl)
-          return
+
+
+        if (isWindows) {
+          console.log(this.pathUrl, file_name)
+          let name = this.pathUrl.replace(/\\/g, '\\').split('\\')
+          console.log(name)
+          if (name[name.length - 1] === file_name) {
+            shell.showItemInFolder(this.pathUrl)
+            return
+          }
+        } else {
+          let name = this.pathUrl.split('/')
+          if (name[name.length - 1] === file_name) {
+            shell.showItemInFolder(this.pathUrl)
+            return
+          }
         }
 
 
         this.hiddenIndex = index
         let downUrl = url;//需要下载文件的路径
-        // let savePath = 'file://'
 
         ipcRenderer.send('download',downUrl)
       }

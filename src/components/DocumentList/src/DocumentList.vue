@@ -590,7 +590,8 @@ export default {
       }
     },
     handleSaveNote () {
-      saveShareWithMe(this.popupedFile.rawData.remote_id).then(resp => {
+      // console.log(this.popupedFile)
+      saveShareWithMe(this.popupedFile.rawData.publicNoteId).then(resp => {
         console.log(resp)
         if (resp.data.returnCode === 200) {
           this.$Message.success('保存成功')
@@ -725,7 +726,7 @@ export default {
       })
     },
     handleShare () {
-      console.log(this.popupedFile)
+      // console.log(this.popupedFile)
       let idx = _.findIndex(this.fileList, { _id: this.popupedFile.file_id })
       this.selectFile(idx)
       this.TOGGLE_SHOW_SHARE_PANEL(true)
@@ -803,7 +804,7 @@ export default {
       })
     },
     copyFile (file) {
-      console.log(file)
+      // console.log(file)
       let result = {
         type: file.type,
         title: file.title,

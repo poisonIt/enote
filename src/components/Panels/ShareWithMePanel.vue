@@ -85,9 +85,7 @@
               })
             })
             this.closeShareWithPanel()
-          } else {
-            this.$Message.error('请检查有道云链接是否正确')
-          }
+          } 
         })
       },
 

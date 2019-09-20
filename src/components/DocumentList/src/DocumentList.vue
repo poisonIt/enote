@@ -561,7 +561,7 @@ export default {
       this.$hub.dispatchHub('newNote', this)
     },
     handleContextmenu (props) {
-      // console.log(props)
+      console.log(props)
       this.popupedFile = props
       if (this.currentNav.type === 'share' && props.type === 'note') {
         // console.log(this.nativeMenus)
@@ -687,7 +687,8 @@ export default {
         })
       } else if (this.currentNav.type === 'public' && this.popupedFile.type === 'note') {
         //删除笔记
-        delPublicNote({ publicId: this.currentFile.publicNoteId }).then(resp => {
+        console.log(this.popupedFile)
+        delPublicNote({ publicId: this.popupedFile.publicNoteId }).then(resp => {
           console.log(resp)
           if (resp.data.returnCode === 200) {
             this.$Message.success('删除成功')

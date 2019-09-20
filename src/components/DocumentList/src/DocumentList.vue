@@ -311,6 +311,7 @@ export default {
     ]),
     fetchSharedFile () {
       if (this.network_status === 'online') {
+        this.isListLoading = true
         getShareWithMe().then(resp => {
           let notes = resp.data.body.map(item => transNoteDataFromRemote(item))
           fetchLocal('updateSharedNote', notes).then(res => {
@@ -590,7 +591,7 @@ export default {
       }
     },
     handleSaveNote () {
-      // console.log(this.popupedFile)
+      console.log(this.popupedFile)
       saveShareWithMe(this.popupedFile.rawData.publicNoteId).then(resp => {
         console.log(resp)
         if (resp.data.returnCode === 200) {

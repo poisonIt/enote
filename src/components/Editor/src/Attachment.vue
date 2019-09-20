@@ -65,6 +65,7 @@
 <script>
   import collapse from "../../../utils/transitions/collapse.js"
   import { ipcRenderer, shell } from 'electron'
+  
   export default {
     name: 'Attachment',
 
@@ -184,6 +185,9 @@
 
       handleDownFile (url, file_name, index) {
         let name = this.pathUrl.split('/')
+        console.log(name)
+        console.log(name[name.length - 1] === file_name)
+        console.log(name[name.length - 1], file_name)
         if (name[name.length - 1] === file_name) {
           shell.showItemInFolder(this.pathUrl)
           return

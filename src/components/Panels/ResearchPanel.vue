@@ -197,8 +197,8 @@
     </modal> -->
 
     <modal
-      width="480px"
-      height="200px"
+      width="350px"
+      height="180px"
       top="20vh"
       transition-name="fade-in-down"
       title="标题重复"
@@ -211,13 +211,13 @@
 
       <div class="button-group" slot="footer">
         <div class="button primary" @click="confirmPostTitle">确认</div>
-        <div class="button" @click="noPostTitle">取消</div>
+        <div class="button" style="margin-left: 20px;" @click="noPostTitle">取消</div>
       </div>
     </modal>
 
     <modal
-      width="480px"
-      height="200px"
+      width="350px"
+      height="180px"
       top="20vh"
       transition-name="fade-in-down"
       title="提示"
@@ -230,13 +230,13 @@
 
       <div class="button-group" slot="footer">
         <div class="button primary" @click="confirmSyncAnswer">是</div>
-        <div class="button" @click="noSyncAnswer">否</div>
+        <div class="button" style="margin-left: 20px;" @click="noSyncAnswer">否</div>
       </div>
     </modal>
 
     <modal
-      width="480px"
-      height="200px"
+      width="350px"
+      height="180px"
       top="20vh"
       transition-name="fade-in-down"
       title="提示"
@@ -936,5 +936,5 @@ export default {
   // font-family:PingFangSC;
   font-weight:400;
   color:rgba(51,51,51,1);
-  line-height:130px;
+  line-height:110px;
 </style>

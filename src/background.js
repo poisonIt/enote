@@ -478,6 +478,7 @@ function createHomeWindow () {
         } else {
           //添加进度显示
           // console.log(item.getSavePath(),item.getFilename(), item.getReceivedBytes(), item.getTotalBytes())
+          console.log(item)
           win.webContents.send("down-done", {
             name: item.getFilename(),
             receive: item.getReceivedBytes(),

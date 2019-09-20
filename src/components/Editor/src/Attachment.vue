@@ -159,21 +159,11 @@
           this.hiddenIndex = -1
           this.hidden = false
         }
-        if (isMac) {
-          this.pathUrl = arg.savePath
-          let pathArr = arg.savePath.split('/')
-          pathArr.pop()
-          this.fileSavePath = pathArr.join('/')
-        } else if (isWindows) {
-          this.pathUrl = arg.savePath
-
-          let pathArr = arg.savePath.replace(/\\/g, '\\').split('\\')
-          // arg.savePat?h
-          pathArr.pop()
-          this.fileSavePath = pathArr.join('\\')
-          // console.log(this.fileSavePath )
-
-        }
+        if (isMac)
+        this.pathUrl = arg.savePath
+        let pathArr = arg.savePath.split('/')
+        pathArr.pop()
+        this.fileSavePath = pathArr.join('/')
       })
 
     },
@@ -204,22 +194,10 @@
       },
 
       handleDownFile (url, file_name, index) {
-
-
-        if (isWindows) {
-          console.log(this.pathUrl, file_name)
-          let name = this.pathUrl.replace(/\\/g, '\\').split('\\')
-          console.log(name)
-          if (name[name.length - 1] === file_name) {
-            shell.showItemInFolder(this.pathUrl)
-            return
-          }
-        } else {
-          let name = this.pathUrl.split('/')
-          if (name[name.length - 1] === file_name) {
-            shell.showItemInFolder(this.pathUrl)
-            return
-          }
+        let name = this.pathUrl.split('/')
+        if (name[name.length - 1] === file_name) {
+          shell.showItemInFolder(this.pathUrl)
+          return
         }
 
 

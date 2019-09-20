@@ -703,8 +703,6 @@ export default {
       this.confirmResearchData = data
 
       if (this.publicStatus) {
-
-        console.log(this.post_data)
         this.confirmNote(this.post_data)
       } else {
         this.submitEnquiry(data)
@@ -724,6 +722,7 @@ export default {
     },
 
     confirmNote(post_data) {
+      this.post_data.publicTitle = this.researchTitle
       console.log(post_data)
       reportIsRepeat(post_data).then(resp => {
         console.log('提交研究部晨会---->', resp)
@@ -731,6 +730,8 @@ export default {
           if (resp.data.body.status === '0') {
             this.confirmResearchData.syncAnswer = this.post_data.syncAnswer
             this.confirmResearchData.titleRepeatAnswer = this.post_data.titleRepeatAnswer
+            this.confirmResearchData.publicTitle = this.researchTitle
+            console.log(this.confirmResearchData)
             this.submitEnquiry(this.confirmResearchData)
           } else if (resp.data.body.status === '1'){
             //"1" 笔记提交至研究部晨会、是要覆盖 （是 syncAnswer = true） false
@@ -774,7 +775,8 @@ export default {
 
     backSyncAnswer () {
       this.isbackAnswerShowed = false
-      this.post_data.titleRepeatAnswer = false
+      this.post_data.titleRepeatAnswer = null
+      // this.post_data.
 
     }
 

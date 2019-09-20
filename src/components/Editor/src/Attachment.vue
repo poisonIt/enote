@@ -188,10 +188,10 @@
       },
 
       handleDownAllAttach () {
-        if (this.fileSavePath) {
-          shell.showItemInFolder(this.fileSavePath)
-          return
-        }
+        // if (this.fileSavePath) {
+        //   shell.showItemInFolder(this.fileSavePath)
+        //   return
+        // }
         this.downUrlList = []
         for (let i = 0; i < this.note_files.length; i ++) {
           this.downUrlList.push({ url: this.note_files[i].url, index: i })

@@ -688,7 +688,7 @@ export default {
       } else if (this.currentNav.type === 'public' && this.popupedFile.type === 'note') {
         //删除笔记
         console.log(this.popupedFile)
-        delPublicNote({ publicId: this.popupedFile.publicNoteId }).then(resp => {
+        delPublicNote({ publicId: this.popupedFile.rawData.publicNoteId }).then(resp => {
           console.log(resp)
           if (resp.data.returnCode === 200) {
             this.$Message.success('删除成功')

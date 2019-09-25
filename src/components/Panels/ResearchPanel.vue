@@ -120,6 +120,7 @@
             :data="uploadData"
             :headers="{ Authorization: 'Bearer'+authorization }"
             style="width: 85%;padding-top: 7px;">
+
             <Button
               class="upload-button"
               icon="ios-cloud-upload-outline">新增文件
@@ -146,6 +147,8 @@
           <div class="form-label"></div>
           <input type="text" class="public_name" v-model="researchTitle" placeholder="研究部晨会标题">
         </div>
+        <Loading class="loading" :type="8" fill="#DDAF59" v-if="isLoading"></Loading>
+        <!-- <Loading class="loading" :type="8" fill="#DDAF59" v-if="isLoading"></Loading> -->
         <!-- <div class="form-item">
           <div class="form-label">摘要</div>
           <textarea type="text"
@@ -509,7 +512,9 @@ export default {
 
     handleSuccess (resp) {
       // console.log(resp)
+      this.isLoading = true
       if (resp.returnCode === 200) {
+        this.isLoading = false
         this.$Message.success('附件上传成功')
         this.uploadList = this.uploadList.concat(resp.body)
         this.noteFiles = _.cloneDeep(this.uploadList)

@@ -497,7 +497,7 @@ export default {
       // this.uploadData = {
       //   reportId: 0
       // }
-
+      this.isLoading = true
       let promise = new Promise((resolve) => {
         this.$nextTick(function () {
           if (this.uploadList.length > 0) {
@@ -512,7 +512,7 @@ export default {
 
     handleSuccess (resp) {
       // console.log(resp)
-      this.isLoading = true
+
       if (resp.returnCode === 200) {
         this.isLoading = false
         this.$Message.success('附件上传成功')

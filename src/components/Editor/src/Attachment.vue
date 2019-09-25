@@ -207,7 +207,7 @@
           // console.log(this.pathUrl, file_name)
           name = this.pathUrl.replace(/\\/g, '\\').split('\\')
         } else {
-          let name = this.pathUrl.split('/')
+          name = this.pathUrl.split('/')
         }
         if (name[name.length - 1] === file_name) {
           shell.showItemInFolder(this.pathUrl)

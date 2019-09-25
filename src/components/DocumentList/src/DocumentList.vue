@@ -252,7 +252,7 @@ export default {
         this.fetchSharedFile()
       } else if (val.type === 'public') {
         this.page = this.totalPages = 0
-        this.fetchPublicFile({ page: 0, size: 10})
+        this.fetchPublicFile({ page: 0, size: 10 })
       } else {
         this.refreshList()
       }
@@ -273,7 +273,13 @@ export default {
       this.updateFileList()
     },
     viewFileSortType (val) {
-      this.updateFileList()
+      if(this.currentNav.type === 'public') {
+        console.log(val)
+        this.fetchPublicFile({ page: 0, size: 10, sort: val})
+      } else {
+        this.updateFileList()
+      }
+
     },
     viewFileSortOrder (val) {
       this.updateFileList()
@@ -440,8 +446,6 @@ export default {
 
       this.fileList = _.flatten([folders, notes])
 
-      // console.log(notes)
-
       let idx = _.findIndex(this.fileList, { _id: this.selectedIdCache })
       idx = (idx === -1 ? 0 : idx)
       this.selectFile(this.fileList.length > 0 ? idx : -1)
@@ -508,6 +512,7 @@ export default {
       this.isMenuVisible = !this.isMenuVisible
     },
     handleMenuClick (value, item) {
+      console.log(value, item)
       let sortOrder = !item.actived ? 'up' : 'down'
       if (value === 'summary' || value === 'list') {
         this.SET_VIEW_FILE_LIST_TYPE(value)

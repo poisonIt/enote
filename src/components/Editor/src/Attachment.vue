@@ -29,7 +29,7 @@
             :key="index"
             @mouseover="currentIndex = index"
             @mouseout="currentIndex = -1"
-            @click="handleDownFile(item.url, item.fileName, index)">
+            @click="handleDownFile(item.url, item.oldName, index)">
             <div class="file_mold">
               <img :src="item.fileType==='EXCEL'?Excel:item.fileType==='PDF'?Pdf:item.fileType==='WORD'?Word:item.fileType==='PPT'?Ppt:Other">
               <van-circle
@@ -159,11 +159,19 @@
           this.hiddenIndex = -1
           this.hidden = false
         }
-        if (isMac)
-        this.pathUrl = arg.savePath
-        let pathArr = arg.savePath.split('/')
-        pathArr.pop()
-        this.fileSavePath = pathArr.join('/')
+         if (isMac) {
+          this.pathUrl = arg.savePath
+          let pathArr = arg.savePath.split('/')
+          pathArr.pop()
+          this.fileSavePath = pathArr.join('/')
+        } else if (isWindows) {
+          this.pathUrl = arg.savePath
+          let pathArr = arg.savePath.replace(/\\/g, '\\').split('\\')
+          // arg.savePat?h
+          pathArr.pop()
+          this.fileSavePath = pathArr.join('\\')
+          // console.log(this.fileSavePath )
+        }
       })
 
     },
@@ -194,7 +202,13 @@
       },
 
       handleDownFile (url, file_name, index) {
-        let name = this.pathUrl.split('/')
+        let name = []
+        if (isWindows) {
+          // console.log(this.pathUrl, file_name)
+          name = this.pathUrl.replace(/\\/g, '\\').split('\\')
+        } else {
+          let name = this.pathUrl.split('/')
+        }
         if (name[name.length - 1] === file_name) {
           shell.showItemInFolder(this.pathUrl)
           return
@@ -203,7 +217,6 @@
 
         this.hiddenIndex = index
         let downUrl = url;//需要下载文件的路径
-
         ipcRenderer.send('download',downUrl)
       }
     },

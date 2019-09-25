@@ -252,7 +252,7 @@ export default {
         this.fetchSharedFile()
       } else if (val.type === 'public') {
         this.page = this.totalPages = 0
-        this.fetchPublicFile({ page: 0, size: 10 })
+        this.fetchPublicFile({ page: 0, size: 10, sort: this.viewFileSortType })
       } else {
         this.refreshList()
       }
@@ -273,13 +273,7 @@ export default {
       this.updateFileList()
     },
     viewFileSortType (val) {
-      if(this.currentNav.type === 'public') {
-        console.log(val)
-        this.fetchPublicFile({ page: 0, size: 10, sort: val})
-      } else {
-        this.updateFileList()
-      }
-
+      this.updateFileList()
     },
     viewFileSortOrder (val) {
       this.updateFileList()
@@ -319,6 +313,7 @@ export default {
       if (this.network_status === 'online') {
         this.isListLoading = true
         getShareWithMe().then(resp => {
+
           let notes = resp.data.body.map(item => transNoteDataFromRemote(item))
           fetchLocal('updateSharedNote', notes).then(res => {
             this.handleDataFetched([[], res])
@@ -340,7 +335,8 @@ export default {
           this.isListLoading = true
         }
         getPublicNote(reqList).then(resp => {
-          // console.log(resp.data)
+          console.log('返回数据', resp.data.body.content)
+          // console.log(resp.data.body.content)
           this.totalPages = resp.data.body.totalPages - 1
           let publicNotes = []
           publicNotes = resp.data.body.content
@@ -413,13 +409,13 @@ export default {
 
       }
     },
+
     handleDataFetched (localFiles, isAppend) {
       // console.log(localFiles[1])
       if (this.currentNav.type !== 'bin') {
         this.folderList = localFiles[0].filter(file => file.trash === 'NORMAL')
         if (this.currentNav.type === 'public') {
           if (isAppend) {
-            // this.noteList = this.page === 0 ? localFiles[1].filter(file => file.trash === 'NORMAL') : this.noteList.concat(localFiles[1]).filter(file => file.trash === 'NORMAL')
             this.noteList = this.page === 0 ? localFiles[1] : this.noteList.concat(localFiles[1])
           } else {
             this.noteList = localFiles[1]
@@ -434,7 +430,6 @@ export default {
       } else {
         this.folderList = localFiles[0]
         this.noteList = localFiles[1]
-        console.log('99999', this.noteList)
       }
       this.stickTopFiles = []
       this.updateFileList()
@@ -512,7 +507,6 @@ export default {
       this.isMenuVisible = !this.isMenuVisible
     },
     handleMenuClick (value, item) {
-      console.log(value, item)
       let sortOrder = !item.actived ? 'up' : 'down'
       if (value === 'summary' || value === 'list') {
         this.SET_VIEW_FILE_LIST_TYPE(value)
@@ -522,6 +516,7 @@ export default {
       }
     },
     fileListSortFunc (list, type) {
+      console.log('排序的时间',list)
       let order
       let sortKey
       if (type === 'folder') {
@@ -857,7 +852,7 @@ export default {
       // console.log('1111')
       this.page++
 
-      this.fetchPublicFile({ page: this.page, size: this.size })
+      this.fetchPublicFile({ page: this.page, size: this.size, sort: this.viewFileListType })
     }
   }
 }

@@ -184,7 +184,7 @@
             this.deg = 0
         }
       },
-
+ 
       handleDownAllAttach () {
         // if (this.fileSavePath) {
         //   shell.showItemInFolder(this.fileSavePath)

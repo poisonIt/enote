@@ -516,7 +516,6 @@ export default {
       }
     },
     fileListSortFunc (list, type) {
-      console.log('排序的时间',list)
       let order
       let sortKey
       if (type === 'folder') {

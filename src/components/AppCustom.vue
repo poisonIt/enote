@@ -5,7 +5,7 @@
         <img src="../assets/images/lanhu/min3@2x.png">
       </span>
       <span class="btn max" @click="handleClick('max')">
-        <img :src="reset?'unMax':'max'" id="max_img">
+        <img :src="reset === true ? unMax:max" id="max_img">
       </span>
       <span class="btn close" @click="handleClick('appQuit')">
         <img src="../assets/images/lanhu/close2@2x.png">
@@ -29,13 +29,11 @@
         ipcRenderer.send(type)
         let max = document.getElementById('max_img')
         if (type === 'max') {
-          this.reset = true
-          console.log(max.getAttribute('src'))
-          // if (max.getAttribute('src') === '../assets/images/lanhu/max2@2x.png') {
-          //   max.setAttribute('src', '../assets/images/lanhu/unMax2@2x.png');
-          // } else {
-          //   max.setAttribute('src', '../assets/images/lanhu/max2@2x.png');
-          // }
+          if(this.reset) {
+            this.reset = false
+          } else {
+            this.reset = true
+          }
         }
       }
     }
@@ -45,28 +43,32 @@
 <style lang="stylus" scoped>
 #title
   height 30px
-  padding 0 25px
+  padding 0 15px
   width 100%
   -webkit-app-region drag
   position absolute
   top 0
   .btn_list
-    width 78px
+    width 120px
     height 100%
     display flex
+    // background red
     flex 1
     align-items center
     justify-content space-between
     float right
     .btn
-      width 28px
-      height 28px
+      // width 28px
+      height 30px
       display flex
       flex 1
       justify-content center
       align-items center
       &:hover
         background #e6e6e6
+      &.close:hover
+        background #da512c
+        
       img
         width 14px
         height 14px

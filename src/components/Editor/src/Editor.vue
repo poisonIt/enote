@@ -1,4 +1,5 @@
 <template>
+<!--  -->
   <div id="editor-container" :class="showHeader?'top':''">
     <textarea name="content" ref="editor" id="editor"></textarea>
     <div class="high-light-mask"
@@ -385,13 +386,13 @@ export default {
 #editor-container
   position relative
   overflow hidden
-  &::-webkit-scrollbar
-    display none
 .top
   top 30px
-
+  
 .ck-editor
   height 100% !important
+.ck-editor__main
+  height 70% !important
 
 .high-light-mask
   position absolute

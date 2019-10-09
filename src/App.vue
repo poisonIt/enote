@@ -39,8 +39,8 @@ export default {
 </script>
 
 <style lang="stylus">
-// ::-webkit-scrollbar
-//   display none
+::-webkit-scrollbar
+  display none
 
 *
   -webkit-app-region no-drag
@@ -56,7 +56,8 @@ export default {
   // display flex
   // flex-direction row
   overflow hidden
-
+  &::-webkit-scrollbar
+    display none
 #history.content
   img
     width 90% !important

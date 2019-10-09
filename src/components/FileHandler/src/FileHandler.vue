@@ -1,5 +1,5 @@
 <template>
-  <div class="container"
+  <div :class="showHeader ? 'container top' : 'container'"
     ref="container"
     v-if="currentFile"
     @dblclick.self="handleHeaderDbClick"
@@ -112,6 +112,7 @@ export default {
 
   data () {
     return {
+      showHeader: false,
       currentFileTitle: '',
       containerWidth: '0px',
       titleValue: '',
@@ -221,6 +222,11 @@ export default {
     window.removeEventListener('click', this.handleWindowClick)
   },
 
+  created() {
+    if (this.$remote.app.appConf.platform !== 'darwin') {
+      this.showHeader = true
+    }
+  },
   methods: {
     ...mapActions([
       'EDIT_FILE',
@@ -430,7 +436,8 @@ export default {
   border-bottom 1px solid #e6e6e6
   padding: 0 20px
   -webkit-app-region drag
-
+.top
+  top 30px
 .title
   position relative
   width 50%

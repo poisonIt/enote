@@ -1037,6 +1037,8 @@ export default {
   flex-direction column
   padding-bottom 30px
   overflow-y scroll
+  &::-webkit-scrollbar
+    display none
 
 .unexpanded
   transform: scaleY(0)

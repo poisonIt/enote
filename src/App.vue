@@ -56,6 +56,7 @@ export default {
   // display flex
   // flex-direction row
   overflow hidden
+  // background red
 
 #history.content
   img

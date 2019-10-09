@@ -1,4 +1,5 @@
 <template>
+<!--  -->
   <div id="editor-container" :class="showHeader?'top':''">
     <textarea name="content" ref="editor" id="editor"></textarea>
     <div class="high-light-mask"
@@ -56,7 +57,7 @@ export default {
       scrollTop: 0,
       noteFiles: [],
       attachShow: false,
-      showHeader: false
+      showHeader: true
     }
   },
 
@@ -384,12 +385,13 @@ export default {
 <style lang="stylus" scoped>
 #editor-container
   position relative
+  width 100%
+  height 100%
   overflow hidden
-  &::-webkit-scrollbar
-    display none
+
 .top
   top 30px
-
+  padding-bottom 30px
 .ck-editor
   height 100% !important
 

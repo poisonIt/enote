@@ -1,5 +1,6 @@
 <template>
-  <div class="document-list">
+<!--  -->
+  <div :class="showHeader?'document-list top' : 'document-list'">
     <div class="header" @dblclick.self="handleHeaderDbClick">
       <div class="button button-back"
         :class="{ disable : !currentNav || !currentNav._id || currentNav.type !== 'folder' }"
@@ -169,6 +170,7 @@ export default {
   },
   data () {
     return {
+      showHeader: false,
       distance: 40,
       endText: '没有更多数据了',
       // publicNoteHeight: 0,
@@ -291,11 +293,15 @@ export default {
         this.refreshList()
       }
     })
+
+    if (this.$remote.app.appConf.platform !== 'darwin') {
+      this.showHeader = true
+    }
   },
   mounted () {
     this.$root.$documentList = this
-    this.publicNoteHeight = this.$refs.body.offsetHeight
-    console.log(this.publicNoteHeight)
+    // this.publicNoteHeight = this.$refs.body.offsetHeight
+    // console.log(this.publicNoteHeight)
   },
   methods: {
     ...mapActions([
@@ -313,7 +319,7 @@ export default {
       if (this.network_status === 'online') {
         this.isListLoading = true
         getShareWithMe().then(resp => {
-
+          console.log(resp)
           let notes = resp.data.body.map(item => transNoteDataFromRemote(item))
           fetchLocal('updateSharedNote', notes).then(res => {
             this.handleDataFetched([[], res])
@@ -335,7 +341,7 @@ export default {
           this.isListLoading = true
         }
         getPublicNote(reqList).then(resp => {
-          console.log('返回数据', resp.data.body.content)
+          // console.log('返回数据', resp.data.body.content)
           // console.log(resp.data.body.content)
           this.totalPages = resp.data.body.totalPages - 1
           let publicNotes = []
@@ -876,11 +882,15 @@ export default {
       flex .85
       text-align center
       font-size 14px
+.top
+  padding 30px 0 0 0
 .body
   position relative
   height 100%
   padding-bottom 90px
   overflow-y scroll
+  &::-webkit-scrollbar
+    display none
   .no-file
     height 100%
     display flex

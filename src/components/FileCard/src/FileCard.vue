@@ -432,9 +432,9 @@ export default {
 
 .isShared
   right 50px
-  width 20px
-  height 20px
-  background-image url(../../../assets/images/lanhu/share_highlight@2x.png)
+  width 16px
+  height 16px
+  background-image url(../../../assets/images/lanhu/FileCardShare@2x.png)
   background-repeat no-repeat
   background-size contain
   background-position center

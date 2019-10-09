@@ -138,14 +138,12 @@ async function removeAll () {
 async function updateAll (req) {
   await removeAll()
   let result = await multiAdd(req)
-  console.log(result)
   return result
 }
 
 function getAll (req) {
   return new Promise((resolve, reject) => {
     PublicNote.find({}).exec((err, notes) => {
-      console.log('PublicNote-getAll', notes)
       if (err) {
         reject(err)
       }

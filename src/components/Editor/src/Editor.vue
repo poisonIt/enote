@@ -1,5 +1,5 @@
 <template>
-  <div id="editor-container">
+  <div id="editor-container" :class="showHeader?'top':''">
     <textarea name="content" ref="editor" id="editor"></textarea>
     <div class="high-light-mask"
       ref="highLightMask"
@@ -55,7 +55,8 @@ export default {
       locations: [],
       scrollTop: 0,
       noteFiles: [],
-      attachShow: false
+      attachShow: false,
+      showHeader: false
     }
   },
 
@@ -126,6 +127,9 @@ export default {
     //     }
     //   }
     // })
+    if (this.$remote.app.appConf.platform !== 'darwin') {
+      this.showHeader = true
+    }
     ipcRenderer.on('wrote-pdf', (event, path) => {
       let webviewPDF = document.getElementById('pdf-path')
       let tempPath = this.$remote.app.appConf.resourcePath + `/${this.currentFile._id}.html`
@@ -381,6 +385,8 @@ export default {
 #editor-container
   position relative
   overflow hidden
+.top
+  top 30px
 
 .ck-editor
   height 100% !important

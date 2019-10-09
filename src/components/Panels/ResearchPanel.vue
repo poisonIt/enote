@@ -278,7 +278,7 @@ export default {
   name: 'ResearchPanel',
 
   components: {
-    Loading
+    Loading,
   },
 
   data () {
@@ -522,6 +522,7 @@ export default {
           this.modalHeight = parseFloat(this.modalHeight) + 32 + 'px'
         }
       } else {
+        this.isLoading = false
         this.$Message.error('附件上传失败')
       }
     },
@@ -866,6 +867,12 @@ export default {
   overflow-y scroll
   .upload-list-item
     position relative
+    span
+      display inline-block
+      width 80%
+      overflow hidden
+      text-overflow ellipsis
+      white-space nowrap
 
 .icon-del
   position absolute
@@ -942,5 +949,13 @@ export default {
   // font-family:PingFangSC;
   font-weight:400;
   color:rgba(51,51,51,1);
-  line-height:110px;
+  line-height:110px
 </style>
+<style lang="stylus">
+.ivu-select-dropdown
+  .ivu-select-dropdown-list
+    max-height 200px !important
+.__vuescroll
+  height 200px !important
+</style>
+

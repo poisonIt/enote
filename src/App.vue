@@ -39,8 +39,8 @@ export default {
 </script>
 
 <style lang="stylus">
-::-webkit-scrollbar
-  display none
+// ::-webkit-scrollbar
+//   display none
 
 *
   -webkit-app-region no-drag

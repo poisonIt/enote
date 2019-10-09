@@ -188,17 +188,17 @@ ipcMain.on('logout', (event, arg) => {
   logout()
 })
 
-// ipcMain.on('min',() => {
-//   win.minimize();
-// })
+ipcMain.on('min',() => {
+  win.minimize();
+})
 
-// ipcMain.on('max',() => {
-//   if(win.isMaximized()){
-//     win.unmaximize();
-//   }else{
-//     win.maximize();
-//   }
-// })
+ipcMain.on('max',() => {
+  if(win.isMaximized()){
+    win.unmaximize();
+  }else{
+    win.maximize();
+  }
+})
 
 
 ipcMain.on('hideWindow', (event, arg) => {

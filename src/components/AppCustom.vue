@@ -5,7 +5,7 @@
         <img src="../assets/images/lanhu/min3@2x.png">
       </span>
       <span class="btn max" @click="handleClick('max')">
-        <img src="../assets/images/lanhu/max2@2x.png" class="max_img">
+        <img :src="reset === true ? unMax:max" id="max_img">
       </span>
       <span class="btn close" @click="handleClick('appQuit')">
         <img src="../assets/images/lanhu/close2@2x.png">
@@ -19,18 +19,20 @@
   export default {
     data() {
       return {
-        reset: false
+        reset: false,
+        max: require('../assets/images/lanhu/max2@2x.png'),
+        unMax: require('../assets/images/lanhu/unMax2@2x.png')
       }
     },
     methods: {
       handleClick (type) {
         ipcRenderer.send(type)
-        let max = document.getElementsByClassName('max_img')
+        let max = document.getElementById('max_img')
         if (type === 'max') {
-          if (max.getAttribute('src') == '../assets/images/lanhu/max2@2x.png') {
-            max.setAttribute('src', '../assets/images/lanhu/unMax2@2x.png');
+          if(this.reset) {
+            this.reset = false
           } else {
-              max.setAttribute('src', '../assets/images/lanhu/max2@2x.png');
+            this.reset = true
           }
         }
       }

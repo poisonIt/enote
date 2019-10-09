@@ -1,6 +1,6 @@
 <template>
   <div class="file-card"
-    :class="{ mini : mini, selected : selected }"
+    :class="{ mini : mini, selected : selected, absence: isAbsence }"
     @click="handleClick"
     @dblclick="handleDbClick"
     :draggable="isDraggable"
@@ -26,6 +26,7 @@
         </span>
       </div>
       <div class="icon-stack">
+        <div class="absence_icon" v-if="isAbsence"></div>
         <div class="icon stick-top" v-if="isTop"></div>
         <div class="isShared" v-if="isShared"></div>
         <div class="isPushing infinite rotate animated" v-if="isPushing"></div>
@@ -153,6 +154,9 @@ export default {
     rawData: {
       type: Object,
       default: () => { return {} }
+    },
+    isTrash: {
+      type: String
     }
   },
 
@@ -163,6 +167,17 @@ export default {
       currentNav: 'GET_CURRENT_NAV'
     }),
 
+    isAbsence () {
+      if (this.type === 'note' && this.currentNav.type === 'share') {
+        if (!this.isShared || this.isTrash !== 'NORMAL') {
+          return true
+        } else {
+          return false
+        }
+      } else {
+        return false
+      }
+    },
     isTimeShowed () {
       if (this.viewFileType === 'latest') {
         return this.mini || !this.selected
@@ -243,6 +258,7 @@ export default {
   },
 
   mounted () {
+    // console.log(this.currentNav)
     this.$on('select', index => {
       if (this.$vnode.key === index) {
         this.selected = true
@@ -353,7 +369,9 @@ export default {
     .footer
       width 100px
       margin 0
-
+  &.absence
+    background #F7F5EC
+    opacity 0.4
 .header
   position relative
   width inherit
@@ -429,7 +447,14 @@ export default {
   opacity .6
   &.local
     background-color green
-
+.absence_icon
+  right 50px
+  width 16px
+  height 16px
+  background-image url(../../../assets/images/lanhu/absence@2x.png)
+  background-repeat no-repeat
+  background-size contain
+  background-position center
 .isShared
   right 50px
   width 16px

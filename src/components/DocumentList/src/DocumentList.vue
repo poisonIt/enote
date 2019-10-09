@@ -1,5 +1,4 @@
 <template>
-<!--  -->
   <div :class="showHeader?'document-list top' : 'document-list'">
     <div class="header" @dblclick.self="handleHeaderDbClick">
       <div class="button button-back"
@@ -75,6 +74,7 @@
             :content="item.summary"
             :isTop="item.top"
             :isShared="item.share"
+            :isTrash="item.trash"
             :update_at="item.update_at | yyyymmdd"
             :file_size="Number(item.size)"
             :username="item.username"
@@ -127,6 +127,7 @@
     <div class="list-loading" v-if="isListLoading">
       <Loading :type="1" fill="#DDAF59" style="transform: scale(1.2) translateY(-60px)"></Loading>
     </div>
+    <div class="absence_toast" v-if="is_absence">{{ absence_info }}</div>
   </div>
 </template>
 
@@ -170,6 +171,8 @@ export default {
   },
   data () {
     return {
+      is_absence: false,
+      absence_info: '',
       showHeader: false,
       distance: 40,
       endText: '没有更多数据了',
@@ -319,7 +322,7 @@ export default {
       if (this.network_status === 'online') {
         this.isListLoading = true
         getShareWithMe().then(resp => {
-          console.log(resp)
+          // console.log(resp)
           let notes = resp.data.body.map(item => transNoteDataFromRemote(item))
           fetchLocal('updateSharedNote', notes).then(res => {
             this.handleDataFetched([[], res])
@@ -426,6 +429,12 @@ export default {
           } else {
             this.noteList = localFiles[1]
           }
+        } else if (this.currentNav.type === 'share') {
+          if (isAppend) {
+            this.noteList = this.noteList.concat(localFiles[1])
+          } else {
+            this.noteList = localFiles[1]
+          }
         } else {
           if (isAppend) {
             this.noteList = this.noteList.concat(localFiles[1].filter(file => file.trash === 'NORMAL'))
@@ -446,7 +455,7 @@ export default {
       let folders = this.fileListSortFunc(this.folderList.filter(file => file.title.search(re) > -1), 'folder')
 
       this.fileList = _.flatten([folders, notes])
-
+      // console.log(this.fileList)
       let idx = _.findIndex(this.fileList, { _id: this.selectedIdCache })
       idx = (idx === -1 ? 0 : idx)
       this.selectFile(this.fileList.length > 0 ? idx : -1)
@@ -478,8 +487,27 @@ export default {
     selectFile (index) {
       this.selectedFileIdx = index
       const file = this.fileList[index]
-      // console.log('selectFile', file, index)
+      this.is_absence = false
       if (file) {
+        if (this.currentNav.type === 'share') {
+          if (!file.share || file.trash !== 'NORMAL') {
+            if (!file.share) {
+              this.absence_info = '该笔记已被分享者取消分享'
+              this.is_absence = true
+              setTimeout(() => {
+                this.is_absence = false
+              }, 3000)
+            } else {
+              this.absence_info = '该笔记已被分享者删除'
+              this.is_absence = true
+              setTimeout(() => {
+                this.is_absence = false
+              }, 3000)
+            }
+            return
+          }
+        }
+
         if (this.currentFile && file._id === this.currentFile._id) return
         this.SET_CURRENT_FILE(this.copyFile(file))
         this.$refs.fileCardGroup.select(index) // visually select file
@@ -596,7 +624,7 @@ export default {
       }
     },
     handleSaveNote () {
-      console.log(this.popupedFile)
+      // console.log(this.popupedFile)
       saveShareWithMe(this.popupedFile.rawData.publicNoteId).then(resp => {
         console.log(resp)
         if (resp.data.returnCode === 200) {
@@ -965,6 +993,25 @@ export default {
   justify-content center
   background-color #fcfbf7
   z-index 9999
+.absence_toast
+  width 175px
+  height 36px
+  background rgba(0,0,0,1)
+  border-radius 4px
+  opacity 0.6
+  position absolute
+  top 0
+  // left 0
+  bottom 0
+  right -80%
+  margin auto
+  z-index 999
+  font-size 12px
+  text-align center
+  font-family PingFangSC-Regular,PingFangSC
+  font-weight 400
+  color rgba(255,255,255,1)
+  line-height 36px
 </style>
 <style lang="stylus">
 .end

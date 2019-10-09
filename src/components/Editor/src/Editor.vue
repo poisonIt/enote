@@ -385,6 +385,8 @@ export default {
 #editor-container
   position relative
   overflow hidden
+  &::-webkit-scrollbar
+    display none
 .top
   top 30px
 

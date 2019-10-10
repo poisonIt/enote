@@ -41,7 +41,6 @@ export default {
 <style lang="stylus">
 // ::-webkit-scrollbar
 //   display none
-
 *
   -webkit-app-region no-drag
 

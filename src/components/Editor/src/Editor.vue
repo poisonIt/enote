@@ -57,7 +57,7 @@ export default {
       scrollTop: 0,
       noteFiles: [],
       attachShow: false,
-      showHeader: true
+      showHeader: false
     }
   },
 
@@ -396,6 +396,7 @@ export default {
 .ck-editor__main
   height 70% !important
 
+
 .high-light-mask
   position absolute
   top 0
@@ -413,4 +414,10 @@ export default {
   background-color #fff
   z-index 9999
 
+</style>
+<style lang="stylus">
+.ck-rounded-corners .ck.ck-editor__main>.ck-editor__editable, .ck.ck-editor__main>.ck-editor__editable.ck-rounded-corners
+  // background blue !important
+  &::-webkit-scrollbar
+    display none !important
 </style>

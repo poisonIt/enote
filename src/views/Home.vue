@@ -126,7 +126,7 @@ export default {
     return {
       validateTokenItv: null,
       modifyFrom: null,
-      showHeader: true
+      showHeader: false
     }
   },
 

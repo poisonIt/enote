@@ -57,7 +57,7 @@ export default {
       scrollTop: 0,
       noteFiles: [],
       attachShow: false,
-      showHeader: false
+      showHeader: true
     }
   },
 
@@ -385,10 +385,12 @@ export default {
 <style lang="stylus" scoped>
 #editor-container
   position relative
+  width 100%
+  height 100%
   overflow hidden
 .top
   top 30px
-  
+  padding-bottom 30px
 .ck-editor
   height 100% !important
 .ck-editor__main

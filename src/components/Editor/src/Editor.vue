@@ -420,4 +420,7 @@ export default {
   // background blue !important
   &::-webkit-scrollbar
     display none !important
+.ck-editor__main
+  &::-webkit-scrollbar
+    display none !important
 </style>

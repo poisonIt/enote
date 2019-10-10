@@ -112,7 +112,7 @@ export default {
 
   data () {
     return {
-      showHeader: true,
+      showHeader: false,
       currentFileTitle: '',
       containerWidth: '0px',
       titleValue: '',

@@ -955,6 +955,8 @@ export default {
 .ivu-select-dropdown
   .ivu-select-dropdown-list
     max-height 200px !important
+    &::-webkit-scrollbar
+      display block !important
 .__vuescroll
   height 200px !important
 </style>

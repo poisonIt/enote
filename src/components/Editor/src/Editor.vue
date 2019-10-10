@@ -1,6 +1,9 @@
 <template>
 <!--  -->
-  <div id="editor-container" :class="showHeader?'top':''">
+  <div
+    id="editor-container"
+    :class="showHeader && changeTop?'paddTop':showHeader?'top':changeTop?'noTop':''"
+  >
     <textarea name="content" ref="editor" id="editor"></textarea>
     <div class="high-light-mask"
       ref="highLightMask"
@@ -13,7 +16,7 @@
         </li>
       </ul>
     </div>
-    <div class="mask" v-if="showMask"></div>
+    <div :class="showHeader?'mask show_header':'mask'" v-if="showMask"></div>
     <attachment
       v-if="hasAttachment"
       :note_files="noteFiles"
@@ -57,17 +60,18 @@ export default {
       scrollTop: 0,
       noteFiles: [],
       attachShow: false,
-      showHeader: false
+      showHeader: false,
+      changeTop: false,
     }
   },
 
   computed: {
     ...mapGetters({
+      isShowed: 'GET_SHOW_TAG_HANDLER',
       currentNav: 'GET_CURRENT_NAV',
       currentFile: 'GET_CURRENT_FILE',
       viewType: 'GET_VIEW_TYPE'
     }),
-
     hasAttachment () {
       if (this.currentNav.type === 'share' || this.currentNav.type === 'public') {
         // console.log(this.noteFiles)
@@ -81,6 +85,18 @@ export default {
   },
 
   watch: {
+    isShowed: {
+      handler: function (val) {
+
+        // if (this.$remote.app.appConf.platform !== 'darwin') {
+          if (val === true) {
+            this.changeTop = true
+          } else {
+            this.changeTop = false
+          }
+        // }
+      }
+    },
     currentFile (val, oldVal) {
       this.showHighLight = false
       this.locations = []
@@ -388,14 +404,16 @@ export default {
   width 100%
   height 100%
   overflow hidden
-
 .top
+  // top 30px
+  padding-top 30px
+.paddTop
   top 30px
-  padding-bottom 30px
+  padding-bottom 66px
+.noTop
+  padding-bottom 36px
 .ck-editor
   height 100% !important
-
-
 .high-light-mask
   position absolute
   top 0
@@ -412,6 +430,8 @@ export default {
   left 0
   background-color #fff
   z-index 9999
+.show_header
+  top 30px
 
 </style>
 <style lang="stylus">

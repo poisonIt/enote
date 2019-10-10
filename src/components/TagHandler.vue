@@ -1,5 +1,5 @@
 <template>
-  <div class="container"
+  <div :class="showHeader?'container top_tag': 'container'"
     ref="container"
     :style="{ width: containerWidth }"
     v-if="isShowed">
@@ -7,7 +7,7 @@
       @click="toggleList"
       ref="tagListButton">标签</div>
     <div class="tag-list"
-      ref="tagList" 
+      ref="tagList"
       :style="{ maxWidth: tagListWidth }">
       <div class="tag-item"
         v-for="(item, index) in currentTags"
@@ -65,7 +65,8 @@ export default {
       isListShowed: false,
       shouldUpdateTagNav: true,
       containerWidth: '0px',
-      tagListWidth: ''
+      tagListWidth: '',
+      showHeader: false
     }
   },
 
@@ -154,7 +155,11 @@ export default {
       this.handleResize()
     })
   },
-
+  created() {
+    if (this.$remote.app.appConf.platform !== 'darwin') {
+      this.showHeader = true
+    }
+  },
   methods: {
     ...mapActions([
       'SAVE_FILE_TITLE',
@@ -260,7 +265,8 @@ export default {
   height 36px !important
   border-bottom 1px solid #e6e6e6
   padding: 0 20px
-
+  &.top_tag
+    top 30px
 .tag-list
   height 100%
   display flex
@@ -369,7 +375,7 @@ export default {
   background-color transparent
   z-index 9999
   -webkit-app-region drag
-  
+
 .all-tag-list-container
   width 200px
   position absolute

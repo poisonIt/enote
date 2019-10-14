@@ -598,8 +598,13 @@ export default {
       this.popupedFile = props
       if (this.currentNav.type === 'share' && props.type === 'note') {
         // console.log(this.nativeMenus)
-        this.popupNativeMenu(this.nativeMenus[3])
-        return
+        if (props.isShared && props.isTrash === "NORMAL") {
+          this.popupNativeMenu(this.nativeMenus[3])
+          return
+        } else {
+          return
+        }
+
       }
       if (this.currentNav.type === 'bin') {
         this.popupNativeMenu(this.nativeMenus[5])

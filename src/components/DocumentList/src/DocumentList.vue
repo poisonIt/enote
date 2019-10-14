@@ -124,7 +124,7 @@
           <div class="button" @click="isDelConfirmShowed = false">取消</div>
         </div>
     </modal>
-    <div class="list-loading" v-if="isListLoading">
+    <div :class="showHeader?'list-loading top_title':'list-loading'" v-if="isListLoading">
       <Loading :type="1" fill="#DDAF59" style="transform: scale(1.2) translateY(-60px)"></Loading>
     </div>
     <div class="absence_toast" v-if="is_absence">{{ absence_info }}</div>
@@ -993,6 +993,8 @@ export default {
   justify-content center
   background-color #fcfbf7
   z-index 9999
+  &.top_title
+    top 30px
 .absence_toast
   width 175px
   height 36px

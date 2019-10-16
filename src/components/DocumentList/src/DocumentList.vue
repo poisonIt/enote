@@ -489,20 +489,23 @@ export default {
       const file = this.fileList[index]
       this.is_absence = false
       if (file) {
+        console.log(file)
         if (this.currentNav.type === 'share') {
           if (!file.share || file.trash !== 'NORMAL') {
-            if (!file.share) {
+            if (file.trash !== 'NORMAL') {
+              this.absence_info = '该笔记已被分享者删除'
+              this.is_absence = true
+              setTimeout(() => {
+                this.is_absence = false
+              }, 3000)
+            } else if (!file.share) {
               this.absence_info = '该笔记已被分享者取消分享'
               this.is_absence = true
               setTimeout(() => {
                 this.is_absence = false
               }, 3000)
             } else {
-              this.absence_info = '该笔记已被分享者删除'
-              this.is_absence = true
-              setTimeout(() => {
-                this.is_absence = false
-              }, 3000)
+
             }
             return
           }

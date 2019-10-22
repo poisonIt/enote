@@ -91,7 +91,7 @@ export default {
   created () {
     this.isOffline = !window.navigator.onLine
   },
-  
+
   mounted () {
     ipcRenderer.on('communicate', (event, arg) => {
       if (arg.from === 'Preview' && arg.tasks.indexOf('pushData') > -1) {
@@ -187,7 +187,7 @@ export default {
           this.authenticate()
         }, 6000)
       })
-     
+
       if (authenticateResp.data.returnCode === 200) {
         const id_token = authenticateResp.data.body.id_token
         this.SET_TOKEN(id_token)
@@ -309,8 +309,8 @@ export default {
     transform rotate(90deg)
 
 .icon-new, .icon-sync
-  width 19px
-  height 19px
+  width 20px
+  height 20px
   display block
   font-size 20px
   font-weight 600

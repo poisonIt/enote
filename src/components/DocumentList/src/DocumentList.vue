@@ -971,8 +971,8 @@ export default {
     &::before
       content ''
       display block
-      width 28px
-      height 18px
+      width 40px
+      height 24px
       position absolute
       top 50%
       left 50%

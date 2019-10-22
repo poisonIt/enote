@@ -251,8 +251,8 @@ export default {
     width 40px
     height 36px
     background-image url('../assets/images/lanhu/minimize_white.png')
-    background-size 60% 80%
-    background-position 50% -10%
+    background-size 50% 50%
+    background-position 50% 50%
     background-repeat no-repeat
     &:hover
       background-color rgba(255, 255, 255, 0.3)
@@ -261,7 +261,7 @@ export default {
     height 36px
     margin-left 10px
     background-image url('../assets/images/lanhu/close_white.png')
-    background-size 80%
+    background-size 50% 50%
     background-position center
     background-repeat no-repeat
     &:hover

@@ -598,7 +598,7 @@ export default {
       this.$hub.dispatchHub('newNote', this)
     },
     handleContextmenu (props) {
-      console.log(props)
+      // console.log(props)
       this.popupedFile = props
       if (this.currentNav.type === 'share' && props.type === 'note') {
         // console.log(this.nativeMenus)
@@ -635,7 +635,7 @@ export default {
     handleSaveNote () {
       // console.log(this.popupedFile)
       saveShareWithMe(this.popupedFile.rawData.publicNoteId).then(resp => {
-        console.log(resp)
+        // console.log(resp)
         if (resp.data.returnCode === 200) {
           this.$Message.success('保存成功')
         }
@@ -686,6 +686,7 @@ export default {
         pid: pid,
         isTemp: isTemp
       }).then(res => {
+        // console.log('新建笔记返回结果',res)
         this.selectedIdCache = res._id
         this.$root.$navTree.select(pid)
         this.$hub.dispatchHub('pushData', this)
@@ -731,7 +732,7 @@ export default {
         //删除笔记
         console.log(this.popupedFile)
         delPublicNote({ publicId: this.popupedFile.rawData.publicNoteId }).then(resp => {
-          console.log(resp)
+          // console.log(resp)
           if (resp.data.returnCode === 200) {
             this.$Message.success('删除成功')
             this.fetchPublicFile({ page: this.page, size: this.size })
@@ -882,6 +883,7 @@ export default {
       }
     },
     folderNameComputed (file) {
+      // console.log(file)
       if (this.currentNav.type === 'share') {
         return '与我分享'
       } else if (this.currentNav.type === 'public') {

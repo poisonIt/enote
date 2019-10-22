@@ -632,6 +632,7 @@ export default {
   height 30px
   line-height 33px
   z-index 1
+  color #c2c2c2
   &.current
     color #DDAF59
 .tn-icon

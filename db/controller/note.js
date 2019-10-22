@@ -585,7 +585,6 @@ async function patchSummary (note) {
   if (doc) {
     note.summary = htmlToText(doc.content)
   }
-
   return note
 }
 

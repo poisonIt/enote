@@ -1,5 +1,5 @@
 <template>
-  <div class="document-list">
+  <div :class="showHeader?'document-list top' : 'document-list'">
     <div class="header" @dblclick.self="handleHeaderDbClick">
       <div class="button button-back"
         :class="{ disable : !currentNav || !currentNav._id || currentNav.type !== 'folder' }"
@@ -21,8 +21,14 @@
         </Menu>
       </div>
     </div>
+
     <div class="body" ref="body">
-      <Scroll :on-reach-bottom="handleReachBottom" :height="publicNoteHeight" :loading-text="text">
+      <InfiniteScroll
+        @next="next"
+        :distance="distance"
+        :end="end"
+        :text="endText"
+        v-if="currentNav.type === 'public'">
         <FileCardGroup
           ref="fileCardGroup"
           @handleSelect="selectFile"
@@ -50,9 +56,38 @@
             @contextmenu="handleContextmenu"
             @dblclick="handleDbClick(item)">
           </FileCard>
-
         </FileCardGroup>
-      </Scroll>
+      </InfiniteScroll>
+      <FileCardGroup
+          v-else
+          ref="fileCardGroup"
+          @handleSelect="selectFile"
+          @titleClick="handleFileTitleClick">
+          <FileCard
+            v-for="(item, index) in fileList"
+            :key="index"
+            :pid="item.pid"
+            :mini="viewFileListType === 'list'"
+            :file_id="item._id"
+            :type="item.type"
+            :title="item.title"
+            :content="item.summary"
+            :isTop="item.top"
+            :isShared="item.share"
+            :isTrash="item.trash"
+            :update_at="item.update_at | yyyymmdd"
+            :file_size="Number(item.size)"
+            :username="item.username"
+            :parent_folder="folderNameComputed(item)"
+            :need_push="item.need_push_remotely"
+            :need_push_local="item.need_push_locally"
+            :rawData="item"
+            :isDraggable="item.isDraggable"
+            :isPushing="notesPushing.indexOf(item._id) > -1"
+            @contextmenu="handleContextmenu"
+            @dblclick="handleDbClick(item)">
+          </FileCard>
+        </FileCardGroup>
 
 
       <div class="no-file" v-if="fileList.length === 0">
@@ -64,6 +99,7 @@
         </div>
       </div>
     </div>
+
     <div class="footer">
       <div class="num">
         总共 {{ fileList.length }} 项
@@ -88,9 +124,10 @@
           <div class="button" @click="isDelConfirmShowed = false">取消</div>
         </div>
     </modal>
-    <div class="list-loading" v-if="isListLoading">
+    <div :class="showHeader?'list-loading top_title':'list-loading'" v-if="isListLoading">
       <Loading :type="1" fill="#DDAF59" style="transform: scale(1.2) translateY(-60px)"></Loading>
     </div>
+    <div class="absence_toast" v-if="is_absence">{{ absence_info }}</div>
   </div>
 </template>
 
@@ -106,6 +143,7 @@ import { transNoteDataFromRemote } from '../../../utils/mixins/transData'
 import { getShareWithMe, getPublicNote, saveShareWithMe, delPublicNote } from '../../../service'
 import SearchBar from '@/components/SearchBar'
 import Loading from '@/components/Loading'
+import InfiniteScroll from 'vt-infinitescroll'
 import { FileCard, FileCardGroup } from '@/components/FileCard'
 import {
   docHandleMenu1,
@@ -128,12 +166,17 @@ export default {
     SearchBar,
     Loading,
     FileCard,
-    FileCardGroup
+    FileCardGroup,
+    InfiniteScroll
   },
   data () {
     return {
-      text: '加赞中',
-      publicNoteHeight: 0,
+      is_absence: false,
+      absence_info: '',
+      showHeader: false,
+      distance: 40,
+      endText: '没有更多数据了',
+      // publicNoteHeight: 0,
       isDelConfirmShowed: false,
       selectedFileIdx: -1,
       selectedIdCache: null,
@@ -155,7 +198,8 @@ export default {
         delPublicMenu
       ],
       page: 0,
-      size: 10
+      size: 10,
+      totalPages: 0,
     }
   },
   filters: {
@@ -200,16 +244,20 @@ export default {
         this.currentNav.type !== 'bin' &&
         this.currentNav.type !== 'share' &&
         this.currentNav.type !== 'public'
+    },
+    end () {
+      // console.log(this.totalPages, this.page)
+      return this.page === this.totalPages
     }
   },
   watch: {
     currentNav (val) {
-
       console.log('wacth-currentNav', val)
       if (val.type === 'share') {
         this.fetchSharedFile()
       } else if (val.type === 'public') {
-        this.fetchPublicFile({ page: this.page, size: this.size })
+        this.page = this.totalPages = 0
+        this.fetchPublicFile({ page: 0, size: 10, sort: this.viewFileSortType })
       } else {
         this.refreshList()
       }
@@ -249,11 +297,14 @@ export default {
       }
     })
 
+    if (this.$remote.app.appConf.platform !== 'darwin') {
+      this.showHeader = true
+    }
   },
   mounted () {
     this.$root.$documentList = this
-    this.publicNoteHeight = this.$refs.body.offsetHeight
-    console.log(this.publicNoteHeight)
+    // this.publicNoteHeight = this.$refs.body.offsetHeight
+    // console.log(this.publicNoteHeight)
   },
   methods: {
     ...mapActions([
@@ -271,6 +322,7 @@ export default {
       if (this.network_status === 'online') {
         this.isListLoading = true
         getShareWithMe().then(resp => {
+          // console.log(resp)
           let notes = resp.data.body.map(item => transNoteDataFromRemote(item))
           fetchLocal('updateSharedNote', notes).then(res => {
             this.handleDataFetched([[], res])
@@ -288,18 +340,18 @@ export default {
     },
     fetchPublicFile (reqList) {
       if (this.network_status === 'online') {
-        this.isListLoading = true
-        // console.log('public')
+        if (this.page === 0) {
+          this.isListLoading = true
+        }
         getPublicNote(reqList).then(resp => {
-          // console.log(resp)
-          // if (resp.data.body.content.lenth < this.size) {
-          //   this.text = '已经到底了'
-          // }
+          // console.log('返回数据', resp.data.body.content)
+          // console.log(resp.data.body.content)
+          this.totalPages = resp.data.body.totalPages - 1
           let publicNotes = []
           publicNotes = resp.data.body.content
+
           let notes = publicNotes.map(item => transNoteDataFromRemote(item))
           fetchLocal('updatePublicNote', notes).then(res => {
-            // console.log(res)
             this.handleDataFetched([[], res], true)
             this.isListLoading = false
           })
@@ -363,26 +415,33 @@ export default {
         })
       } else if (nav.type === 'public') {
         console.log('nav-public', nav)
+
       }
     },
+
     handleDataFetched (localFiles, isAppend) {
       // console.log(localFiles[1])
       if (this.currentNav.type !== 'bin') {
         this.folderList = localFiles[0].filter(file => file.trash === 'NORMAL')
-        if (this.currentNav.type === 'share' || this.currentNav.type === 'public') {
+        if (this.currentNav.type === 'public') {
+          if (isAppend) {
+            this.noteList = this.page === 0 ? localFiles[1] : this.noteList.concat(localFiles[1])
+          } else {
+            this.noteList = localFiles[1]
+          }
+        } else if (this.currentNav.type === 'share') {
           if (isAppend) {
             this.noteList = this.noteList.concat(localFiles[1])
           } else {
             this.noteList = localFiles[1]
           }
         } else {
-          if (isAppend) { 
+          if (isAppend) {
             this.noteList = this.noteList.concat(localFiles[1].filter(file => file.trash === 'NORMAL'))
           } else {
             this.noteList = localFiles[1].filter(file => file.trash === 'NORMAL')
           }
         }
-
       } else {
         this.folderList = localFiles[0]
         this.noteList = localFiles[1]
@@ -394,14 +453,16 @@ export default {
       let re = new RegExp(this.searchKeyword, 'g')
       let notes = this.fileListSortFunc(this.noteList.filter(file => file.title.search(re) > -1), 'note')
       let folders = this.fileListSortFunc(this.folderList.filter(file => file.title.search(re) > -1), 'folder')
-      // if ()
-      this.fileList = _.flatten([folders, notes])
 
+      this.fileList = _.flatten([folders, notes])
       // console.log(this.fileList)
       let idx = _.findIndex(this.fileList, { _id: this.selectedIdCache })
       idx = (idx === -1 ? 0 : idx)
       this.selectFile(this.fileList.length > 0 ? idx : -1)
-      this.scrollToSelected()
+      if (this.currentNav.type !== 'public') {
+        this.scrollToSelected()
+      }
+      // this.scrollToSelected()
       this.isListLoading = false
       if (this.navNeedUpdate) {
         let fileListIds = this.fileList.map(file => file._id)
@@ -426,8 +487,30 @@ export default {
     selectFile (index) {
       this.selectedFileIdx = index
       const file = this.fileList[index]
-      // console.log('selectFile', file, index)
+      this.is_absence = false
       if (file) {
+        console.log(file)
+        if (this.currentNav.type === 'share') {
+          if (!file.share || file.trash !== 'NORMAL') {
+            if (file.trash !== 'NORMAL') {
+              this.absence_info = '该笔记已被分享者删除'
+              this.is_absence = true
+              setTimeout(() => {
+                this.is_absence = false
+              }, 3000)
+            } else if (!file.share) {
+              this.absence_info = '该笔记已被分享者取消分享'
+              this.is_absence = true
+              setTimeout(() => {
+                this.is_absence = false
+              }, 3000)
+            } else {
+
+            }
+            return
+          }
+        }
+
         if (this.currentFile && file._id === this.currentFile._id) return
         this.SET_CURRENT_FILE(this.copyFile(file))
         this.$refs.fileCardGroup.select(index) // visually select file
@@ -470,6 +553,7 @@ export default {
       }
     },
     fileListSortFunc (list, type) {
+
       let order
       let sortKey
       if (type === 'folder') {
@@ -514,13 +598,17 @@ export default {
       this.$hub.dispatchHub('newNote', this)
     },
     handleContextmenu (props) {
-      // console.log(props)
+      console.log(props)
       this.popupedFile = props
-
       if (this.currentNav.type === 'share' && props.type === 'note') {
         // console.log(this.nativeMenus)
-        this.popupNativeMenu(this.nativeMenus[3])
-        return
+        if (props.isShared && props.isTrash === "NORMAL") {
+          this.popupNativeMenu(this.nativeMenus[3])
+          return
+        } else {
+          return
+        }
+
       }
       if (this.currentNav.type === 'bin') {
         this.popupNativeMenu(this.nativeMenus[5])
@@ -543,11 +631,10 @@ export default {
       } else if (props.type === 'folder') {
         this.popupNativeMenu(this.nativeMenus[2])
       }
-
     },
-
     handleSaveNote () {
-      saveShareWithMe(this.popupedFile.rawData.remote_id).then(resp => {
+      // console.log(this.popupedFile)
+      saveShareWithMe(this.popupedFile.rawData.publicNoteId).then(resp => {
         console.log(resp)
         if (resp.data.returnCode === 200) {
           this.$Message.success('保存成功')
@@ -641,15 +728,16 @@ export default {
           })
         })
       } else if (this.currentNav.type === 'public' && this.popupedFile.type === 'note') {
-        console.log(this.currentFile)
         //删除笔记
-        delPublicNote({ publicId: this.currentFile.publicNoteId }).then(resp => {
+        console.log(this.popupedFile)
+        delPublicNote({ publicId: this.popupedFile.rawData.publicNoteId }).then(resp => {
           console.log(resp)
           if (resp.data.returnCode === 200) {
             this.$Message.success('删除成功')
             this.fetchPublicFile({ page: this.page, size: this.size })
           }
         })
+
       } else {
         this.removeFile(this.popupedFile.rawData)
       }
@@ -682,8 +770,7 @@ export default {
       })
     },
     handleShare () {
-      console.log(this.popupedFile)
-
+      // console.log(this.popupedFile)
       let idx = _.findIndex(this.fileList, { _id: this.popupedFile.file_id })
       this.selectFile(idx)
       this.TOGGLE_SHOW_SHARE_PANEL(true)
@@ -726,7 +813,6 @@ export default {
           titleArr
         )
       }
-
       fetchLocal(taskName, {
         id: fileId,
         title: newTitle,
@@ -762,6 +848,7 @@ export default {
       })
     },
     copyFile (file) {
+      // console.log(file)
       let result = {
         type: file.type,
         title: file.title,
@@ -803,279 +890,146 @@ export default {
         return file.parent_folder ? file.parent_folder.title : '我的文件夹'
       }
     },
-
-    handleReachBottom () {
+    next () {
       // console.log('1111')
       this.page++
-      this.fetchPublicFile({ page: this.page, size: this.size })
+
+      this.fetchPublicFile({ page: this.page, size: this.size, sort: this.viewFileListType })
     }
   }
 }
 </script>
 
 <style lang="stylus" scoped>
-.document-list {
-  width: 100%;
-  height: 100%;
-  position: relative;
-
-  .header {
-    width: inherit;
-    height: 60px;
-    padding: 14px;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #e6e6e6;
-    -webkit-app-region: drag;
-
-    .title {
-      flex: 0.85;
-      text-align: center;
-      font-size: 14px;
-    }
-  }
-}
-
-.body {
-  position: relative;
-  height: 100%;
-  padding-bottom: 90px;
-  overflow-y: scroll;
-
-  .no-file {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    color: #999;
-  }
-
-  .new-doc_button {
-    width: 110px;
-    height: 36px;
-    margin-top: 10px;
-    border-radius: 3px;
-    background-color: #DDAF59;
-    color: #fff;
-    font-size: 12px;
-    font-weight: 500;
-    text-align: center;
-    line-height: 36px;
-  }
-}
-
-.footer {
-  width: 100%;
-  position: absolute;
-  bottom: 0;
-  border-top: 1px solid #e6e6e6;
-  background-color: #FCFBF7;
-
-  .num {
-    height: 30px;
-    line-height: 30px;
-    padding-left: 20px;
-    font-size: 12px;
-    letter-spacing: 1px;
-  }
-}
-
-.header {
-  .button {
-    position: relative;
-    width: 40px;
-    height: 24px;
-    border-radius: 0;
-    background-color: inherit;
-    border: none;
-
-    &::before {
-      content: '';
-      display: block;
-      width: 28px;
-      height: 18px;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background-repeat: no-repeat;
-      background-size: 100%;
-      background-position: center;
-    }
-
-    &.button-back {
-      &::before {
-        background-image: url('../../../assets/images/lanhu/back@2x.png');
-      }
-
-      &.disable {
-        &::before {
-          background-image: url('../../../assets/images/lanhu/back_dis@2x.png');
-        }
-      }
-    }
-
-    &.expand {
-      &::before {
-        background-image: url('../../../assets/images/lanhu/view@2x.png');
-      }
-
-      &.summary {
-        &::before {
-          background-image: url('../../../assets/images/lanhu/view@2x.png');
-        }
-      }
-    }
-  }
-}
-
-.list-loading {
-  position: absolute;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  margin-top: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #fcfbf7;
-  z-index: 9999;
-}
+.document-list
+  width 100%
+  height 100%
+  position relative
+  .header
+    width inherit
+    height 60px
+    padding 14px
+    display flex
+    flex-direction row
+    justify-content space-between
+    align-items center
+    border-bottom 1px solid #e6e6e6
+    -webkit-app-region drag
+    .title
+      flex .85
+      text-align center
+      font-size 14px
+.top
+  padding 30px 0 0 0
+.body
+  position relative
+  height 100%
+  padding-bottom 90px
+  overflow-y scroll
+  &::-webkit-scrollbar
+    display none
+  .no-file
+    height 100%
+    display flex
+    flex-direction column
+    align-items center
+    justify-content center
+    font-size 12px
+    color #999
+  .new-doc_button
+    width 110px
+    height 36px
+    margin-top 10px
+    border-radius 3px
+    background-color #DDAF59
+    color #fff
+    font-size 12px
+    font-weight 500
+    text-align center
+    line-height 36px
+.footer
+  width 100%
+  position absolute
+  bottom 0
+  border-top 1px solid #e6e6e6
+  background-color #FCFBF7
+  .num
+    height 30px
+    line-height 30px
+    padding-left 20px
+    font-size 12px
+    letter-spacing 1px
+.header
+  .button
+    position relative
+    width 40px
+    height 24px
+    border-radius 0
+    background-color inherit
+    border none
+    &::before
+      content ''
+      display block
+      width 28px
+      height 18px
+      position absolute
+      top 50%
+      left 50%
+      transform translate(-50%, -50%)
+      background-repeat no-repeat
+      background-size 100%
+      background-position center
+    &.button-back
+      &::before
+        background-image url(../../../assets/images/lanhu/back@2x.png)
+      &.disable
+        &::before
+          background-image url(../../../assets/images/lanhu/back_dis@2x.png)
+    &.expand
+      &::before
+        background-image url(../../../assets/images/lanhu/view@2x.png)
+      &.summary
+        &::before
+          background-image url(../../../assets/images/lanhu/view@2x.png)
+.list-loading
+  position absolute
+  top 0
+  width 100%
+  height 100%
+  margin-top 60px
+  display flex
+  align-items center
+  justify-content center
+  background-color #fcfbf7
+  z-index 9999
+  &.top_title
+    top 30px
+.absence_toast
+  width 175px
+  height 36px
+  background rgba(0,0,0,1)
+  border-radius 4px
+  opacity 0.6
+  position absolute
+  top 0
+  // left 0
+  bottom 0
+  right -80%
+  margin auto
+  z-index 999
+  font-size 12px
+  text-align center
+  font-family PingFangSC-Regular,PingFangSC
+  font-weight 400
+  color rgba(255,255,255,1)
+  line-height 36px
 </style>
 <style lang="stylus">
-.document-list {
-  width: 100%;
-  height: 100%;
-  position: relative;
-
-  .header {
-    width: inherit;
-    height: 60px;
-    padding: 14px;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #e6e6e6;
-    -webkit-app-region: drag;
-
-    .title {
-      flex: 0.85;
-      text-align: center;
-      font-size: 14px;
-    }
-  }
-}
-
-.body {
-  position: relative;
-  height: 100%;
-  padding-bottom: 90px;
-  overflow-y: scroll;
-
-  .no-file {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    color: #999;
-  }
-
-  .new-doc_button {
-    width: 110px;
-    height: 36px;
-    margin-top: 10px;
-    border-radius: 3px;
-    background-color: #DDAF59;
-    color: #fff;
-    font-size: 12px;
-    font-weight: 500;
-    text-align: center;
-    line-height: 36px;
-  }
-}
-
-.footer {
-  width: 100%;
-  position: absolute;
-  bottom: 0;
-  border-top: 1px solid #e6e6e6;
-  background-color: #FCFBF7;
-
-  .num {
-    height: 30px;
-    line-height: 30px;
-    padding-left: 20px;
-    font-size: 12px;
-    letter-spacing: 1px;
-  }
-}
-
-.header {
-  .button {
-    position: relative;
-    width: 40px;
-    height: 24px;
-    border-radius: 0;
-    background-color: inherit;
-    border: none;
-
-    &::before {
-      content: '';
-      display: block;
-      width: 28px;
-      height: 18px;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background-repeat: no-repeat;
-      background-size: 100%;
-      background-position: center;
-    }
-
-    &.button-back {
-      &::before {
-        background-image: url('../../../assets/images/lanhu/back@2x.png');
-      }
-
-      &.disable {
-        &::before {
-          background-image: url('../../../assets/images/lanhu/back_dis@2x.png');
-        }
-      }
-    }
-
-    &.expand {
-      &::before {
-        background-image: url('../../../assets/images/lanhu/view@2x.png');
-      }
-
-      &.summary {
-        &::before {
-          background-image: url('../../../assets/images/lanhu/view@2x.png');
-        }
-      }
-    }
-  }
-}
-
-.list-loading {
-  position: absolute;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  margin-top: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #fcfbf7;
-  z-index: 9999;
-}
+.end
+  height 40px !important
+  .text
+    font-size 12px !important
+.more
+  height 40px !important
+  visibility hidden
 </style>

@@ -14,6 +14,7 @@
         <DocumentList></DocumentList>
       </div>
       <div slot="right">
+        <AppCustom v-if="showHeader"></AppCustom>
         <FileHandler></FileHandler>
         <TagHandler></TagHandler>
         <Editor style="height: 100%"></Editor>
@@ -77,7 +78,7 @@ import TagHandler from '@/components/TagHandler.vue'
 import Editor from '@/components/Editor'
 import Content from '@/components/Editor/src/Content'
 import FolderComp from '@/components/FolderComp.vue'
-// import ProgressBar from '@/components/ProgressBar'
+import AppCustom from '@/components/AppCustom.vue'
 import ShareWithMePanel from '@/components/Panels/ShareWithMePanel'
 import MovePanel from '@/components/Panels/MovePanel'
 import UserPanel from '@/components/Panels/UserPanel'
@@ -117,13 +118,15 @@ export default {
     HistoryPanel,
     ResearchPanel,
     SettingPanel,
-    Loading
+    Loading,
+    AppCustom
   },
 
   data () {
     return {
       validateTokenItv: null,
-      modifyFrom: null
+      modifyFrom: null,
+      showHeader: false
     }
   },
 
@@ -149,7 +152,9 @@ export default {
   },
 
   created () {
-
+    if (this.$remote.app.appConf.platform !== 'darwin') {
+      this.showHeader = true
+    }
     window.onbeforeunload = (e) => {
       e.returnValue = false
       let curWin = this.$remote.getCurrentWindow()

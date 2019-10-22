@@ -17,6 +17,10 @@ import '@/assets/styles/iview.styl'
 import '@/assets/styles/common.styl'
 import '@/assets/css/font-family.css'
 
+import { Circle } from 'vant'
+
+Vue.use(Circle)
+
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
 const {ipcRenderer, remote, shell, webFrame} = require('electron')
@@ -65,7 +69,7 @@ axios.interceptors.request.use(config => {
 
   // if (config.url.split('/api/')[1]) {
   //   let configArr = config.url.split('/api/')
-  //   console.log(configArr)
+  //   // console.log(configArr)
   //   if (configArr[1] === 'authenticate' || config.url.indexOf('user') != -1 || config.url.indexOf('stocks') != -1 || config.url.indexOf('trades') != -1 || config.url.indexOf('reportSubclass') != -1) {
   //     config.url = `${configArr[0]}/api/${configArr[1]}`
   //   // return
@@ -76,23 +80,22 @@ axios.interceptors.request.use(config => {
   //     config.url = `${configArr[0]}/api/${configArr[1]}`
   //   }
   // }
-  // 5d77188b6658da4d98772755 5d77188b6658da4d98772755
 
-  if (config.url.split('/api/share/')[1]) {
-    // console.log()
-    let str = 'eyJhbGciOiJIUzUxMiJ9.eyJleHAiOjE1Njg2MDQ5OTgsInN1YiI6IjI5NyIsImNyZWF0ZWQiOjE1NjgwMDAxOTg2OTF9.CistPIpXgWwtW7yElikLWhoF-A5eTBBgbthLSbw6-KdmV-dTQFM4AKdpk9jSPNCWoXbAewnOqqosgDvz0Cftog'
-    config.headers['Authorization'] = 'Bearer' + str
-    let configArr = config.url.split('/api/share/')
+  // if (config.url.split('/api/share/')[1]) {
+  //   // console.log()
+  //   let str = 'eyJhbGciOiJIUzUxMiJ9.eyJleHAiOjE1Njg2MDQ5OTgsInN1YiI6IjI5NyIsImNyZWF0ZWQiOjE1NjgwMDAxOTg2OTF9.CistPIpXgWwtW7yElikLWhoF-A5eTBBgbthLSbw6-KdmV-dTQFM4AKdpk9jSPNCWoXbAewnOqqosgDvz0Cftog'
+  //   config.headers['Authorization'] = 'Bearer' + str
+  //   let configArr = config.url.split('/api/share/')
 
-    configArr.splice(0, 1, 'http://115.159.127.156:8000')
-    if (configArr[1] === 'withme') {
-      config.url = `${configArr[0]}/api/share/withme`
-    } else if (config.url.indexOf('save') != -1) {
-      config.url = `${configArr[0]}/api/share/save/youdao`
-    } else {
-      config.url = `${configArr[0]}/api/share/${configArr[1]}`
-    }
-  }
+  //   configArr.splice(0, 1, 'http://115.159.127.156:8000')
+  //   if (configArr[1] === 'withme') {
+  //     config.url = `${configArr[0]}/api/share/withme`
+  //   } else if (config.url.indexOf('save') != -1) {
+  //     config.url = `${configArr[0]}/api/share/save/youdao`
+  //   } else {
+  //     config.url = `${configArr[0]}/api/share/${configArr[1]}`
+  //   }
+  // }
 
   return config
 }, error => {
@@ -109,9 +112,9 @@ axios.interceptors.response.use(data => {
   if (data.data) {
     if (data.data.returnCode !== 200) {
       if (data.data.returnMsg !== undefined) {
-        // Message.error(data.data.returnMsg)
+        Message.error(data.data.returnMsg)
       } else {
-        // Message.error(data.data)
+        Message.error(data.data)
       }
     }
   }

@@ -6,7 +6,6 @@
 
 <script>
 import { mapActions } from 'vuex'
-
 export default {
   computed: {
     appStyle () {
@@ -40,9 +39,8 @@ export default {
 </script>
 
 <style lang="stylus">
-::-webkit-scrollbar
-  display none
-
+// ::-webkit-scrollbar
+//   display none
 *
   -webkit-app-region no-drag
 
@@ -57,6 +55,7 @@ export default {
   // display flex
   // flex-direction row
   overflow hidden
+  // background red
 
 #history.content
   img

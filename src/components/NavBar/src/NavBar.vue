@@ -7,7 +7,7 @@
       :model="folderTree"
       default-tree-node-name="新建文件夹"
       v-bind:default-expanded="true"
-      :flat-ids="['0', 'latest', 'share', 'tag', 'bin', 'public']"
+      :flat-ids="['0', 'latest', 'share','public', 'tag', 'bin']"
       @contextmenu="handleContextmenu"
       @set-current="handleSetCurrentFolder"
       @select="handleSelect"
@@ -457,7 +457,8 @@ export default {
     },
 
     handleAddTagNode (tagData) {
-      let tagRootNode = this.$refs.tree.model.store.root.children[3]
+      let tagRootNode = this.$refs.tree.model.store.root.children[4]
+      console.log(tagRootNode)
       let tag = {}
       tag.type = 'select'
       tag.isSelected = false
@@ -1037,6 +1038,8 @@ export default {
   flex-direction column
   padding-bottom 30px
   overflow-y scroll
+  &::-webkit-scrollbar
+    display none
 
 .unexpanded
   transform: scaleY(0)

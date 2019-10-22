@@ -98,11 +98,11 @@ app.on('ready', async () => {
 
   let dbPath = path.resolve(app.getAppPath('userData'), `../`)
   // let dbPath = '/Users/bowiego/Documents/workspace/enote/temp'
-  // let serviceUrl = 'https://iapp.htffund.com/note/api'
+  let serviceUrl = 'https://iapp.htffund.com/note/api'
   // let serviceUrl = isDevelopment
     // ? 'http://10.50.16.123:8000/api'
     // : 'https://iapp.htffund.com/note/api'
-  let serviceUrl = 'http://10.50.16.123:8000/api'
+  // let serviceUrl = 'http://10.50.16.123:8000/api'
 
   let appConf = await getAppConf(app.getAppPath('userData'))
   if (!appConf.serviceUrl || appConf.serviceUrl === '') {
@@ -187,6 +187,19 @@ ipcMain.on('appQuit', (event, arg) => {
 ipcMain.on('logout', (event, arg) => {
   logout()
 })
+
+ipcMain.on('min',() => {
+  win.minimize();
+})
+
+ipcMain.on('max',() => {
+  if(win.isMaximized()){
+    win.unmaximize();
+  }else{
+    win.maximize();
+  }
+})
+
 
 ipcMain.on('hideWindow', (event, arg) => {
 })
@@ -478,6 +491,7 @@ function createHomeWindow () {
         } else {
           //添加进度显示
           // console.log(item.getSavePath(),item.getFilename(), item.getReceivedBytes(), item.getTotalBytes())
+          console.log(item)
           win.webContents.send("down-done", {
             name: item.getFilename(),
             receive: item.getReceivedBytes(),

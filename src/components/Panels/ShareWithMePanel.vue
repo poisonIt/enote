@@ -62,7 +62,7 @@
 
       handleShareWithChecked (node) {
         saveYoudaoShare({ shareUrl: this.shareUrl, userCode: this.userInfo.usercode }).then(response => {
-          if (response.data.returnCode === 0) {
+          if (response.data.returnCode === 200) {
             // 保存成功后打开查看笔记跳转到与我分享菜单
             // this.$hub.dispatchHub('goShare', this)
             // console.log(this.currentFile)
@@ -85,9 +85,7 @@
               })
             })
             this.closeShareWithPanel()
-          } else {
-            this.$Message.error('请检查有道云链接是否正确')
-          }
+          } 
         })
       },
 

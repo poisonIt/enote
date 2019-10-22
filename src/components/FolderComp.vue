@@ -16,6 +16,7 @@ export default {
   height 100%
   position absolute
   top 60px
+  top 90px // win
   left 0
   text-align center
   line-height 400px

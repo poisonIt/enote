@@ -1,5 +1,9 @@
 <template>
-  <div id="editor-container">
+<!--  -->
+  <div
+    id="editor-container"
+    :class="showHeader && changeTop?'paddTop':showHeader?'top':changeTop?'noTop':''"
+  >
     <textarea name="content" ref="editor" id="editor"></textarea>
     <div class="high-light-mask"
       ref="highLightMask"
@@ -12,7 +16,7 @@
         </li>
       </ul>
     </div>
-    <div class="mask" v-show="showMask"></div>
+    <div :class="showHeader?'mask show_header':'mask'" v-if="showMask"></div>
     <attachment
       v-if="hasAttachment"
       :note_files="noteFiles"
@@ -55,17 +59,19 @@ export default {
       locations: [],
       scrollTop: 0,
       noteFiles: [],
-      attachShow: false
+      attachShow: false,
+      showHeader: false,
+      changeTop: false,
     }
   },
 
   computed: {
     ...mapGetters({
+      isShowed: 'GET_SHOW_TAG_HANDLER',
       currentNav: 'GET_CURRENT_NAV',
       currentFile: 'GET_CURRENT_FILE',
       viewType: 'GET_VIEW_TYPE'
     }),
-
     hasAttachment () {
       if (this.currentNav.type === 'share' || this.currentNav.type === 'public') {
         // console.log(this.noteFiles)
@@ -79,6 +85,18 @@ export default {
   },
 
   watch: {
+    isShowed: {
+      handler: function (val) {
+
+        // if (this.$remote.app.appConf.platform !== 'darwin') {
+          if (val === true) {
+            this.changeTop = true
+          } else {
+            this.changeTop = false
+          }
+        // }
+      }
+    },
     currentFile (val, oldVal) {
       this.showHighLight = false
       this.locations = []
@@ -91,18 +109,12 @@ export default {
       if (val && val.type === 'note') {
         this.showMask = true
         this.noteFiles = val.noteFiles || []
+        // console.log(this.noteFiles)
         this.attachShow = false
-        if (val.trash !== 'NORMAL' && this.currentNav.type !== 'share') {
+        if (val.trash !== 'NORMAL' && this.currentNav.type !== 'share' && this.currentNav.type !== 'public') {
           this.showMask = true
           return
         }
-        // if (this.editor) {
-        //   // 切换选中笔记，保存上一个笔记修改内容
-        //   let editorData = this.editor.getData()
-        //   if (editorData !== this.cachedDoc.content) {
-        //     this.saveData(this.cachedDoc._id, editorData)
-        //   }
-        // }
 
         fetchLocal('getLocalDoc', {
           note_id: val._id
@@ -132,6 +144,9 @@ export default {
     //     }
     //   }
     // })
+    if (this.$remote.app.appConf.platform !== 'darwin') {
+      this.showHeader = true
+    }
     ipcRenderer.on('wrote-pdf', (event, path) => {
       let webviewPDF = document.getElementById('pdf-path')
       let tempPath = this.$remote.app.appConf.resourcePath + `/${this.currentFile._id}.html`
@@ -226,7 +241,7 @@ export default {
             this.editor = editor
             this.editor.isReadOnly = false
             this.editor.setData(content || '')
-            if (this.currentNav.type === 'share') {
+            if (this.currentNav.type === 'share' || this.currentNav.type === 'public') {
               this.editor.isReadOnly = true
               document.getElementsByClassName('ck-editor__top')[0].style.display = 'none'
               this.showMask = false
@@ -386,11 +401,19 @@ export default {
 <style lang="stylus" scoped>
 #editor-container
   position relative
+  width 100%
+  height 100%
   overflow hidden
-
+.top
+  // top 30px
+  padding-top 30px
+.paddTop
+  top 30px
+  padding-bottom 66px
+.noTop
+  padding-bottom 36px
 .ck-editor
   height 100% !important
-
 .high-light-mask
   position absolute
   top 0
@@ -407,5 +430,13 @@ export default {
   left 0
   background-color #fff
   z-index 9999
+.show_header
+  top 30px
 
+</style>
+<style lang="stylus">
+.ck-rounded-corners .ck.ck-editor__main>.ck-editor__editable, .ck.ck-editor__main>.ck-editor__editable.ck-rounded-corners
+  // background blue !important
+  &::-webkit-scrollbar
+    display none !important
 </style>

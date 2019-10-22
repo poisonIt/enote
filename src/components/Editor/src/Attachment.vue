@@ -29,13 +29,24 @@
             :key="index"
             @mouseover="currentIndex = index"
             @mouseout="currentIndex = -1"
-            @click="handleDownFile(item.url)">
+            @click="handleDownFile(item.url, item.oldName, index)">
             <div class="file_mold">
               <img :src="item.fileType==='EXCEL'?Excel:item.fileType==='PDF'?Pdf:item.fileType==='WORD'?Word:item.fileType==='PPT'?Ppt:Other">
+              <van-circle
+                v-show="hiddenIndex === index || hidden"
+                :rate="rate"
+                v-model="currentRate"
+                :speed="100"
+                :stroke-width="80"
+                size="34px"
+                :text="text"
+                :fill="'#678'"
+              />
             </div>
 
             <div class="attach_name">
-              <p class="name" :style="{color: currentIndex === index ? '#DDAF59':''}">{{ item.fileName }}</p>
+              <p class="name"
+                 :style="{color: currentIndex === index ? '#DDAF59':''}">{{ item.oldName }}</p>
               <div class="down_info">
                 <img :src="currentIndex === index ? selSrc: noSelSrc" class="down_img">
                 <span class="size">{{ Number(item.size) | size }}</span>
@@ -53,7 +64,17 @@
 
 <script>
   import collapse from "../../../utils/transitions/collapse.js"
-  import { ipcRenderer } from 'electron'
+  import { ipcRenderer, shell } from 'electron'
+  /** * 是否为mac系统（包含iphone手机） * */
+  const isMac = function() {
+  return /macintosh|mac os x/i.test(navigator.userAgent);
+  }();
+
+
+  /** * 是否为windows系统 * */
+  const isWindows = function() {
+      return /windows|win32/i.test(navigator.userAgent);
+  }();
   export default {
     name: 'Attachment',
 
@@ -72,8 +93,15 @@
 
     data () {
       return {
+        hiddenIndex: -1,
+        rate: -1,
+        hidden: false,
+        fill_color: '#678',
+        color: 'DDAF59',
+        currentRate: 0,
         downStatus: '',
         fileSavePath: '',
+        pathUrl: '',
         attachShowStatus: this.attachShow,
         deg: 0,
         downUrlList: [],
@@ -85,6 +113,12 @@
         Ppt: require('../../../assets/images/attachment/ppt.png'),
         Word: require('../../../assets/images/attachment/word.png'),
         Other: require('../../../assets/images/attachment/other.png')
+      }
+    },
+
+    computed: {
+      text() {
+        return this.currentRate.toFixed(0) + '%'
       }
     },
 
@@ -106,24 +140,38 @@
     created () {
       //监听main process里发出的message
       ipcRenderer.on('downstate', (event, arg) => {
-        console.log(event, arg)
+        // console.log(event, arg)
         // alert("下载状态：" + arg);
         this.downStatus = arg
         if (this.downStatus ===  'completed') {
-          console.log('下载成功---->', this.fileSavePath)
+          // console.log('下载成功---->', this.fileSavePath)
           setTimeout(() => {
             this.downStatus = ''
-          }, 3000);
+          }, 5000);
         }
       })
 
       ipcRenderer.on('down-done', (event, arg) => {
         // console.log(event, arg)
-        // console.log((arg.receive/arg.total*100).toFixed(2)+"%")
-        let pathArr = arg.savePath.split('/')
-        pathArr.pop()
-        console.log(pathArr)
-        this.fileSavePath = pathArr.join('/')
+        // console.log((arg.receive/arg.total*100))
+        this.rate = (arg.receive/arg.total*100)
+        if (this.rate === 100) {
+          this.hiddenIndex = -1
+          this.hidden = false
+        }
+         if (isMac) {
+          this.pathUrl = arg.savePath
+          let pathArr = arg.savePath.split('/')
+          pathArr.pop()
+          this.fileSavePath = pathArr.join('/')
+        } else if (isWindows) {
+          this.pathUrl = arg.savePath
+          let pathArr = arg.savePath.replace(/\\/g, '\\').split('\\')
+          // arg.savePat?h
+          pathArr.pop()
+          this.fileSavePath = pathArr.join('\\')
+          // console.log(this.fileSavePath )
+        }
       })
 
     },
@@ -138,24 +186,37 @@
       },
 
       handleDownAllAttach () {
+        // if (this.fileSavePath) {
+        //   shell.showItemInFolder(this.fileSavePath)
+        //   return
+        // }
         this.downUrlList = []
-        console.log(this.note_files)
-        this.note_files.forEach(item => {
-          this.downUrlList.push(item.url)
-        })
-        console.log(this.downUrlList)
+        for (let i = 0; i < this.note_files.length; i ++) {
+          this.downUrlList.push({ url: this.note_files[i].url, index: i })
+        }
 
         this.downUrlList.forEach(item => {
-          ipcRenderer.send('download',item+'+all')
+          this.hidden = true
+          ipcRenderer.send('download',item.url+'+all')
         })
-
-        // if ()
       },
 
-      handleDownFile (url) {
-        let downUrl = url;//需要下载文件的路径
-        // let savePath = 'file://'
+      handleDownFile (url, file_name, index) {
+        let name = []
+        if (isWindows) {
+          // console.log(this.pathUrl, file_name)
+          name = this.pathUrl.replace(/\\/g, '\\').split('\\')
+        } else {
+          name = this.pathUrl.split('/')
+        }
+        if (name[name.length - 1] === file_name) {
+          shell.showItemInFolder(this.pathUrl)
+          return
+        }
 
+
+        this.hiddenIndex = index
+        let downUrl = url;//需要下载文件的路径
         ipcRenderer.send('download',downUrl)
       }
     },
@@ -262,6 +323,7 @@
             // height 34px
             vertical-align middle
 
+
         .attach_name
           // position absolute
           margin-left 40px
@@ -302,7 +364,7 @@
               font-weight 400
               color rgba(153,153,153,1)
 .down_path
-  min-width:282px;
+  width:382px;
   height:36px;
   background:rgba(0,0,0,1);
   border-radius:4px;
@@ -319,4 +381,29 @@
   left 0
   right 0
   margin auto
+</style>
+<style lang="stylus">
+.van-circle
+  width 34px !important
+  height 34px !important
+  position absolute
+  top 0
+  left 0
+  color #fff
+.van-circle__text
+  width 30px !important
+  height 30px !important
+  position absolute
+  background rgba(255, 255, 255, .7)
+  border-radius 50%
+  // line-height 34px
+  text-align center
+  line-height: 30px;
+  text-align: center;
+  top: 0;
+  left 0
+  right 0
+  bottom: 0;
+  margin: auto;
+
 </style>

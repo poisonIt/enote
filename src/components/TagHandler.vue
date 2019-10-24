@@ -125,7 +125,7 @@ export default {
 
     isListShowed (val) {
       if (!val) {
-        this.$hub.dispatchHub('refreshList', this)
+        // this.$hub.dispatchHub('refreshList', this)
       }
     },
 

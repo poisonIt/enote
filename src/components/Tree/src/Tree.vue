@@ -318,6 +318,8 @@ export default {
 
     contextmenu () {
       var root = this.getRootNode()
+      // this.model.store.setCurrentNode(this.model, root, this)
+
       root.$emit('contextmenu', this)
     },
 

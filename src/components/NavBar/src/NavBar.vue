@@ -126,7 +126,7 @@ const latestNav = {
 }
 
 const shareNav = {
-  name: '与我分享',
+  name: '朋友分享',
   id: 'share',
   pid: null,
   dragDisabled: true,

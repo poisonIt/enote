@@ -435,7 +435,7 @@ function createHomeWindow () {
     show: false,
     title: productName,
     frame: false,
-    maximizable: false,
+    // maximizable: false,
     titleBarStyle: isDevelopment ? 'hidden' : 'hidden',
     icon: path.join(__static, 'icon.png'),
     webPreferences: {

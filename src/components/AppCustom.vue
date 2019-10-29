@@ -4,9 +4,9 @@
       <span class="btn min" @click="handleClick('min')">
         <img src="../assets/images/lanhu/min3@2x.png">
       </span>
-      <!-- <span class="btn max" @click="handleClick('max')">
+      <span class="btn max" @click="handleClick('max')">
         <img :src="reset === true ? unMax:max" id="max_img">
-      </span> -->
+      </span>
       <span class="btn close" @click="handleClick('appQuit')">
         <img src="../assets/images/lanhu/close2@2x.png">
       </span>

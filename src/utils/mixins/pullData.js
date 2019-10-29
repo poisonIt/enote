@@ -77,7 +77,7 @@ export default {
       })
 
       let folderData = (pullResp[0].data.body || []).map(item => transNoteBookDataFromRemote(item))
-      console.log('111', folderData)
+      // console.log('111', folderData)
       await fetchLocal('diffAddMultiLocalFolder', folderData)
       // console.log('222', tagsData)
 

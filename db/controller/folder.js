@@ -242,6 +242,7 @@ function updateP (query, req, multi) {
 
 // update
 async function update (req) {
+  console.log(req)
   const { id } = req
   let newFolder
   req.update_at = new Date().valueOf()

@@ -237,7 +237,8 @@ export default {
       selectedTags: 'GET_SELECTED_TAGS',
       isTagShowed: 'GET_SHOW_TAG_HANDLER',
       draggingFile: 'GET_DRAGGING_FILE',
-      network_status: 'GET_NETWORK_STATUS'
+      network_status: 'GET_NETWORK_STATUS',
+      userInfo: 'GET_USER_INFO'
     })
   },
 
@@ -262,7 +263,6 @@ export default {
 
   mounted () {
     const _self = this
-
     this.$root.$navTree = this.$refs.tree
 
     this.$worker.onmessage = function (e) {

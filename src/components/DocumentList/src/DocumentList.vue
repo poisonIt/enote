@@ -322,7 +322,7 @@ export default {
       if (this.network_status === 'online') {
         this.isListLoading = true
         getShareWithMe().then(resp => {
-          // console.log(resp)
+          console.log(resp)
           let notes = resp.data.body.map(item => transNoteDataFromRemote(item))
           fetchLocal('updateSharedNote', notes).then(res => {
             this.handleDataFetched([[], res])

@@ -18,6 +18,7 @@
           @keyup.enter="handleTitleInputBlur">
         <span v-for="(item, index) in titleStrArr"
           :key="index"
+          :style="{ width: listType === 'summary' ? '100%': '178px' }"
           :class="{ highlight : item === searchKeyword }"
           v-show="!showTitleInput"
           ref="title"
@@ -26,12 +27,12 @@
         </span>
       </div>
       <div class="icon-stack">
-        <div class="absence_icon" v-if="isAbsence"></div>
-        <div class="icon stick-top" v-if="isTop"></div>
-        <div class="isShared" v-if="isShared"></div>
-        <div class="isPushing infinite rotate animated" v-if="isPushing"></div>
-        <div class="need_push" v-if="need_push"></div>
-        <div class="need_push local" v-if="need_push_local"></div>
+        <div :class="listType === 'summary' ? 'absence_icon' : 'absence_icon list-div'" v-if="isAbsence"></div>
+        <div :class="listType === 'summary' ? 'icon stick-top':'icon stick-top list-div-top' " v-if="isTop"></div>
+        <div :class="listType === 'summary' ? 'isShared' : 'isShared list-div'" v-if="isShared && currentNav.type !== 'share'"></div>
+        <div :class="listType === 'summary' ? 'isPushing infinite rotate animated' : 'isPushing infinite rotate animated list-div_IsPush'" v-if="isPushing"></div>
+        <div :class="listType === 'summary' ? 'need_push':'need_push list-div-need'" v-if="need_push"></div>
+        <div :class="listType === 'summary' ? 'need_push local' : 'need_push local list-div'" v-if="need_push_local"></div>
       </div>
     </div>
     <div class="body" v-if="content.length > 0 && !mini && type === 'note'">
@@ -42,7 +43,7 @@
         {{ parent_folder }}
       </div>
       <span class="username" v-if="isUserShowed">{{ username }}</span>
-      <span class="time" v-if="isTimeShowed">{{ update_at }}</span>
+      <span :class="listType === 'summary'?'time':'list'" v-if="isTimeShowed">{{ update_at }}</span>
       <span class="size" v-if="isSizeShowed">{{ file_size | size }}</span>
     </div>
     <modal
@@ -164,7 +165,8 @@ export default {
     ...mapGetters({
       viewFileType: 'GET_VIEW_FILE_TYPE',
       searchKeyword: 'GET_SEARCH_KEYWORD',
-      currentNav: 'GET_CURRENT_NAV'
+      currentNav: 'GET_CURRENT_NAV',
+      listType: 'GET_VIEW_FILE_LIST_TYPE'
     }),
 
     isAbsence () {
@@ -383,6 +385,9 @@ export default {
     font-size 13px
     span
       float left
+      overflow hidden
+      text-overflow ellipsis
+      white-space nowrap
     span.highlight
       background-color yellow
     &.folder:hover
@@ -423,7 +428,15 @@ export default {
   align-items center
   div
     margin-left 10px
-
+    &.list-div
+      position absolute
+      right -10px
+    &.list-div_IsPush
+      position absolute
+      right 3px
+    &.list-div-top
+      position absolute
+      right 5px
 .drag-icon
   width 36px
   height 36px
@@ -490,6 +503,11 @@ export default {
     margin-left 10px
   .username
     margin-right 10px
+  .list
+    margin-left 15px
+    // position absolute
+    // top 0
+    // right 0
   .path
     display flex
     flex-direction row

@@ -198,7 +198,7 @@ export default {
         delPublicMenu
       ],
       page: 0,
-      size: 10,
+      size: 50,
       totalPages: 0,
     }
   },
@@ -257,7 +257,7 @@ export default {
         this.fetchSharedFile()
       } else if (val.type === 'public') {
         this.page = this.totalPages = 0
-        this.fetchPublicFile({ page: 0, size: 10, sort: this.viewFileSortType })
+        this.fetchPublicFile({ page: 0, size: 50, sort: this.viewFileSortType })
       } else {
         this.refreshList()
       }

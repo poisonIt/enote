@@ -37,6 +37,7 @@
         @click="handleClickMini('0')">
       </div>
       <div class="icon icon-public"
+        v-if="userInfo.department_name==='研究部'"
         :class="{
           active : navMiniActive('public')
         }"
@@ -110,6 +111,7 @@ import { handleNameConflict } from '../../../utils/utils'
 import mixins from '../mixins'
 import { Tree, TreeStore } from '@/components/Tree'
 
+// console.log(userInfo)
 const latestNav = {
   name: '最新文档',
   id: 'latest',
@@ -176,7 +178,6 @@ const publicFolder = {
 const binNav = {
   name: '回收站',
   id: 'bin',
-
   pid: null,
   dragDisabled: true,
   addTreeNodeDisabled: true,
@@ -188,8 +189,6 @@ const binNav = {
     type: 'bin'
   }
 }
-
-
 export default {
   name: 'NavBar',
 
@@ -260,7 +259,6 @@ export default {
       }
     }
   },
-
   mounted () {
     const _self = this
     this.$root.$navTree = this.$refs.tree
@@ -270,6 +268,13 @@ export default {
         if (e.data[0] === 'calcLocalData') {
           let newRootFolder = e.data[1]
           let newTagNav = e.data[2]
+          console.log(publicFolder)
+          console.log(_self.userInfo)
+          if (_self.userInfo.department_name !== '研究部') {
+            publicFolder.hidden = true
+          } else {
+            publicFolder.hidden = false
+          }
           _self.folderTree = new TreeStore([latestNav, shareNav, newRootFolder, publicFolder, newTagNav, binNav])
           _self.$nextTick(() => {
             _self.$refs.tree.$children[0].click()

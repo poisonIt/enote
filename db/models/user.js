@@ -11,6 +11,7 @@ function userModel (opts) {
     position_name: opts.position_name || '',
     department_id: opts.department_id || '',
     department_name: opts.department_name || '',
+    // department_name: '研究部',
     friend_list: opts.friend_list || [],
     sync_state: opts.sync_state || 'UNBIND',
     access_token: opts.access_token || '',

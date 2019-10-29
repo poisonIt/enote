@@ -210,6 +210,7 @@ export default {
         account_name_cn: obj.accountNameCN,
         department_id: obj.departmentId,
         department_name: obj.departmentName,
+        // department_name:'研究部',
         image_url: obj.imageUrl,
         sync_state: obj.syncState,
         oa_id: obj.oaId,

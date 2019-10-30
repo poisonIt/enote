@@ -1,4 +1,5 @@
 export function transNoteBookDataFromRemote (obj) {
+  // console.log(obj)
   let pid = obj.parentId
   return {
     type: 'folder',

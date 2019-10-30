@@ -125,7 +125,7 @@ export default {
 
     isListShowed (val) {
       if (!val) {
-        this.$hub.dispatchHub('refreshList', this)
+        // this.$hub.dispatchHub('refreshList', this)
       }
     },
 
@@ -274,6 +274,8 @@ export default {
   float left
   overflow-x scroll
   padding 0 10px
+  &::-webkit-scrollbar
+    display none
 
 .tag-list-button
   position relative

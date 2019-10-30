@@ -305,10 +305,16 @@ export default {
       //   return true
       // }
       // return true
+      if (this.userInfo.department_name !== '研究部') {
+        if (item === 'fetch') {
+          return true
+        } else {
+          return false
+        }
+      }
       if (this.currentFile.type === 'folder' || this.currentNav.type === 'share' || this.currentNav.type === 'public') {
         return true
       }
-
     },
 
     iconClassComputed (key) {

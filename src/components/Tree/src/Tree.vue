@@ -154,7 +154,8 @@ export default {
 
   computed: {
      ...mapGetters({
-      draggingFile: 'GET_DRAGGING_FILE'
+      draggingFile: 'GET_DRAGGING_FILE',
+      userInfo: 'GET_USER_INFO'
     }),
 
     isCurrent () {

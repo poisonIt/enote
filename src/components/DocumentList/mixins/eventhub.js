@@ -20,7 +20,6 @@ export default {
     handleFileAdded (file) {
       this.noteList.unshift(file)
       this.selectedIdCache = file._id
-      // this.updateFileList()
       this.refreshList()
     },
 

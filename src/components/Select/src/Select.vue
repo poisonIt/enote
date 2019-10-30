@@ -125,12 +125,14 @@ export default {
   vertical-align middle
   padding-left 10px
   cursor pointer
+  color #333
   &:hover
     border-color #DDAF59
   &.active
     border-color #DDAF59
   &::placeholder
-    color #999999
+    // color #999
+    color #333
   &.disabled
     &::placeholder
       color #eee

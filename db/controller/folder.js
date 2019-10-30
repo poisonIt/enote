@@ -242,10 +242,9 @@ function updateP (query, req, multi) {
 
 // update
 async function update (req) {
-  console.log(req)
+  // console.log(req)
   const { id } = req
   let newFolder, isUpdate
-  // req.update_at = new Date().valueOf()
 
   if (!req.hasOwnProperty('need_push')) {
     req.need_push = true

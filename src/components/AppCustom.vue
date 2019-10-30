@@ -7,8 +7,8 @@
       <span class="btn max" @click="handleClick('max')">
         <img :src="reset === true ? unMax:max" id="max_img">
       </span>
-      <span class="btn close" @click="handleClick('appQuit')">
-        <img src="../assets/images/lanhu/close2@2x.png">
+      <span class="btn close" @mouseenter="handleMove" @mouseleave="handleLeave" @click="handleClick('appQuit')">
+        <img src="">
       </span>
     </div>
   </div>
@@ -21,7 +21,9 @@
       return {
         reset: false,
         max: require('../assets/images/lanhu/max2@2x.png'),
-        unMax: require('../assets/images/lanhu/unMax2@2x.png')
+        unMax: require('../assets/images/lanhu/unMax2@2x.png'),
+        close: require('../assets/images/lanhu/close2@2x.png'),
+        hoverClose: require('../assets/images/lanhu/closeHover.png')
       }
     },
     methods: {
@@ -35,6 +37,18 @@
             this.reset = true
           }
         }
+      },
+      handleMove() {
+        let close = document.querySelector('.close')
+        close.style.background = '#da512c'
+        let img = close.querySelector('img')
+        img.setAttribute('src', this.hoverClose)
+      },
+      handleLeave () {
+        let close = document.querySelector('.close')
+        close.style.background = '#fff'
+        let img = close.querySelector('img')
+        img.setAttribute('src', this.close)
       }
     }
   }
@@ -47,6 +61,7 @@
   width 100%
   -webkit-app-region drag
   position absolute
+  z-index 99
   top 0
   .btn_list
     width 120px

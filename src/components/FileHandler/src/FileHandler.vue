@@ -305,13 +305,11 @@ export default {
       //   return true
       // }
       // return true
-      if (this.userInfo.department_name !== '研究部') {
-        if (item === 'fetch') {
-          return true
-        } else {
-          return false
-        }
-      }
+      // if (this.userInfo.department_name !== '研究部') {
+      //   if (item === 'fetch') {
+      //     return true
+      //   }
+      // }
       if (this.currentFile.type === 'folder' || this.currentNav.type === 'share' || this.currentNav.type === 'public') {
         return true
       }
@@ -603,4 +601,9 @@ input[disabled]
 * html input.disabled
   background-color: #fff
 </style>
+<style lang="stylus">
+.ivu-poptip-body-content-inner
+  color #333
+</style>
+
 

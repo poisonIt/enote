@@ -22,10 +22,11 @@ export default {
   left 0
   margin 5px 0
   background-color #fff
-  border 1px solid #DDAF59
+  // border 1px solid #DDAF59
   border-radius 2px
   box-shadow 0 2px 12px 0 rgba(0,0,0,.1)
   z-index 9999
+  color #333
   // box-sizing unset
 .b-select-dropdown__wrap
   width 100%
@@ -41,7 +42,7 @@ export default {
   border-top-width 0
   border-style solid
   border-color transparent
-  border-bottom-color #DDAF59
+  // border-bottom-color #DDAF59
   filter drop-shadow(0 2px 12px rgba(0, 0, 0, .03))
   &::after
     content " "
@@ -56,5 +57,5 @@ export default {
     display block
     width 0
     height 0
-    border-style solid
+    // border-style solid
 </style>

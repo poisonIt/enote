@@ -47,6 +47,7 @@
   width 100%
   -webkit-app-region drag
   position absolute
+  z-index 99
   top 0
   .btn_list
     width 78px

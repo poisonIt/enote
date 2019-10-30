@@ -14,7 +14,7 @@
         <DocumentList></DocumentList>
       </div>
       <div slot="right">
-        <AppCustom v-if="showHeader"></AppCustom>
+        <AppCustom></AppCustom>
         <FileHandler></FileHandler>
         <TagHandler></TagHandler>
         <Editor style="height: 100%"></Editor>

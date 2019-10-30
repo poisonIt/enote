@@ -243,8 +243,7 @@ function updateP (query, req, multi) {
 // update
 async function update (req) {
   const { id } = req
-  let newFolder
-  req.update_at = new Date().valueOf()
+  let newFolder, isUpdate
 
   if (!req.hasOwnProperty('need_push')) {
     req.need_push = true
@@ -264,6 +263,9 @@ async function update (req) {
   } else {
     let oldRemoteId = folder.remote_id
     let oldTrash = folder.trash
+    if (checkUpdate(req, folder)) {
+      req.update_at = new Date().valueOf()
+    }
     newFolder = await updateP(
       { _id: id },
       { $set: req }
@@ -436,6 +438,19 @@ async function patchParentFolder (folder) {
     }
   }
   return folder
+}
+
+function checkUpdate (req, folder) {
+  let keys = ['pid', 'title', 'seq', 'trash', 'tags', 'top']
+  for (let i = 0, len = keys.length; i < len; i++) {
+    let key = keys[i]
+    if (req.hasOwnProperty(key) && folder.hasOwnProperty(key)) {
+      if (req[key] !== folder[key]) {
+        return true
+      }
+    }
+  }
+  return false
 }
 
 export default {

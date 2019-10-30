@@ -122,7 +122,7 @@
           </ul>
         </div>
       </div>
-      <div class="button-group" slot="footer">
+      <div class="button-group" style="top: 15px" slot="footer">
         <div class="button primary" @click="handleFriendChecked">完成</div>
         <div class="button" @click="isFrdPanelShowed = false">取消</div>
       </div>
@@ -617,7 +617,6 @@ export default {
   .button-group
     position relative
     margin 0 auto
-    top -15px
     left 0
     transform none
 </style>

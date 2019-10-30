@@ -242,6 +242,7 @@ function updateP (query, req, multi) {
 
 // update
 async function update (req) {
+  console.log(req)
   const { id } = req
   let newFolder, isUpdate
 
@@ -338,6 +339,14 @@ async function getAll () {
   })
   // return await getByQuery({}, { multi: true })
 }
+
+// async function getByOnePid(pid) {
+//   return new Promise((resolve, reject) => {
+//     Folder.find({id: pid}, (err, folder) => {
+//       resolve(folder)
+//     })
+//   })
+// }
 
 async function getAllByPid (req) {
   const { pid, remote_pid } = req

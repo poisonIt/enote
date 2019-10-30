@@ -154,7 +154,8 @@ export default {
 
   computed: {
      ...mapGetters({
-      draggingFile: 'GET_DRAGGING_FILE'
+      draggingFile: 'GET_DRAGGING_FILE',
+      userInfo: 'GET_USER_INFO'
     }),
 
     isCurrent () {
@@ -318,6 +319,8 @@ export default {
 
     contextmenu () {
       var root = this.getRootNode()
+      // this.model.store.setCurrentNode(this.model, root, this)
+
       root.$emit('contextmenu', this)
     },
 
@@ -632,6 +635,7 @@ export default {
   height 30px
   line-height 33px
   z-index 1
+  color #c2c2c2
   &.current
     color #DDAF59
 .tn-icon

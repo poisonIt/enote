@@ -298,7 +298,7 @@ export default {
     })
 
     if (this.$remote.app.appConf.platform !== 'darwin') {
-      this.showHeader = true
+      // this.showHeader = true
     }
   },
   mounted () {

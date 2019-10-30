@@ -145,7 +145,7 @@ export default {
     //   }
     // })
     if (this.$remote.app.appConf.platform !== 'darwin') {
-      this.showHeader = true
+      this.showHeader = false
     }
     ipcRenderer.on('wrote-pdf', (event, path) => {
       let webviewPDF = document.getElementById('pdf-path')

@@ -14,7 +14,7 @@ export default {
   },
   created() {
     if (this.$remote.app.appConf.platform !== 'darwin') {
-      this.showHeader = true
+      this.showHeader = false
     }
   }
 }

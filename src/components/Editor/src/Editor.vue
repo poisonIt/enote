@@ -41,7 +41,6 @@ import fetchLocal from '../../../utils/fetchLocal'
 import Attachment from './Attachment'
 import '../../../assets/styles/editor.css'
 const ClassicEditor = window.ClassicEditor
-
 export default {
   name: 'EditorComp',
 

@@ -1,7 +1,4 @@
 <template>
-  <!-- <div class="editor-content">
-    <div class="ck-blurred ck ck-content ck-editor__editable ck-rounded-corners ck-editor__editable_inline" v-html="content"></div>
-  </div> -->
   <div id="container">
     <div
       class="editor-container_body"
@@ -14,7 +11,6 @@
 </template>
 
 <script>
-// import '../../../assets/css/ck-editor.css'
 const ClassicEditor = window.ClassicEditor
 import { mapGetters, mapActions } from 'vuex'
 export default {
@@ -24,6 +20,10 @@ export default {
       this.handleResize()
     },
   },
+
+
+
+
   computed: {
     ...mapGetters({
       viewType: 'GET_VIEW_TYPE',

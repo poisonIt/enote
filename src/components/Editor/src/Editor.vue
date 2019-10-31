@@ -144,6 +144,12 @@ export default {
     //     }
     //   }
     // })
+    document.onkeydown = function(e) {
+      let key = e.keyCode
+      if (key === 34 || key === 33) {
+        return false
+      }
+    }
     if (this.$remote.app.appConf.platform !== 'darwin') {
       this.showHeader = true
     }
@@ -403,9 +409,7 @@ export default {
   position relative
   width 100%
   height 100%
-  background red
   overflow hidden
-  z-index 99999
 .top
   // top 30px
   padding-top 30px
@@ -416,6 +420,7 @@ export default {
   padding-bottom 36px
 .ck-editor
   height 100% !important
+  width 100% !important
 .high-light-mask
   position absolute
   top 0
@@ -438,10 +443,11 @@ export default {
 </style>
 <style lang="stylus">
 .ck-editor__main
-  height auto !important
-  overflow-y scroll
+  &::-webkit-scrollbar
+    display none !important
 // .ck-rounded-corners .ck.ck-editor__main>.ck-editor__editable, .ck.ck-editor__main>.ck-editor__editable.ck-rounded-corners
 //   // background blue !important
 //   &::-webkit-scrollbar
 //     display none !important
+
 </style>

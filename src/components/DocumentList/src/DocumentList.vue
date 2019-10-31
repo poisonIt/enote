@@ -553,7 +553,6 @@ export default {
       }
     },
     fileListSortFunc (list, type) {
-
       let order
       let sortKey
       if (type === 'folder') {
@@ -929,7 +928,7 @@ export default {
   padding-bottom 90px
   overflow-y scroll
   &::-webkit-scrollbar
-    display none
+    // display none
   .no-file
     height 100%
     display flex

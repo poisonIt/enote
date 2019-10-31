@@ -399,6 +399,7 @@ export default {
     isResearchPanelShowed(val) {
       if (val) {
         this.noteId = this.currentFile.remote_id
+        this.title = this.currentFile.title
         fetchLocal('getLocalDoc', {
           note_id: this.currentFile._id
         }).then(res => {

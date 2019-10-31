@@ -57,29 +57,33 @@
 <style lang="stylus" scoped>
 #title
   height 30px
-  padding 0 25px
+  padding 0 15px
   width 100%
   -webkit-app-region drag
   position absolute
   z-index 99
   top 0
   .btn_list
-    width 78px
+    width 120px
     height 100%
     display flex
+    // background red
     flex 1
     align-items center
     justify-content space-between
     float right
     .btn
-      width 28px
-      height 28px
+      // width 28px
+      height 30px
       display flex
       flex 1
       justify-content center
       align-items center
       &:hover
         background #e6e6e6
+      &.close:hover
+        background #da512c
+        
       img
         width 14px
         height 14px

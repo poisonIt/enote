@@ -4,7 +4,10 @@
     id="editor-container"
     :class="showHeader && changeTop?'paddTop':showHeader?'top':changeTop?'noTop':''"
   >
-    <textarea name="content" ref="editor" id="editor"></textarea>
+    <div class="editor-container_body" :style="{ width: containerWidth }">
+      <textarea name="content" ref="editor" id="editor"></textarea>
+    </div>
+
     <div class="high-light-mask"
       ref="highLightMask"
       v-show="locations.length > 0 && showHighLight"
@@ -34,10 +37,9 @@ import { mapGetters, mapActions } from 'vuex'
 import mixins from '../mixins'
 import { matchIndex, getStrPixelLen } from '../../../utils/utils'
 import uploadAdapter from './upload'
-import '../../../assets/styles/editor.css'
 import fetchLocal from '../../../utils/fetchLocal'
 import Attachment from './Attachment'
-
+import '../../../assets/styles/editor.css'
 const ClassicEditor = window.ClassicEditor
 
 export default {
@@ -47,6 +49,7 @@ export default {
 
   data () {
     return {
+      containerWidth: '0px',
       selectedKeyIdx: 0,
       showHighLight: false,
       cachedDoc: {
@@ -297,6 +300,7 @@ export default {
       if (el) {
         el.style.width = document.body.clientWidth - space + 'px'
       }
+      this.containerWidth = document.body.clientWidth - space + 'px'
     },
 
     async saveData (id, content) {
@@ -420,7 +424,6 @@ export default {
   padding-bottom 36px
 .ck-editor
   height 100% !important
-  width 100% !important
 .high-light-mask
   position absolute
   top 0

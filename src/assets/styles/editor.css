@@ -1,14 +1,17 @@
 #cke_editor-container {
   border: none;
 }
+
 #cke_1_bottom {
   border: none;
 }
+
 .cke_top {
   border-color: #eee !important;
   padding-top: 6px !important;
   padding-bottom: 6px !important;
 }
+
 .cke_bottom {
   display: none !important;
 }
@@ -17,6 +20,7 @@
   flex-wrap: wrap !important;
   border: none !important;
 }
+
 .w-e-text-container {
   border: none !important;
   padding-bottom: 30px;
@@ -27,26 +31,32 @@
   display: flex;
   flex-direction: column;
   height: 100% !important;
+  width: 100%;
   font-size: 14px !important;
 }
+
 .ck-editor__top {
   width: 100%;
   z-index: 2;
 }
+
 .ck-toolbar {
   border: none !important;
   box-shadow: none !important;
 }
+
 .ck-editor__main {
   /* flex: 1; */
-  width: 100%;
+  /* width: 100%; */
   /* max-width: 800px; */
   height: 100%;
   overflow: scroll !important;
 }
+
 #preview .ck-editor__main {
   overflow: visible !important;
 }
+
 .ck-content {
   /* width: 100%; */
   /* min-width: 800px; */
@@ -59,14 +69,26 @@
 
 .ck-content .table {
   margin: 1em 0 !important;
+
+}
+
+.ck-content ul,
+.ck-content ol,
+.ck-content li {
+  list-style: inside !important;
+  padding-left: inherit !important;
 }
 
 .ck-content li {
   list-style: inside !important;
 }
+
 .ck-content ul li {
   list-style-type: disc !important;
+  padding-left: inherit !important;
 }
+
 .ck-content ol li {
   list-style-type: decimal !important;
+  padding-left: inherit !important;
 }

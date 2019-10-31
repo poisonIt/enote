@@ -377,7 +377,8 @@ export default {
       isResearchPanelShowed: 'GET_SHOW_RESEARCH_PANEL',
       userInfo: 'GET_USER_INFO',
       currentFile: 'GET_CURRENT_FILE',
-      authorization: 'GET_TOKEN'
+      authorization: 'GET_TOKEN',
+      isSyncing: 'GET_IS_SYNCING',
     })
   },
 
@@ -456,7 +457,6 @@ export default {
   mounted () {
     // this.uploadList = this.$refs.upload.fileList
     this.searchTrade()
-
   },
 
   methods: {
@@ -649,6 +649,10 @@ export default {
       }
     },
     postReport () {
+      if (this.isSyncing) {
+        this.$Message.warning('同步未完成无法提交，请等待同步完成后再提交')
+        return
+      }
       if (this.largeType==''){
         this.$Message.error('请选择报告大类')
         return

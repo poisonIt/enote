@@ -32,7 +32,7 @@ export default {
   flex-direction row
   height 100%
   .section
-    height 100%
+    // height 100%
     &.left
       width 220px
       &.unexpanded
@@ -48,6 +48,7 @@ export default {
         height 100%
     &.right
       flex 1
+      height auto
       padding-top 60px
       div
         height 100%

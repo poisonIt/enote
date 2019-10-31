@@ -8,7 +8,7 @@
         <img :src="reset === true ? unMax:max" id="max_img">
       </span>
       <span class="btn close" @mouseenter="handleMove" @mouseleave="handleLeave" @click="handleClick('appQuit')">
-        <img src="">
+        <img src="../assets/images/lanhu/close2@2x.png">
       </span>
     </div>
   </div>

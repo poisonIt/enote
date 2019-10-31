@@ -403,7 +403,9 @@ export default {
   position relative
   width 100%
   height 100%
+  background red
   overflow hidden
+  z-index 99999
 .top
   // top 30px
   padding-top 30px
@@ -435,8 +437,11 @@ export default {
 
 </style>
 <style lang="stylus">
-.ck-rounded-corners .ck.ck-editor__main>.ck-editor__editable, .ck.ck-editor__main>.ck-editor__editable.ck-rounded-corners
-  // background blue !important
-  &::-webkit-scrollbar
-    display none !important
+.ck-editor__main
+  height auto !important
+  overflow-y scroll
+// .ck-rounded-corners .ck.ck-editor__main>.ck-editor__editable, .ck.ck-editor__main>.ck-editor__editable.ck-rounded-corners
+//   // background blue !important
+//   &::-webkit-scrollbar
+//     display none !important
 </style>

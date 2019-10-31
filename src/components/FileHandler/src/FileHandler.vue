@@ -1,5 +1,6 @@
 <template>
   <div :class="showHeader ? 'container top' : 'container'"
+    class="icon_container"
     ref="container"
     v-if="currentFile"
     @dblclick.self="handleHeaderDbClick"

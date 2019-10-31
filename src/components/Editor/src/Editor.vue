@@ -3,10 +3,9 @@
   <div
     id="editor-container"
     :class="showHeader && changeTop?'paddTop':showHeader?'top':changeTop?'noTop':''"
+     :style="{ width: containerWidth }"
   >
-    <div class="editor-container_body" :style="{ width: containerWidth }">
-      <textarea name="content" ref="editor" id="editor"></textarea>
-    </div>
+    <textarea name="content" ref="editor" id="editor"></textarea>
 
     <div class="high-light-mask"
       ref="highLightMask"
@@ -295,10 +294,16 @@ export default {
 
     handleResize () {
       let space = this.viewType === 'expanded' ? 540 : 390
+      let titH = document.getElementsByClassName('icon_container')[0].offsetHeight
       let el = document.getElementsByClassName('ck ck-editor__main')[0]
+      let content = document.getElementsByClassName('ck ck-content')[0]
+      let barH = document.getElementsByClassName('ck ck-toolbar')[0].offsetHeight
       if (el) {
         el.style.width = document.body.clientWidth - space + 'px'
       }
+      // if (content) {
+      //   content.style.height = document.body.clientHeight-titH-barH + 'px'
+      // }
       this.containerWidth = document.body.clientWidth - space + 'px'
     },
 

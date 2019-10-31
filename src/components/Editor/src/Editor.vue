@@ -144,8 +144,14 @@ export default {
     //     }
     //   }
     // })
+    document.onkeydown = function(e) {
+      let key = e.keyCode
+      if (key === 34 || key === 33) {
+        return false
+      }
+    }
     if (this.$remote.app.appConf.platform !== 'darwin') {
-      this.showHeader = false
+      this.showHeader = true
     }
     ipcRenderer.on('wrote-pdf', (event, path) => {
       let webviewPDF = document.getElementById('pdf-path')
@@ -413,7 +419,7 @@ export default {
 .noTop
   padding-bottom 36px
 .ck-editor
-  height 100% !important
+  // height 100% !important
 .high-light-mask
   position absolute
   top 0
@@ -436,9 +442,8 @@ export default {
 </style>
 <style lang="stylus">
 .ck-rounded-corners .ck.ck-editor__main>.ck-editor__editable, .ck.ck-editor__main>.ck-editor__editable.ck-rounded-corners
-  // background blue !important
   &::-webkit-scrollbar
-    display none !important
+    // display none !important
 .ck-editor__main
   &::-webkit-scrollbar
     display none !important

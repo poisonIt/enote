@@ -298,7 +298,7 @@ export default {
     })
 
     if (this.$remote.app.appConf.platform !== 'darwin') {
-      // this.showHeader = true
+      this.showHeader = true
     }
   },
   mounted () {
@@ -928,7 +928,7 @@ export default {
   padding-bottom 90px
   overflow-y scroll
   &::-webkit-scrollbar
-    display none
+    // display none
   .no-file
     height 100%
     display flex

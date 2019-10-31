@@ -1044,8 +1044,17 @@ export default {
   padding-bottom 30px
   overflow-y scroll
   &::-webkit-scrollbar
-    display none
-
+    width: 4px;     
+    height: 4px;
+  &::-webkit-scrollbar-thumb
+      border-radius: 5px;
+      -webkit-box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+      // background: rgba(0,0,0,0.2);
+      background #fff
+  &::-webkit-scrollbar-track
+      -webkit-box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+      border-radius: 0;
+      background: rgba(0,0,0,0.1);
 .unexpanded
   transform: scaleY(0)
   overflow hidden

@@ -43,6 +43,7 @@ export default {
       width 320px
       border-left 1px solid #e6e6e6
       border-right 1px solid #e6e6e6
+      // overflow hidden
       div
         position relative
         height 100%

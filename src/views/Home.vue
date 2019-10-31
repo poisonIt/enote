@@ -153,7 +153,7 @@ export default {
 
   created () {
     if (this.$remote.app.appConf.platform !== 'darwin') {
-      this.showHeader = false
+      this.showHeader = true
     }
     window.onbeforeunload = (e) => {
       e.returnValue = false

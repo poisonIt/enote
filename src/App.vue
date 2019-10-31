@@ -41,6 +41,17 @@ export default {
 <style lang="stylus">
 // ::-webkit-scrollbar
 //   display none
+::-webkit-scrollbar
+    width: 6px;     
+    height: 6px;
+::-webkit-scrollbar-thumb
+    border-radius: 6x;
+    -webkit-box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+    background: rgba(0,0,0,0.2);
+::-webkit-scrollbar-track
+    -webkit-box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+    border-radius: 0;
+    background: rgba(0,0,0,0);
 *
   -webkit-app-region no-drag
 

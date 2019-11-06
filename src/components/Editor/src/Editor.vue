@@ -145,12 +145,13 @@ export default {
     //     }
     //   }
     // })
-    document.onkeydown = function(e) {
-      let key = e.keyCode
-      if (key === 34 || key === 33) {
-        return false
-      }
-    }
+    // document.onkeydown = function(e) {
+    //   let key = e.keyCode
+    //   if (key === 34 || key === 33) {
+    //     return false
+    //   }
+    // }
+
     if (this.$remote.app.appConf.platform !== 'darwin') {
       this.showHeader = true
     }
@@ -294,10 +295,8 @@ export default {
 
     handleResize () {
       let space = this.viewType === 'expanded' ? 540 : 390
-      let titH = document.getElementsByClassName('icon_container')[0].offsetHeight
       let el = document.getElementsByClassName('ck ck-editor__main')[0]
       let content = document.getElementsByClassName('ck ck-content')[0]
-      let barH = document.getElementsByClassName('ck ck-toolbar')[0].offsetHeight
       if (el) {
         el.style.width = document.body.clientWidth - space + 'px'
       }

@@ -91,3 +91,8 @@
   list-style-type: decimal !important;
   padding-left: inherit !important;
 }
+
+.ck-content .todo-list li {
+  list-style: none !important;
+  padding-left: 20px !important;
+}

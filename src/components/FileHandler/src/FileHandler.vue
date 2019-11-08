@@ -433,6 +433,7 @@ export default {
   height 60px !important
   position absolute
   top 0
+  z-index 99
   // right 0
   display flex
   flex-direction row

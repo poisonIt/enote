@@ -20,6 +20,7 @@
           @itemClick="handleMenuClick">
         </Menu>
       </div>
+      
     </div>
 
     <div class="body" ref="body">
@@ -925,7 +926,7 @@ export default {
 .body
   position relative
   height 100%
-  padding-bottom 90px
+  // padding-bottom 90px
   overflow-y scroll
   &::-webkit-scrollbar
     // display none
@@ -951,7 +952,7 @@ export default {
 .footer
   width 100%
   position absolute
-  bottom 0
+  bottom -90px
   border-top 1px solid #e6e6e6
   background-color #FCFBF7
   .num

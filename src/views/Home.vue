@@ -293,7 +293,7 @@ export default {
   height 31px !important
   position absolute !important
   left -1px
-  bottom 0
+  bottom -90px
   border-radius 0 4px 4px 0
   background-color #3C3E44
   z-index 1

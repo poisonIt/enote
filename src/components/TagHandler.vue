@@ -264,7 +264,8 @@ export default {
   position relative
   height 36px !important
   border-bottom 1px solid #e6e6e6
-  padding: 0 20px
+  padding 0 20px
+  z-index 99
   &.top_tag
     top 30px
 .tag-list

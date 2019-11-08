@@ -6,7 +6,7 @@
     <div class="section middle" style="background-color: #FCFBF7;">
       <slot name="middle"></slot>
     </div>
-    <div class="section right" style="position: relative">
+    <div :class="showTag?'section right showTag':'section right'" style="position: relative">
       <slot name="right"></slot>
     </div>
   </div>
@@ -20,8 +20,26 @@ export default {
 
   computed: {
     ...mapGetters({
-      viewType: 'GET_VIEW_TYPE'
+      viewType: 'GET_VIEW_TYPE',
+      isShowed: 'GET_SHOW_TAG_HANDLER',
     })
+  },
+  data() {
+    return {
+      showTag: false
+    }
+  },
+   watch: {
+    isShowed: {
+      handler: function (val) {
+
+        if (val === true) {
+          this.showTag = true
+        } else {
+          this.showTag = false
+        }
+      }
+    },
   }
 }
 </script>
@@ -31,6 +49,7 @@ export default {
   display flex
   flex-direction row
   height 100%
+  overflow hidden
   .section
     // height 100%
     &.left
@@ -41,9 +60,10 @@ export default {
         height 100%
     &.middle
       width 320px
+      height 100%
       border-left 1px solid #e6e6e6
       border-right 1px solid #e6e6e6
-      // overflow hidden
+      padding-bottom 90px
       div
         position relative
         height 100%
@@ -51,6 +71,8 @@ export default {
       flex 1
       height auto
       padding-top 60px
+      &.showTag
+        padding-bottom 36px
       div
         height 100%
 </style>

@@ -24,7 +24,7 @@
       :note_files="noteFiles"
       :attachShow="attachShow"
     ></attachment>
-    <webview id="pdf-path"></webview>
+    <!-- <webview id="pdf-path"></webview> -->
 
   </div>
 </template>
@@ -184,6 +184,13 @@ export default {
     })
   },
 
+  mounted () {
+    this.handleResize()
+    this.$hub.pool.push(() => {
+      this.handleResize()
+    })
+  },
+
   methods: {
     ...mapActions([
       'SAVE_DOC',
@@ -297,8 +304,11 @@ export default {
       let space = this.viewType === 'expanded' ? 540 : 390
       let el = document.getElementsByClassName('ck ck-editor__main')[0]
       let content = document.getElementsByClassName('ck ck-content')[0]
+      let el_top = document.getElementsByClassName('ck ck-editor__top')[0]
       if (el) {
         el.style.width = document.body.clientWidth - space + 'px'
+        // el_top.style.width = document.body.clientWidth - space + 'px'
+        el_top.style.paddingRight= '40px'
       }
       // if (content) {
       //   content.style.height = document.body.clientHeight-titH-barH + 'px'
@@ -416,13 +426,14 @@ export default {
   position relative
   width 100%
   height 100%
-  overflow hidden
+  // overflow hidden
+  // padding-right 40px
 .top
   // top 30px
   padding-top 30px
 .paddTop
-  top 30px
-  padding-bottom 66px
+  padding-top 30px
+  // padding-bottom 66px
 .noTop
   padding-bottom 36px
 .ck-editor
@@ -444,7 +455,7 @@ export default {
   background-color #fff
   z-index 9999
 .show_header
-  top 30px
+  margin-top 30px
 
 </style>
 <style lang="stylus">

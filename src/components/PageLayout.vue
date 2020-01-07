@@ -6,7 +6,7 @@
     <div class="section middle" style="background-color: #FCFBF7;">
       <slot name="middle"></slot>
     </div>
-    <div :class="showTag?'section right showTag':'section right'" style="position: relative">
+    <div :class="showTag && show_tag?'section right showTag':'section right'" style="position: relative">
       <slot name="right"></slot>
     </div>
   </div>
@@ -24,12 +24,15 @@ export default {
       isShowed: 'GET_SHOW_TAG_HANDLER',
     })
   },
+
   data() {
     return {
-      showTag: false
+      showTag: false,
+      show_tag: false
     }
   },
-   watch: {
+
+  watch: {
     isShowed: {
       handler: function (val) {
 
@@ -40,7 +43,12 @@ export default {
         }
       }
     },
-  }
+  },
+  created () {
+    if (this.$remote.app.appConf.platform !== 'darwin') {
+      this.show_tag = true
+    }
+  },
 }
 </script>
 

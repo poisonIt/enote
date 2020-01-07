@@ -10,9 +10,11 @@ import Modal from '@/components/Modal'
 import BSelect from '@/components/Select'
 import BOption from '@/components/Option'
 import Menu from '@/components/Menu'
-import { Alert, Message, Upload, Button, Select, Option, Form, FormItem, Poptip, Scroll } from 'iview'
+// import Table from '@/components/Table'
+import { Alert, Message, Upload, Button, Option, Select, OptionGroup, Progress, Form, FormItem, Poptip, Scroll, Table, Input } from 'view-design'
 import '@/assets/css/font-awesome.min.css'
-import 'iview/dist/styles/iview.css'
+// import 'iview/dist/styles/iview.css'
+import 'view-design/dist/styles/iview.css'
 import '@/assets/styles/iview.styl'
 import '@/assets/styles/common.styl'
 import '@/assets/css/font-family.css'
@@ -34,13 +36,18 @@ Vue.use(Modal)
 Vue.use(BSelect)
 Vue.use(BOption)
 Vue.use(Menu)
+Vue.component('Input', Input)
+Vue.component('Table', Table)
 Vue.component('Alert', Alert)
 Vue.component('Upload', Upload)
 Vue.component('Button', Button)
 Vue.component('Select', Select)
 Vue.component('Option', Option)
+Vue.component('OptionGroup', OptionGroup)
 Vue.component('Poptip', Poptip)
 Vue.component('Scroll', Scroll)
+Vue.component('Progress', Progress)
+
 // Vue.component('Form', Form)
 // Vue.component('FormItem', FormItem)
 Vue.prototype.$Message = Message

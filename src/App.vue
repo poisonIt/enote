@@ -1,5 +1,5 @@
 <template>
-  <div id="app" :style="appStyle">
+  <div id="app">
     <router-view></router-view>
   </div>
 </template>
@@ -7,16 +7,6 @@
 <script>
 import { mapActions } from 'vuex'
 export default {
-  computed: {
-    appStyle () {
-      let result = {}
-      if (this.$remote.app.appConf.platform !== 'darwin') {
-        result.border = '1px solid #f3f3f3'
-      }
-      return result
-    }
-  },
-
   mounted () {
     let network_status = window.navigator.onLine ? 'online' : 'offline'
     this.SET_NETWORK_STATUS(network_status)
@@ -29,7 +19,6 @@ export default {
       this.SET_NETWORK_STATUS('offline')
     })
   },
-
   methods: {
     ...mapActions([
       'SET_NETWORK_STATUS'
@@ -39,24 +28,10 @@ export default {
 </script>
 
 <style lang="stylus">
-// ::-webkit-scrollbar
-//   display none
 ::-webkit-scrollbar
-    width: 6px;     
-    height: 6px;
-::-webkit-scrollbar-thumb
-    border-radius: 6x;
-    -webkit-box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
-    background: rgba(0,0,0,0.2);
-::-webkit-scrollbar-track
-    -webkit-box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
-    border-radius: 0;
-    background: rgba(0,0,0,0);
-*
-  -webkit-app-region no-drag
-
+  display none
 #app
-  font-family 'Avenir', Helvetica, Arial, sans-serif,  Microsoft YaHei
+  font-family 'Avenir', Helvetica, Arial, sans-serif
   -webkit-font-smoothing antialiased
   -moz-osx-font-smoothing grayscale
   color #2c3e50
@@ -66,8 +41,4 @@ export default {
   // display flex
   // flex-direction row
   overflow hidden
-  // background red
-#history.content
-  img
-    width 90% !important
 </style>

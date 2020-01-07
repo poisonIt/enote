@@ -98,11 +98,12 @@ app.on('ready', async () => {
 
   let dbPath = path.resolve(app.getAppPath('userData'), `../`)
   // let dbPath = '/Users/bowiego/Documents/workspace/enote/temp'
-  let serviceUrl = 'https://iapp.htffund.com/note/api'
+  // let serviceUrl = 'https://iapp.htffund.com/note/api'
+  // let serviceUrl = 'https://iapp.htffund.com/note/api'
   // let serviceUrl = isDevelopment
     // ? 'http://10.50.16.123:8000/api'
     // : 'https://iapp.htffund.com/note/api'
-  // let serviceUrl = 'http://10.50.16.123:8000/api'
+  let serviceUrl = 'http://10.50.16.123:8000/api'
 
   let appConf = await getAppConf(app.getAppPath('userData'))
   if (!appConf.serviceUrl || appConf.serviceUrl === '') {
@@ -123,10 +124,10 @@ app.on('ready', async () => {
       appConf.devTool = '1'
     }
   }
-  let defaultSize = [1000, 640]
+  let defaultSize = [1024, 800]
   if (appConf.size) {
-    defaultSize[0] = appConf.size.width || 1000
-    defaultSize[1] = appConf.size.height || 640
+    defaultSize[0] = appConf.size.width || 1024
+    defaultSize[1] = appConf.size.height || 800
   }
   let p = dbPath + '/database'
   app.appConf = {
@@ -443,7 +444,7 @@ function createHomeWindow () {
     }
   })
 
-  win.setMinimumSize(960, 640)
+  win.setMinimumSize(1440, 910)
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode

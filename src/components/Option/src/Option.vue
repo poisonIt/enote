@@ -8,6 +8,7 @@
     <i class="fa fa-check icon-check" aria-hidden="true" v-show="selected"></i>
     <slot>
       <span>{{ label }}</span>
+
     </slot>
     <div class="child" v-if="children.length > 0 && showChildren">
       <b-option

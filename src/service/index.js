@@ -114,17 +114,18 @@ export function syncSate () {
   return axios.get('/youdao/syncState')
 }
 
+//
 export function getReportSubclass (params) {
   return axios.get('/report/reportSubclass', {
     params: params
   })
 }
 
-export function getReportStock (params) {
-  return axios.get('/report/stocks', {
-    params: params
-  })
-}
+// export function getReportStock (params) {
+//   return axios.get('/report/stocks', {
+//     params: params
+//   })
+// }
 
 export function getReportTrade (params) {
   return axios.get('/report/trades', {
@@ -164,4 +165,45 @@ export function saveYoudaoShare (params) {
 
 export function reportIsRepeat (params) {
   return axios.post('/report/reportIsrepeat', params)
+}
+
+// 研报改造接口
+
+// 初始报告大类和对应销类
+export function getReportType () {
+  return axios.post('/newReport/getReportType')
+}
+// 获取该报告需要上传的字段
+export function getReportTypeFiled (typeId) {
+  return axios.post(`/newReport/getReportTypeFiled?typeId=${typeId}`)
+}
+
+// 股票搜索
+export function getReportStock (params) {
+  return axios.post(`/newReport/indicator/index/query-stock`, params)
+}
+
+// 获取行业
+export function getReportIndustry () {
+  return axios.post('/newReport/indicator/index/query-industry')
+}
+
+// 获取股票带出的字段
+export function getLastStockExpectProfit (stockCode) {
+  return axios.post(`/newReport/report/getLastStockExpectProfit?stockCode=${stockCode}`)
+}
+
+// 盈利预测数据
+export function getProfitItem (data) {
+  return axios.post('/newReport/report/getProfitItem', data)
+}
+
+// 获取行业评级
+export function getEnumByCode (code) {
+  return axios.post(`/newReport/report/getEnumByCode?code=${code}`)
+}
+
+// 报告上传
+export function insertReport (data) {
+  return axios.post('/newReport/report/insertReport', data)
 }

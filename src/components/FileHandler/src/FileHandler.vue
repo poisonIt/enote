@@ -306,11 +306,11 @@ export default {
       //   return true
       // }
       // return true
-      if (this.userInfo.department_name !== '研究部') {
-        if (item === 'fetch') {
-          return true
-        }
-      }
+      // if (this.userInfo.department_name !== '研究部') {
+      //   if (item === 'fetch') {
+      //     return true
+      //   }
+      // }
       if (this.currentFile.type === 'folder' || this.currentNav.type === 'share' || this.currentNav.type === 'public') {
         return true
       }
@@ -592,10 +592,7 @@ export default {
       margin-right 4px
       color #999999
 </style>
-<style lang="stylus">
-.ivu-poptip-popper
-  min-width 50px !important
-  z-index 10000 !important
+<style lang="stylus" scoped>
 input:disabled
   background-color: #fff;
 input[disabled]
@@ -604,6 +601,9 @@ input[disabled]
   background-color: #fff
 </style>
 <style lang="stylus">
+.ivu-poptip-popper
+  min-width 50px !important
+  z-index 10000 !important
 .ivu-poptip-body-content-inner
   color #333
 </style>

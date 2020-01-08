@@ -1604,6 +1604,7 @@ export default {
         border 1px solid #E9E9E9
         outline none
         height 28px
+        width 140px
 
 .upload-button
   color #DDAF59 !important

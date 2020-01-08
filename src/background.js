@@ -128,6 +128,8 @@ app.on('ready', async () => {
   if (appConf.size) {
     defaultSize[0] = appConf.size.width || 1024
     defaultSize[1] = appConf.size.height || 800
+    // defaultSize[0] = 1024
+    // defaultSize[1] = 800
   }
   let p = dbPath + '/database'
   app.appConf = {
@@ -444,7 +446,7 @@ function createHomeWindow () {
     }
   })
 
-  win.setMinimumSize(1440, 910)
+  win.setMinimumSize(1024, 800)
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode

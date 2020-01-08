@@ -119,7 +119,7 @@ export default {
 .container
   width 100%
   position relative
-  -webkit-app-region drag
+  // -webkit-app-region drag
 .avatar
   width 40px
   height 40px
@@ -127,7 +127,7 @@ export default {
   border-radius 50%
   overflow hidden
   background-color #fff
-  -webkit-app-region drag
+  // -webkit-app-region drag
   &.expanded
     margin 20px auto 0px
   img

@@ -57,12 +57,11 @@
 <style lang="stylus" scoped>
 #title
   height 30px
-  padding 0 15px
-  width 100%
-  -webkit-app-region drag
-  position absolute
-  z-index 99
+  right 0
   top 0
+  z-index 9999
+  padding 0 15px
+  position absolute
   .btn_list
     width 120px
     height 100%

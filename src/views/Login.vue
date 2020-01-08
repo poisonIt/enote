@@ -1,6 +1,6 @@
 <template>
   <div id="login">
-    <div class="header" v-if="showHeader">
+    <div class="header" v-if='showHeader'>
       <div class="minimize" @click="minimizeWindow"></div>
       <div class="close" @click="closeWindow"></div>
     </div>
@@ -11,14 +11,14 @@
         <input class="round"
           type="text"
           v-model="username"
-          placeholder="用户名">
+          placeholder="用户名" />
       </div>
       <div class="input password">
         <input class="round"
           type="password"
           v-model="password"
           placeholder="密码"
-          @keyup.enter="postInput">
+          @keyup.enter="postInput" />
       </div>
       <div class="button round"
         :class="{ disabled: isLoading }"
@@ -232,22 +232,22 @@ export default {
 
 <style lang="stylus" scoped>
 #login
-  position relative
+  sposition relative
   width 100%
   height 100%
-  background #fff
   background-image url('../assets/images/lanhu/login_bg@1x.png')
   background-size cover
   background-repeat no-repeat
-  -webkit-app-region drag
+  // -webkit-app-region drag
 
 .header
-  position fixed
+  position absolute
   width 100%
   height 40px
   display flex
   justify-content flex-end
-  -webkit-app-region drag
+  right 0
+  // -webkit-app-region drag
   .minimize
     width 40px
     height 36px

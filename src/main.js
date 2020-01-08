@@ -11,7 +11,7 @@ import BSelect from '@/components/Select'
 import BOption from '@/components/Option'
 import Menu from '@/components/Menu'
 // import Table from '@/components/Table'
-import { Alert, Message, Upload, Button, Option, Select, OptionGroup, Progress, Form, FormItem, Poptip, Scroll, Table } from 'view-design'
+import { Alert, Message, Upload, Button, Option, Select, OptionGroup, Progress, Form, FormItem, Poptip, Scroll, Table, Input} from 'view-design'
 import '@/assets/css/font-awesome.min.css'
 // import 'iview/dist/styles/iview.css'
 import 'view-design/dist/styles/iview.css'
@@ -36,7 +36,7 @@ Vue.use(Modal)
 Vue.use(BSelect)
 Vue.use(BOption)
 Vue.use(Menu)
-// Vue.component('Input', Input)
+Vue.component('Input', Input)
 Vue.component('Table', Table)
 Vue.component('Alert', Alert)
 Vue.component('Upload', Upload)

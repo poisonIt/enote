@@ -442,7 +442,7 @@ export default {
       showSummaryError: false,
       uploadList: [],
       query: '北',
-      iconDel: require('../../assets/images/lanhu/del-file@3.png'),
+      iconDel: require('../../assets/images/lanhu/delete-icon@3.png'),
       largeTypeArr: [],
       smallTypeArr: [],
       stockMenuData: [],
@@ -477,7 +477,7 @@ export default {
         this.researchTitle = this.currentFile.title
         this.post_data = {
           noteId: this.currentFile.remote_id,
-          publicTitle: this.researchTitle,
+          publicTitle: this.currentFile.title,
           syncAnswer: null,
           titleRepeatAnswer: null
         }
@@ -495,6 +495,7 @@ export default {
           note_id: this.currentFile._id
         }).then(res => {
           this.summary = new Buffer(res.content || '').toString('base64')
+          // console.log(this.summary)
         })
 
         this.handleGetReportType()
@@ -510,7 +511,10 @@ export default {
     largeType: {
       handler: function (val) {
         this.$refs.smallTypeSelect.clear()
-        this.enumCodeArr = []
+        // this.enumCodeArr = []
+        // this.showProfitData = false
+        // this.projectData = []
+        this.stock = ''
         console.log(val)
 
         this.reportType.forEach(item => {
@@ -563,6 +567,7 @@ export default {
       valutionYears = []
       this.projectData = []
       this.countData = []
+
       this.showProfitData = false
       this.modalHeight = '445px'
       getLastStockExpectProfit(newVal).then(resp => {
@@ -572,10 +577,12 @@ export default {
           this.investMarkName = resp.data.data.investMarkName
           this.currency = resp.data.data.currency === 1 ?  'CNY' : resp.data.data.currency === 2 ? 'HKD': resp.data.data.currency === 3 ? 'USD' : null
           this.sixMonthPrice = resp.data.data.sixMonthPrice
-          if (resp.data.data.valutionItems !== null) {
+          console.log('盈利预测数据', resp.data.data.valutionItems )
+          valutionYears = resp.data.data.valutionYears
+          if (resp.data.data.valutionItems !== null && resp.data.data.valutionItems.length > 0) {
             this.showProfitData = true
             this.modalHeight = '646px'
-            valutionYears = resp.data.data.valutionYears
+
             this.countData = resp.data.data.valutionItems
             resp.data.data.valutionItems.forEach((item, index) => {
               item.data.forEach((child, index1) => {
@@ -600,7 +607,7 @@ export default {
         let stockArr = newVal.split('.')
         let stockArrPrice = stockArr[stockArr.length - 1]
         if (stockArrPrice === 'HK') {
-          return this.unitPrice = 'HK'
+          return this.unitPrice = 'HKD'
         } else if (stockArrPrice === 'SZ' || stockArrPrice === 'SH' || stockArrPrice === 'TW') {
           return this.unitPrice = 'CNY'
         } else {
@@ -621,9 +628,10 @@ export default {
         this.columns = [{
           title: '预测项目', width: 170,align: 'center',
           render: (h, params) => {
+
             return h('Select', {
               props: {
-                value: params.row.itemTitle==='PE'?'1':params.row.itemTitle==='PS'?'2':params.row.itemTitle==='PB'?'3':params.row.itemTitle==='PBV'?'4':params.row.itemTitle==='EV/EBITDA'?'5':'6'
+                value: params.row.itemTitle==='PE'?'1':params.row.itemTitle==='PS'?'2':params.row.itemTitle==='PB'?'3':params.row.itemTitle==='PEV'?'4':params.row.itemTitle==='EV/EBITDA'?'5':'6'
               },
               style: {
                 width: '140px'
@@ -631,7 +639,36 @@ export default {
               on: {
                 'on-change':(val) => {
                   console.log(val)
-
+                  console.log(params)
+                  let data = {
+                    currency: this.currency !== null ? (this.currency === 'CNY' ? '1' : this.currency === 'HKD' ?'2' : '3') : this.currencyName,
+                    method: val,
+                    stockCode: this.stock
+                  }
+                  this.projectData = []
+                  getProfitItem(data).then(resp => {
+                    if (resp.data.returnCode === 200) {
+                      if (resp.data.data.valutionItems !== null) {
+                        console.log(resp.data.data.valutionItems)
+                        this.countData[params.index] = resp.data.data.valutionItems[0]
+                        console.log()
+                        this.countData.forEach((item, index) => {
+                          item.data.forEach((child, index1) => {
+                            child['itemLength'] = item.data.length
+                            child['itemIndex'] = index
+                            child['itemTitle'] = item.itemTitle
+                          })
+                          list_array.forEach(option => {
+                            if (item.itemTitle === option.value) {
+                              option.disabled = true
+                            }
+                          })
+                          this.projectData = this.projectData.concat(item.data)
+                        })
+                        console.log()
+                      }
+                    }
+                  })
                 }
               }
             },
@@ -993,7 +1030,7 @@ export default {
               h('img', {
                 style: {
                   width: '11px',
-                  height: '13px',
+                  height: '11px',
                 },
                 attrs: {
                   src: this.iconDel,
@@ -1009,6 +1046,11 @@ export default {
                         child['itemLength'] = item.data.length
                         child['itemIndex'] = index
                         child['itemTitle'] = item.itemTitle
+                      })
+                      list_array.forEach(option => {
+                        if (item.itemTitle === option.value) {
+                          option.disabled = true
+                        }
                       })
                       this.projectData = this.projectData.concat(item.data)
                     })
@@ -1134,6 +1176,7 @@ export default {
         this.$refs.stockSelectEl.setQuery('')
         this.$refs.stockRatingSelect.clear()
       }
+      this.countData = []
 
       this.showProfitData = false
       // this.stockMenuData = []
@@ -1152,7 +1195,7 @@ export default {
       // this.isResearchTitleShowed = false
       // this.title = ''
       // this.keywords = ''
-      // this.summary = ''
+      this.summary = ''
       this.publicStatus = false
       this.$refs.upload.clearFiles()
       this.noteFiles = []
@@ -1385,10 +1428,8 @@ export default {
         firstReportType: Number(this.largeType), //报告大类
         secondReportType: Number(this.smallType), //报告小类
         stockRating: stockRatingName, //投资评级中文
-        valuation: valuation,
+        valuation: valuation, // 问题
         attachments: this.noteFiles,
-
-
         noteFiles: this.noteFiles, //笔记附件
         // attachmentList: transAttachMentList(this.noteFiles),
         // attachmentflag: this.attachmentflag,
@@ -1402,7 +1443,7 @@ export default {
         // status: 50,
         // stype: 2,
         // keywords: this.keywords,
-        // summary: this.summary, //摘要
+        summary: this.summary, //摘要
         // title: this.title,
         // // username: this.userInfo.usercode
         // // username: this.userInfo.usernamePinYin
@@ -1445,10 +1486,10 @@ export default {
       //   this.$Message.error('请填写关键字')
       //   return
       // }
-      // if (data.summary === '') {
-      //   this.$Message.error('笔记不能为空')
-      //   return
-      // }
+      if (data.summary === '') {
+        this.$Message.error('笔记不能为空')
+        return
+      }
 
       // if (this.publicStatus && this.researchTitle === '') {
       //   this.$Message.error('研究部晨会名称不能为空')
@@ -1462,12 +1503,12 @@ export default {
       this.confirmResearchData = data
 
       console.log(this.confirmResearchData)
-      this.submitEnquiry(data)
-      // if (this.publicStatus) {
-      //   this.confirmNote(this.post_data)
-      // } else {
-      //   this.submitEnquiry(data)
-      // }
+      // this.submitEnquiry(data)
+      if (this.publicStatus) {
+        this.confirmNote(this.post_data)
+      } else {
+        this.submitEnquiry(data)
+      }
     },
 
     submitEnquiry (data) {
@@ -1542,6 +1583,7 @@ export default {
     handleAddProject() {
       let j = 0, method
       list_array.forEach((item, index) => {
+
         if (index === j && !item.disabled) {
           method = item.label
         } else {
@@ -1549,12 +1591,37 @@ export default {
         }
       })
       let params = {
-        currency: this.currencyName,
+        currency: this.currency !== null ? (this.currency === 'CNY' ? '1' : this.currency === 'HKD' ?'2' : '3') : this.currencyName,
         method: method,
         stockCode: this.stock
       }
+      console.log(params)
+      // if (j >= list_array.length) return
+      if (this.stock === '') return
       getProfitItem(params).then(resp => {
-        console.log(resp)
+        // console.log(resp)
+        if (resp.data.returnCode === 200) {
+          if (resp.data.data.valutionItems !== null) {
+            this.showProfitData = true
+            this.modalHeight = '646px'
+            this.projectData = []
+            // valutionYears = resp.data.data.valutionYears
+            this.countData = this.countData.concat(resp.data.data.valutionItems)
+            this.countData.forEach((item, index) => {
+              item.data.forEach((child, index1) => {
+                child['itemLength'] = item.data.length
+                child['itemIndex'] = index
+                child['itemTitle'] = item.itemTitle
+              })
+              list_array.forEach(option => {
+                if (item.itemTitle === option.value) {
+                  option.disabled = true
+                }
+              })
+              this.projectData = this.projectData.concat(item.data)
+            })
+          }
+        }
       })
     },
   }
@@ -1596,7 +1663,7 @@ export default {
         margin-right 13px
         font-size 12px
         &.right-label
-          width 80px
+          width 79px
           margin-left 27px
       input
         padding-left 10px
@@ -1832,6 +1899,7 @@ input[disabled]
 .ivu-table-stripe-odd td
   background-color #fff !important
 
+
 .ivu-input:focus
   border-color #DDAF59 !important
   box-shadow 0 0 0 2px rgba(221,175,89,.1) !important
@@ -1850,5 +1918,7 @@ input[disabled]
   height 28px !important
 .ivu-input-small
   font-size 12px !important
+.ivu-icon .ivu-icon-ios-arrow-down .ivu-select-arrow
+  font-size 12px
 </style>
 

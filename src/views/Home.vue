@@ -148,6 +148,10 @@ export default {
       } else {
         this.clearValidateTokenItv()
       }
+    },
+
+    currentFile (val) {
+      console.log(val)
     }
   },
 

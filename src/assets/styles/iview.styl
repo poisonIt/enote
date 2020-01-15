@@ -7,7 +7,7 @@
 .ivu-select-selection
   height 28px !important
   line-height 28px !important
-  border-color #DDAF59 !important
+  // border-color #DDAF59 !important
   box-shadow none !important
   font-size 12px !important
 .ivu-select-input
@@ -18,3 +18,11 @@
 //   // padding 0 10px 0 8px !important
 .ivu-select-item.ivu-select-item-selected
   color #DDAF59 !important
+.ivu-select-visible .ivu-select-selection
+  border-color #DDAF59 !important
+.ivu-select-selection-focused, .ivu-select-selection:hover
+  border-color #DDAF59 !important
+  box-shadow 0 0 0 2px rgba(221,175,89,.1) !important
+.ivu-select-single .ivu-select-selection .ivu-select-placeholder, .ivu-select-single .ivu-select-selection .ivu-select-selected-value
+  font-size 12px
+  color #333

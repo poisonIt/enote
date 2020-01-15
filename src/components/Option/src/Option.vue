@@ -7,8 +7,7 @@
     @mouseout="handleMouseout">
     <i class="fa fa-check icon-check" aria-hidden="true" v-show="selected"></i>
     <slot>
-      <span>{{ label }}</span>
-
+      <span :style="{color: selected?'#ddaf59':'' }">{{ label }}</span>
     </slot>
     <div class="child" v-if="children.length > 0 && showChildren">
       <b-option
@@ -97,7 +96,7 @@ export default {
   cursor pointer
   text-align left
   &:hover
-    background-color #f5f7fa
+    background-color #FBF5EB !important
 .child
   position absolute
   top -2px
@@ -117,5 +116,6 @@ export default {
   position absolute
   top 50%
   left 7%
+  color #ddaf59
   transform translateY(-50%)
 </style>

@@ -195,7 +195,7 @@ export function getLastStockExpectProfit (stockCode) {
 
 // 盈利预测数据
 export function getProfitItem (data) {
-  return axios.post('/newReport/report/getProfitItem', data)
+  return axios.post(`/newReport/report/getProfitItem`, data)
 }
 
 // 获取行业评级

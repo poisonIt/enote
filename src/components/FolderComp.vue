@@ -1,5 +1,6 @@
 <template>
-  <div :class="showHeader ? 'folder-comp top' : 'folder-comp'">
+  <!-- <div :class="showHeader ? 'folder-comp top' : 'folder-comp'"> -->
+<div class="folder-comp">
     <div class="folder-icon"></div>
   </div>
 </template>

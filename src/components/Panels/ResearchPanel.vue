@@ -207,6 +207,7 @@
               :before-upload="handleUpload"
               :on-success="handleSuccess"
               :on-progress="handleProgress"
+              :on-error="handleError"
               :data="uploadData"
               :headers="{ Authorization: 'Bearer'+authorization }">
               <Button
@@ -518,7 +519,7 @@ export default {
         console.log(val)
 
         this.reportType.forEach(item => {
-          if (val === (item.id).toString()) {
+          if (val == (item.id).toString()) {
             this.smallTypeArr = item.children.map(child => {
               return {
                 name: child.typeName,
@@ -526,7 +527,6 @@ export default {
                 children: []
               }
             })
-
             if (item.typeName === '公司研究') {
               this.getEnumByCode(18)
               this.largeTypeName = item.typeName
@@ -545,6 +545,7 @@ export default {
           }
         })
       },
+      immediate: true,
       deep: true
     },
     smallType (val) {
@@ -784,7 +785,6 @@ export default {
                           if(item.data[0].pre !== "") {
                             item.data[1].current = (Number(val) - Number((item.data[0].pre))) / (item.data[0].pre)
                             item.data[1].current = `${(item.data[1].current * 100).toFixed(2)}%`
-
                           }
 
                           if(item.data[item.data.length - 2].current !== "" && item.data[item.data.length - 2].current !== "/") {
@@ -1164,6 +1164,8 @@ export default {
       if(this.industryName === null && (this.largeTypeName === '公司研究' || this.largeTypeName === '行业报告')) {
         this.$refs.tradeSelect.clearSingleSelect()
       }
+      this.tradeName = null
+      this.stockRating= ''
       this.industryName = null
       this.investMarkName = null
       if (this.largeTypeName === '公司研究'){
@@ -1223,7 +1225,7 @@ export default {
 
     handleSuccess (resp, file) {
       this.strokeColor = '#1890FF'
-
+      console.log(resp)
       if (resp.returnCode === 200) {
         file.url = resp.data.attachUrl
         file.name = resp.data.attachTitle
@@ -1241,6 +1243,11 @@ export default {
 
     handleProgress (fileList) {
 
+    },
+
+    handleError(error) {
+      console.log(error)
+      this.$Message.error('附件上传失败')
     },
 
     deleteFile (file) {

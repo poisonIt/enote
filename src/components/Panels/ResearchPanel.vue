@@ -288,7 +288,7 @@
       </div>
 
       <div class="button-group" slot="footer">
-        <div class="button primary" @click="confirmPostTitle">确认</div>
+        <div class="button primary" @click="confirmPostTitle">提交</div>
         <div class="button" style="margin-left: 20px;" @click="noPostTitle">取消</div>
       </div>
     </modal>
@@ -1248,17 +1248,18 @@ export default {
       this.uploadList.splice(idx, 1)
 
       this.noteFiles.forEach(item => {
-        if (item.fileId === file.fileId) {
+        console.log(item,  file)
+        if (item.attachTitle === file.name) {
           item.status = 1
           this.$Message.error('附件删除成功')
         }
       })
 
       this.$nextTick(() => {
-        if (this.uploadList.length === 0) {
-          this.modalHeight = '445px'
-          return
-        }
+        // if (this.uploadList.length === 0) {
+        //   this.modalHeight = '445px'
+        //   return
+        // }
         // if (parseFloat(this.modalHeight) >= 445 && this.$refs.uploadList.clientHeight < 80) {
         //   this.modalHeight = parseFloat(this.modalHeight) - 32 + 'px'
         // } else {
@@ -1428,8 +1429,8 @@ export default {
         firstReportType: Number(this.largeType), //报告大类
         secondReportType: Number(this.smallType), //报告小类
         stockRating: stockRatingName, //投资评级中文
-        valuation: valuation, // 问题
-        attachments: this.noteFiles,
+        valuations: valuation, // 问题
+        attachments: this.noteFiles, //transAttachMentList(this.noteFiles)
         noteFiles: this.noteFiles, //笔记附件
         // attachmentList: transAttachMentList(this.noteFiles),
         // attachmentflag: this.attachmentflag,

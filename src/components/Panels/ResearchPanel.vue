@@ -543,7 +543,7 @@ export default {
           }
         })
       },
-      immediate: true,
+      immediate: false,
       deep: true
     },
     smallType (val) {
@@ -1151,6 +1151,7 @@ export default {
       this.smallTypeArr = []
       this.isShowFiled = ['1','2','3','4','5','7','8']
       this.stock = ''
+      this.largeType=''
       this.stockRating = ''
       this.sixMonthPrice1 = null
       this.sixMonthPrice = null

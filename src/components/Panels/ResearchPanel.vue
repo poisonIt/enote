@@ -510,16 +510,14 @@ export default {
     },
 
     largeType: {
-      handler: function (val) {
+      handler: function (newVal, oldVal) {
+        console.log(newVal, oldVal)
+
         this.$refs.smallTypeSelect.clear()
-        // this.enumCodeArr = []
-        // this.showProfitData = false
-        // this.projectData = []
         this.stock = ''
-        console.log(val)
 
         this.reportType.forEach(item => {
-          if (val == (item.id).toString()) {
+          if (newVal == (item.id).toString()) {
             this.smallTypeArr = item.children.map(child => {
               return {
                 name: child.typeName,
@@ -568,7 +566,7 @@ export default {
       valutionYears = []
       this.projectData = []
       this.countData = []
-
+      this.stockRating = ''
       this.showProfitData = false
       this.modalHeight = '445px'
       getLastStockExpectProfit(newVal).then(resp => {
@@ -578,7 +576,7 @@ export default {
           this.investMarkName = resp.data.data.investMarkName
           this.currency = resp.data.data.currency === 1 ?  'CNY' : resp.data.data.currency === 2 ? 'HKD': resp.data.data.currency === 3 ? 'USD' : null
           this.sixMonthPrice = resp.data.data.sixMonthPrice
-          console.log('盈利预测数据', resp.data.data.valutionItems )
+          console.log('盈利预测数据', resp.data.data.valutionYears )
           valutionYears = resp.data.data.valutionYears
           if (resp.data.data.valutionItems !== null && resp.data.data.valutionItems.length > 0) {
             this.showProfitData = true
@@ -1168,7 +1166,7 @@ export default {
       this.stockRating= ''
       this.industryName = null
       this.investMarkName = null
-      if (this.largeTypeName === '公司研究'){
+      if (this.largeTypeName === '公司研究' || this.largeTypeName === '行业报告'){
         this.$refs.stockRatingSelect.clear()
       }
       if (this.largeTypeName === '公司研究') {
@@ -1370,7 +1368,7 @@ export default {
       }
     },
     postReport () {
-
+      console.log(this.projectData)
       let valuation = []
       if (this.isShowFiled.indexOf('7') > -1) {
         let i = valutionYears.length - 4;
@@ -1406,7 +1404,7 @@ export default {
         }
         valuation.push(dic3);
       }
-
+      console.log(valuation)
       if (this.isSyncing) {
         this.$Message.warning('同步未完成无法提交，请等待同步完成后再提交')
         return
@@ -1513,9 +1511,9 @@ export default {
       console.log(this.confirmResearchData)
       // this.submitEnquiry(data)
       if (this.publicStatus) {
-        this.confirmNote(this.post_data)
+        // this.confirmNote(this.post_data)
       } else {
-        this.submitEnquiry(data)
+        // this.submitEnquiry(data)
       }
     },
 
@@ -1605,7 +1603,10 @@ export default {
       }
       console.log(params)
       // if (j >= list_array.length) return
-      if (this.stock === '') return
+      if (this.stock === '') {
+        this.$Message.error('请选择股票')
+        return
+      }
       getProfitItem(params).then(resp => {
         // console.log(resp)
         if (resp.data.returnCode === 200) {

@@ -682,6 +682,9 @@ export default {
           width: 126 ,
           align: 'center',
           ellipsis: true,
+          renderHeader: (h, params) => {
+            return h('div', {}, `币种${this.currency !== null ? this.currency : this.currencyName === '1' ? 'CNY' : this.currencyName === '2' ?'HKD' : 'USD'}`)
+          },
           render: (h, params) => {
             return h('div', {}, params.row.fieldTitle)
           }

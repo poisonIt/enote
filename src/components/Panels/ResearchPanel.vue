@@ -569,6 +569,7 @@ export default {
       this.stockRating = ''
       this.showProfitData = false
       this.modalHeight = '445px'
+      if (newVal === '') { return }
       getLastStockExpectProfit(newVal).then(resp => {
         if (resp.data.returnCode === 200) {
           this.industryName = resp.data.data.industryName

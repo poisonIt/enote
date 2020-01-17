@@ -617,13 +617,9 @@ export default {
 
     showProfitData(val) {
       if (val) {
-        this.countData.forEach((item) => {
-          list_array.forEach(option => {
-            if (item.itemTitle === option.value) {
-              option.disabled = true
-            }
-          })
-        })
+        // list_array.forEach(option => {
+        //   option.disabled = false
+        // })
         this.columns = [{
           title: '预测项目', width: 170,align: 'center',
           render: (h, params) => {
@@ -637,8 +633,6 @@ export default {
               },
               on: {
                 'on-change':(val) => {
-                  console.log(val)
-                  console.log(params)
                   let data = {
                     currency: this.currency !== null ? (this.currency === 'CNY' ? '1' : this.currency === 'HKD' ?'2' : '3') : this.currencyName,
                     method: val,
@@ -648,23 +642,20 @@ export default {
                   getProfitItem(data).then(resp => {
                     if (resp.data.returnCode === 200) {
                       if (resp.data.data.valutionItems !== null) {
-                        console.log(resp.data.data.valutionItems)
+
                         this.countData[params.index] = resp.data.data.valutionItems[0]
-                        console.log()
+                        console.log(this.countData)
+
                         this.countData.forEach((item, index) => {
                           item.data.forEach((child, index1) => {
                             child['itemLength'] = item.data.length
                             child['itemIndex'] = index
                             child['itemTitle'] = item.itemTitle
                           })
-                          list_array.forEach(option => {
-                            if (item.itemTitle === option.value) {
-                              option.disabled = true
-                            }
-                          })
                           this.projectData = this.projectData.concat(item.data)
                         })
-                        console.log()
+                        this.caozuo()
+
                       }
                     }
                   })
@@ -1038,20 +1029,21 @@ export default {
                     this.countData = this.countData.filter((item) => {
                       return item.itemTitle !== params.row.itemTitle
                     })
+
+                    let countData = JSON.parse(JSON.stringify(this.countData))
+                    console.log(countData)
                     this.projectData = []
-                    this.countData.forEach((item, index) => {
+                    countData.forEach((item, index) => {
                       item.data.forEach((child, index1) => {
                         child['itemLength'] = item.data.length
                         child['itemIndex'] = index
                         child['itemTitle'] = item.itemTitle
                       })
-                      list_array.forEach(option => {
-                        if (item.itemTitle === option.value) {
-                          option.disabled = true
-                        }
-                      })
                       this.projectData = this.projectData.concat(item.data)
                     })
+
+                    this.caozuo()
+
                     if(this.projectData.length === 0) {
                       this.showProfitData = false
                       this.modalHeight = '446px'
@@ -1075,6 +1067,20 @@ export default {
     ...mapActions([
       'TOGGLE_SHOW_RESEARCH_PANEL'
     ]),
+
+    caozuo(){
+      list_array.forEach(option => {
+        option.disabled = false
+      })
+      this.countData.forEach((item, index) => {
+
+        list_array.forEach(option => {
+          if (item.itemTitle === option.value) {
+            option.disabled = true
+          }
+        })
+      })
+    },
     // 获取报告评级
     getEnumByCode(code) {
       getEnumByCode(code).then(resp => {
@@ -1371,6 +1377,15 @@ export default {
     postReport () {
       console.log(this.projectData)
       let valuation = []
+      for (let k = 0; k<valutionYears.length - 4;++k){
+        let tempdic = {};
+        for (let j = 0; j < this.projectData.length; j ++) {
+          tempdic[this.projectData[j].fieldIndex] = ''
+          tempdic['targetYear'] = valutionYears[k]
+          tempdic['stockCode'] = this.stock
+        }
+        valuation.push(tempdic);
+      }
       if (this.isShowFiled.indexOf('7') > -1) {
         let i = valutionYears.length - 4;
         let dic = {}
@@ -1512,9 +1527,9 @@ export default {
       console.log(this.confirmResearchData)
       // this.submitEnquiry(data)
       if (this.publicStatus) {
-        // this.confirmNote(this.post_data)
+        this.confirmNote(this.post_data)
       } else {
-        // this.submitEnquiry(data)
+        this.submitEnquiry(data)
       }
     },
 
@@ -1588,9 +1603,8 @@ export default {
     },
     // 添加项目
     handleAddProject() {
-      let j = 0, method
+      let j = 0, method = 0;
       list_array.forEach((item, index) => {
-
         if (index === j && !item.disabled) {
           method = item.label
         } else {
@@ -1603,11 +1617,21 @@ export default {
         stockCode: this.stock
       }
       console.log(params)
-      // if (j >= list_array.length) return
+      //
       if (this.stock === '') {
         this.$Message.error('请选择股票')
         return
       }
+      if (params.currency === '') {
+        this.$Message.error('请选择盈利预测币种')
+        return
+      }
+      console.log(method)
+      if (method === undefined) {
+        this.$Message.error(`最多添加${list_array.length}条`)
+        return
+      }
+
       getProfitItem(params).then(resp => {
         // console.log(resp)
         if (resp.data.returnCode === 200) {
@@ -1616,8 +1640,12 @@ export default {
             this.modalHeight = '646px'
             this.projectData = []
             // valutionYears = resp.data.data.valutionYears
+            list_array.forEach(element111 => {
+              element111.disabled = false
+            });
             this.countData = this.countData.concat(resp.data.data.valutionItems)
             this.countData.forEach((item, index) => {
+
               item.data.forEach((child, index1) => {
                 child['itemLength'] = item.data.length
                 child['itemIndex'] = index

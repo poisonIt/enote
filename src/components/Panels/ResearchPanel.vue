@@ -1377,16 +1377,16 @@ export default {
     postReport () {
       console.log(this.projectData)
       let valuation = []
-      for (let k = 0; k<valutionYears.length - 4;++k){
-        let tempdic = {};
-        for (let j = 0; j < this.projectData.length; j ++) {
-          tempdic[this.projectData[j].fieldIndex] = ''
-          tempdic['targetYear'] = valutionYears[k]
-          tempdic['stockCode'] = this.stock
-        }
-        valuation.push(tempdic);
-      }
       if (this.isShowFiled.indexOf('7') > -1) {
+        for (let k = 0; k<valutionYears.length - 4;++k){
+          let tempdic = {};
+          for (let j = 0; j < this.projectData.length; j ++) {
+            tempdic[this.projectData[j].fieldIndex] = ''
+            tempdic['targetYear'] = valutionYears[k]
+            tempdic['stockCode'] = this.stock
+          }
+          valuation.push(tempdic);
+        }
         let i = valutionYears.length - 4;
         let dic = {}
         for (let j = 0; j < this.projectData.length; j ++) {
@@ -1442,7 +1442,8 @@ export default {
       let data = {
         title: this.title,//报告标题
         stockCode: this.stock,//股票代码
-        inductryName: this.industryName === null ? this.tradeName : this.industryName, //行业名称
+        industryName: this.industryName === null ? this.tradeName : this.industryName, //行业名称
+        // industryCode: this.industryName === null ? this.tradeName.split[' '][1] : this.industryName, //行业Code
         investMark: Number(this.stockRating), //投资评级Id
         sixMonthPrice: this.sixMonthPrice1, //六月目标价
         currency: this.currency !== null ? (this.currency === 'CNY' ? '1' : this.currency === 'HKD' ?'2' : '3') : this.currencyName,//币种

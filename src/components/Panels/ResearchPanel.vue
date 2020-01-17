@@ -1390,7 +1390,8 @@ export default {
         let i = valutionYears.length - 4;
         let dic = {}
         for (let j = 0; j < this.projectData.length; j ++) {
-          dic[this.projectData[j].fieldIndex] = this.projectData[j].pre
+          console.log('projectData', this.projectData[j])
+          dic[this.projectData[j].fieldIndex] = parseFloat(this.projectData[j].pre)
           dic['targetYear'] = valutionYears[i]
           dic['stockCode'] = this.stock
         }
@@ -1398,7 +1399,7 @@ export default {
         valuation.push(dic);
         let dic1 = {};
         for (let j = 0; j < this.projectData.length; j ++) {
-          dic1[this.projectData[j].fieldIndex] = this.projectData[j].current
+          dic1[this.projectData[j].fieldIndex] = parseFloat(this.projectData[j].current)
           dic1['targetYear'] = valutionYears[i]
           dic1['stockCode'] = this.stock
         }
@@ -1406,7 +1407,7 @@ export default {
         valuation.push(dic1);
         let dic2 = {}
         for (let j = 0; j < this.projectData.length; j ++) {
-          dic2[this.projectData[j].fieldIndex] = this.projectData[j].oneNext
+          dic2[this.projectData[j].fieldIndex] = parseFloat(this.projectData[j].oneNext)
           dic2['targetYear'] = valutionYears[i]
           dic2['stockCode'] = this.stock
         }
@@ -1414,7 +1415,7 @@ export default {
         let dic3 = {}
         i ++
         for (let j = 0; j < this.projectData.length; j ++) {
-          dic3[this.projectData[j].fieldIndex] = this.projectData[j].twoNext
+          dic3[this.projectData[j].fieldIndex] = parseFloat(this.projectData[j].twoNext)
           dic3['targetYear'] = valutionYears[i]
           dic3['stockCode'] = this.stock
         }
@@ -1627,7 +1628,7 @@ export default {
         return
       }
       console.log(method)
-      if (method === undefined) {
+      if (Number(method) === 0) {
         this.$Message.error(`最多添加${list_array.length}条`)
         return
       }

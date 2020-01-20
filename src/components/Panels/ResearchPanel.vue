@@ -527,6 +527,7 @@ export default {
             })
             if (item.typeName === '公司研究') {
               this.getEnumByCode(18)
+              this.gradeArray=[ {label:'买入', id: 251 },{label:'卖出', id: 252 } ]
               this.largeTypeName = item.typeName
             } else if (item.typeName === "行业报告") {
               this.getEnumByCode(19)
@@ -1379,7 +1380,6 @@ export default {
       }
     },
     postReport () {
-      console.log(this.projectData)
       let valuation = []
       if (this.isShowFiled.indexOf('7') > -1) {
         for (let k = 0; k<valutionYears.length - 4;++k){
@@ -1394,8 +1394,8 @@ export default {
         let i = valutionYears.length - 4;
         let dic = {}
         for (let j = 0; j < this.projectData.length; j ++) {
-          console.log('projectData', this.projectData[j])
-          dic[this.projectData[j].fieldIndex] = parseFloat(this.projectData[j].pre)
+          // console.log('projectData', this.projectData[j])
+          dic[this.projectData[j].fieldIndex] = this.projectData[j].pre !== '' && this.projectData[j].pre !== '/' ? parseFloat(this.projectData[j].pre) : this.projectData[j].pre
           dic['targetYear'] = valutionYears[i]
           dic['stockCode'] = this.stock
         }
@@ -1403,7 +1403,7 @@ export default {
         valuation.push(dic);
         let dic1 = {};
         for (let j = 0; j < this.projectData.length; j ++) {
-          dic1[this.projectData[j].fieldIndex] = parseFloat(this.projectData[j].current)
+          dic1[this.projectData[j].fieldIndex] = this.projectData[j].current !== '' &&  this.projectData[j].current !== '/'? parseFloat(this.projectData[j].current) : this.projectData[j].current
           dic1['targetYear'] = valutionYears[i]
           dic1['stockCode'] = this.stock
         }
@@ -1411,7 +1411,7 @@ export default {
         valuation.push(dic1);
         let dic2 = {}
         for (let j = 0; j < this.projectData.length; j ++) {
-          dic2[this.projectData[j].fieldIndex] = parseFloat(this.projectData[j].oneNext)
+          dic2[this.projectData[j].fieldIndex] = this.projectData[j].oneNext !== '' && this.projectData[j].oneNext !== '/'  ? parseFloat(this.projectData[j].oneNext) : ''
           dic2['targetYear'] = valutionYears[i]
           dic2['stockCode'] = this.stock
         }
@@ -1419,13 +1419,15 @@ export default {
         let dic3 = {}
         i ++
         for (let j = 0; j < this.projectData.length; j ++) {
-          dic3[this.projectData[j].fieldIndex] = parseFloat(this.projectData[j].twoNext)
+          console.log('this.projectData[j].twoNex', this.projectData[j].twoNext)
+          dic3[this.projectData[j].fieldIndex] = this.projectData[j].twoNext!=='' && this.projectData[j].twoNext!=='/'? parseFloat(this.projectData[j].twoNext) :this.projectData[j].twoNext
           dic3['targetYear'] = valutionYears[i]
           dic3['stockCode'] = this.stock
         }
         valuation.push(dic3);
       }
-      console.log(valuation)
+
+      // console.log(valuation)
       if (this.isSyncing) {
         this.$Message.warning('同步未完成无法提交，请等待同步完成后再提交')
         return
@@ -1535,7 +1537,7 @@ export default {
       if (this.publicStatus) {
         this.confirmNote(this.post_data)
       } else {
-        this.submitEnquiry(data)
+        // this.submitEnquiry(data)
       }
     },
 

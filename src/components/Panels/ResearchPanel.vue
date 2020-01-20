@@ -571,9 +571,6 @@ export default {
       this.stockRating = ''
       this.showProfitData = false
       this.modalHeight = '445px'
-      list_array.forEach((item, index) => {
-        item.disabled = false
-      })
       if (newVal === '') { return }
       getLastStockExpectProfit(newVal).then(resp => {
         if (resp.data.returnCode === 200) {
@@ -1616,7 +1613,8 @@ export default {
     // 添加项目
     handleAddProject() {
       let j = 0;
-      this.method = 0;
+      this.method = 0
+      this.caozuo()
       list_array.forEach((item, index) => {
         if (index === j && !item.disabled) {
           this.method = item.label

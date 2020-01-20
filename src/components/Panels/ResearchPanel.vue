@@ -1537,7 +1537,7 @@ export default {
       if (this.publicStatus) {
         this.confirmNote(this.post_data)
       } else {
-        // this.submitEnquiry(data)
+        this.submitEnquiry(data)
       }
     },
 

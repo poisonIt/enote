@@ -32,6 +32,7 @@ export default {
   display none
 #app
   font-family 'Avenir', Helvetica, Arial, sans-serif
+  -webkit-app-region drag
   -webkit-font-smoothing antialiased
   -moz-osx-font-smoothing grayscale
   color #2c3e50

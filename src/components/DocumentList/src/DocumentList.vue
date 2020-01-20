@@ -20,7 +20,7 @@
           @itemClick="handleMenuClick">
         </Menu>
       </div>
-      
+
     </div>
 
     <div class="body" ref="body">
@@ -916,7 +916,7 @@ export default {
     justify-content space-between
     align-items center
     border-bottom 1px solid #e6e6e6
-    // -webkit-app-region drag
+    -webkit-app-region drag
     .title
       flex .85
       text-align center

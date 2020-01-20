@@ -526,7 +526,7 @@ export default {
               }
             })
             if (item.typeName === '公司研究') {
-              this.getEnumByCode(18)
+              // this.getEnumByCode(18)
               this.gradeArray=[ {label:'买入', id: 251 },{label:'卖出', id: 252 } ]
               this.largeTypeName = item.typeName
             } else if (item.typeName === "行业报告") {

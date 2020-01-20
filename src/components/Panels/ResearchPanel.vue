@@ -459,6 +459,7 @@ export default {
       itemTitle: '',
       columns: [],
       projectData: [],
+      method: 0
     }
   },
 
@@ -570,6 +571,9 @@ export default {
       this.stockRating = ''
       this.showProfitData = false
       this.modalHeight = '445px'
+      list_array.forEach((item, index) => {
+        item.disabled = false
+      })
       if (newVal === '') { return }
       getLastStockExpectProfit(newVal).then(resp => {
         if (resp.data.returnCode === 200) {
@@ -1611,17 +1615,19 @@ export default {
     },
     // 添加项目
     handleAddProject() {
-      let j = 0, method = 0;
+      let j = 0;
+      this.method = 0;
       list_array.forEach((item, index) => {
         if (index === j && !item.disabled) {
-          method = item.label
+          this.method = item.label
         } else {
           j ++
         }
       })
+      console.log('method', this.method)
       let params = {
         currency: this.currency !== null ? (this.currency === 'CNY' ? '1' : this.currency === 'HKD' ?'2' : '3') : this.currencyName,
-        method: method,
+        method: this.method,
         stockCode: this.stock
       }
       console.log(params)
@@ -1634,8 +1640,8 @@ export default {
         this.$Message.error('请选择盈利预测币种')
         return
       }
-      console.log(method)
-      if (Number(method) === 0) {
+      console.log(this.method)
+      if (Number(this.method) === 0) {
         this.$Message.error(`最多添加${list_array.length}条`)
         return
       }

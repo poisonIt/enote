@@ -18,6 +18,7 @@ import 'view-design/dist/styles/iview.css'
 import '@/assets/styles/iview.styl'
 import '@/assets/styles/common.styl'
 import '@/assets/css/font-family.css'
+import '@/utils/drag.js'
 //
 
 import { Circle } from 'vant'

@@ -1,6 +1,7 @@
 <template>
   <div>
     <modal
+      v-dialogDrag
       width="791px"
       top="10vh"
       :height="modalHeight"

@@ -623,7 +623,8 @@ export default {
         // list_array.forEach(option => {
         //   option.disabled = false
         // })
-        this.columns = [{
+        this.columns = [
+          {
           title: '预测项目', width: 170,align: 'center',
           render: (h, params) => {
 
@@ -719,7 +720,7 @@ export default {
                   },
                   on: {
                     input: (val) => {
-                      console.log(val)
+                      console.log('Pre', val)
                       this.projectData[params.index].pre = val
                       this.countData.forEach((item, index) => {
 
@@ -951,7 +952,6 @@ export default {
                   },
                   on: {
                     input: (val) => {
-                      console.log(val)
                       // EV/EBITDA 除外所有规则
                       this.projectData[params.index].twoNext = val
                       this.countData.forEach((item, index) => {
@@ -988,6 +988,7 @@ export default {
                     size:'small',
                     placeholder:"请输入"
                   },
+
                   on: {
                     input: (val) => {
                       this.projectData[params.index].twoNext = val
@@ -1156,8 +1157,11 @@ export default {
         return "ivu-table-stripe-odd"
       }
     },
+    closeResearchPanel() {
+      this.TOGGLE_SHOW_RESEARCH_PANEL(false)
+    },
 
-    closeResearchPanel () {
+    closeResearchPanelClear () {
       this.$refs.largeTypeSelect.clear()
       this.$refs.smallTypeSelect.clear()
       this.smallTypeArr = []
@@ -1400,6 +1404,7 @@ export default {
           dic['targetYear'] = valutionYears[i]
           dic['stockCode'] = this.stock
         }
+        // if ()
         i ++;
         valuation.push(dic);
         let dic1 = {};
@@ -1420,12 +1425,30 @@ export default {
         let dic3 = {}
         i ++
         for (let j = 0; j < this.projectData.length; j ++) {
-          console.log('this.projectData[j].twoNex', this.projectData[j].twoNext)
+          // console.log('this.projectData[j].twoNex', this.projectData[j].twoNext)
           dic3[this.projectData[j].fieldIndex] = this.projectData[j].twoNext!=='' && this.projectData[j].twoNext!=='/'? parseFloat(this.projectData[j].twoNext) :this.projectData[j].twoNext
           dic3['targetYear'] = valutionYears[i]
           dic3['stockCode'] = this.stock
         }
         valuation.push(dic3);
+      }
+// console.log()
+      let inputAll = document.querySelectorAll('.ivu-table-cell .ivu-input')
+      this.flag = true
+      // for (let i = 0; i < inputAll.length; i ++) {
+      //   console.log(inputAll[0].value)
+      // }
+      inputAll.forEach((item) => {
+        if(item.value === '') {
+          // console.log(item.value)
+
+          this.flag = false
+        }
+      })
+
+      if (!this.flag) {
+        this.$Message.error('盈利数据为必填项')
+        return
       }
 
       // console.log(valuation)
@@ -1546,7 +1569,7 @@ export default {
       insertReport(data).then(res => {
         if (res.data.returnCode === 200) {
           this.$Message.success('提交成功')
-          this.closeResearchPanel()
+          this.closeResearchPanelClear()
           this.isResearchTitleShowed = false
           this.isNotesyncAnswerShowed = false
           this.isbackAnswerShowed = false

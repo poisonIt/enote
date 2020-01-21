@@ -238,7 +238,7 @@ export default {
   background-image url('../assets/images/lanhu/login_bg@1x.png')
   background-size cover
   background-repeat no-repeat
-  -webkit-app-region drag
+  // -webkit-app-region drag
 
 .header
   position absolute

@@ -127,7 +127,7 @@ export default {
   border-radius 50%
   overflow hidden
   background-color #fff
-  -webkit-app-region drag
+  -webkit-app-region no-sdrag
   &.expanded
     margin 20px auto 0px
   img

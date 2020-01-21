@@ -907,6 +907,8 @@ export default {
   width 100%
   height 100%
   position relative
+  &.top
+    padding 30px 0 0 0
   .header
     width inherit
     height 60px
@@ -921,8 +923,7 @@ export default {
       flex .85
       text-align center
       font-size 14px
-.top
-  padding 30px 0 0 0
+
 .body
   position relative
   height 100%

@@ -1170,8 +1170,8 @@ export default {
       this.stock = ''
       this.largeType=''
       this.stockRating = ''
-      this.sixMonthPrice1 = null
-      this.sixMonthPrice = null
+      this.sixMonthPrice1 = ''
+      this.sixMonthPrice = ''
       if(this.largeTypeName === '公司研究' && this.currency === null) {
         this.$refs.currencySelect.clear()
       }
@@ -1516,15 +1516,15 @@ export default {
         this.$Message.error('请选择报告小类')
         return
       }
-      if(data.investMark === '' && this.largeTypeName === '公司研究') {
+      if((data.investMark === '' || data.investMark === null) && this.largeTypeName === '公司研究') {
         this.$Message.error('请选择投资评级')
         return
       }
-      if(data.sixMonthPrice === ''&& this.largeTypeName === '公司研究') {
+      if((data.sixMonthPrice === '' || data.sixMonthPrice === null) && this.largeTypeName === '公司研究') {
         this.$Message.error('六月目标价不能为空')
         return
       }
-      if(data.currency === ''&& this.largeTypeName === '公司研究') {
+      if((data.currency === '' || data.currency === null) && this.largeTypeName === '公司研究') {
         this.$Message.error('盈利预测币种不能为空')
         return
       }
@@ -1557,7 +1557,8 @@ export default {
 
       this.confirmResearchData = data
 
-      console.log(this.confirmResearchData)
+      // return
+      // console.log(this.confirmResearchData)
       // this.submitEnquiry(data)
       if (this.publicStatus) {
         this.confirmNote(this.post_data)
